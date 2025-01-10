@@ -11,6 +11,20 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
+from celery.schedules import crontab
+from .mongo_setup import (
+    connect_mongo
+)
+import os
+import environ
+import warnings 
+
+
+env = environ.Env(
+    DEBUG=(bool, False)
+)
+
+environ.Env.read_env()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -25,7 +39,49 @@ SECRET_KEY = 'django-insecure--i$a=heuuy55t_!15ketws1@ks01x4zc3b@0paekw7&g$7r8k7
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
+
+CSRF_TRUSTED_ORIGINS = env.list('CSRF_TRUSTED_ORIGINS', default=[])
+
+CSRF_COOKIE_SECURE = False  
+
+CSRF_COOKIE_NAME = 'csrftoken'
+
+CSRF_COOKIE_HTTPONLY = False
+
+CSRF_HEADER_NAME = 'HTTP_X_CSRFTOKEN'
+
+CSRF_COOKIE_SAMESITE = 'Lax'
+
+SESSION_COOKIE_SECURE = False  
+
+CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS', default=[])
+
+CORS_ALLOW_METHODS = [
+    'GET',
+    'POST',
+    'PUT',
+    'PATCH',
+    'DELETE',
+    'OPTIONS',
+]
+
+CORS_ALLOW_HEADERS = [
+    'Authorization',
+    'Content-Type',
+    'Accept',
+    'x-requested-with',
+    'accept',
+    'origin',
+    'user-agent',
+    'dnt',
+    'cache-control',
+    'X-CSRFToken',
+    'x-requested-with',
+    'x-xsrf-token',
+]
 
 
 # Application definition
@@ -37,6 +93,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'api_integration',
+    'api_authorization',
 ]
 
 MIDDLEWARE = [
@@ -47,7 +105,15 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'api_authorization.middleware.MongoAuthMiddleware',
+    'api_authorization.middleware.MongoConnectionMiddleware',
 ]
+
+AUTHENTICATION_BACKENDS = [
+    'api_authorization.backends.MongoDBBackend',
+]
+
+SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
 
 ROOT_URLCONF = 'system_installation_project.urls'
 
@@ -105,7 +171,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'America/New_York'
 
 USE_I18N = True
 
@@ -115,9 +181,50 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+BASE_DIR_STATIC = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BACKUP_DIR = os.path.join(BASE_DIR, 'backup')
+
+MEDIA_URL = '/backup/'
+MEDIA_ROOT = BACKUP_DIR
+
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# REST FRAMEWORK
+
+FRONTEND_URL = env('FRONTEND_URL', default='')
+# API MAIN DATA
+API_MAIN_DATA_URL = env('API_MAIN_DATA_URL', default='')
+API_MAIN_DATA_TOKEN = env('API_MAIN_DATA_TOKEN', default='')
+
+
+# Celery
+
+CELERY_BROKER_URL = env('CELERY_BROKER_URL', default='')
+CELERY_RESULT_BACKEND = env('CELERY_RESULT_BACKEND', default='')
+CELERY_TASKS_DELAY = env('CELERY_TASKS_DELAY', default=5)
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'America/New_York'
+CELERY_ENABLE_UTC = False
+
+
+# MONGOENGINE
+
+warnings.filterwarnings("ignore", message="MongoClient opened before fork")
+
+MONGO_HOST = env('MONGO_HOST', default='localhost')
+MONGO_PORT = int(env('MONGO_PORT', default=27017))
+MONGO_USER = env('MONGO_USER', default='root')
+MONGO_PASSWORD = env('MONGO_PASSWORD', default='')
+MONGO_DB = env('MONGO_DB', default='')
+connect_mongo()
+
+

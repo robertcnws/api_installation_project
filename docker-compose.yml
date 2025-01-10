@@ -1,0 +1,99 @@
+services:
+  mongodb_installation:
+    build:
+      context: ./mongo_db
+    container_name: mongodb_installation
+    restart: unless-stopped
+    ports:
+      - "27037:27017"
+    env_file:
+      - ./mongo_db/.env
+    volumes:
+      - mongodb_data:/data/db
+      - ./mongo_db/init:/docker-entrypoint-initdb.d
+    networks:
+      - net_installation
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4g
+        reservations:
+          cpus: '1.0'
+          memory: 2g
+
+  mongoexpress_installation:
+    build:
+      context: ./mongo_express
+    container_name: mongoexpress_installation
+    restart: unless-stopped
+    ports:
+      - "8085:8085"
+    env_file:
+      - ./mongo_express/.env
+    depends_on:
+      - mongodb_installation
+    networks:
+      - net_installation
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512m
+        reservations:
+          cpus: '0.25'
+          memory: 256m
+          
+  api_installation:
+    build:
+      context: ./backend_app
+      dockerfile: Dockerfile
+    container_name: api_installation
+    restart: unless-stopped
+    volumes:
+      - ./backend_app:/app
+      - ./backend_app/gunicorn.conf.py:/etc/nginx/gunicorn.conf.py
+      - ./backend_app/static:/app/staticfiles
+    ports:
+      - "8001:8000"
+    depends_on:
+      - mongodb_installation
+      - redis_installation
+    env_file:
+      - ./backend_app/.env
+    networks:
+      - net_installation
+
+  nginx_installation:
+    image: nginx:latest
+    container_name: nginx_installation
+    restart: unless-stopped
+    ports:
+      - "85:80"
+      - "543:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
+    depends_on:
+      - api_installation
+    networks:
+      - net_installation
+
+  redis_installation:
+    image: redis:latest
+    container_name: redis_installation
+    restart: unless-stopped
+    ports:
+      - "6399:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - net_installation
+
+volumes:
+  mongodb_data:
+  redis_data:
+
+networks:
+  net_installation:
+    driver: bridge
