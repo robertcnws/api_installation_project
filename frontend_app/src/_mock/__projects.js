@@ -1,0 +1,86 @@
+import { useEffect } from 'react';
+import { gql, useQuery } from '@apollo/client';
+import { CONFIG } from 'src/config-global';
+import { _mock } from './_mock';
+
+
+const GET_ALL_PROJECTS = gql`
+  {
+    allProjects {
+      address
+      createdTime
+      currentStage
+      description
+      endDate
+      hasPermission
+      id
+      isActive
+      lastModifiedTime
+      name
+      number
+      projectAttachments
+      projectComments
+      projectDefaultTasks
+      projectHistory
+      projectTasks
+      salesOrder
+      stageHistory
+      startDate
+      userManager
+      userReporter
+      usersAssignees
+    }
+  }
+`;
+
+const GET_PROJECT_BY_ID = gql`
+  query GetProjectById($id: String!) {
+    projectById(id: $id) {
+      address
+      createdTime
+      currentStage
+      description
+      endDate
+      hasPermission
+      id
+      isActive
+      lastModifiedTime
+      name
+      number
+      projectAttachments
+      projectComments
+      projectDefaultTasks
+      projectHistory
+      projectTasks
+      salesOrder
+      stageHistory
+      startDate
+      userManager
+      userReporter
+      usersAssignees
+    }
+  }
+`;
+
+export const useProjectsQuery = () => {
+
+  const { loading, error, data, startPolling, stopPolling, refetch } = useQuery(GET_ALL_PROJECTS);
+
+  const projects = data?.allProjects || [];
+
+  return { loading, error, data: projects, refetch };
+
+};
+
+export const useProjectByIdQuery = (id) => {
+  
+  const { loading, error, data, startPolling, stopPolling, refetch } = useQuery(GET_PROJECT_BY_ID, {
+    variables: { id },
+    skip: !id,
+  });
+
+  const project = data?.projectById || {};
+
+  return { loading, error, data: project, refetch };
+
+}

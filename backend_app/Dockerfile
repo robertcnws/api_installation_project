@@ -21,7 +21,9 @@ COPY . /app/
 
 EXPOSE 8000
 
-CMD ["sh", "-c", "python manage.py collectstatic --no-input && \
+CMD ["sh", "-c", "python manage.py makemigrations --no-input && \
+                  python manage.py migrate --no-input && \
+                  python manage.py collectstatic --no-input && \
                   python init_scripts.py && \
                   celery -A system_installation_project worker --loglevel=info -E & \
                   celery -A system_installation_project beat --loglevel=info & \

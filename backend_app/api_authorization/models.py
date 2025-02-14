@@ -21,6 +21,8 @@ class LoginUser(Document):
     is_active = BooleanField(default=True)
     date_joined = DateTimeField(default=mongoengine.fields.DateTimeField().default)
     date_updated = DateTimeField(default=mongoengine.fields.DateTimeField().default)
+    created_time = DateTimeField(default=mongoengine.fields.DateTimeField().default)
+    last_modified_time = DateTimeField(default=mongoengine.fields.DateTimeField().default)
     phone_number = StringField(max_length=50, required=False)
     country = StringField(max_length=50, required=False)
     state = StringField(max_length=50, required=False)

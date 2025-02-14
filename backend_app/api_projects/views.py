@@ -1,0 +1,2013 @@
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.response import Response
+from django.utils import timezone
+from django.conf import settings
+from .models import (
+    Project, 
+    ProjectAttachment, 
+    ProjectPermissions, 
+    ProjectStage,
+    ProjectTaskStage,
+    ProjectTask,
+    ProjectTaskAttachment,
+    ProjectTracking,
+    ProjectDefaultTask,
+    ProjectTaskComment,
+)
+from .s3_utils import (
+    upload_attachment_to_s3, 
+    generate_default_file_url,
+    delete_attachment_from_s3
+)
+from .data_util import (
+    transform_data_to_mongo,
+    parse_custom_date,
+    create_default_task_number,
+    create_project_number,
+    fix_order,
+    fix_order_after_edit,
+    get_current_stage_from_tasks,
+    to_aware,
+)
+import json
+import logging
+
+logging.basicConfig(level=logging.WARNING)
+logger = logging.getLogger(__name__)
+
+
+def create_task_number():
+    last_task = ProjectTask.objects().order_by('-created_time').first()
+    if not last_task:
+        return 'T-00001'
+    last_number = int(last_task.number.split('-')[1])
+    return f'T-{str(last_number + 1).zfill(5)}'
+    
+    
+#############################################
+# DELETE PROJECT FILE
+#############################################
+
+@api_view(['DELETE'])
+@permission_classes([AllowAny])
+def delete_project_file(request, id, folder, file):
+    data = request.data
+    user_reporter = data.get('userReporter', None)
+    try: 
+        obj = Project.objects(id=id).first()
+        attachments = obj.project_attachments if obj.project_attachments else []
+        attachments = [attachment for attachment in attachments if attachment['file'] !=  folder + '/' + file]
+        attachments = sorted(attachments, key=lambda x: to_aware(x['created_time']), reverse=True)
+        obj.project_attachments = attachments
+        obj.save()
+        attachment = ProjectAttachment.objects(file=folder + '/' + file).first()
+        attachment.project = transform_data_to_mongo(obj, include_fields=['id', 'name', 'number'])
+        if not attachment:
+            return Response({'error': 'Attachment not found'}, status=404)
+        delete_attachment_from_s3(attachment.file)
+        tracking_info = transform_data_to_mongo(attachment)
+        attachment.delete()
+        tracking = ProjectTracking(
+            user_reporter=user_reporter,
+            action=f'delete project ({obj.id} - {obj.name}) file attachment',
+            created_time=timezone.now(),
+            managed_data={
+                'data': tracking_info
+            },
+        )
+        tracking.save()
+            
+        return Response({'message': 'Project file deleted successfully'})
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+    
+    
+#############################################
+# DELETE PROJECT DEFAULT TASK FILE
+#############################################
+
+@api_view(['DELETE'])
+@permission_classes([AllowAny])
+def delete_default_task_file(request, projectId, id, folder, file):
+    data = request.data
+    user_reporter = data.get('userReporter', None)
+    try: 
+        project = Project.objects(id=projectId).first()
+        if not project:
+            return Response({'error': 'Project not found'}, status=404)
+        tasks = project.project_default_tasks if project.project_default_tasks else []
+        task = next((task for task in tasks if str(task['project_default_task']['_id']) == id), None)
+        tasks = [task for task in tasks if str(task['project_default_task']['_id']) != id]
+        attachments = task['project_task_attachments'] if task['project_task_attachments'] else []
+        attachments = [attachment for attachment in attachments if attachment['file'] != folder + '/' + file]
+        attachments = sorted(attachments, key=lambda x: to_aware(x['created_time']), reverse=True)
+        task['project_task_attachments'] = attachments
+        tasks.append(task)
+        project.project_default_tasks = tasks
+        project.save()
+        attachment = ProjectTaskAttachment.objects(file=folder + '/' + file).first()
+        attachment.project = transform_data_to_mongo(project, include_fields=['id', 'name', 'number'])
+        if not attachment:
+            return Response({'error': 'Attachment not found'}, status=404)
+        delete_attachment_from_s3(attachment.file)
+        tracking_info = transform_data_to_mongo(attachment)
+        attachment.delete()
+        tracking = ProjectTracking(
+            user_reporter=user_reporter,
+            action=f'delete default task ({task['project_default_task']['id']} - {task['project_default_task']['name']}) file attachment ',
+            created_time=timezone.now(),
+            managed_data={
+                'data': tracking_info
+            },
+        )
+        tracking.save()
+            
+        return Response({'message': 'Project file deleted successfully'})
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+    
+
+#############################################
+# CREATE PROJECT
+#############################################
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def create_project(request):         
+    data = request.data
+
+    # start_date = parse_custom_date(logger, data.get('startDate'))
+    # end_date = parse_custom_date(logger, data.get('endDate'))
+    
+    user_reporter = json.loads(data.get('userReporter', None))
+    
+    permission = ProjectPermissions.objects(name='full access').first()
+    permission = transform_data_to_mongo(permission)
+    
+    users_assignees = json.loads(data.get('usersAssignees', []))
+    
+    user_manager = json.loads(data.get('userManager', None))
+    
+    has_permission = data.get('hasPermission', False)
+    
+    current_stage = ProjectStage.objects(name='Preparation').first()
+    
+    current_stage = transform_data_to_mongo(current_stage)
+    
+    for user in users_assignees:
+        user['project_permissions'] = [permission]
+    
+    user_reporter['project_permissions'] = [permission]
+    
+    project_attachments = []
+    files = request.FILES.getlist('projectAttachments')
+    
+    for file_obj in files:
+        key = upload_attachment_to_s3(file_obj)
+        if key:
+            # Ejemplo: url = f"https://{settings.AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com/{key}"
+            attachment = ProjectAttachment(
+                name=file_obj.name,
+                file=key,
+                created_time=timezone.now(),
+                last_modified_time=timezone.now(),
+                user_upload = user_reporter,
+            )
+            attachment.save()
+            project_attachments.append(transform_data_to_mongo(attachment))
+            
+    project_attachments = sorted(project_attachments, key=lambda x: x['name'], reverse=True)
+    
+    default_tasks = ProjectDefaultTask.objects().all().order_by('order')
+    
+    list_default_tasks_info = []
+    
+    for default_task in default_tasks:
+        info = {
+            'project_default_task': transform_data_to_mongo(default_task),
+            'status': 'not started',
+            'percentage': 0,
+            'created_time': timezone.now(),
+            'last_modified_time': timezone.now(),
+            'users_assignees': [],
+            'user_reporter': user_reporter,
+            'priority': 'medium',
+            'project_task_attachments': [],
+        }
+        list_default_tasks_info.append(info)
+
+    try:
+        project = Project(
+            name=data.get('name', ''),
+            description=data.get('description'), 
+            sales_order=json.loads(data.get('salesOrder')), 
+            users_assignees=users_assignees,
+            # start_date=start_date,
+            # end_date=end_date,
+            address=data.get('address', ''),
+            created_time=timezone.now(),
+            last_modified_time=timezone.now(),
+            is_active=True,
+            current_stage=current_stage,    
+            user_reporter=user_reporter,
+            project_attachments=project_attachments,
+            number=create_project_number(data.get('salesOrder').get('salesorder_number')),
+            user_manager=user_manager,
+            has_permission=has_permission,
+            project_default_tasks=list_default_tasks_info,
+        )
+        
+        project.save()
+        
+        tracking = ProjectTracking(
+            user_reporter=user_reporter,
+            action=f'create project ({project.id} - {project.name})',
+            created_time=timezone.now(),
+            managed_data={
+                'data': transform_data_to_mongo(project, exclude_fields=['sales_order'])
+            },
+        )
+        tracking.save()
+        
+        return Response({
+            'message': 'Project created successfully',
+            'data': json.loads(project.to_json())
+        }, status=201)
+
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+    
+    
+
+#############################################
+# CREATE PROJECTS
+#############################################
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def create_projects(request):         
+    data = request.data
+    
+    sales_orders = data.get('salesOrders', [])
+    
+    user_reporter = data.get('userReporter', None)
+    
+    today = timezone.now()
+    a_week_later = today + timezone.timedelta(days=7)
+
+    # start_date = parse_custom_date(logger, today.strftime('%Y-%m-%d'))
+    # end_date = parse_custom_date(logger, a_week_later.strftime('%Y-%m-%d'))
+    
+    permission = ProjectPermissions.objects(name='full access').first()
+    permission = transform_data_to_mongo(permission)
+    
+    users_assignees = []
+    
+    user_manager = None
+    
+    has_permission = False
+    
+    current_stage = ProjectStage.objects(name='Preparation').first()
+    
+    current_stage = transform_data_to_mongo(current_stage)
+    
+    user_reporter['project_permissions'] = [permission]
+    
+    project_attachments = []
+    
+    count = 0
+    
+    list_tracking_info = []
+    
+    default_tasks = ProjectDefaultTask.objects().all().order_by('order')
+    
+    list_default_tasks_info = []
+    
+    for default_task in default_tasks:
+        info = {
+            'project_default_task': transform_data_to_mongo(default_task),
+            'status': 'not started',
+            'percentage': 0,
+            'created_time': timezone.now(),
+            'last_modified_time': timezone.now(),
+            'users_assignees': [],
+            'user_reporter': user_reporter,
+            'priority': 'medium',
+            'project_task_attachments': [],
+        }
+        list_default_tasks_info.append(info)
+    
+    for sales_order in sales_orders:
+
+        try:
+            project = Project(
+                name=f'{sales_order.get("salesorder_number")} ({sales_order.get("customer_name")})',
+                description=f'Project for sales order {sales_order.get("salesorder_number")}', 
+                sales_order=sales_order, 
+                users_assignees=users_assignees,
+                # start_date=start_date,
+                # end_date=end_date,
+                address='You can add the address here',
+                created_time=timezone.now(),
+                last_modified_time=timezone.now(),
+                is_active=True,
+                current_stage=current_stage,
+                user_reporter=user_reporter,
+                project_attachments=project_attachments,
+                project_tasks=[],
+                number = create_project_number(sales_order.get('salesorder_number')), 
+                user_manager=user_manager,
+                has_permission=has_permission,
+                project_default_tasks=list_default_tasks_info,
+            )
+            
+            project.save()
+            
+            tracking_info = transform_data_to_mongo(project, exclude_fields=['sales_order'])
+            list_tracking_info.append(tracking_info)
+            
+            count += 1
+            
+        except Exception as e:
+            return Response({'error': str(e)}, status=500)
+        
+    tracking = ProjectTracking(
+        user_reporter=user_reporter,
+        action=f'create list projects',
+        created_time=timezone.now(),
+        managed_data={
+            'data': list_tracking_info
+        },
+    )
+    tracking.save()
+        
+    return Response({
+        'message': f'{count} Project(s) created successfully',
+        'data': tracking_info
+    }, status=200)
+    
+    
+
+#############################################
+# UPDATE PROJECT
+#############################################
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def update_project(request, id): 
+    
+    project = Project.objects(id=id).first()
+    if not project:
+        return Response({'error': 'Project not found'}, status=404)
+    
+    last_stage = project.current_stage
+    last_attachments = project.project_attachments if project.project_attachments else []   
+            
+    data = request.data
+    
+    has_permission_str = data.get('hasPermission', 'false') if data.get('hasPermission') else None
+    if has_permission_str:
+        has_permission = True if has_permission_str.lower() == 'true' else False
+    
+    user_manager = json.loads(data.get('userManager', None)) if data.get('userManager') else project.user_manager
+    project_default_tasks = json.loads(data.get('projectDefaultTasks', [])) if data.get('projectDefaultTasks') else project.project_default_tasks
+    project_comments = json.loads(data.get('projectComments', [])) if data.get('projectComments') else project.project_comments
+
+    start_date = parse_custom_date(logger, data.get('startDate')) if data.get('startDate') else project.start_date
+    end_date = parse_custom_date(logger, data.get('endDate')) if data.get('endDate') else project.end_date
+    
+    user_reporter = json.loads(data.get('userReporter', None)) if data.get('userReporter') else project.user_reporter
+    
+    users_assignees = json.loads(data.get('usersAssignees', [])) if data.get('usersAssignees') else project.users_assignees
+    
+    current_stage = json.loads(data.get('currentStage', {})) if data.get('currentStage') else project.current_stage
+    
+    last_stage_id = last_stage['_id'] if '_id' in last_stage else last_stage['id']
+    current_stage_id = current_stage['_id'] if '_id' in current_stage else current_stage['id']
+    
+    if last_stage_id != current_stage_id:
+        project_history = project.project_history if project.project_history else []
+        project_history.append({
+            'initial_stage': last_stage,
+            'final_stage': current_stage,
+            'created_time': timezone.now()
+        })
+        project.project_history = project_history
+    
+    project_attachments = []
+    files = request.FILES.getlist('projectAttachments')
+    
+    for file_obj in files:
+        key = upload_attachment_to_s3(file_obj)
+        if key:
+            attachment = ProjectAttachment(
+                name=file_obj.name,
+                file=key,
+                created_time=timezone.now(),
+                last_modified_time=timezone.now(),
+                user_upload = user_reporter,
+            )
+            attachment.save()
+            project_attachments.append(transform_data_to_mongo(attachment))
+            
+    last_attachments.extend(project_attachments)
+            
+    last_attachments = sorted(last_attachments, key=lambda x: x['name'], reverse=True)
+    
+    project.name = data.get('name', project.name) if data.get('name') else project.name
+    project.description = data.get('description', project.description) if data.get('description') else project.description
+    project.users_assignees = users_assignees if users_assignees else project.users_assignees
+    project.start_date = start_date if start_date else project.start_date
+    project.end_date = end_date if end_date else project.end_date
+    project.address = data.get('address', project.address) if data.get('address') else project.address
+    project.last_modified_time = timezone.now()
+    project.current_stage = current_stage if current_stage else project.current_stage
+    project.user_reporter = user_reporter if user_reporter else project.user_reporter
+    project.project_attachments = last_attachments if last_attachments else project.project_attachments
+    project.user_manager = user_manager if user_manager else project.user_manager
+    project.has_permission = has_permission if has_permission_str else project.has_permission
+    project.project_default_tasks = project_default_tasks if project_default_tasks else project.project_default_tasks
+    project.project_comments = project_comments if project_comments else project.project_comments
+        
+    project.save()
+    
+    tracking = ProjectTracking(
+        user_reporter=user_reporter,
+        action=f'update project ({project.id} - {project.name})',
+        created_time=timezone.now(),
+        managed_data={
+            'data': transform_data_to_mongo(project)
+        },
+    )
+    tracking.save()
+        
+    return Response({
+        'message': 'Project updated successfully',
+        'data': json.loads(project.to_json())
+    }, status=201)
+    
+    
+#############################################
+# CHANGE PROJECT PERMISSION
+#############################################
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def change_project_permission(request, id): 
+    
+    project = Project.objects(id=id).first()
+    if not project:
+        return Response({'error': 'Project not found'}, status=404)
+            
+    data = request.data
+    
+    has_permission_str = data.get('hasPermission', 'false') if data.get('hasPermission') else None
+    if has_permission_str:
+        has_permission = True if has_permission_str.lower() == 'true' else False
+    
+    user_reporter = json.loads(data.get('userReporter', None)) if data.get('userReporter') else project.user_reporter
+    
+    project.last_modified_time = timezone.now()
+    project.user_reporter = user_reporter if user_reporter else project.user_reporter
+    project.has_permission = has_permission if has_permission_str else project.has_permission
+        
+    project.save()
+    
+    tracking = ProjectTracking(
+        user_reporter=user_reporter,
+        action=f'change project permission ({project.id} - {project.name})',
+        created_time=timezone.now(),
+        managed_data={
+            'data': transform_data_to_mongo(project, include_fields=['id', 'name', 'has_permission'])
+        },
+    )
+    tracking.save()
+        
+    return Response({
+        'message': 'Project updated successfully',
+        'data': json.loads(project.to_json())
+    }, status=201)
+    
+    
+#############################################
+# CHANGE PROJECT ADDRESS
+#############################################
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def change_project_address(request, id): 
+    
+    project = Project.objects(id=id).first()
+    if not project:
+        return Response({'error': 'Project not found'}, status=404)
+            
+    data = request.data
+    
+    user_reporter = json.loads(data.get('userReporter', None)) if data.get('userReporter') else project.user_reporter
+    
+    project.address = data.get('address', project.address) if data.get('address') else project.address
+    project.last_modified_time = timezone.now()
+    project.user_reporter = user_reporter if user_reporter else project.user_reporter
+        
+    project.save()
+    
+    tracking = ProjectTracking(
+        user_reporter=user_reporter,
+        action=f'change project address ({project.id} - {project.name})',
+        created_time=timezone.now(),
+        managed_data={
+            'data': transform_data_to_mongo(project, include_fields=['id', 'name', 'address'])
+        },
+    )
+    tracking.save()
+        
+    return Response({
+        'message': 'Project updated successfully',
+        'data': json.loads(project.to_json())
+    }, status=201)
+    
+
+#############################################
+# ADD USERS ASSIGNEES TO PROJECT
+#############################################
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def add_project_users_assignees(request, id): 
+    
+    data = request.data
+    user_reporter = data.get('userReporter', None)
+    users_assignees = data.get('usersAssignees', [])
+    
+    project = Project.objects(id=id).first()
+    if not project:
+        return Response({'error': 'Project not found'}, status=404)
+    
+    project.users_assignees = users_assignees
+    project.user_reporter = user_reporter
+        
+    project.save()
+    
+    tracking = ProjectTracking(
+        user_reporter=user_reporter,
+        action=f'add project users assignees',
+        created_time=timezone.now(),
+        managed_data={
+            'data': transform_data_to_mongo(project, include_fields=['id', 'name', 'users_assignees', 'number'])
+        },
+    )
+    tracking.save()
+        
+    return Response({
+        'message': 'Project users assignees added successfully',
+        'data': json.loads(project.to_json())
+    }, status=201)
+    
+    
+
+#############################################
+# DELETE PROJECT
+#############################################
+
+@api_view(['DELETE'])
+@permission_classes([AllowAny])
+def delete_project(request, id):
+    data = request.data
+    user_reporter = data.get('userReporter', None)
+    try:
+        project = Project.objects(id=id).first()
+        if not project:
+            return Response({'error': 'Project not found'}, status=404)
+        attachments = project.project_attachments if project.project_attachments else []
+        ProjectAttachment.objects(id__in=[attachment['_id'] for attachment in attachments]).delete()
+        for attachment in attachments:
+            delete_attachment_from_s3(attachment['file'])
+        project.delete()
+        tracking = ProjectTracking(
+            user_reporter=user_reporter,
+            action=f'delete project ({project.id} - {project.name})',
+            created_time=timezone.now(),
+            managed_data={
+                'data': transform_data_to_mongo(project)
+            },
+        )
+        tracking.save()
+        return Response({'message': 'Project deleted successfully'})
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+    
+
+#############################################
+# DELETE PROJECTS
+#############################################
+
+@api_view(['DELETE'])
+@permission_classes([AllowAny])
+def delete_projects(request):
+    data = request.data
+    ids = data.get('ids', [])
+    user_reporter = data.get('userReporter', None)
+    list_tracking_info = []
+    try:
+        projects = Project.objects(id__in=ids).all()
+        if not projects:
+            return Response({'error': 'Projects not found'}, status=404)
+        for project in projects:
+            tracking_info = transform_data_to_mongo(project, exclude_fields=['sales_order'])
+            list_tracking_info.append(tracking_info)
+            attachments = project.project_attachments if project.project_attachments else []
+            ProjectAttachment.objects(id__in=[attachment['_id'] for attachment in attachments]).delete()
+            for attachment in attachments:
+                delete_attachment_from_s3(attachment['file'])
+            tasks = project.project_tasks if project.project_tasks else []
+            for task in tasks:
+                attachments = task['project_task_attachments'] if task['project_task_attachments'] else []
+                ProjectTaskAttachment.objects(id__in=[attachment['_id'] for attachment in attachments]).delete()
+                for attachment in attachments:
+                    delete_attachment_from_s3(attachment['file'])
+                ProjectTask.objects(id__in=[task['_id'] for task in tasks]).delete()
+            project.delete()
+        tracking = ProjectTracking(
+            user_reporter=user_reporter,
+            action=f'delete list projects',
+            created_time=timezone.now(),
+            managed_data={
+                'data': list_tracking_info
+            },
+        )
+        tracking.save()
+        return Response({'message': 'Projects deleted successfully'})
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+    
+
+#############################################
+# DELETE PROJECT USER
+#############################################
+
+@api_view(['DELETE'])
+@permission_classes([AllowAny])
+def delete_project_user(request, id, userId):
+    data = request.data
+    user_reporter = data.get('userReporter', None)
+    try:
+        project = Project.objects(id=id).first()
+        if not project:
+            return Response({'error': 'Project not found'}, status=404)
+        users_assignees = project.users_assignees if project.users_assignees else []
+        tracking_info = next((user for user in users_assignees if str(user['id']) == userId), None)
+        users_assignees = [user for user in users_assignees if str(user['id']) != userId]
+        users_assignees = sorted(
+            users_assignees, key=lambda x: x['created_time' if 'created_time' in x else 'username'], reverse=True
+        )
+        project.users_assignees = users_assignees
+        default_tasks = project.project_default_tasks if project.project_default_tasks else []
+        new_default_tasks = []
+        for task in default_tasks:
+            users_assignees = task['users_assignees'] if task['users_assignees'] else []
+            users_assignees = [user for user in users_assignees if str(user['id']) != userId]
+            task['users_assignees'] = users_assignees
+            new_default_tasks.append(task)
+            sorted_tasks = sorted(new_default_tasks, key=lambda x: to_aware(x['created_time']), reverse=True)
+        project.project_default_tasks = sorted_tasks
+        project.save()
+        if tracking_info:
+            tracking = ProjectTracking(
+                user_reporter=user_reporter,
+                action=f'delete project user ({tracking_info["id"]} - {tracking_info["username"]}) from project ({project.id} - {project.name})',
+                created_time=timezone.now(),
+                managed_data={
+                    'data': tracking_info
+                },
+            )
+            tracking.save()
+        return Response({'message': 'Project user deleted successfully'})
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+    
+    
+#############################################
+# GET FILE URL
+#############################################
+    
+    
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_default_file_url(request):
+    object_key = request.query_params.get('key')
+    if not object_key:
+        return Response({'error': 'A key was not sended'}, status=400)
+    try:
+        url = generate_default_file_url(object_key)
+        return Response({'url': url})
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+    
+    
+#############################################
+# CREATE STAGE
+#############################################
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def create_stage(request):
+    data = request.data
+    user_reporter = data.get('userReporter', None)
+    try:
+        name = data.get('name')
+        description = data.get('description')
+        order = data.get('order', 0)
+        stage = ProjectStage.objects(name=name).first()
+        if stage:
+            return Response({'error': 'Stage already exists'}, status=404)
+        stage = ProjectStage.objects(order=order).first()
+        if stage:
+            return Response({'error': 'Stage with this order already exists'}, status=404)
+        stage = ProjectStage(
+            name=name,
+            order=order,
+            description=description
+        )
+        stage.save()
+        tracking_info = transform_data_to_mongo(stage)
+        tracking = ProjectTracking(
+            user_reporter=user_reporter,
+            action=f'create stage ({tracking_info["id"]} - {tracking_info["name"]})',
+            created_time=timezone.now(),
+            managed_data={
+                'data': tracking_info
+            },
+        )
+        tracking.save()
+        return Response({'message': 'Stage created successfully'})
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+    
+    
+#############################################
+# EDIT STAGE
+#############################################
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def edit_stage(request, id):
+    data = request.data
+    user_reporter = data.get('userReporter', None)
+    try:
+        name = data.get('name')
+        description = data.get('description')
+        order = data.get('order', 0)
+        stage = ProjectStage.objects(name=name).first()
+        if stage and str(stage.id) != id:
+            return Response({'error': 'Stage already exists'}, status=404)
+        stage = ProjectStage.objects(order=order).first()
+        if stage and str(stage.id) != id:
+            return Response({'error': 'Stage with this order already exists'}, status=404)
+        stage = ProjectStage.objects(id=id).first()
+        if not stage:
+            return Response({'error': 'Stage not found'}, status=404)
+        stage.name = name
+        stage.description = description
+        stage.order = order
+        stage.save()
+        tracking_info = transform_data_to_mongo(stage)
+        tracking = ProjectTracking(
+            user_reporter=user_reporter,
+            action=f'update stage ({tracking_info["id"]} - {tracking_info["name"]})',
+            created_time=timezone.now(),
+            managed_data={
+                'data': tracking_info
+            },
+        )
+        tracking.save()
+        return Response({'message': 'Stage updated successfully'})
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+    
+
+#############################################
+# DELETE STAGE
+#############################################
+
+@api_view(['DELETE'])
+@permission_classes([AllowAny])
+def delete_stage(request, id):
+    data = request.data
+    user_reporter = data.get('userReporter', None)
+    try:
+        stage = ProjectStage.objects(id=id).first()
+        if not stage:
+            return Response({'error': 'Stage not found'}, status=404)
+        tracking_info = transform_data_to_mongo(stage)
+        stage.delete()
+        tracking = ProjectTracking(
+            user_reporter=user_reporter,
+            action=f'delete stage ({tracking_info["id"]} - {tracking_info["name"]})',
+            created_time=timezone.now(),
+            managed_data={
+                'data': tracking_info
+            },
+        )
+        tracking.save()
+        return Response({'message': 'Stage deleted successfully'})
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+    
+#############################################
+# DELETE STAGES
+#############################################
+
+@api_view(['DELETE'])
+@permission_classes([AllowAny])
+def delete_stages(request):
+    data = request.data
+    ids = data.get('ids', [])
+    user_reporter = data.get('userReporter', None)
+    try:
+        stages = ProjectStage.objects(id__in=ids).all()
+        if not stages:
+            return Response({'error': 'Stages not found'}, status=404)
+        tracking_info = [transform_data_to_mongo(stage) for stage in stages]
+        ProjectStage.objects(id__in=ids).delete()
+        tracking = ProjectTracking(
+            user_reporter=user_reporter,
+            action=f'delete list stages',
+            created_time=timezone.now(),
+            managed_data={
+                'data': tracking_info
+            },
+        )
+        tracking.save()
+        return Response({'message': 'Stages deleted successfully'})
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+    
+    
+
+#############################################
+# CREATE STAGE TASK
+#############################################
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def create_stage_task(request):
+    data = request.data
+    user_reporter = data.get('userReporter', None)
+    try:
+        name = data.get('name')
+        description = data.get('description')
+        order = data.get('order', 0)
+        stage = ProjectTaskStage.objects(name=name).first()
+        if stage:
+            return Response({'error': 'Stage task already exists'}, status=404)
+        stage = ProjectTaskStage.objects(order=order).first()
+        if stage:
+            return Response({'error': 'Stage task with this order already exists'}, status=404)
+        stage = ProjectTaskStage(
+            name=name,
+            order=order,
+            description=description
+        )
+        stage.save()
+        tracking_info = transform_data_to_mongo(stage)
+        tracking = ProjectTracking(
+            user_reporter=user_reporter,
+            action=f'create stage task ({tracking_info["id"]} - {tracking_info["name"]})',
+            created_time=timezone.now(),
+            managed_data={
+                'data': tracking_info
+            },
+        )
+        tracking.save()
+        return Response({'message': 'Stage task created successfully'})
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+    
+    
+#############################################
+# EDIT STAGE TASK
+#############################################
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def edit_stage_task(request, id):
+    data = request.data
+    user_reporter = data.get('userReporter', None)
+    try:
+        name = data.get('name')
+        description = data.get('description')
+        order = data.get('order', 0)
+        stage = ProjectTaskStage.objects(name=name).first()
+        if stage and str(stage.id) != id:
+            return Response({'error': 'Stage task already exists'}, status=404)
+        stage = ProjectTaskStage.objects(order=order).first()
+        if stage and str(stage.id) != id:
+            return Response({'error': 'Stage task with this order already exists'}, status=404)
+        stage = ProjectTaskStage.objects(id=id).first()
+        if not stage:
+            return Response({'error': 'Stage task not found'}, status=404)
+        stage.name = name
+        stage.description = description
+        stage.order = order
+        stage.save()
+        tracking_info = transform_data_to_mongo(stage)
+        tracking = ProjectTracking(
+            user_reporter=user_reporter,
+            action=f'update stage task ({tracking_info["id"]} - {tracking_info["name"]})',
+            created_time=timezone.now(),
+            managed_data={
+                'data': tracking_info
+            },
+        )
+        tracking.save()
+        return Response({'message': 'Stage task updated successfully'})
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+    
+
+#############################################
+# DELETE STAGE TASK
+#############################################
+
+@api_view(['DELETE'])
+@permission_classes([AllowAny])
+def delete_stage_task(request, id):
+    data = request.data
+    user_reporter = data.get('userReporter', None)
+    try:
+        stage = ProjectTaskStage.objects(id=id).first()
+        if not stage:
+            return Response({'error': 'Stage task not found'}, status=404)
+        tracking_info = transform_data_to_mongo(stage)
+        stage.delete()
+        tracking = ProjectTracking(
+            user_reporter=user_reporter,
+            action=f'delete stage task ({tracking_info["id"]} - {tracking_info["name"]})',
+            created_time=timezone.now(),
+            managed_data={
+                'data': tracking_info
+            },
+        )
+        tracking.save()
+        return Response({'message': 'Stage task deleted successfully'})
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+    
+#############################################
+# DELETE STAGES TASK
+#############################################
+
+@api_view(['DELETE'])
+@permission_classes([AllowAny])
+def delete_stages_task(request):
+    data = request.data
+    ids = data.get('ids', [])
+    user_reporter = data.get('userReporter', None)
+    try:
+        stages_tasks = ProjectTaskStage.objects(id__in=ids).all()
+        if not stages_tasks:
+            return Response({'error': 'Stages tasks not found'}, status=404)
+        tracking_info = [transform_data_to_mongo(stage) for stage in stages_tasks]
+        ProjectTaskStage.objects(id__in=ids).delete()
+        tracking = ProjectTracking(
+            user_reporter=user_reporter,
+            action=f'delete list stages task',
+            created_time=timezone.now(),
+            managed_data={
+                'data': tracking_info
+            },
+        )
+        tracking.save()
+        return Response({'message': 'Stages task deleted successfully'})
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+    
+    
+#############################################
+# CREATE PROJECT TASK
+#############################################
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def create_project_task(request):         
+    data = request.data
+
+    start_date = parse_custom_date(logger, data.get('startDate'))
+    end_date = parse_custom_date(logger, data.get('endDate'))
+    
+    user_reporter = json.loads(data.get('userReporter', None))
+    
+    project_id = data.get('projectId')
+    
+    project = Project.objects(id=project_id).first()
+    
+    if not project:
+        return Response({'error': 'Project not found'}, status=404)
+    
+    project = transform_data_to_mongo(project, exclude_fields=['project_tasks'])
+    
+    users_assignees = json.loads(data.get('usersAssignees', []))
+    
+    current_stage = json.loads(data.get('currentStage', {}))
+    
+    priority = data.get('priority', None)
+    
+    project_task_attachments = []
+    
+    files = request.FILES.getlist('projectTaskAttachments')
+    
+    for file_obj in files:
+        key = upload_attachment_to_s3(file_obj, folder=settings.AWS_S3_FOLDER_TASKS)
+        if key:
+            # Ejemplo: url = f"https://{settings.AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com/{key}"
+            attachment = ProjectTaskAttachment(
+                name=file_obj.name,
+                file=key,
+                created_time=timezone.now(),
+                last_modified_time=timezone.now(),
+                user_upload = user_reporter,
+            )
+            attachment.save()
+            project_task_attachments.append(transform_data_to_mongo(attachment))
+            
+    project_task_attachments = sorted(project_task_attachments, key=lambda x: x['name'], reverse=True)
+
+    try:
+        project_task = ProjectTask(
+            name=data.get('name', ''),
+            description=data.get('description'),
+            users_assignees=users_assignees,
+            start_date=start_date,
+            end_date=end_date,
+            created_time=timezone.now(),
+            last_modified_time=timezone.now(),
+            is_active=True,
+            current_stage=current_stage,  
+            user_reporter=user_reporter,
+            project_task_attachments=project_task_attachments,
+            project=project,
+            number=create_task_number(),
+            priority=priority,  
+        )
+        
+        project_task.save()
+        
+        tracking_info = transform_data_to_mongo(project_task)
+        
+        project = Project.objects(id=project_id).first()
+        existing_tasks = project.project_tasks if project.project_tasks is not None else []
+        project_task = transform_data_to_mongo(project_task, exclude_fields=['project'])
+        
+        existing_tasks.append(project_task)
+        sorted_tasks = sorted(existing_tasks, key=lambda x: x['number'], reverse=True)
+        project.project_tasks = sorted_tasks
+        project.save()
+        
+        tracking = ProjectTracking(
+            user_reporter=user_reporter,
+            action=f'create project task ({tracking_info["id"]} - {tracking_info["name"]})',
+            created_time=timezone.now(),
+            managed_data={
+                'data': tracking_info
+            },
+        )
+        tracking.save()
+        
+        return Response({
+            'message': 'Project task created successfully',
+            'data': project_task
+        }, status=201)
+
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+    
+
+#############################################
+# UPDATE PROJECT TASK
+#############################################
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def update_project_task(request, id):
+    
+    project_task = ProjectTask.objects(id=id).first()
+    if not project_task:
+        return Response({'error': 'Project task not found'}, status=404)
+    initial_tasks_attachments = project_task.project_task_attachments if project_task.project_task_attachments else []
+    initial_stage = project_task.current_stage
+             
+    data = request.data
+
+    start_date = parse_custom_date(logger, data.get('startDate'))
+    end_date = parse_custom_date(logger, data.get('endDate'))
+    
+    user_reporter = json.loads(data.get('userReporter', None))
+    
+    project_id = data.get('projectId')
+    
+    project = Project.objects(id=project_id).first()
+    
+    if not project:
+        return Response({'error': 'Project not found'}, status=404)
+    
+    project = transform_data_to_mongo(project, exclude_fields=['project_tasks'])
+    
+    users_assignees = json.loads(data.get('usersAssignees', []))
+    
+    current_stage = json.loads(data.get('currentStage', {}))
+    
+    priority = data.get('priority', None)
+    
+    project_task_attachments = []
+    
+    files = request.FILES.getlist('projectTaskAttachments')
+    
+    for file_obj in files:
+        key = upload_attachment_to_s3(file_obj, folder=settings.AWS_S3_FOLDER_TASKS)
+        if key:
+            attachment = ProjectTaskAttachment(
+                name=file_obj.name,
+                file=key,
+                created_time=timezone.now(),
+                last_modified_time=timezone.now(),
+                user_upload = user_reporter,
+            )
+            attachment.save()
+            project_task_attachments.append(transform_data_to_mongo(attachment))
+            
+    project_task_attachments = sorted(project_task_attachments, key=lambda x: x['name'], reverse=True)
+    initial_tasks_attachments.extend(project_task_attachments)
+    initial_tasks_attachments = sorted(initial_tasks_attachments, key=lambda x: x['name'], reverse=True)
+    
+    initial_stage_id = initial_stage['_id'] if '_id' in initial_stage else initial_stage['id']
+    current_stage_id = current_stage['_id'] if '_id' in current_stage else current_stage['id']
+    
+    if initial_stage_id != current_stage_id:
+        task_history = project_task.project_task_history if project_task.project_task_history else []
+        task_history.append({
+            'initial_stage': initial_stage,
+            'final_stage': current_stage,
+            'created_time': timezone.now()
+        })
+        project_task.project_task_history = task_history
+    
+    project_task.name = data.get('name', '')
+    project_task.description = data.get('description')
+    project_task.users_assignees = users_assignees
+    project_task.start_date = start_date
+    project_task.end_date = end_date
+    project_task.last_modified_time = timezone.now()
+    project_task.current_stage = current_stage
+    project_task.user_reporter = user_reporter
+    project_task.project_task_attachments = initial_tasks_attachments
+    project_task.priority = priority
+    project_task.project = project  
+    project_task.save()
+    
+    tracking_info = transform_data_to_mongo(project_task)
+        
+    project = Project.objects(id=project_id).first()
+    existing_tasks = project.project_tasks if project.project_tasks is not None else []
+    project_task = transform_data_to_mongo(project_task, exclude_fields=['project'])
+    existing_tasks = [task for task in existing_tasks if str(task['_id']) != id]
+    existing_tasks.append(project_task)
+    sorted_tasks = sorted(existing_tasks, key=lambda x: x['number'], reverse=True)
+    project.project_tasks = sorted_tasks
+    project.save()
+    
+    tracking = ProjectTracking(
+        user_reporter=user_reporter,
+        action=f'update project task ({tracking_info["id"]} - {tracking_info["name"]})',
+        created_time=timezone.now(),
+        managed_data={
+            'data': tracking_info
+        },
+    )
+    tracking.save()
+        
+    return Response({
+        'message': 'Project task updated successfully',
+        'data': project_task
+    }, status=201)
+    
+    
+#############################################
+# ADD USERS ASSIGNEES TO PROJECT TASK
+#############################################
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def add_project_task_users_assignees(request, projectId, id): 
+    
+    data = request.data
+    user_reporter = data.get('userReporter', None)
+    users_assignees = data.get('usersAssignees', [])
+    
+    project = Project.objects(id=projectId).first()
+    if not project:
+        return Response({'error': 'Project not found'}, status=404)
+    
+    all_tasks = project.project_default_tasks if project.project_default_tasks else []
+    
+    project_task = next((task for task in all_tasks if str(task['project_default_task']['_id']) == id), None)
+    if not project_task:
+        return Response({'error': 'Project task not found'}, status=404)
+    
+    all_tasks = [task for task in all_tasks if str(task['project_default_task']['_id']) != id]
+    
+    project_task['users_assignees'] = users_assignees
+    project_task['user_reporter'] = user_reporter
+    project_task['last_modified_time'] = timezone.now()
+    
+    all_tasks.append(project_task)
+    
+    sorted_tasks = sorted(all_tasks, key=lambda x: x['project_default_task']['order'], reverse=True)
+    
+    project.project_default_tasks = sorted_tasks
+    project.save()
+    
+    tracking = ProjectTracking(
+        user_reporter=user_reporter,
+        action=f'add project task users assignees',
+        created_time=timezone.now(),
+        managed_data={
+            'data': project_task
+        },
+    )
+    tracking.save()
+        
+    return Response({
+        'message': 'Project task users assignees added successfully',
+        'data': project_task
+    }, status=201)
+    
+    
+#############################################
+# DELETE PROJECT TASK
+#############################################
+
+@api_view(['DELETE'])
+@permission_classes([AllowAny])
+def delete_project_task(request, projectId, id):
+    data = request.data
+    user_reporter = data.get('userReporter', None)
+    try:
+        project_task = ProjectTask.objects(id=id).first()
+        if not project_task:
+            return Response({'error': 'Project task not found'}, status=404)
+        project = Project.objects(id=projectId).first()
+        if not project:
+            return Response({'error': 'Project not found'}, status=404)
+        existing_tasks = project.project_tasks if project.project_tasks else []
+        existing_tasks = [task for task in existing_tasks if str(task['_id']) != id]
+        existing_tasks = sorted(existing_tasks, key=lambda x: x['created_time'], reverse=True)
+        project.project_tasks = existing_tasks
+        project.save()
+        attachments = project_task.project_task_attachments if project_task.project_task_attachments else []
+        ProjectTaskAttachment.objects(id__in=[attachment['_id'] for attachment in attachments]).delete()
+        for attachment in attachments:
+            delete_attachment_from_s3(attachment['file'])
+        tracking_info = transform_data_to_mongo(project_task)
+        project_task.delete()
+        tracking = ProjectTracking(
+            user_reporter=user_reporter,
+            action=f'delete project task',
+            created_time=timezone.now(),
+            managed_data={
+                'data': tracking_info
+            },
+        )
+        tracking.save()
+        return Response({'message': 'Project task deleted successfully'})
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+    
+
+#############################################
+# DELETE PROJECT TASK USER
+#############################################
+
+@api_view(['DELETE'])
+@permission_classes([AllowAny])
+def delete_project_task_user(request, projectId, id, userId):
+    data = request.data
+    user_reporter = data.get('userReporter', None)
+    try:
+        project = Project.objects(id=projectId).first()
+        if not project:
+            return Response({'error': 'Project not found'}, status=404)
+        
+        all_tasks = project.project_default_tasks if project.project_default_tasks else []
+        
+        project_task = next((task for task in all_tasks if str(task['project_default_task']['_id']) == id), None)
+        if not project_task:
+            return Response({'error': 'Project task not found'}, status=404)
+        
+        task_users_assignees = project_task['users_assignees'] if project_task['users_assignees'] else []
+        
+        tracking_info = next((user for user in task_users_assignees if str(user['id']) == userId), None)
+        
+        task_users_assignees = [user for user in task_users_assignees if str(user['id']) != userId]
+        
+        task_users_assignees = sorted(task_users_assignees, key=lambda x: x['created_time' if 'created_time' in x else 'username'], reverse=True)
+        
+        project_task['users_assignees'] = task_users_assignees
+        project_task['user_reporter'] = user_reporter
+        project_task['last_modified_time'] = timezone.now()
+        
+        all_tasks = [task for task in all_tasks if str(task['project_default_task']['_id']) != id]
+        all_tasks.append(project_task)
+        sorted_tasks = sorted(all_tasks, key=lambda x: x['project_default_task']['order'], reverse=True)
+        project.project_tasks = sorted_tasks
+        project.save()
+        
+        if tracking_info:
+            tracking = ProjectTracking(
+                user_reporter=user_reporter,
+                action=f'delete project task user ({project_task["project_default_task"]["_id"]} - {project_task["project_default_task"]["name"]})',
+                created_time=timezone.now(),
+                managed_data={
+                    'data': tracking_info
+                },
+            )
+            tracking.save()
+        return Response({'message': 'Project task user deleted successfully'})
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+    
+    
+#############################################
+# CREATE DEFAULT TASK
+#############################################
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def create_default_task(request):
+    data = request.data
+    user_reporter = data.get('userReporter', None)
+    try:
+        name = data.get('name')
+        description = data.get('description')
+        order = data.get('order', 0)
+        stage = data.get('projectStage', {})
+        project_stage_status = data.get('projectStageStatus', 'not started')
+        project_stage = ProjectStage.objects(id=stage['id']).first()
+        
+        task = ProjectDefaultTask(
+            name=name,
+            order=order,
+            description=description,
+            project_stage=transform_data_to_mongo(project_stage),
+            project_stage_status=project_stage_status,
+            created_time=timezone.now(),
+            last_modified_time=timezone.now(),
+        )
+        task.save()
+        tasks_after_order = ProjectDefaultTask.objects.all()
+        fix_order(tasks_after_order)
+        
+        task = ProjectDefaultTask.objects(id=task.id).first()
+        
+        projects = Project.objects.all()
+        for project in projects:
+            project_default_tasks = project.project_default_tasks if project.project_default_tasks else []
+            project_default_tasks.append({
+                'project_default_task': transform_data_to_mongo(task),
+                'status': 'not started',
+                'percentage': 0,
+                'created_time': timezone.now(),
+                'last_modified_time': timezone.now(),
+                'users_assignees': [],
+                'priority': 'medium',
+                'project_task_attachments': [],
+            })
+            project_default_tasks = sorted(project_default_tasks, key=lambda x: x['project_default_task']['order'], reverse=True)
+            project.project_default_tasks = project_default_tasks
+            project_default_tasks = project.project_default_tasks if project.project_default_tasks else []
+            
+            for default_task in project_default_tasks:
+                new_task = ProjectDefaultTask.objects(id=default_task['project_default_task']['_id']).first()
+                default_task['project_default_task'] = transform_data_to_mongo(new_task)
+            project_default_tasks = sorted(project_default_tasks, key=lambda x: x['project_default_task']['order'], reverse=True)
+            project.project_default_tasks = project_default_tasks
+                 
+            project.save()
+        
+        tracking_info = transform_data_to_mongo(task)
+        tracking = ProjectTracking(
+            user_reporter=user_reporter,
+            action=f'create default task ({task.id} - {task.name})',
+            created_time=timezone.now(),
+            managed_data={
+                'data': tracking_info
+            },
+        )
+        tracking.save()
+        return Response({'message': 'Default task created successfully'})
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+    
+    
+#############################################
+# EDIT DEFAULT TASK
+#############################################
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def edit_default_task(request, id):
+    data = request.data
+    user_reporter = data.get('userReporter', None)
+    try:
+        name = data.get('name')
+        description = data.get('description')
+        order = data.get('order', 0)
+        stage = data.get('projectStage', {})
+        project_stage_status = data.get('projectStageStatus', 'not started')
+        project_stage = ProjectStage.objects(id=stage['id']).first()
+        
+        default_task = ProjectDefaultTask.objects(name=name).first()
+        if default_task and str(default_task.id) != id:
+            return Response({'error': 'Default task already exists'}, status=404)
+        default_task = ProjectDefaultTask.objects(id=id).first()
+        if not stage:
+            return Response({'error': 'Default task not found'}, status=404)
+        default_task.name = name
+        default_task.description = description
+        default_task.project_stage = transform_data_to_mongo(project_stage)
+        default_task.project_stage_status = project_stage_status
+        default_task.save()
+        
+        tasks = ProjectDefaultTask.objects.all()
+        fix_order_after_edit(tasks, default_task, order)
+        
+        default_task = ProjectDefaultTask.objects(id=default_task.id).first()
+        
+        projects = Project.objects.all()
+        for project in projects:
+            project_default_tasks = project.project_default_tasks if project.project_default_tasks else []
+            task = next((task for task in project_default_tasks if str(task['project_default_task']['_id']) == id), None)
+            project_default_tasks = [task for task in project_default_tasks if str(task['project_default_task']['_id']) != id]
+            project_default_tasks.append({
+                'project_default_task': transform_data_to_mongo(default_task),
+                'status': task['status'] if task else 'not started',
+                'percentage': task['percentage'] if task else 0,
+                'created_time': task['created_time'] if task else timezone.now(),
+                'last_modified_time': timezone.now(),
+                'users_assignees': task['users_assignees'] if task else [],
+                'priority': task['priority'] if task else 'medium',
+                'project_task_attachments': task['project_task_attachments'] if task else [],
+            })
+            project_default_tasks = sorted(project_default_tasks, key=lambda x: x['project_default_task']['order'], reverse=True)
+            project.project_default_tasks = project_default_tasks
+            
+            project_default_tasks = project.project_default_tasks if project.project_default_tasks else []
+            for task in project_default_tasks:
+                new_task = ProjectDefaultTask.objects(id=task['project_default_task']['_id']).first()
+                task['project_default_task'] = transform_data_to_mongo(new_task)
+            project_default_tasks = sorted(project_default_tasks, key=lambda x: x['project_default_task']['order'], reverse=True)
+            project.project_default_tasks = project_default_tasks
+            project.save()
+        
+        tracking_info = transform_data_to_mongo(default_task)
+        tracking = ProjectTracking(
+            user_reporter=user_reporter,
+            action=f'update default task ({default_task.id} - {default_task.name})',
+            created_time=timezone.now(),
+            managed_data={
+                'data': tracking_info
+            },
+        )
+        tracking.save()
+        return Response({'message': 'Stage updated successfully'})
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+    
+
+#############################################
+# DELETE DEFAULT TASK
+#############################################
+
+@api_view(['DELETE'])
+@permission_classes([AllowAny])
+def delete_default_task(request, id):
+    data = request.data
+    user_reporter = data.get('userReporter', None)
+    try:
+        default_task = ProjectDefaultTask.objects(id=id).first()
+        if not default_task:
+            return Response({'error': 'Default task not found'}, status=404)
+        tracking_info = transform_data_to_mongo(default_task)
+        default_task.delete()
+        
+        tasks_after_order = ProjectDefaultTask.objects.all()
+        fix_order(tasks_after_order)
+        
+        projects = Project.objects.all()
+        for project in projects:
+            project_default_tasks = project.project_default_tasks if project.project_default_tasks else []
+            project_default_tasks = [task for task in project_default_tasks if str(task['project_default_task']['_id']) != id]
+            project.project_default_tasks = project_default_tasks
+            project.save()
+        
+        tracking = ProjectTracking(
+            user_reporter=user_reporter,
+            action=f'delete default task ({tracking_info['id']} - {tracking_info['name']})',
+            created_time=timezone.now(),
+            managed_data={
+                'data': tracking_info
+            },
+        )
+        tracking.save()
+        return Response({'message': 'Default task deleted successfully'})
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+    
+#############################################
+# DELETE DEFAULT TASKS
+#############################################
+
+@api_view(['DELETE'])
+@permission_classes([AllowAny])
+def delete_default_tasks(request):
+    data = request.data
+    ids = data.get('ids', [])
+    user_reporter = data.get('userReporter', None)
+    try:
+        default_tasks = ProjectDefaultTask.objects(id__in=ids).all()
+        if not default_tasks:
+            return Response({'error': 'Default tasks not found'}, status=404)
+        tracking_info = [transform_data_to_mongo(default_task) for default_task in default_tasks]
+        ProjectDefaultTask.objects(id__in=ids).delete()
+        
+        tasks_after_order = ProjectDefaultTask.objects.all()
+        fix_order(tasks_after_order)
+        
+        projects = Project.objects.all()
+        for project in projects:
+            project_default_tasks = project.project_default_tasks if project.project_default_tasks else []
+            project_default_tasks = [task for task in project_default_tasks if str(task['project_default_task']['_id']) not in ids]
+            project.project_default_tasks = project_default_tasks
+            project.save()
+        
+        tracking = ProjectTracking(
+            user_reporter=user_reporter,
+            action=f'delete list default tasks',
+            created_time=timezone.now(),
+            managed_data={
+                'data': tracking_info
+            },
+        )
+        tracking.save()
+        return Response({'message': 'Default tasks deleted successfully'})
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+    
+    
+#############################################
+# CHANGE STATUS PROJECT DEFAULT TASK
+#############################################
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def change_status_project_default_task(request, projectId, id):
+    data = request.data
+    user_reporter = data.get('userReporter', None)
+    try:
+        project = Project.objects(id=projectId).first()
+        if not project:
+            return Response({'error': 'Project not found'}, status=404)
+        
+        status = data.get('status', 'not started')
+        percentage = data.get('percentage', 0)
+        
+        all_tasks = project.project_default_tasks if project.project_default_tasks else []
+        task = next((task for task in all_tasks if str(task['project_default_task']['_id']) == id), None)
+        if not task:
+            return Response({'error': 'Project task not found'}, status=404)
+        task['status'] = status
+        task['percentage'] = percentage
+        task['user_reporter'] = user_reporter
+        task['last_modified_time'] = timezone.now()
+        
+        all_tasks = [task for task in all_tasks if str(task['project_default_task']['_id']) != id]
+        all_tasks.append(task)
+        sorted_tasks = sorted(all_tasks, key=lambda x: x['project_default_task']['order'], reverse=True)
+        
+        current_stage = get_current_stage_from_tasks(sorted_tasks)
+        
+        current_stage = ProjectStage.objects(name=current_stage['name']).first()
+        
+        if current_stage.name == 'Permission' and not project.has_permission:
+            order = current_stage.order + 1
+            current_stage = ProjectStage.objects(order=order).first()
+        
+        if project.current_stage['name'] != current_stage.name:
+            history = project.project_history if project.project_history else []
+            current_stage = transform_data_to_mongo(current_stage)
+            history.append({
+                'initial_stage': project.current_stage,
+                'final_stage': current_stage,
+                'created_time': timezone.now()
+            })
+            project.current_stage = current_stage
+            project.project_history = history
+            
+            tracking = ProjectTracking(
+                user_reporter=user_reporter,
+                action=f'change stage project ({project.id} - {project.name})',
+                created_time=timezone.now(),
+                managed_data={
+                    'data': transform_data_to_mongo(project, exclude_fields=['sales_order', 'project_tasks', 'project_default_tasks', 'project_attachments'])
+                },
+            )
+            tracking.save()
+        
+        project.project_default_tasks = sorted_tasks
+        project.save()
+        
+        tracking = ProjectTracking(
+            user_reporter=user_reporter,
+            action=f'change status default task ({task["project_default_task"]["id"]} - {task["project_default_task"]["name"]})',
+            created_time=timezone.now(),
+            managed_data={
+                'data': transform_data_to_mongo(project, exclude_fields=['sales_order', 'project_tasks'])
+            },
+        )
+        tracking.save()
+        return Response({'message': 'Status in default task updated successfully'})
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+    
+    
+#############################################
+# CHANGE PRIORITY PROJECT DEFAULT TASK
+#############################################
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def change_priority_project_default_task(request, projectId, id):
+    data = request.data
+    user_reporter = data.get('userReporter', None)
+    try:
+        project = Project.objects(id=projectId).first()
+        if not project:
+            return Response({'error': 'Project not found'}, status=404)
+        
+        priority = data.get('priority', 'medium')
+        
+        all_tasks = project.project_default_tasks if project.project_default_tasks else []
+        task = next((task for task in all_tasks if str(task['project_default_task']['_id']) == id), None)
+        if not task:
+            return Response({'error': 'Project task not found'}, status=404)
+        task['priority'] = priority
+        task['user_reporter'] = user_reporter
+        task['last_modified_time'] = timezone.now()
+        
+        all_tasks = [task for task in all_tasks if str(task['project_default_task']['_id']) != id]
+        all_tasks.append(task)
+        sorted_tasks = sorted(all_tasks, key=lambda x: x['project_default_task']['order'], reverse=True)
+        
+        project.project_default_tasks = sorted_tasks
+        project.save()
+        
+        tracking = ProjectTracking(
+            user_reporter=user_reporter,
+            action=f'change priority default task ({task["project_default_task"]["id"]} - {task["project_default_task"]["name"]})',
+            created_time=timezone.now(),
+            managed_data={
+                'data': transform_data_to_mongo(project, exclude_fields=['sales_order', 'project_tasks'])
+            },
+        )
+        tracking.save()
+        return Response({'message': 'Status in default task updated successfully'})
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+    
+    
+#############################################
+# UPLOAD FILES TO PROJECT
+#############################################
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def upload_files_to_project(request, id): 
+    
+    project = Project.objects(id=id).first()
+    if not project:
+        return Response({'error': 'Project not found'}, status=404)
+    
+    last_attachments = project.project_attachments if project.project_attachments else []
+            
+    data = request.data
+    
+    user_reporter = json.loads(data.get('userReporter', None))
+    
+    project_attachments = []
+    files = request.FILES.getlist('projectAttachments')
+    
+    for file_obj in files:
+        key = upload_attachment_to_s3(file_obj)
+        if key:
+            attachment = ProjectAttachment(
+                name=file_obj.name,
+                file=key,
+                created_time=timezone.now(),
+                last_modified_time=timezone.now(),
+                user_upload = user_reporter,
+                current_stage = project.current_stage if project.current_stage else None
+            )
+            attachment.save()
+            project_attachments.append(transform_data_to_mongo(attachment))
+            
+    last_attachments.extend(project_attachments)
+            
+    last_attachments = sorted(last_attachments, key=lambda x: x['name'], reverse=True)
+    
+    project.last_modified_time = timezone.now()
+    project.user_reporter = user_reporter if user_reporter else project.user_reporter
+    project.project_attachments = last_attachments if last_attachments else project.project_attachments
+        
+    project.save()
+    
+    tracking = ProjectTracking(
+        user_reporter=user_reporter,
+        action=f'upload files to project ({project.id} - {project.name})',
+        created_time=timezone.now(),
+        managed_data={
+            'data': transform_data_to_mongo(project, exclude_fields=['sales_order', 'project_tasks', 'project_default_tasks'])
+        },
+    )
+    tracking.save()
+        
+    return Response({
+        'message': 'Uploaded files to project successfully',
+        'data': json.loads(project.to_json())
+    }, status=201)
+
+
+
+#############################################
+# UPLOAD FILES TO DEFAULT TASK
+#############################################
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def upload_files_to_default_task(request, projectId, id): 
+    
+    project = Project.objects(id=projectId).first()
+    if not project:
+        return Response({'error': 'Project not found'}, status=404)
+    
+    all_tasks = project.project_default_tasks if project.project_default_tasks else []
+    task = next((task for task in all_tasks if str(task['project_default_task']['_id']) == id), None)
+    if not task:
+        return Response({'error': 'Project task not found'}, status=404)
+    
+    last_attachments = task['project_task_attachments'] if 'project_task_attachments' in task else []
+            
+    data = request.data
+    
+    user_reporter = json.loads(data.get('userReporter', None))
+    
+    project_tasks_attachments = []
+    files = request.FILES.getlist('projectTaskAttachments')
+    
+    for file_obj in files:
+        key = upload_attachment_to_s3(file_obj, folder=settings.AWS_S3_FOLDER_TASKS)
+        if key:
+            attachment = ProjectTaskAttachment(
+                name=file_obj.name,
+                file=key,
+                created_time=timezone.now(),
+                last_modified_time=timezone.now(),
+                user_upload = user_reporter,
+                due_project_stage = project.current_stage if project.current_stage else None,
+                project_task = task if task else None
+            )
+            attachment.save()
+            project_tasks_attachments.append(transform_data_to_mongo(attachment))
+            
+    last_attachments.extend(project_tasks_attachments)
+            
+    last_attachments = sorted(last_attachments, key=lambda x: x['name'], reverse=True)
+    
+    task['last_modified_time'] = timezone.now()
+    
+    task['project_task_attachments'] = last_attachments if last_attachments else task['project_task_attachments']
+    
+    all_tasks = [task for task in all_tasks if str(task['project_default_task']['_id']) != id]
+    all_tasks.append(task)
+    sorted_tasks = sorted(all_tasks, key=lambda x: x['project_default_task']['order'], reverse=True)
+    
+    project.project_default_tasks = sorted_tasks
+    
+    project.last_modified_time = timezone.now()
+        
+    project.save()
+    
+    tracking = ProjectTracking(
+        user_reporter=user_reporter,
+        action=f'upload files to default task ({task['project_default_task']['_id']} - {task['project_default_task']['name']} in project {project.id} - {project.name})',
+        created_time=timezone.now(),
+        managed_data={
+            'data': transform_data_to_mongo(project, exclude_fields=['sales_order', 'project_tasks'])
+        },
+    )
+    tracking.save()
+        
+    return Response({
+        'message': 'Uploaded files to default task successfully',
+        'data': json.loads(project.to_json())
+    }, status=201)
+    
+    
+#############################################
+# CREATE PROJECT COMMENT
+#############################################
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def create_project_comment(request, id): 
+    
+    project = Project.objects(id=id).first()
+    if not project:
+        return Response({'error': 'Project not found'}, status=404)
+    
+    last_comments = project.project_comments if project.project_comments else []
+            
+    data = request.data
+    
+    user_reporter = data.get('userReporter', None)
+    
+    text_comment = data.get('comment', None)
+    
+    task_id = data.get('taskId', None)
+    
+    task = None
+    
+    if task_id:
+        task = next((task for task in project.project_default_tasks if str(task['project_default_task']['_id']) == task_id), None)
+        if not task:
+            return Response({'error': 'Task not found'}, status=404)
+    
+    if not text_comment:
+        return Response({'error': 'Comment is required'}, status=400)
+    
+    new_comment = ProjectTaskComment(
+        comment=text_comment,
+        created_time=timezone.now(),
+        last_modified_time=timezone.now(),
+        user_reporter=user_reporter,
+        project=transform_data_to_mongo(project, exclude_fields=['sales_order', 'project_tasks', 'project_comments']),
+        project_default_task=task if task else None,
+        project_default_task_comment_attachments=[]
+    )
+    
+    new_comment.save()
+    
+    last_comments.append(transform_data_to_mongo(new_comment))
+    sorted_comments = sorted(last_comments, key=lambda x: to_aware(x['created_time']), reverse=True)
+    
+    
+    project.last_modified_time = timezone.now()
+    project.project_comments = sorted_comments if sorted_comments else project.project_comments
+        
+    project.save()
+    
+    tracking = ProjectTracking(
+        user_reporter=user_reporter,
+        action=f'create comment in project ({project.id} - {project.name})',
+        created_time=timezone.now(),
+        managed_data={
+            'data': transform_data_to_mongo(project, exclude_fields=['sales_order', 'project_tasks', 'project_default_tasks'])
+        },
+    )
+    tracking.save()
+        
+    return Response({
+        'message': 'Comment in project created successfully',
+        'data': json.loads(project.to_json())
+    }, status=201)
+    
+    
+#############################################
+# EDIT PROJECT COMMENT
+#############################################
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def edit_project_comment(request, id, projectId): 
+    
+    project = Project.objects(id=projectId).first()
+    if not project:
+        return Response({'error': 'Project not found'}, status=404)
+    
+    last_comments = project.project_comments if project.project_comments else []
+    last_comments = [comment for comment in last_comments if str(comment['id']) != id]
+            
+    data = request.data
+    
+    user_reporter = data.get('userReporter', None)
+    
+    text_comment = data.get('comment', None)
+    
+    task_id = data.get('taskId', None)
+    
+    task = None
+    
+    if task_id:
+        task = next((task for task in project.project_default_tasks if str(task['project_default_task']['_id']) == task_id), None)
+        if not task:
+            return Response({'error': 'Task not found'}, status=404)
+    
+    if not text_comment:
+        return Response({'error': 'Comment is required'}, status=400)
+    
+    existing_comment = ProjectTaskComment.objects(id=id).first()
+    
+    if not existing_comment:
+        return Response({'error': 'Comment not found'}, status=404)
+    
+    existing_comment.comment = text_comment
+    existing_comment.last_modified_time = timezone.now()
+    existing_comment.user_reporter = user_reporter
+    existing_comment.project = transform_data_to_mongo(project, exclude_fields=['sales_order', 'project_tasks', 'project_comments'])
+    existing_comment.project_default_task = task if task else None
+    existing_comment.save()
+    
+    last_comments.append(transform_data_to_mongo(existing_comment))
+    sorted_comments = sorted(last_comments, key=lambda x: to_aware(x['created_time']), reverse=True)
+    
+    project.last_modified_time = timezone.now()
+    project.project_comments = sorted_comments if sorted_comments else project.project_comments
+        
+    project.save()
+    
+    tracking = ProjectTracking(
+        user_reporter=user_reporter,
+        action=f'edit comment ({existing_comment.id}) in project ({project.id} - {project.name})',
+        created_time=timezone.now(),
+        managed_data={
+            'data': transform_data_to_mongo(project, exclude_fields=['sales_order', 'project_tasks', 'project_default_tasks'])
+        },
+    )
+    tracking.save()
+        
+    return Response({
+        'message': 'Comment in project edited successfully',
+        'data': json.loads(project.to_json())
+    }, status=201)
+    
+    
+#############################################
+# DELETE PROJECT COMMENT
+#############################################
+
+@api_view(['DELETE'])
+@permission_classes([AllowAny])
+def delete_project_comment(request, id, projectId): 
+    
+    project = Project.objects(id=projectId).first()
+    if not project:
+        return Response({'error': 'Project not found'}, status=404)
+    
+    last_comments = project.project_comments if project.project_comments else []
+    last_comments = [comment for comment in last_comments if str(comment['id']) != id]
+            
+    data = request.data
+    
+    user_reporter = data.get('userReporter', None)
+    
+    existing_comment = ProjectTaskComment.objects(id=id).first()
+    
+    if not existing_comment:
+        return Response({'error': 'Comment not found'}, status=404)
+    
+    existing_comment.delete()
+    
+    sorted_comments = sorted(last_comments, key=lambda x: to_aware(x['created_time']), reverse=True)
+    
+    project.last_modified_time = timezone.now()
+    project.project_comments = sorted_comments if sorted_comments else project.project_comments
+        
+    project.save()
+    
+    tracking = ProjectTracking(
+        user_reporter=user_reporter,
+        action=f'delete comment ({existing_comment.id}) in project ({project.id} - {project.name})',
+        created_time=timezone.now(),
+        managed_data={
+            'data': transform_data_to_mongo(project, exclude_fields=['sales_order', 'project_tasks', 'project_default_tasks'])
+        },
+    )
+    tracking.save()
+        
+    return Response({
+        'message': 'Comment in project deleted successfully',
+        'data': json.loads(project.to_json())
+    }, status=201)
+    
+    
+
+

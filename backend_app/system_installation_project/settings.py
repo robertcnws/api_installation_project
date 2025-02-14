@@ -29,6 +29,8 @@ environ.Env.read_env()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+REDIS_HOST = env('REDIS_HOST', default='localhost')
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
@@ -39,7 +41,7 @@ SECRET_KEY = 'django-insecure--i$a=heuuy55t_!15ketws1@ks01x4zc3b@0paekw7&g$7r8k7
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[])
 
 CSRF_TRUSTED_ORIGINS = env.list('CSRF_TRUSTED_ORIGINS', default=[])
 
@@ -51,9 +53,11 @@ CSRF_COOKIE_HTTPONLY = False
 
 CSRF_HEADER_NAME = 'HTTP_X_CSRFTOKEN'
 
-CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SAMESITE = None
 
-SESSION_COOKIE_SECURE = False  
+SESSION_COOKIE_SECURE = True
+
+SESSION_COOKIE_SAMESITE = None
 
 CORS_ALLOW_CREDENTIALS = True
 
@@ -87,19 +91,25 @@ CORS_ALLOW_HEADERS = [
 # Application definition
 
 INSTALLED_APPS = [
+    'corsheaders',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'channels',
+    'graphene_django',
     'api_integration',
     'api_authorization',
+    # 'api_projects',
+    'api_projects.apps.ApiProjectsConfig',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -113,7 +123,8 @@ AUTHENTICATION_BACKENDS = [
     'api_authorization.backends.MongoDBBackend',
 ]
 
-SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
+SESSION_ENGINE = 'django.contrib.sessions.backends.signed_cookies'
+
 
 ROOT_URLCONF = 'system_installation_project.urls'
 
@@ -132,6 +143,16 @@ TEMPLATES = [
         },
     },
 ]
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [(REDIS_HOST, 6379, 1)], 
+        },
+        'CAPACITY': 1500,
+    },
+}
 
 WSGI_APPLICATION = 'system_installation_project.wsgi.application'
 
@@ -197,9 +218,16 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # REST FRAMEWORK
 
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+}
+
 FRONTEND_URL = env('FRONTEND_URL', default='')
 # API MAIN DATA
 API_MAIN_DATA_URL = env('API_MAIN_DATA_URL', default='')
+API_USER_DATA_URL = env('API_USER_DATA_URL', default='')
 API_MAIN_DATA_TOKEN = env('API_MAIN_DATA_TOKEN', default='')
 
 
@@ -214,6 +242,17 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'America/New_York'
 CELERY_ENABLE_UTC = False
+
+
+# AWS
+
+AWS_ACCESS_KEY_ID = env('AWS_ACCESS_KEY_ID', default='')
+AWS_SECRET_ACCESS_KEY = env('AWS_SECRET_ACCESS_KEY', default='')
+AWS_REGION = env('AWS_REGION', default='')
+AWS_STORAGE_BUCKET_NAME = env('AWS_STORAGE_BUCKET_NAME', default='')
+AWS_S3_FOLDER_PROJECTS = env('AWS_S3_FOLDER_PROJECTS', default='projects/')
+AWS_S3_FOLDER_TASKS = env('AWS_S3_FOLDER_TASKS', default='tasks/')
+AWS_S3_FOLDER_COMMENTS = env('AWS_S3_FOLDER_COMMENTS', default='comments/')
 
 
 # MONGOENGINE

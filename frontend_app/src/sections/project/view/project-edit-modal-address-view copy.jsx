@@ -1,0 +1,216 @@
+import { useState, useCallback, useMemo, useContext, useEffect } from 'react';
+import axios from 'axios';
+import { CONFIG } from 'src/config-global';
+
+import { LoadingContext } from 'src/auth/context/loading-context';
+
+import { z as zod } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+
+import { useProjectByIdQuery } from 'src/_mock/__projects';
+
+import { toast } from 'src/components/snackbar';
+
+
+import Box from '@mui/material/Box';
+import Chip from '@mui/material/Chip';
+import Stack from '@mui/material/Stack';
+import Button from '@mui/material/Button';
+import Divider from '@mui/material/Divider';
+import IconButton from '@mui/material/IconButton';
+import { Avatar, Dialog, DialogActions, DialogTitle } from '@mui/material';
+import { Form, Field, schemaHelper } from 'src/components/hook-form';
+import { useForm } from 'react-hook-form';
+import { useTabs } from 'src/hooks/use-tabs';
+
+import { useBoolean } from 'src/hooks/use-boolean';
+import dayjs from 'dayjs';
+import { useDateRangePicker } from 'src/components/custom-date-range-picker';
+import { usePopover } from 'src/components/custom-popover';
+
+import { Iconify } from 'src/components/iconify';
+import { useRouter } from 'src/routes/hooks';
+import { paths } from 'src/routes/paths';
+
+import { LoadingButton } from '@mui/lab';
+
+import { useDataContext } from 'src/auth/context/data/data-context';
+import { add } from '@dnd-kit/utilities';
+
+
+// ----------------------------------------------------------------------
+
+export function ProjectEditModalAddressView({
+    isEdit,
+    projectId,
+    open,
+    onClose,
+}) {
+
+    const {
+        loadedProjects,
+        loadedUsers,
+        refetchProjects,
+        refetchSalesOrders,
+    } = useDataContext();
+
+    const item = useMemo(() => loadedProjects?.find((project) => project.id === projectId), [loadedProjects, projectId]);
+
+    const { isMobile } = useContext(LoadingContext);
+
+    const router = useRouter();
+
+    const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
+
+    const { data: itemById } = useProjectByIdQuery(item?.id, {
+        skip: !item?.id,
+    });
+
+    const [projectData, setProjectData] = useState({})
+
+    useEffect(() => {
+        if (itemById) {
+            setProjectData((prev) => ({
+                ...prev,
+                id: itemById?.id || '',
+                name: itemById?.name || '',
+                number: itemById?.number || '',
+                address: itemById?.address || '',   
+            }));
+        }
+    }, [itemById, setProjectData]);
+
+    const ProjectDialogSchema = zod.object({
+        name: zod.string().min(1, { message: 'Name is required!' }),
+        description: schemaHelper.editor().optional().nullable(),
+        address: zod.string().min(1, { message: 'Address is required!' }),
+    });
+
+    const defaultValues = useMemo(
+        () => ({
+            id: itemById?.id || '',
+            name: itemById?.name || '',
+            number: itemById?.number || '',
+            address: itemById?.address || '',
+        }),
+        [itemById]
+    );
+
+    const methods = useForm({
+        mode: 'all',
+        resolver: zodResolver(ProjectDialogSchema),
+        defaultValues,
+    });
+
+    const {
+        reset,
+        handleSubmit,
+        setValue,
+        watch,
+        control,
+        formState: { isSubmitting },
+    } = methods;
+
+
+    useEffect(() => {
+        if (itemById) {
+            reset({
+                id: itemById.id || '',
+                name: itemById.name || '',
+                number: itemById.number || '',
+                address: itemById.address || '',
+            });
+        }
+    }, [itemById, userLogged?.data, reset]);
+
+
+    const onSubmit = handleSubmit(async (data) => {
+        const formData = new FormData();
+        formData.append('userReporter', JSON.stringify(userLogged?.data));
+        formData.append('address', data.address);
+
+        const promise = axios.post(`${CONFIG.apiUrl}/projects/update/project/${item.id}/`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+
+        try {
+            toast.promise(promise, {
+                loading: 'Loading...',
+                success: `Update Project (${data.name}) success!`,
+                error: `Update Project (${data.name}) error!`,
+            });
+
+            const response = await promise;
+
+            if (!response.data) {
+                return;
+            }
+
+            // refetchProjects?.();
+
+            // reset();
+
+            onClose();
+
+        } catch (error) {
+            console.error(error);
+        }
+    });
+
+    const renderProject = (
+        <>
+            <Dialog fullWidth maxWidth="md" open={open} onClose={onClose}>
+                <DialogTitle>{isEdit ? 'Update' : 'Add'} Address to Project {projectData?.name} </DialogTitle>
+
+                <Form methods={methods} onSubmit={onSubmit}>
+
+                    <Stack
+                        spacing={2.5}
+                        justifyContent="center"
+                        sx={{ p: 2.5 }}
+                    >
+
+                        <Box sx={{ flexDirection: !isMobile ? 'row' : 'column', display: 'flex' }}>
+                            
+                            <Box sx={{ width: '100%', color: 'text.secondary', mt: !isMobile ? 0 : 2, ml: !isMobile ? 2 : 0 }}>
+                                <Field.Text
+                                    name="address"
+                                    label="Address"
+                                    control={control}
+                                    fullWidth
+                                    multiline
+                                    rows={3}
+                                    placeholder="Enter address"
+                                />
+                            </Box>
+                        </Box>
+                    </Stack>
+                    <DialogActions>
+                        <LoadingButton type="submit" variant="contained" loading={isSubmitting}>
+                            {isEdit ? 'Update' : 'Add'}
+                        </LoadingButton>
+                        {/* <Button onClick={onClose}>
+                            Delete
+                        </Button> */}
+                        <Button variant="outlined" onClick={onClose}>
+                            Cancel
+                        </Button>
+                    </DialogActions>
+                </Form>
+            </Dialog>
+        </>
+    )
+
+    return (
+        <>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                {/* Tabs alineados a la izquierda */}
+                <Box sx={{ flexGrow: 1, borderRadius: 1 }}>{renderProject}</Box>
+            </Box>
+            {/* </Drawer > */}
+
+        </>
+    );
+}

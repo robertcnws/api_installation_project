@@ -3,6 +3,7 @@ import os
 import django
 from datetime import datetime
 from api_authorization.models import LoginUser
+from api_projects.models import ProjectPermissions
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'system_installation_project.settings')
 django.setup()
@@ -27,24 +28,33 @@ def create_superuser():
         superuser.save()
         print("Superuser created!")
 
-def create_loginuser():
-    username = os.getenv('LOGINUSER_USERNAME')
-    email = os.getenv('LOGINUSER_EMAIL')
-    password = os.getenv('LOGINUSER_PASSWORD')
-
-    if not LoginUser.objects(username=username).first():
-        print("Creating LoginUser...")
-        loginuser = LoginUser(
-            username=username,
-            email=email,
-            is_staff=True,
-            is_active=True,
-            date_joined=datetime.now(),
+def create_project_permissions():
+    
+    if not ProjectPermissions.objects(name='full access').first():
+        permission = ProjectPermissions(
+            name='full access',
+            description='full access to project',
         )
-        loginuser.set_password(password)
-        loginuser.save()
-        print("LoginUser created!")
+        permission.save()
+    if not ProjectPermissions.objects(name='read').first():
+        permission = ProjectPermissions(
+            name='read',
+            description='read access to project',
+        )
+        permission.save()
+    if not ProjectPermissions.objects(name='write').first():
+        permission = ProjectPermissions(
+            name='write',
+            description='write access to project',
+        )
+        permission.save()
+    if not ProjectPermissions.objects(name='delete').first():
+        permission = ProjectPermissions(
+            name='delete',
+            description='delete access to project',
+        )
+        permission.save()
 
 if __name__ == "__main__":
     create_superuser()
-    create_loginuser()
+    create_project_permissions()
