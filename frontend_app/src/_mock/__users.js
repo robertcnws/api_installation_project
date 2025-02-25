@@ -1,7 +1,5 @@
-import { useEffect } from 'react';
 import { gql, useQuery } from '@apollo/client';
-import { CONFIG } from 'src/config-global';
-import { _mock } from './_mock';
+
 
 
 const GET_ALL_USERS = gql`
@@ -10,6 +8,7 @@ const GET_ALL_USERS = gql`
       address
       city
       country
+      createdTime
       dateJoined
       dateUpdated
       email
@@ -19,20 +18,25 @@ const GET_ALL_USERS = gql`
       isActive
       isStaff
       lastLogin
+      lastModifiedTime
       lastName
       phoneNumber
       state
+      userRole
       username
       zipCode
-      createdTime
-      lastModifiedTime
+      password
     }
   }
 `;
 
 export const useUsersQuery = () => {
 
-  const { loading, error, data, startPolling, stopPolling } = useQuery(GET_ALL_USERS);
+  const { loading, error, data, startPolling, stopPolling, refetch } = useQuery(GET_ALL_USERS, {
+    context: {
+      clientName: 'Users',
+    },
+  });
 
   // useEffect(() => {
   //   startPolling(CONFIG.pollingInterval * 3);
@@ -43,6 +47,6 @@ export const useUsersQuery = () => {
 
   const users = data?.allLoginUsers || [];
 
-  return { loading, error, data: users };
+  return { loading, error, data: users, refetch };
 
 };

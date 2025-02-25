@@ -1,13 +1,17 @@
 import axios from 'axios';
-import { Box, Button, Divider, Grid, Paper, IconButton } from '@mui/material';
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { toast } from 'sonner';
+import { useMemo, useState, useEffect } from 'react';
+
+import { Box, Grid, Paper, Button, Divider } from '@mui/material';
+
+import { useBoolean } from 'src/hooks/use-boolean';
+
+import { CONFIG } from 'src/config-global';
+
+import { Iconify } from 'src/components/iconify';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 import { UploadBox, MultiFilePreview } from 'src/components/upload';
-import { CONFIG } from 'src/config-global';
-import { useBoolean } from 'src/hooks/use-boolean';
-import { Iconify } from 'src/components/iconify';
-import { toast } from 'sonner';
-import { FileThumbnailWithDownload } from '../file-thumbnail-with-download';
+
 
 export function ProjectEditAttachments({
   project,

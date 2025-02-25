@@ -1,32 +1,29 @@
-import { z as zod } from 'zod';
-import { useCallback, useMemo } from 'react';
-import { useForm, useWatch } from 'react-hook-form';
 import axios from 'axios';
-import { CONFIG } from 'src/config-global';
+import { z as zod } from 'zod';
+import { useMemo, useCallback } from 'react';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { isValidPhoneNumber } from 'react-phone-number-input/input';
-import { _tags, _tourGuides, TOUR_SERVICE_OPTIONS, USER_STATUS_OPTIONS } from 'src/_mock';
-import { useRouter } from 'src/routes/hooks';
-import { paths } from 'src/routes/paths';
-import Chip from '@mui/material/Chip';
-import Avatar from '@mui/material/Avatar';
 
 import Box from '@mui/material/Box';
-import Alert from '@mui/material/Alert';
+import Chip from '@mui/material/Chip';
+import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
-import MenuItem from '@mui/material/MenuItem';
+import { Stack, Typography } from '@mui/material';
 import LoadingButton from '@mui/lab/LoadingButton';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 
+import { paths } from 'src/routes/paths';
+import { useRouter } from 'src/routes/hooks';
+
+import { stripHtmlUsingDOM } from 'src/utils/helper';
+
+import { CONFIG } from 'src/config-global';
+
 import { toast } from 'src/components/snackbar';
 import { Form, Field, schemaHelper } from 'src/components/hook-form';
-import { Label } from 'src/components/label';
-import { Stack, Typography } from '@mui/material';
-import { fIsAfter } from 'src/utils/format-time';
-import { stripHtmlUsingDOM } from 'src/utils/helper';
 
 // ----------------------------------------------------------------------
 
@@ -60,26 +57,12 @@ export const SalesOrderCreateProjectDialogSchema = zod.object({
     message: "Project Manager is required!",
     path: ["userManager"],
   }),
-
-  // startDate: schemaHelper.date({
-  //   requireDate: true,
-  //   message: { required_error: 'Start date is required!' },
-  // }),
-  // endDate: schemaHelper.date({
-  //   requireDate: false,
-  // }).nullable(),
   projectAttachments: schemaHelper.files({
     requireFiles: false,
   }),
   address: zod.string().min(1, { message: 'Address is required!' }),
+  hasPermission: zod.boolean(),
 });
-// .refine((data) => {
-//   if (!data.endDate || data.endDate === "") return true;
-//   return !fIsAfter(data.startDate, data.endDate);
-// }, {
-//   message: 'End date cannot be earlier than start date!',
-//   path: ['endDate'],
-// });
 
 // ----------------------------------------------------------------------
 
@@ -99,8 +82,6 @@ export function SalesOrderCreateProjectDialogForm({ currentProject, loadedUsers,
       usersAssignees: currentProject?.usersAssignees || [],
       userManager: currentProject?.userManager || null,
       hasPermission: currentProject?.hasPermission || false,
-      // startDate: currentProject?.startDate || null,
-      // endDate: currentProject?.endDate || null,
       projectAttachments: currentProject?.projectAttachments || [],
       address: currentProject?.address || '',
     }),
@@ -201,7 +182,7 @@ export function SalesOrderCreateProjectDialogForm({ currentProject, loadedUsers,
       PaperProps={{ sx: { maxWidth: 1220 } }}
     >
       <Form methods={methods} onSubmit={onSubmit}>
-        <DialogTitle>Creating a Project to {currentSalesOrder?.salesorder_number}</DialogTitle>
+        <DialogTitle>Creating an Installation from {currentSalesOrder?.salesorder_number}</DialogTitle>
 
         <DialogContent>
           <Box
@@ -340,22 +321,6 @@ export function SalesOrderCreateProjectDialogForm({ currentProject, loadedUsers,
               />
             </Stack>
           </Box>
-          {/* <Box
-            rowGap={3}
-            columnGap={2}
-            display="grid"
-            gridTemplateColumns={{ xs: 'repeat(1, 1fr)', sm: 'repeat(2, 1fr)' }}
-            sx={{ mb: 2 }}
-          >
-            <Stack spacing={1.5}>
-              <Typography variant="subtitle2">Start Date</Typography>
-              <Field.DatePicker name="startDate" />
-            </Stack>
-            <Stack spacing={1.5}>
-              <Typography variant="subtitle2">End Date</Typography>
-              <Field.DatePicker name="endDate" />
-            </Stack>
-          </Box> */}
           <Box
             rowGap={3}
             columnGap={1}

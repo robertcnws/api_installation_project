@@ -6,6 +6,7 @@ from mongoengine import (
     StringField, 
     BooleanField, 
     DateTimeField, 
+    DynamicField,
 )
 from django.contrib.auth.hashers import (
     make_password, 
@@ -33,6 +34,8 @@ class LoginUser(Document):
     password = StringField(required=True)
     last_login = DateTimeField(default=mongoengine.fields.DateTimeField().default)
     token = StringField(max_length=255, required=False)
+    user_role = DynamicField(required=False)
+    avatar_url = StringField(max_length=255, required=False)
 
     meta = {
         'collection': 'login_users',

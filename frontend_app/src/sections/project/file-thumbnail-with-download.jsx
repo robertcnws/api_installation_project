@@ -1,6 +1,8 @@
-import { Box, IconButton } from '@mui/material';
-import { Iconify } from 'src/components/iconify';
 import React from 'react';
+
+import { Box, IconButton } from '@mui/material';
+
+import { Iconify } from 'src/components/iconify';
 
 export function FileThumbnailWithDownload({ file, thumbnailSx }) {
   return (

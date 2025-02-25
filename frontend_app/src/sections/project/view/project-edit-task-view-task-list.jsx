@@ -1,7 +1,9 @@
 import React from 'react';
-import { Box, List, ListItem, ListItemText, Divider, Button, Typography } from '@mui/material';
-import { Iconify } from 'src/components/iconify';
+
+import { Box, List, Button, Divider, ListItem, Typography, ListItemText } from '@mui/material';
+
 import { Label } from 'src/components/label';
+import { Iconify } from 'src/components/iconify';
 
 function ProjectEditTaskViewTaskList({
     projectData,

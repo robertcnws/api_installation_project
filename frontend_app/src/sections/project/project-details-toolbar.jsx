@@ -1,17 +1,28 @@
+import axios from 'axios';
+import { useMemo, useCallback } from 'react';
+
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
+import { Typography } from '@mui/material';
 import Tooltip from '@mui/material/Tooltip';
-import MenuList from '@mui/material/MenuList';
-import MenuItem from '@mui/material/MenuItem';
 import IconButton from '@mui/material/IconButton';
-import LoadingButton from '@mui/lab/LoadingButton';
+import { ConfirmDialog } from 'src/components/custom-dialog';
 
 import { RouterLink } from 'src/routes/components';
 
+import { useBoolean } from 'src/hooks/use-boolean';
+
+import { CONFIG } from 'src/config-global';
+
 import { Iconify } from 'src/components/iconify';
-import { usePopover, CustomPopover } from 'src/components/custom-popover';
-import { Divider, Typography } from '@mui/material';
+
+import { useDataContext } from 'src/auth/context/data/data-context';
+
+import { ProjectShareDialog } from './project-share-dialog';
+
+
+
 
 // ----------------------------------------------------------------------
 
@@ -22,10 +33,46 @@ export function ProjectDetailsToolbar({
   openEdit,
   setOpenEdit,
   type,
+  onDelete,
   sx,
   ...other
 }) {
-  const popover = usePopover();
+
+  const {
+    loadedUsers,
+    loadedProjectPermissions,
+  } = useDataContext();
+
+  const share = useBoolean();
+
+  const confirmDelete = useBoolean();
+
+  const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
+
+  const cleanLoadedUsers = useMemo(() => loadedUsers.map(({ __typename, ...rest }) => rest), [loadedUsers]);
+
+  const filteredUsers = useMemo(() => cleanLoadedUsers.filter(user => user.id !== project?.userManager?.id), [cleanLoadedUsers, project]);
+
+  const handleAddResetUsersAssignees = useCallback(
+    async (users) => {
+        let updatedUsers = users;
+        if (project?.usersAssignees.length > 0) {
+            updatedUsers = [
+                ...project.usersAssignees,
+                ...users.filter((user) => !project?.usersAssignees.some((u) => u.id === user.id)),
+            ];
+        }
+        try {
+            const promise = axios.post(`${CONFIG.apiUrl}/projects/add/project/${project?.id}/users/`, {
+                usersAssignees: updatedUsers,
+                userReporter: userLogged?.data,
+            });
+        } catch (error) {
+            console.error(error);
+        }
+    },
+    [project, userLogged]
+);
 
   return (
     <>
@@ -43,11 +90,23 @@ export function ProjectDetailsToolbar({
         <Box sx={{ flexGrow: 1 }} />
 
         {(type === 'project' || type === 'tasks') && (
-          <Tooltip title={`Edit ${type}`} arrow>
-            <IconButton onClick={() => setOpenEdit(true)}>
-              <Iconify icon="solar:pen-bold" />
-            </IconButton>
-          </Tooltip>
+          <>
+            <Tooltip title='Add users to installation' arrow>
+              <IconButton onClick={share.onTrue} color={project?.usersAssignees?.length > 0 ? 'default' : 'error'}>
+                <Iconify icon="tdesign:usergroup-add-filled" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title={`Edit ${type === 'project' ? 'installation' : type}`} arrow>
+              <IconButton onClick={() => setOpenEdit(true)}>
+                <Iconify icon="solar:pen-bold" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Delete installation">
+              <IconButton onClick={confirmDelete.onTrue} color="error">
+                <Iconify icon="solar:trash-bin-trash-bold" />
+              </IconButton>
+            </Tooltip>
+          </>
         )}
         <Tooltip title='Close installation' arrow>
           <Button
@@ -70,6 +129,41 @@ export function ProjectDetailsToolbar({
           {publish}
         </LoadingButton> */}
       </Stack>
+
+      <ProjectShareDialog
+        open={share.value}
+        shared={project?.shared}
+        loadedUsers={filteredUsers}
+        loadedProjectPermissions={loadedProjectPermissions}
+        projectData={project}
+        handleAddUsersAssignees={handleAddResetUsersAssignees}
+        onClose={() => {
+          share.onFalse();
+        }}
+      />
+
+      <ConfirmDialog
+        open={confirmDelete.value}
+        onClose={confirmDelete.onFalse}
+        title="Delete"
+        content={
+          <>
+            Are you sure want to delete installation project <strong> {project?.name} </strong>?
+          </>
+        }
+        action={
+          <Button
+            variant="contained"
+            color="error"
+            onClick={() => {
+              confirmDelete.onFalse();
+              onDelete();
+            }}
+          >
+            Delete
+          </Button>
+        }
+      />
 
       {/* <CustomPopover open={popover.open} anchorEl={popover.anchorEl} onClose={popover.onClose}>
         <MenuList>

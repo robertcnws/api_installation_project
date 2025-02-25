@@ -18,7 +18,7 @@ const Jwt = {
 };
 
 const authJwt = {
-  path: 'jwt',
+  path: '',
   children: [
     {
       path: 'sign-in',

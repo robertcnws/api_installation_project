@@ -44,6 +44,9 @@ def login(request):
                     }
                 )
                 tracking.save()
+                current_user = LoginUser.objects(username=username).first()
+                current_user.last_login = timezone.now()
+                current_user.save()
                 return JsonResponse({'data': user}, status=200)
             login_user = LoginUser.objects(username=username).first()
             if login_user:

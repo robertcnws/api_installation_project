@@ -1,7 +1,5 @@
-import { useEffect } from 'react';
 import { gql, useQuery } from '@apollo/client';
-import { CONFIG } from 'src/config-global';
-import { _mock } from './_mock';
+
 
 
 const GET_ALL_PROJECTS = gql`
@@ -64,7 +62,11 @@ const GET_PROJECT_BY_ID = gql`
 
 export const useProjectsQuery = () => {
 
-  const { loading, error, data, startPolling, stopPolling, refetch } = useQuery(GET_ALL_PROJECTS);
+  const { loading, error, data, startPolling, stopPolling, refetch } = useQuery(GET_ALL_PROJECTS, {
+    context: {
+      clientName: 'Projects',
+    },
+  });
 
   const projects = data?.allProjects || [];
 
@@ -73,8 +75,11 @@ export const useProjectsQuery = () => {
 };
 
 export const useProjectByIdQuery = (id) => {
-  
+
   const { loading, error, data, startPolling, stopPolling, refetch } = useQuery(GET_PROJECT_BY_ID, {
+    context: {
+      clientName: 'Projects',
+    },
     variables: { id },
     skip: !id,
   });

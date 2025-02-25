@@ -1,6 +1,6 @@
 import React, { useContext } from 'react';
 
-import { LoadingContext } from 'src/auth/context/loading-context';
+import { Stack } from '@mui/material';
 import Button from '@mui/material/Button';
 import MenuList from '@mui/material/MenuList';
 import MenuItem from '@mui/material/MenuItem';
@@ -11,12 +11,12 @@ import IconButton from '@mui/material/IconButton';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
-
 import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 import { usePopover, CustomPopover } from 'src/components/custom-popover';
-import { Stack } from '@mui/material';
+
+import { LoadingContext } from 'src/auth/context/loading-context';
 
 // ----------------------------------------------------------------------
 

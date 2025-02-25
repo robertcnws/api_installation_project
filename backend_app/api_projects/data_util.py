@@ -3,6 +3,8 @@ from django.utils import timezone
 from datetime import datetime
 from dateutil import parser
 from collections import defaultdict
+from .models import ProjectNotification, ProjectNotificationUser
+from api_authorization.models import LoginUser
 import json
 
 def transform_data_to_mongo(data, exclude_fields=None, include_fields=None):
@@ -141,3 +143,34 @@ def to_aware(dt):
     if dt.tzinfo is None:
         return timezone.make_aware(dt, timezone.get_default_timezone())
     return dt
+
+
+def create_notification(module, info_id, info, type, username):
+    notification = ProjectNotification(
+        module=module,
+        info_id=str(info_id),
+        info=info,
+        type=type,
+        created_time=timezone.now(),
+        last_modified_time=timezone.now(),
+    )
+    
+    notification.save()
+    
+    user = LoginUser.objects(username=username).first()
+    
+    username = user.username if user else 'System Job'
+    
+    all_users = LoginUser.objects.all()
+    
+    for user in all_users:
+        user_notification = ProjectNotificationUser(
+            notification=transform_data_to_mongo(notification),
+            username=username,
+            user=transform_data_to_mongo(user, exclude_fields=['password']),
+            created_time=timezone.now(),
+            last_modified_time=timezone.now(),
+        )
+        user_notification.save()
+    
+    return notification

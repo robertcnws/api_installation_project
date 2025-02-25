@@ -1,7 +1,8 @@
-import { jsPDF as JsPDF } from 'jspdf';
 import 'jspdf-autotable';
-import logoBase64 from '../../public/files/color_white_background/icon_with_text/NWS-profile.png';
+import { jsPDF as JsPDF } from 'jspdf';
+
 import { fDateTime } from './format-time';
+import logoBase64 from '../../public/files/color_white_background/icon_with_text/NWS-profile.png';
 
 export const generatePrintablePDF = ({ data, title }) => {
 

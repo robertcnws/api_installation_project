@@ -1,4 +1,4 @@
-import axios, { axiosInstanceBackend, endpoints } from 'src/utils/axios';
+import axios, { endpoints, axiosInstanceBackend } from 'src/utils/axios';
 
 import { setSession } from './utils';
 import { STORAGE_KEY } from './constant';
@@ -57,9 +57,15 @@ export const signInWithUsernameAndPassword = async ({ username, password }) => {
 
       if (loginResponse.status === 200) {
         console.log('loginResponse', loginResponse);
+        const loggedUser = {
+          data: {
+            ...loginResponse.data.data,
+            id: loginResponse.data.data._id,
+          }
+        };
         delete loginResponse.data.data.password;
-        sessionStorage.setItem('userLogged', JSON.stringify(loginResponse.data));
-        localStorage.setItem('userLogged', JSON.stringify(loginResponse.data));
+        sessionStorage.setItem('userLogged', JSON.stringify(loggedUser));
+        localStorage.setItem('userLogged', JSON.stringify(loggedUser));
       }
       // setSession(accessToken);
     }

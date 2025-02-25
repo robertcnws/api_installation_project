@@ -1,18 +1,17 @@
-import { useState, useCallback, useContext } from 'react';
+import { useState, useContext, useCallback } from 'react';
 
-import Stack from '@mui/material/Stack';
-import Grid from '@mui/material/Unstable_Grid2';
 import Box from '@mui/material/Box';
+import Stack from '@mui/material/Stack';
+import { LinearProgress } from '@mui/material';
+import Grid from '@mui/material/Unstable_Grid2';
 
 import { paths } from 'src/routes/paths';
-import { LoadingContext } from 'src/auth/context/loading-context';
-import { useDataContext } from 'src/auth/context/data/data-context';
-
-import { LinearProgress } from '@mui/material';
 
 import { DashboardContent } from 'src/layouts/dashboard';
 
-import { SalesOrderDetailsInfo } from '../sales-order-details-info';
+import { LoadingContext } from 'src/auth/context/loading-context';
+import { useDataContext } from 'src/auth/context/data/data-context';
+
 import { SalesOrderDetailsItems } from '../sales-order-details-item';
 import { SalesOrderDetailsToolbar } from '../sales-order-details-toolbar';
 

@@ -1,7 +1,5 @@
-import { useEffect } from 'react';
 import { gql, useQuery } from '@apollo/client';
-import { CONFIG } from 'src/config-global';
-import { _mock } from './_mock';
+
 
 
 const GET_ALL_DEFAULT_TASKS = gql`
@@ -23,7 +21,11 @@ const GET_ALL_DEFAULT_TASKS = gql`
 
 export const useDefaultTasksQuery = () => {
 
-  const { loading, error, data, startPolling, stopPolling, refetch } = useQuery(GET_ALL_DEFAULT_TASKS);
+  const { loading, error, data, startPolling, stopPolling, refetch } = useQuery(GET_ALL_DEFAULT_TASKS, {
+    context: {
+      clientName: 'Projects',
+    },
+  });
 
   const tasks = data?.allProjectDefaultTasks || [];
 

@@ -14,6 +14,8 @@ export * from './_files';
 
 export * from './_order';
 
+export * from './_items';
+
 export * from './_others';
 
 export * from './_invoice';
@@ -23,5 +25,3 @@ export * from './_product';
 export * from './_overview';
 
 export * from './_calendar';
-
-export * from './_items';

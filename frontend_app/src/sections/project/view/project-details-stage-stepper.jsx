@@ -1,5 +1,7 @@
 import React, { useContext } from 'react';
-import { Stepper, Step, StepLabel, Box, StepIcon } from '@mui/material';
+
+import { Box, Step, Stepper, StepLabel } from '@mui/material';
+
 import { LoadingContext } from 'src/auth/context/loading-context';
 
 export function ProjectDetailsStageStepper({ stages, currentStageId, project }) {

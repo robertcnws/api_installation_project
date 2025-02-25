@@ -1,8 +1,10 @@
-import React, { useContext, useState } from 'react';
-import { Box, TableRow, TableCell, TablePagination, IconButton, Menu, MenuItem, Typography, TableContainer, Table, TableBody } from '@mui/material';
+import React, { useState, useContext } from 'react';
+
 import Switch from '@mui/material/Switch';
-import FormControlLabel from '@mui/material/FormControlLabel';
 import { Settings } from '@mui/icons-material';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import { Menu, TableRow, MenuItem, TableCell, IconButton, TablePagination } from '@mui/material';
+
 import { LoadingContext } from 'src/auth/context/loading-context';
 
 export const TableCustomPaginationZohoStyleRow = ({

@@ -165,13 +165,14 @@ class ProjectUser(Document):
 class ProjectNotification(Document):
     module = StringField(max_length=255, null=True)
     info = StringField(max_length=255, null=True)
+    info_id = StringField(max_length=255, null=True)
     created_time = DateTimeField(default=timezone.now, null=True)
     last_modified_time = DateTimeField(default=timezone.now, null=True)
     type = StringField(max_length=255, null=True, default='load')
     meta = {
         'collection': 'project_notification',
         'indexes': [
-            'module', 'info', 'created_time', 'last_modified_time', 'type'
+            'module', 'info', 'created_time', 'last_modified_time', 'type', 'info_id'
         ],
         'verbose_name': 'Project Notification',
         'verbose_name_plural': 'Project Notifications'

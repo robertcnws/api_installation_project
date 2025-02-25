@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+
 import Box from '@mui/material/Box';
 import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
@@ -12,9 +13,9 @@ import { useBoolean } from 'src/hooks/use-boolean';
 import { Logo } from 'src/components/logo';
 
 import { Main } from './main';
+import { CustomFooter } from './footer';
 import { NavMobile } from './nav/mobile';
 import { NavDesktop } from './nav/desktop';
-import { CustomFooter, Footer, HomeFooter } from './footer';
 import { MenuButton } from '../components/menu-button';
 import { LayoutSection } from '../core/layout-section';
 import { HeaderSection } from '../core/header-section';

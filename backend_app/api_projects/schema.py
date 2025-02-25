@@ -26,10 +26,6 @@ def convert_dynamic_field(field, registry=None, executor=None):
         description=getattr(field, 'help_text', ''),
         required=field.required
     )
-    
-class LoginUserType(MongoengineObjectType):
-    class Meta:
-        model = LoginUser
         
 class ProjectPermissionsType(MongoengineObjectType):
     class Meta:
@@ -131,6 +127,19 @@ class ProjectNotificationUserType(MongoengineObjectType):
     class Meta:
         model = ProjectNotificationUser
         
+    notification = GenericScalar()
+    user = GenericScalar()
+    
+    def resolve_notification(self, info):
+        notification = self.notification or {}
+        notification = serialize_datetime(notification)
+        return dynamic_field_to_json(notification)
+    
+    def resolve_user(self, info):
+        user = self.user or {}
+        user = serialize_datetime(user)
+        return dynamic_field_to_json(user)
+        
 
 class ProjectNotificationUsersPaginated(graphene.ObjectType):
     count = graphene.Int()
@@ -178,7 +187,6 @@ class ProjectDefaultTaskType(MongoengineObjectType):
     
 
 class Query(graphene.ObjectType):
-    all_login_users = graphene.List(LoginUserType)
     all_project_permissions = graphene.List(ProjectPermissionsType)
     all_project_stages = graphene.List(ProjectStageType)
     all_project_task_stages = graphene.List(ProjectTaskStageType)
@@ -191,6 +199,7 @@ class Query(graphene.ObjectType):
     all_project_notification_users = graphene.Field(
         ProjectNotificationUsersPaginated,
         username=graphene.String(required=False),
+        user=graphene.String(required=False),
         page=graphene.Int(required=False, default_value=1), 
         pageSize=graphene.Int(required=False, default_value=100)
     )
@@ -202,9 +211,6 @@ class Query(graphene.ObjectType):
         ProjectUserType, 
         username=graphene.String(required=True), 
     )
-    
-    def resolve_all_login_users(self, info):
-        return list(LoginUser.objects.all())
     
     def resolve_all_project_permissions(self, info):
         return list(ProjectPermissions.objects(is_active=True))
@@ -233,11 +239,13 @@ class Query(graphene.ObjectType):
     def resolve_all_project_default_tasks(self, info):
         return list(ProjectDefaultTask.objects.all())
     
-    def resolve_all_project_notification_users(self, info, username=None, page=1, pageSize=100):
+    def resolve_all_project_notification_users(self, info, username=None, user=None, page=1, pageSize=100):
         qs = ProjectNotificationUser.objects.all()
         if username:
             qs = qs(username=username)
-        qs = qs.order_by('-created_at')
+        if user:
+            qs = qs(user__username=user)
+        qs = qs.order_by('-created_time')
         total = qs.count()
         skip = (page - 1) * pageSize
         paginated_qs = qs.skip(skip).limit(pageSize)

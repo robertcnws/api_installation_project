@@ -1,9 +1,7 @@
-import { m } from 'framer-motion';
-import { useState, useCallback, useMemo, useEffect } from 'react';
 import axios from 'axios';
-import { CONFIG } from 'src/config-global';
-import { useDataContext } from 'src/auth/context/data/data-context';
-import { LinearProgress } from '@mui/material';
+import { m } from 'framer-motion';
+import { useMemo, useState, useEffect, useCallback } from 'react';
+
 import Tab from '@mui/material/Tab';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
@@ -17,11 +15,15 @@ import IconButton from '@mui/material/IconButton';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
+import { CONFIG } from 'src/config-global';
+
 import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
 import { varHover } from 'src/components/animate';
 import { Scrollbar } from 'src/components/scrollbar';
 import { CustomTabs } from 'src/components/custom-tabs';
+
+import { useDataContext } from 'src/auth/context/data/data-context';
 
 import { NotificationItem } from './notification-item';
 
@@ -32,25 +34,61 @@ import { NotificationItem } from './notification-item';
 
 export function NotificationsDrawer({ sx, ...other }) {
 
+  const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
+
   const {
     loadedNotifications: userNotifications,
+    refetchNotifications,
   } = useDataContext();
 
   const [notifications, setNotifications] = useState(null);
 
   useEffect(() => {
-    if (userNotifications) {
-      const interval = setInterval(() => {
-        setNotifications(userNotifications);
-      }, 5000);
-      return () => clearInterval(interval);
+    if (refetchNotifications) {
+      refetchNotifications();
     }
-    return () => { };
-  }, [userNotifications]);
+    setNotifications(userNotifications?.filter((notif) => notif.user.username === userLogged?.data.username) || []);
+  }, [refetchNotifications, userNotifications, userLogged]);
+
+  useEffect(() => {
+    if (userNotifications) {
+      setNotifications(userNotifications?.filter((notif) => notif.user.username === userLogged?.data.username));
+    }
+  }, [userNotifications, userLogged]);
+
+  useEffect(() => {
+    const socket = new WebSocket(`wss://${CONFIG.apiHost}/api/projects/ws/project-notification-users/`);
+    socket.onerror = (errorEvent) => {
+      console.dir(errorEvent);
+      console.error('WebSocket error (toString):', errorEvent.toString());
+    };
+    socket.onmessage = (event) => {
+      const message = JSON.parse(event.data);
+      if (message.type === 'created' || message.type === 'updated') {
+        setNotifications((prevData) => {
+          const existingItemIndex = prevData.findIndex(item => String(item.id) === String(message.item.id));
+          if (existingItemIndex !== -1) {
+            const updatedData = [...prevData];
+            updatedData[existingItemIndex] = message.item;
+            return updatedData;
+          }
+          const pData = prevData?.filter((notif) => notif.user.username === userLogged?.data.username && String(notif.id) !== String(message.item.id));
+          return [message.item, ...pData];
+        });
+      }
+      else if (message.type === 'deleted') {
+        setNotifications((prevData) => prevData.filter(item => String(item.id) !== String(message.item.id)));
+      }
+    };
+    return () => {
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.close();
+      }
+    };
+  }, [userLogged]);
+
 
   const drawer = useBoolean();
-
-  const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
 
   const [filteredNotifications, setFilteredNotifications] = useState(null);
 
@@ -58,9 +96,9 @@ export function NotificationsDrawer({ sx, ...other }) {
 
   useEffect(() => {
     if (currentTab === 'all') {
-      setFilteredNotifications(notifications);
+      setFilteredNotifications(notifications?.filter((notif) => notif.user.username === userLogged?.data.username));
     }
-  }, [notifications, currentTab]);
+  }, [notifications, currentTab, userLogged]);
 
   const handleChangeTab = useCallback((event, newValue) => {
     setCurrentTab(newValue);
@@ -68,26 +106,47 @@ export function NotificationsDrawer({ sx, ...other }) {
       setFilteredNotifications(notifications);
     }
     else if (newValue === 'unread') {
-      setFilteredNotifications(notifications?.filter((item) => item.read === false));
+      setFilteredNotifications(notifications?.filter((notif) => notif.user.username === userLogged?.data.username).filter((item) => item.read === false));
     }
     else if (newValue === 'archived') {
-      setFilteredNotifications(notifications?.filter((item) => item.read === true));
+      setFilteredNotifications(notifications?.filter((notif) => notif.user.username === userLogged?.data.username).filter((item) => item.read === true));
     }
-  }, [notifications]);
+  }, [notifications, userLogged]);
 
-  const totalUnRead = notifications?.filter((item) => item.read === false).length;
+  const totalUnRead = notifications?.filter((notif) => notif.user.username === userLogged?.data.username).filter((item) => item.read === false).length;
 
-  const totalRead = notifications?.filter((item) => item.read === true).length;
+  const totalRead = notifications?.filter((notif) => notif.user.username === userLogged?.data.username).filter((item) => item.read === true).length;
 
-  const handleMarkAllAsRead = () => {
-    setNotifications(notifications?.map((notification) => ({ ...notification, read: true })));
-    axios.post(`${CONFIG.apiUrl}/api_senitron/notifications/mark_all_as_read/`, {
-      username: userLogged?.data.username
-    });
-  };
+  const handleMarkAllAsRead = useCallback(
+    async () => {
+      setNotifications(notifications?.filter((notif) => notif.user.username === userLogged?.data.username).map((notification) => ({ ...notification, read: true })));
+      await axios.post(`${CONFIG.apiUrl}/projects/mark-read/notifications/`, {
+        userReporter: userLogged?.data,
+        notificationIds: notifications?.filter((notif) => notif.user.username === userLogged?.data.username).map((notification) => notification.id),
+      });
+    }, [notifications, userLogged]);
+
+
+  const handleDeleteNotifications = useCallback(
+    async () => {
+      const selectedNotifications = notifications?.filter((notif) => notif.user.username === userLogged?.data.username);
+      const deletedNotifications = currentTab === 'all' ? selectedNotifications :
+        currentTab === 'unread' ? selectedNotifications.filter((item) => item.read === false) :
+          selectedNotifications.filter((item) => item.read === true);
+      const finalNotifications = deletedNotifications.map((notification) => notification.id);
+      const response = await axios.delete(`${CONFIG.apiUrl}/projects/delete/notifications/`, {
+        data: {
+          userReporter: userLogged?.data,
+          notificationIds: finalNotifications,
+        }
+      });
+      if (response.status) {
+        setCurrentTab('all');
+      }
+    }, [notifications, userLogged, currentTab]);
 
   const TABS = [
-    { value: 'all', label: 'All', count: notifications?.length },
+    { value: 'all', label: 'All', count: notifications?.filter((notif) => notif.user.username === userLogged?.data.username).length },
     { value: 'unread', label: 'Unread', count: totalUnRead },
     { value: 'archived', label: 'Archived', count: totalRead },
   ];
@@ -146,7 +205,7 @@ export function NotificationsDrawer({ sx, ...other }) {
       <Box component="ul">
         {filteredNotifications?.map((notification) => (
           <Box component="li" key={notification.id} sx={{ display: 'flex' }}>
-            <NotificationItem notification={notification} drawer={drawer}/>
+            <NotificationItem notification={notification} drawer={drawer} />
           </Box>
         ))}
       </Box>
@@ -239,8 +298,8 @@ export function NotificationsDrawer({ sx, ...other }) {
         {renderList}
 
         <Box sx={{ p: 1 }}>
-          <Button fullWidth size="large">
-            View all
+          <Button fullWidth size="large" color='error' variant="outlined" onClick={handleDeleteNotifications} disabled={filteredNotifications?.length === 0}>
+            Delete {currentTab === 'all' ? 'All' : currentTab === 'unread' ? 'Unread' : 'Archived'} Notifications
           </Button>
         </Box>
       </Drawer>

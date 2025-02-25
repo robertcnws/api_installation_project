@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect, useCallback, useMemo, useContext } from 'react';
+import { useRef, useMemo, useState, useEffect, useContext, useCallback } from 'react';
 import {
   arrayMove,
   SortableContext,
@@ -19,30 +19,25 @@ import {
   MeasuringStrategy,
 } from '@dnd-kit/core';
 
-import { useDataContext } from 'src/auth/context/data/data-context';
-
-import { LoadingContext } from 'src/auth/context/loading-context';
-
-import { Box, LinearProgress } from '@mui/material';
-
 import Stack from '@mui/material/Stack';
 import Switch from '@mui/material/Switch';
-import Typography from '@mui/material/Typography';
+import { Box, LinearProgress } from '@mui/material';
 import FormControlLabel from '@mui/material/FormControlLabel';
 
-import { hideScrollY, varAlpha } from 'src/theme/styles';
+import { CONFIG } from 'src/config-global';
+import { moveColumn } from 'src/actions/kanban';
+import { varAlpha, hideScrollY } from 'src/theme/styles';
 import { DashboardContent } from 'src/layouts/dashboard';
-import { moveTask, moveColumn, useGetBoard } from 'src/actions/kanban';
 
 import { EmptyContent } from 'src/components/empty-content';
 
-import { fCurrency, fPercent } from 'src/utils/format-number';
+import { LoadingContext } from 'src/auth/context/loading-context';
+import { useDataContext } from 'src/auth/context/data/data-context';
 
 import { kanbanClasses } from '../classes';
 import { coordinateGetter } from '../utils';
 import { KanbanColumn } from '../column/kanban-column';
 import { KanbanTaskItem } from '../item/kanban-task-item';
-import { KanbanColumnAdd } from '../column/kanban-column-add';
 import { KanbanColumnSkeleton } from '../components/kanban-skeleton';
 import { KanbanDragOverlay } from '../components/kanban-drag-overlay';
 
@@ -72,7 +67,7 @@ export function KanbanView({
       if (hasPermission) {
         setStages(loadedStages);
       } else {
-        setStages(loadedStages.filter((stage) => stage.name !== 'Permission'));
+        setStages(loadedStages.filter((stage) => stage.name !== CONFIG.stages.permission));
       }
     }
   }, [loadedStages, hasPermission]);

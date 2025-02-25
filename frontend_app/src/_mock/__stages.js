@@ -1,7 +1,5 @@
-import { useEffect } from 'react';
 import { gql, useQuery } from '@apollo/client';
-import { CONFIG } from 'src/config-global';
-import { _mock } from './_mock';
+
 
 
 const GET_ALL_STAGES = gql`
@@ -18,7 +16,11 @@ const GET_ALL_STAGES = gql`
 
 export const useStagesQuery = () => {
 
-  const { loading, error, data, startPolling, stopPolling, refetch } = useQuery(GET_ALL_STAGES);
+  const { loading, error, data, startPolling, stopPolling, refetch } = useQuery(GET_ALL_STAGES, {
+    context: {
+      clientName: 'Projects',
+    },
+  });
 
   const projectStages = data?.allProjectStages || [];
 

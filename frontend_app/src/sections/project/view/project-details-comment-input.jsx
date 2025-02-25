@@ -1,18 +1,20 @@
+import axios from 'axios';
+import { useMemo, useState, useEffect, useContext, useCallback } from 'react';
+
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import Avatar from '@mui/material/Avatar';
 import InputBase from '@mui/material/InputBase';
 import IconButton from '@mui/material/IconButton';
+import { TextField, Autocomplete } from '@mui/material';
+
+import { CONFIG } from 'src/config-global';
 
 import { Iconify } from 'src/components/iconify';
 
 import { useMockedUser } from 'src/auth/hooks';
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { Autocomplete, TextField } from '@mui/material';
 import { LoadingContext } from 'src/auth/context/loading-context';
-import axios from 'axios';
-import { CONFIG } from 'src/config-global';
 import { useDataContext } from 'src/auth/context/data/data-context';
 
 // ----------------------------------------------------------------------
@@ -58,7 +60,7 @@ export function ProjectDetailsCommentInput({ project, refetchProject, commentDat
       });
       if (project?.hasPermission) {
         const permissionTasks = tasks?.filter(
-          (task) => task.project_default_task?.project_stage?.name === 'Permission' && task.status === 'not started'
+          (task) => task.project_default_task?.project_stage?.name === CONFIG.stages.permission && task.status === CONFIG.taskStatus.notStarted
         );
         filtered.push(...permissionTasks);
       }
@@ -126,7 +128,7 @@ export function ProjectDetailsCommentInput({ project, refetchProject, commentDat
           onChange={handleTaskChange}
           renderOption={(props, stage, index) => {
             let icon; let color;
-            if (stage.status === 'not started') {
+            if (stage.status === CONFIG.taskStatus.notStarted) {
               icon = 'mdi:restart-off';
               color = '#ed6c02'; // color warning
             } else if (stage.status === 'in progress') {
@@ -193,7 +195,7 @@ export function ProjectDetailsCommentInput({ project, refetchProject, commentDat
                 onChange={handleTaskChange}
                 renderOption={(props, stage, index) => {
                   let icon; let color;
-                  if (stage.status === 'not started') {
+                  if (stage.status === CONFIG.taskStatus.notStarted) {
                     icon = 'mdi:restart-off';
                     color = '#ed6c02'; // color warning
                   } else if (stage.status === 'in progress') {

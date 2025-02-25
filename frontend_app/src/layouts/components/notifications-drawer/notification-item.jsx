@@ -1,7 +1,9 @@
+import axios from 'axios';
+import { useMemo, useCallback } from 'react';
+
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
-import Avatar from '@mui/material/Avatar';
 import Typography from '@mui/material/Typography';
 import ListItemText from '@mui/material/ListItemText';
 import ListItemAvatar from '@mui/material/ListItemAvatar';
@@ -16,35 +18,47 @@ import { CONFIG } from 'src/config-global';
 
 import { Label } from 'src/components/label';
 import { FileThumbnail } from 'src/components/file-thumbnail';
-import { useCallback } from 'react';
-import axios from 'axios';
+import { useDataContext } from 'src/auth/context/data/data-context';
 
 // ----------------------------------------------------------------------
 
 export function NotificationItem({ notification, drawer }) {
 
+  const { loadedProjects } = useDataContext();
+
+  const projectExists = useMemo(
+    () => loadedProjects?.find((project) => project.id === notification.notification.info_id),
+    [loadedProjects, notification]);
+
+  const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
+
   const router = useRouter();
 
   const handleLink = useCallback(
-    (module, element = 'list') => {
+    async (module, element = 'list', type = '') => {
+      if (module === 'projects' && element !== 'list' && projectExists) {
+        localStorage.setItem('projectId', element);
+      }
       router.push(
-        module === 'zoho_item' && element === 'list' ? paths.dashboard.item.list :
-          module === 'zoho_item' && element === 'analytics' ? paths.dashboard.general.analytics :
-            module === 'zoho_shipment' && element === 'list' ? paths.dashboard.shipment.list :
-              module === 'zoho_shipment' && element === 'listBySku' ? paths.dashboard.shipment.listBySku :
-                module === 'zoho_shipment' && element === 'liveMonitor' ? paths.dashboard.general.liveMonitor :
-                  module === 'create_system_user' || module === 'update_system_user' || module === 'delete_system_user' || module === 'delete_system_users' ? paths.dashboard.user.list :
-                    module === 'system_timeline' ? paths.dashboard.general.analytics :
-                      module === 'senitron_item_assets' && element === 'list' ? paths.dashboard.item.list :
-                        module === 'senitron_item_assets' && element === 'analytics' ? paths.dashboard.general.analytics :
-                          module === 'senitron_item_assets_logs' ? paths.dashboard.general.liveMonitor : ''
+        module === 'projects' && element === 'list' ? paths.dashboard.project.list :
+          module === 'projects' && element !== 'list' && projectExists ? paths.dashboard.project.details(element) :
+            module === 'projects' && element !== 'list' && !projectExists ? paths.dashboard.project.list :
+              module === 'users' ? paths.dashboard.user.list :
+                module === 'stages' ? paths.dashboard.stage.list :
+                  module === 'stage_tasks' ? paths.dashboard.stageTask.list :
+                    module === 'project_tasks' ? paths.dashboard.task.list :
+                      module === 'default_tasks' ? paths.dashboard.task.list :
+                        module === 'user_roles' ? paths.dashboard.role.list : ''
       );
       if (!notification.read) {
-        axios.post(`${CONFIG.apiUrl}/api_senitron/notification/mark_as_read/${notification.id}/`);
+        await axios.post(`${CONFIG.apiUrl}/projects/mark-read/notifications/`, {
+          userReporter: userLogged?.data,
+          notificationIds: [notification.id],
+        });
       }
       drawer.onFalse();
     },
-    [router, notification, drawer]
+    [router, notification, drawer, userLogged, projectExists]
   );
 
   const renderAvatar = (
@@ -56,15 +70,8 @@ export function NotificationItem({ notification, drawer }) {
       >
         <Box
           component="img"
-          src={`${CONFIG.assetsDir}/assets/icons/notification/${(notification.notification.module === 'zoho_shipment' && 'ic-shipment') ||
-            (notification.notification.module === 'zoho_item' && 'ic-item') ||
-            (notification.notification.module === 'senitron_item_assets' && 'ic-assets') ||
-            (notification.notification.module === 'system_timeline' && 'ic-system-timeline') ||
-            (notification.notification.module === 'create_system_user' && 'ic-new-user') ||
-            (notification.notification.module === 'update_system_user' && 'ic-update-user') ||
-            (notification.notification.module === 'delete_system_user' && 'ic-delete-user') ||
-            (notification.notification.module === 'delete_system_users' && 'ic-delete-users') ||
-            (notification.notification.module === 'senitron_item_assets_logs' && 'ic-assets-logs')}.svg`}
+          src={`${CONFIG.assetsDir}/assets/icons/notification/ic-${notification.notification.type.replace(/_/g, '-')}.svg`}
+          alt={notification.notification.type}
           sx={{ width: 24, height: 24 }}
         />
       </Stack>
@@ -92,15 +99,8 @@ export function NotificationItem({ notification, drawer }) {
             />
           }
         >
-          {fToNow(notification.createdAt)}
-          {notification.notification.module === 'zoho_shipment' && ' - Shipment' ||
-            notification.notification.module === 'zoho_item' && ' - Item' ||
-            notification.notification.module === 'senitron_item_assets' && ' - Senitron Assets' ||
-            notification.notification.module === 'create_system_user' && ' - New User' ||
-            notification.notification.module === 'update_system_user' && ' - Update User' ||
-            notification.notification.module === 'delete_system_user' && ' - Delete User' ||
-            notification.notification.module === 'delete_system_users' && ' - Delete Users' ||
-            notification.notification.module === 'senitron_item_assets_logs' && ' - Senitron Logs'}
+          {fToNow(notification.createdTime)}
+          {notification.notification.module}
         </Stack>
       }
     />
@@ -232,11 +232,12 @@ export function NotificationItem({ notification, drawer }) {
 
   const notificationAction = (
     <Stack direction="row" spacing={0.75} flexWrap="wrap" sx={{ mt: 1.5 }}>
-      {notification.notification.module !== 'senitron_item_assets_logs' && (
-        <Label variant="outlined" color="info" sx={{ cursor: 'pointer' }} onClick={() => handleLink(notification.notification.module)}>
-          See in List
-        </Label>
-      )}
+      <Label variant="outlined" color={projectExists ? 'info' : 'secondary'} sx={{ cursor: 'pointer' }}
+        onClick={() => handleLink(
+          notification.notification.module, notification.notification.info_id, notification.notification.type
+        )}>
+        See in {projectExists ? 'Details' : 'List'}
+      </Label>
       {notification.notification.module === 'zoho_shipment' && (
         <Label variant="outlined" color="success" sx={{ cursor: 'pointer' }} onClick={() => handleLink(notification.notification.module, 'listBySku')}>
           See in SKUs
@@ -294,7 +295,7 @@ function reader(data) {
         ml: 1,
         mr: 1,
         mb: 0.5,
-        '& p': { typography: 'body2', m: 0 },
+        '& p': { typography: 'subtitle2', m: 0 },
         '& a': { color: 'inherit', textDecoration: 'none' },
         '& strong': { typography: 'subtitle2' },
       }}

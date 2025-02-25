@@ -1,7 +1,5 @@
-import { useEffect } from 'react';
 import { gql, useQuery } from '@apollo/client';
-import { CONFIG } from 'src/config-global';
-import { _mock } from './_mock';
+
 
 
 const GET_ALL_STAGES_TASK = gql`
@@ -18,7 +16,11 @@ const GET_ALL_STAGES_TASK = gql`
 
 export const useStagesTaskQuery = () => {
 
-  const { loading, error, data, startPolling, stopPolling, refetch } = useQuery(GET_ALL_STAGES_TASK);
+  const { loading, error, data, startPolling, stopPolling, refetch } = useQuery(GET_ALL_STAGES_TASK, {
+    context: {
+      clientName: 'Projects',
+    },
+  });
 
   const projectTaskStages = data?.allProjectTaskStages || [];
 

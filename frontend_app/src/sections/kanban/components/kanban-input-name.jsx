@@ -1,4 +1,5 @@
 import React, { forwardRef } from 'react';
+
 import InputBase, { inputBaseClasses } from '@mui/material/InputBase';
 
 export const KanbanInputName = forwardRef(({ sx, ...other }, ref) => (

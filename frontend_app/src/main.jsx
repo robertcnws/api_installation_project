@@ -2,6 +2,7 @@ import ReactDOM from 'react-dom/client';
 import { Suspense, StrictMode } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
+
 import { LoadingProvider } from 'src/auth/context/loading-context';
 
 import App from './app';

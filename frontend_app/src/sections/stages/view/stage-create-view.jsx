@@ -1,12 +1,11 @@
 import { useCallback } from 'react';
 
 import { paths } from 'src/routes/paths';
+import { useRouter } from 'src/routes/hooks';
 
 import { DashboardContent } from 'src/layouts/dashboard';
 
 import { CustomBreadcrumbs } from 'src/components/custom-breadcrumbs';
-
-import { useRouter } from 'src/routes/hooks';
 
 import { StageNewEditForm } from '../stage-new-edit-form';
 

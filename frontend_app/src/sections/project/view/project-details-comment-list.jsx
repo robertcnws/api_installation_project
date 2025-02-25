@@ -1,21 +1,27 @@
+import axios from 'axios';
+import { useMemo, useState, useCallback } from 'react';
+
 import Stack from '@mui/material/Stack';
 import Avatar from '@mui/material/Avatar';
 import Typography from '@mui/material/Typography';
-
-import { fIsAfter, fToNow } from 'src/utils/format-time';
-import axios from 'axios';
-import { CONFIG } from 'src/config-global';
-import { useDataContext } from 'src/auth/context/data/data-context';
-import { toast } from 'src/components/snackbar';
-import { Image } from 'src/components/image';
-import { Lightbox, useLightBox } from 'src/components/lightbox';
-import { Label } from 'src/components/label';
-import { Iconify } from 'src/components/iconify';
 import { Box, Button, Divider, MenuItem, MenuList } from '@mui/material';
-import { useCallback, useMemo, useState } from 'react';
-import { CustomPopover, usePopover } from 'src/components/custom-popover';
+
 import { useBoolean } from 'src/hooks/use-boolean';
+
+import { fToNow, fIsAfter } from 'src/utils/format-time';
+
+import { CONFIG } from 'src/config-global';
+
+import { Image } from 'src/components/image';
+import { Label } from 'src/components/label';
+import { toast } from 'src/components/snackbar';
+import { Iconify } from 'src/components/iconify';
 import { ConfirmDialog } from 'src/components/custom-dialog';
+import { Lightbox, useLightBox } from 'src/components/lightbox';
+import { usePopover, CustomPopover } from 'src/components/custom-popover';
+
+import { useDataContext } from 'src/auth/context/data/data-context';
+
 import { ProjectDetailsCommentInput } from './project-details-comment-input';
 
 
@@ -83,7 +89,7 @@ export function ProjectDetailsCommentList({ comments, project, refetchProject })
                   <Typography variant="caption" sx={{ color: 'text.disabled', fontSize: 'x-small' }}>
                     {fToNow(comment.last_modified_time)}
                   </Typography>
-                  {userLogged.id === comment.user_reporter.id ? (
+                  {userLogged?.data.id === comment?.user_reporter.id ? (
                     <Button sx={{ p: 0, ml: 1 }} onClick={(e) => {
                       popover.onOpen(e);
                       setSelectedComment(comment)
@@ -91,7 +97,7 @@ export function ProjectDetailsCommentList({ comments, project, refetchProject })
                       <Iconify icon="eva:more-vertical-fill" />
                     </Button>
                   ) : (
-                    <></>
+                    <Box />
                   )}
                 </Box>
                 <CustomPopover
@@ -170,11 +176,9 @@ export function ProjectDetailsCommentList({ comments, project, refetchProject })
         title="Delete Comment"
         maxWidth="md"
         content={
-          <>
-            <Typography variant="body2">
+          <Typography variant="body2">
               Are you sure want to delete selected comment &quot;<b>{selectedComment?.comment}</b>&quot;?
             </Typography>
-          </>
         }
         action={
           <Button variant="contained" color="error" onClick={onDeleteComment}>
@@ -189,9 +193,7 @@ export function ProjectDetailsCommentList({ comments, project, refetchProject })
         title="Edit Comment"
         maxWidth="lg"
         content={
-          <>
-            <ProjectDetailsCommentInput project={project} refetchProject={refetchProject} commentData={selectedComment} confirmEdit={confirmEdit} />
-          </>
+          <ProjectDetailsCommentInput project={project} refetchProject={refetchProject} commentData={selectedComment} confirmEdit={confirmEdit} />
         }
       />
 

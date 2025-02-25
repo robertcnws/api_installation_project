@@ -1,10 +1,7 @@
 import { Helmet } from 'react-helmet-async';
 
 import { CONFIG } from 'src/config-global';
-
 import { useProjectByIdQuery } from 'src/_mock/__projects';
-
-
 
 import { KanbanView } from 'src/sections/project/kanban/view';
 

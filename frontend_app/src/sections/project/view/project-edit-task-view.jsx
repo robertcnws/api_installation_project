@@ -1,26 +1,26 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
-import { stripHtmlUsingDOM } from 'src/utils/helper';
 import axios from 'axios';
-import { CONFIG } from 'src/config-global';
+import dayjs from 'dayjs';
 import { z as zod } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Controller, useForm } from 'react-hook-form';
-import LoadingButton from '@mui/lab/LoadingButton';
-import { Box, Stack, Button, Tooltip, IconButton, Chip, Typography, List, ListItemText, ListItem } from '@mui/material';
-import { varAlpha } from 'src/theme/styles';
-import dayjs from 'dayjs';
-import { CustomDateRangePicker, useDateRangePicker } from 'src/components/custom-date-range-picker';
-import { toast } from 'src/components/snackbar';
-import { Form, Field, schemaHelper } from 'src/components/hook-form';
+import { useForm, Controller } from 'react-hook-form';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
+
+import { Box, Chip, Stack, Button, IconButton, Typography } from '@mui/material';
+
+import { useBoolean } from 'src/hooks/use-boolean';
+
+import { CONFIG } from 'src/config-global';
+
 import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
-import { ConfirmDialog } from 'src/components/custom-dialog';
-import { useBoolean } from 'src/hooks/use-boolean';
+import { Form, Field, schemaHelper } from 'src/components/hook-form';
+import { useDateRangePicker } from 'src/components/custom-date-range-picker';
+
+import { ProjectTaskShareDialog } from 'src/sections/project/project-task-share-dialog';
+import { ProjectDetailsAttachments } from 'src/sections/project/project-details-attachments';
 import { ProjectTaskDetailsPriority } from 'src/sections/project/project-task-details-priority';
 import { ProjectTaskUserAssigneesList } from 'src/sections/project/project-task-user-assignees-list';
-import { ProjectDetailsAttachments } from 'src/sections/project/project-details-attachments';
-import { ProjectTaskShareDialog } from 'src/sections/project/project-task-share-dialog';
-import { useDataContext } from 'src/auth/context/data/data-context';
+
 import ProjectEditTaskViewTaskList from './project-edit-task-view-task-list';
 
 
@@ -50,7 +50,7 @@ export function ProjectEditTaskView({
             }));
             if (!projectData.hasPermission) {
                 tasks = tasks.filter(
-                    (task) => task.project_default_task?.project_stage?.name !== 'Permission'
+                    (task) => task.project_default_task?.project_stage?.name !== CONFIG.stages.permission
                 );
             }
             setAllTasks(tasks);
@@ -75,7 +75,7 @@ export function ProjectEditTaskView({
             });
             if (projectData.hasPermission) {
                 const permissionTasks = tasks.filter(
-                    (task) => task.project_default_task?.project_stage?.name === 'Permission' && task.status === 'not started'
+                    (task) => task.project_default_task?.project_stage?.name === CONFIG.stages.permission && task.status === CONFIG.taskStatus.notStarted
                 );
                 filteredTasks.push(...permissionTasks);
             }
@@ -268,8 +268,7 @@ export function ProjectEditTaskView({
     );
 
     const renderAddTaskUsers = (
-        <>
-            <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ p: 0.5 }}>
+        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ p: 0.5 }}>
                 <IconButton
                     size="small"
                     color="primary"
@@ -285,7 +284,6 @@ export function ProjectEditTaskView({
                     <Iconify icon="mingcute:add-line" />
                 </IconButton>
             </Stack>
-        </>
     );
 
     const renderTaskAttachments = (
@@ -348,7 +346,7 @@ export function ProjectEditTaskView({
                                         {...props}
                                         key={stage.project_default_task.id}
                                         style={{
-                                            color: stage.status === 'not started' ? '#ed6c02' : // warning.main
+                                            color: stage.status === CONFIG.taskStatus.notStarted ? '#ed6c02' : // warning.main
                                                 stage.status === 'in progress' ? '#0288d1' : // info.main
                                                     stage.status === 'finished' ? '#2e7d32' : // success.main
                                                         '#d32f2f' // error.main
@@ -375,7 +373,7 @@ export function ProjectEditTaskView({
                                 size="medium"
                                 startIcon={<Iconify icon="vaadin:start-cog" />}
                                 sx={{ ml: 2.5, height: 50 }}
-                                disabled={!selectedTask || selectedTask.status !== 'not started'}
+                                disabled={!selectedTask || selectedTask.status !== CONFIG.taskStatus.notStarted}
                                 onClick={handleStartTask}
                             >
                                 Start Task

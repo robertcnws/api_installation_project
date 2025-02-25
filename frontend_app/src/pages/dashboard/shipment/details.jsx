@@ -1,12 +1,10 @@
-import React, { useEffect, useState } from 'react';
-
 import { Helmet } from 'react-helmet-async';
+import React, { useState, useEffect } from 'react';
 
 import { useParams } from 'src/routes/hooks';
 
-import { useShipmentsQuery } from 'src/_mock/_shipment';
-
 import { CONFIG } from 'src/config-global';
+import { useShipmentsQuery } from 'src/_mock/_shipment';
 
 import { ShipmentDetailsView } from 'src/sections/shipment/view';
 

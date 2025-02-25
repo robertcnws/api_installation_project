@@ -6,7 +6,6 @@ import FormHelperText from '@mui/material/FormHelperText';
 
 import { varAlpha } from 'src/theme/styles';
 
-import { Iconify } from '../iconify';
 import { uploadClasses } from './classes';
 import { UploadPlaceholder } from './components/placeholder';
 import { RejectionFiles } from './components/rejection-files';

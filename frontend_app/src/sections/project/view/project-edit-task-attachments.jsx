@@ -1,13 +1,17 @@
 import axios from 'axios';
-import { Box, Button, Divider, Grid, Paper, IconButton } from '@mui/material';
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { toast } from 'sonner';
+import { useMemo, useState, useEffect, useCallback } from 'react';
+
+import { Box, Grid, Button } from '@mui/material';
+
+import { useBoolean } from 'src/hooks/use-boolean';
+
+import { CONFIG } from 'src/config-global';
+
+import { Iconify } from 'src/components/iconify';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 import { UploadBox, MultiFilePreview } from 'src/components/upload';
-import { CONFIG } from 'src/config-global';
-import { useBoolean } from 'src/hooks/use-boolean';
-import { Iconify } from 'src/components/iconify';
-import { toast } from 'sonner';
-import { FileThumbnailWithDownload } from '../file-thumbnail-with-download';
+
 
 export function ProjectEditTaskAttachments({
   project,
@@ -198,8 +202,7 @@ export function ProjectEditTaskAttachments({
     <>
       <Box sx={{ maxHeight: 550, minHeight: !isMobile ? 400 : 0, overflow: 'auto' }}>
         {project?.currentStage && (
-          <>
-            <Box
+          <Box
               key={project?.currentStage?.id}
               sx={{ mb: 3, display: 'flex', gap: 3 }}
             >
@@ -279,7 +282,6 @@ export function ProjectEditTaskAttachments({
                 </Grid>
               </Grid>
             </Box>
-          </>
         )}
       </Box>
 

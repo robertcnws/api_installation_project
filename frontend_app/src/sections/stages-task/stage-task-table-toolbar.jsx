@@ -1,23 +1,20 @@
-import { useCallback, useContext, useEffect, useMemo } from 'react';
+import { useMemo, useContext, useCallback } from 'react';
 
 import Stack from '@mui/material/Stack';
+import { ListItemText } from '@mui/material';
 import MenuList from '@mui/material/MenuList';
 import MenuItem from '@mui/material/MenuItem';
 import TextField from '@mui/material/TextField';
 import IconButton from '@mui/material/IconButton';
 import InputAdornment from '@mui/material/InputAdornment';
 
+import { fDate } from 'src/utils/format-time';
+
+import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
 import { usePopover, CustomPopover } from 'src/components/custom-popover';
-import { CONFIG } from 'src/config-global';
-import axios from 'axios';
+
 import { LoadingContext } from 'src/auth/context/loading-context';
-import { Checkbox, FormControl, InputLabel, ListItemText, OutlinedInput, Select } from '@mui/material';
-import { generatePrintablePDF } from 'src/utils/printable-pdf';
-import ExportCSV from 'src/utils/export-csv';
-import { Label } from 'src/components/label';
-import { fDate } from 'src/utils/format-time';
-import { height } from '@mui/system';
 
 // ----------------------------------------------------------------------
 
@@ -65,7 +62,7 @@ export function StageTaskTableToolbar({ filters, onResetPage, options, dataFilte
               fullWidth
               value={filters.state.name}
               onChange={handleFilterName}
-              placeholder={isListAll ? "Search by item (NAME, SKU, ID or STOCK ON HAND)..." : "Search by item SKU..."}
+              placeholder={isListAll ? "Search by task stage (NAME, DESCRIPTION)..." : "Search by TASK STAGE..."}
               // disabled={dataFiltered?.length === 0}
               InputProps={{
                 startAdornment: (

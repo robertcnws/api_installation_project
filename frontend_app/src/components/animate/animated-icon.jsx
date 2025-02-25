@@ -1,5 +1,7 @@
 import React from 'react';
-import { keyframes, styled } from '@mui/material/styles';
+
+import { styled, keyframes } from '@mui/material/styles';
+
 import { Iconify } from 'src/components/iconify';
 
 const shake = keyframes`

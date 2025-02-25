@@ -1,5 +1,5 @@
 
-import { Backdrop, Button, CircularProgress, Typography } from '@mui/material';
+import { Button, Backdrop, Typography, CircularProgress } from '@mui/material';
 
 export default function BackdropBackground({ loading, error, setError, component }) {
     return (

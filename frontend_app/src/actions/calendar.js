@@ -1,5 +1,6 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import useSWR, { mutate } from 'swr';
+import { ALL_COLORS } from 'src/_mock/__colors';
 
 import axios, { fetcher, endpoints } from 'src/utils/axios';
 
@@ -34,6 +35,47 @@ export function useGetEvents() {
       eventsEmpty: !isLoading && !data?.events.length,
     };
   }, [data?.events, error, isLoading, isValidating]);
+
+  return memoizedValue;
+}
+
+// ----------------------------------------------------------------------
+
+export function useGetProjectEvents(projects = []) {
+  const colorMappingRef = useRef({});
+  const usedColorsRef = useRef(new Set());
+  
+  const getAvailableColor = useCallback(() => {
+    const available = ALL_COLORS.find(color => !usedColorsRef.current.has(color));
+    if (available) {
+      usedColorsRef.current.add(available);
+      return available;
+    }
+    return ALL_COLORS[Math.floor(Math.random() * ALL_COLORS.length)];
+  }, []);
+
+  const memoizedValue = useMemo(() => {
+    const events = projects.map((project) => {
+      if (!colorMappingRef.current[project.id]) {
+        colorMappingRef.current[project.id] = getAvailableColor();
+      }
+      const color = colorMappingRef.current[project.id];
+      
+      return {
+        ...project,
+        id: project.id,
+        title: project.name,
+        start: project.startDate,
+        end: project.endDate ? project.endDate : '9999-12-31',
+        textColor: color,
+      };
+    });
+
+    return {
+      events,
+      eventsEmpty: projects.length === 0,
+    };
+  }, [projects, getAvailableColor]);
 
   return memoizedValue;
 }

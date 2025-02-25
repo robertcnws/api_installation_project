@@ -1,42 +1,39 @@
-import { useState, useCallback, useContext, useEffect, useMemo } from 'react';
-
 import axios from 'axios';
-
-import { LoadingContext } from 'src/auth/context/loading-context';
-
-import { useDataContext } from 'src/auth/context/data/data-context';
-
-import { CONFIG } from 'src/config-global';
+import { useMemo, useState, useEffect, useContext, useCallback } from 'react';
 
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
-import Typography from '@mui/material/Typography';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 
-import { useBoolean } from 'src/hooks/use-boolean';
-import { useSetState } from 'src/hooks/use-set-state';
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
 
+import { useBoolean } from 'src/hooks/use-boolean';
+import { useSetState } from 'src/hooks/use-set-state';
+
 import { fIsAfter, fIsBetween } from 'src/utils/format-time';
 
+import { CONFIG } from 'src/config-global';
+import { PROJECT_TYPE_OPTIONS } from 'src/_mock';
 import { DashboardContent } from 'src/layouts/dashboard';
-import { _allFiles, FILE_TYPE_OPTIONS, PROJECT_TYPE_OPTIONS } from 'src/_mock';
 
 import { toast } from 'src/components/snackbar';
 import { Iconify } from 'src/components/iconify';
-import { Divider } from '@mui/material';
-import { fileFormat } from 'src/components/file-thumbnail';
 import { EmptyContent } from 'src/components/empty-content';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 import { useTable, rowInPage, getComparator } from 'src/components/table';
+
+import { LoadingContext } from 'src/auth/context/loading-context';
+import { useDataContext } from 'src/auth/context/data/data-context';
 
 import { ProjectTable } from '../project-table';
 import { ProjectFilters } from '../project-filters';
 import { ProjectGridView } from '../project-grid-view';
 import { ProjectFiltersResult } from '../project-filters-result';
 import { ProjectNewFolderDialog } from '../project-new-folder-dialog';
+import { ProjectCalendarView } from '../calendar/view';
+import { KanbanProjectView } from '../kanban-project/view';
 
 
 // ----------------------------------------------------------------------
@@ -44,6 +41,8 @@ import { ProjectNewFolderDialog } from '../project-new-folder-dialog';
 export function ProjectView() {
 
   const { isMobile } = useContext(LoadingContext);
+
+  localStorage.setItem('backFromProjectDetails', 'projects');
 
   const {
     loadedProjects,
@@ -67,7 +66,7 @@ export function ProjectView() {
 
   const upload = useBoolean();
 
-  const [view, setView] = useState('list');
+  const [view, setView] = useState(localStorage.getItem('projectView') || 'list');
 
   const [tableData, setTableData] = useState([]);
 
@@ -86,16 +85,16 @@ export function ProjectView() {
 
   useEffect(() => {
     const socket = new WebSocket(`wss://${CONFIG.apiHost}/api/projects/ws/projects/`);
-    socket.onopen = () => {
-      console.log('WebSocket connected');
-    };
+    // socket.onopen = () => {
+    //   console.log('WebSocket connected');
+    // };
     socket.onerror = (errorEvent) => {
       console.dir(errorEvent);
       console.error('WebSocket error (toString):', errorEvent.toString());
     };
-    socket.onclose = (e) => {
-      console.log('WebSocket closed', e);
-    };
+    // socket.onclose = (e) => {
+    //   console.log('WebSocket closed', e);
+    // };
     socket.onmessage = (event) => {
       const message = JSON.parse(event.data);
       if (message.type === 'created' || message.type === 'updated') {
@@ -176,6 +175,7 @@ export function ProjectView() {
 
   const handleChangeView = useCallback((event, newView) => {
     if (newView !== null) {
+      localStorage.setItem('projectView', newView);
       setView(newView);
     }
   }, []);
@@ -245,6 +245,7 @@ export function ProjectView() {
   const handleDetailsView = useCallback(
     (id) => {
       localStorage.setItem('projectId', id);
+      localStorage.setItem('backFromProjectDetails', 'projects');
       router.push(paths.dashboard.project.details(id));
     },
     [router]
@@ -338,7 +339,7 @@ export function ProjectView() {
                 refetchProjects={refetchProjects}
                 loadedProjects={loadedProjects}
               />
-            ) : (
+            ) : view === 'grid' ? (
               <ProjectGridView
                 table={table}
                 dataFiltered={dataFiltered}
@@ -353,6 +354,10 @@ export function ProjectView() {
                 setTableData={setTableData}
                 refetchProjects={refetchProjects}
               />
+            ) : view === 'calendar' ? (
+              <ProjectCalendarView projects={dataFiltered} isOnlyWeek={false}/>
+            ) : (
+              <KanbanProjectView projects={dataFiltered} refetchProjects={refetchProjects} />
             )}
           </>
         )}

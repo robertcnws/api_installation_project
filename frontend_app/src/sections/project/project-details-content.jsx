@@ -1,34 +1,33 @@
-import { useState, useEffect, useContext, useMemo, useCallback } from 'react';
-import { useTheme } from '@mui/material/styles';
 import axios from 'axios';
-import Chip from '@mui/material/Chip';
+import { useMemo, useState, useEffect, useContext, useCallback } from 'react';
+
 import Card from '@mui/material/Card';
-import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Avatar from '@mui/material/Avatar';
+import { useTheme } from '@mui/material/styles';
 import Grid from '@mui/material/Unstable_Grid2';
 import Typography from '@mui/material/Typography';
 import ListItemText from '@mui/material/ListItemText';
-import { toast } from 'src/components/snackbar';
+import { Box, Table, Switch, ListItem, TableRow, TableBody, TableCell, TextField, IconButton } from '@mui/material';
 
 import { fDate, fDateTime } from 'src/utils/format-time';
-import { fCurrency } from 'src/utils/format-number';
+
 import { CONFIG } from 'src/config-global';
 
-import { Iconify } from 'src/components/iconify';
-import { Markdown } from 'src/components/markdown';
-import { Box, Button, colors, IconButton, ListItem, Switch, Table, TableBody, TableCell, TableContainer, TableRow, TextField } from '@mui/material';
 import { Label } from 'src/components/label';
-import { useDataContext } from 'src/auth/context/data/data-context';
-import { LoadingContext } from 'src/auth/context/loading-context';
-import { ProjectDetailsStageStepper } from './view/project-details-stage-stepper';
-import { ProjectDetailsChartTask } from './view/project-details-chart-task';
-import { ProjectDetailsChartProject } from './view/project-details-chart-project';
+import { toast } from 'src/components/snackbar';
+import { Iconify } from 'src/components/iconify';
 
-import { ProjectDetailsChartSemicircleProject } from './view/project-details-chart-semicircle-project';
-import { ProjectEditModalUserManagerView } from './view/project-edit-modal-user-manager-view';
+import { LoadingContext } from 'src/auth/context/loading-context';
+import { useDataContext } from 'src/auth/context/data/data-context';
+
+import { ProjectDetailsChartTask } from './view/project-details-chart-task';
 import { ProjectEditModalDatesView } from './view/project-edit-modal-dates-view';
-import { ProjectEditModalAddressView } from './view/project-edit-modal-address-view copy';
+import { ProjectDetailsStageStepper } from './view/project-details-stage-stepper';
+import { ProjectDetailsChartProject } from './view/project-details-chart-project';
+import { ProjectEditModalAddressView } from './view/project-edit-modal-address-view';
+import { ProjectEditModalUserManagerView } from './view/project-edit-modal-user-manager-view';
+import { ProjectDetailsChartSemicircleProject } from './view/project-details-chart-semicircle-project';
 
 
 // ----------------------------------------------------------------------
@@ -65,28 +64,22 @@ export function ProjectDetailsContent({ project, refetchProject, setOpenEdit }) 
   const [isStartDate, setIsStartDate] = useState(false);
 
   useEffect(() => {
-    if (refetchProject) {
-      refetchProject?.();
-    }
-  }, [refetchProject]);
-
-  useEffect(() => {
     if (project) {
       setTotalTasks(
         project?.hasPermission ? project?.projectDefaultTasks?.length :
-          project?.projectDefaultTasks?.filter((task) => task.project_default_task.project_stage.name !== 'Permission').length
+          project?.projectDefaultTasks?.filter((task) => task.project_default_task.project_stage.name !== CONFIG.stages.permission).length
       );
       setTotalInProgressTasks(
         project?.hasPermission ? project?.projectDefaultTasks?.filter((task) => task.status === 'in progress').length :
-          project?.projectDefaultTasks?.filter((task) => task.status === 'in progress' && task.project_default_task.project_stage.name !== 'Permission').length
+          project?.projectDefaultTasks?.filter((task) => task.status === 'in progress' && task.project_default_task.project_stage.name !== CONFIG.stages.permission).length
       );
       setTotalCompletedTasks(
         project?.hasPermission ? project?.projectDefaultTasks?.filter((task) => task.status === 'finished').length :
-          project?.projectDefaultTasks?.filter((task) => task.status === 'finished' && task.project_default_task.project_stage.name !== 'Permission').length
+          project?.projectDefaultTasks?.filter((task) => task.status === 'finished' && task.project_default_task.project_stage.name !== CONFIG.stages.permission).length
       );
       setTotalNotStartedTasks(
-        project?.hasPermission ? project?.projectDefaultTasks?.filter((task) => task.status === 'not started').length :
-          project?.projectDefaultTasks?.filter((task) => task.status === 'not started' && task.project_default_task.project_stage.name !== 'Permission').length
+        project?.hasPermission ? project?.projectDefaultTasks?.filter((task) => task.status === CONFIG.taskStatus.notStarted).length :
+          project?.projectDefaultTasks?.filter((task) => task.status === CONFIG.taskStatus.notStarted && task.project_default_task.project_stage.name !== CONFIG.stages.permission).length
       );
     }
   }, [project]);
@@ -327,13 +320,22 @@ export function ProjectDetailsContent({ project, refetchProject, setOpenEdit }) 
       { label: 'In Progress', value: totalInProgressTasks },
       { label: 'Completed', value: totalCompletedTasks },
     ],
-  }), [totalNotStartedTasks, totalInProgressTasks, totalCompletedTasks]);
+    data: [
+      {
+        name: 'Tasks',
+        totalTasks,
+        totalCompletedTasks,
+        icon: <Box component="img" src={`${CONFIG.assetsDir}/assets/icons/files/ic-folder.svg`} />,
+      },
+    ],
+    type: 'pie',
+  }), [totalNotStartedTasks, totalInProgressTasks, totalCompletedTasks, totalTasks]);
 
   const percentage = useMemo(() => {
     const total = totalNotStartedTasks + totalInProgressTasks + totalCompletedTasks;
     const sumPercentage = project?.projectDefaultTasks?.reduce((acc, task) => acc + task.percentage, 0);
     return total > 0 ? (sumPercentage / total).toFixed(2) : 0;
-  }, [project.projectDefaultTasks, totalNotStartedTasks, totalInProgressTasks, totalCompletedTasks]);
+  }, [project?.projectDefaultTasks, totalNotStartedTasks, totalInProgressTasks, totalCompletedTasks]);
 
   const chartProject = useMemo(() => ({
     title: '',
@@ -494,6 +496,16 @@ export function ProjectDetailsContent({ project, refetchProject, setOpenEdit }) 
   //     </Stack>
   //   </Paper>
   // );
+
+  if (project === null) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 300 }}>
+        <Typography variant="h6" color="text.secondary">
+          Project not found!
+        </Typography>
+      </Box>
+    );
+  }
 
   return (
     <>

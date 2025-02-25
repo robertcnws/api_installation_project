@@ -9,8 +9,6 @@ import { useBoolean } from 'src/hooks/use-boolean';
 
 import { Iconify } from 'src/components/iconify';
 
-import { ProjectPanel } from './project-panel';
-import { ProjectFileItem } from './project-file-item';
 import { ProjectFolderItem } from './project-folder-item';
 import { ProjectShareDialog } from './project-share-dialog';
 import { ProjectActionSelected } from './project-action-selected';

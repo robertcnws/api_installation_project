@@ -1,29 +1,16 @@
-import { lazy, Suspense, useContext, useEffect, useMemo, useState } from 'react';
 import { Navigate, useRoutes } from 'react-router-dom';
-
-import { useDataContext } from 'src/auth/context/data/data-context';
-
-import { Backdrop, CircularProgress, Typography, Button } from '@mui/material';
-
-import { LoadingContext } from 'src/auth/context/loading-context';
-
-import { MainLayout } from 'src/layouts/main';
-
-import { SplashScreen } from 'src/components/loading-screen';
+import { lazy, useMemo, Suspense, useState, useEffect } from 'react';
 
 import { AuthSplitLayout } from 'src/layouts/auth-split';
 
+import { SplashScreen } from 'src/components/loading-screen';
+
 import { GuestGuard } from 'src/auth/guard';
+import { useDataContext } from 'src/auth/context/data/data-context';
 
 import { authRoutes } from './auth';
 import { mainRoutes } from './main';
-import { authDemoRoutes } from './auth-demo';
 import { dashboardRoutes } from './dashboard';
-import { componentsRoutes } from './components';
-
-
-
-
 
 
 // ----------------------------------------------------------------------
@@ -40,19 +27,20 @@ export function Router() {
 
   const [listPermissions, setListPermissions] = useState(null);
 
+  const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
+
   useEffect(() => {
-    const user = JSON.parse(localStorage.getItem('userLogged'));
-    if (loadedPermissions && user) {
+    if (loadedPermissions && userLogged) {
       const results = loadedPermissions?.results;
 
-      const permissions = results?.filter((item) => item.username === user?.data.username);
+      const permissions = results?.filter((item) => item.username === userLogged?.data.username);
 
       if (permissions.length > 0) {
         setListPermissions(permissions[0].permissions);
       }
 
     }
-  }, [loadedPermissions]);
+  }, [loadedPermissions, userLogged]);
 
   return useRoutes([
     {
@@ -81,16 +69,12 @@ export function Router() {
 
     // Auth
     ...authRoutes,
-    ...authDemoRoutes,
 
     // Dashboard
-    ...dashboardRoutes(listPermissions),
+    ...dashboardRoutes(listPermissions, userLogged?.data),
 
     // Main
     ...mainRoutes,
-
-    // Components
-    ...componentsRoutes,
 
     // No match
     { path: '*', element: <Navigate to="/404" replace /> },

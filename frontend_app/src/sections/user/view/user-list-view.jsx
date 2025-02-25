@@ -1,6 +1,5 @@
-import { useState, useCallback, useEffect, useMemo, useContext } from 'react';
-
 import axios from 'axios';
+import { useMemo, useState, useEffect, useContext, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
 import Tab from '@mui/material/Tab';
@@ -9,6 +8,7 @@ import Card from '@mui/material/Card';
 import Table from '@mui/material/Table';
 import Button from '@mui/material/Button';
 import Tooltip from '@mui/material/Tooltip';
+import { TableContainer } from '@mui/material';
 import TableBody from '@mui/material/TableBody';
 import IconButton from '@mui/material/IconButton';
 
@@ -19,36 +19,34 @@ import { RouterLink } from 'src/routes/components';
 import { useBoolean } from 'src/hooks/use-boolean';
 import { useSetState } from 'src/hooks/use-set-state';
 
-import { varAlpha } from 'src/theme/styles';
-import { DashboardContent } from 'src/layouts/dashboard';
-import { _roles, USER_STATUS_OPTIONS } from 'src/_mock';
-import { useUserList } from 'src/_mock/_user';
 import { CONFIG } from 'src/config-global';
+import { varAlpha } from 'src/theme/styles';
+import { USER_STATUS_OPTIONS } from 'src/_mock';
+import { DashboardContent } from 'src/layouts/dashboard';
 
 import { Label } from 'src/components/label';
 import { toast } from 'src/components/snackbar';
 import { Iconify } from 'src/components/iconify';
-import { Scrollbar } from 'src/components/scrollbar';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 import { CustomBreadcrumbs } from 'src/components/custom-breadcrumbs';
 import { TableCustomPaginationZohoStyleRow } from 'src/components/table/table-pagination-custom-zoho-style-row';
 import {
   useTable,
-  emptyRows,
   rowInPage,
   TableNoData,
   getComparator,
-  TableEmptyRows,
   TableHeadCustom,
   TableSelectedAction,
-  TablePaginationCustom,
 } from 'src/components/table';
 
 import { LoadingContext } from 'src/auth/context/loading-context';
+import { useDataContext } from 'src/auth/context/data/data-context';
 
 import { UserTableRow } from '../user-table-row';
 import { UserTableToolbar } from '../user-table-toolbar';
 import { UserTableFiltersResult } from '../user-table-filters-result';
+
+
 
 
 
@@ -57,11 +55,14 @@ import { UserTableFiltersResult } from '../user-table-filters-result';
 const STATUS_OPTIONS = [{ value: 'all', label: 'All' }, ...USER_STATUS_OPTIONS];
 
 const TABLE_HEAD = [
-  { id: 'name', label: 'Name' },
-  { id: 'phoneNumber', label: 'Phone number', width: 200 },
-  { id: 'role', label: 'Role', width: 200 },
-  { id: 'status', label: 'Status', width: 100 },
-  { id: '', width: 88 },
+  { id: 'username', label: 'Username' },
+  { id: 'firstName', label: 'First Name' },
+  { id: 'lastName', label: 'Last Name' },
+  { id: 'phoneNumber', label: 'Phone number' },
+  { id: 'role', label: 'Role' },
+  { id: 'status', label: 'Status' },
+  { id: 'lastLogin', label: 'Last Login' },
+  { id: '' },
 ];
 
 const TABLE_HEAD_MOBILE = [
@@ -82,55 +83,61 @@ export function UserListView() {
 
   const confirm = useBoolean();
 
-  const { loading, error, data: _userList } = useUserList();
+  const { loadedUsers, refetchUsers, loadedUserRoles } = useDataContext();
 
   const [tableData, setTableData] = useState([]);
 
   const filters = useSetState({ name: '', role: [], status: 'all' });
 
-  // useEffect(() => {
-  //   const socket = new WebSocket(`wss://${CONFIG.apiHost}/${CONFIG.apiDomain}/ws/users/`);
-
-  //   socket.onopen = () => {
-  //     console.log('WebSocket connected');
-  //   };
-
-  //   socket.onerror = (err) => {
-  //     console.error('WebSocket error:', err);
-  //   };
-
-  //   socket.onclose = (event) => {
-  //     console.log('WebSocket closed:', event);
-  //   };
-
-  //   socket.onmessage = (event) => {
-  //     const message = JSON.parse(event.data);
-  //     if (message.type === 'created' || message.type === 'updated') {
-  //       setTableData((prevData) => {
-  //         const existingItemIndex = prevData.findIndex(item => item.id === message.item.id);
-  //         if (existingItemIndex !== -1) {
-  //           const updatedData = [...prevData];
-  //           updatedData[existingItemIndex] = message.item;
-  //           return updatedData;
-  //         }
-  //         return [message.item, ...prevData];
-  //       });
-  //     }
-  //   };
-  //   return () => {
-  //     socket.close();
-  //   };
-  // }, []);
-
+  useEffect(() => {
+    if (refetchUsers) {
+      refetchUsers();
+    }
+    setTableData(loadedUsers || []);
+  }, [refetchUsers, loadedUsers]);
 
   useEffect(() => {
-    if (_userList && _userList.length > 0) {
-      setTableData(_userList);
-    } else if (!loading && !error) {
-      console.error("No data returned from useUserList");
-      setTableData([]);
+    if (loadedUsers) {
+      setTableData(loadedUsers);
     }
-  }, [_userList, loading, error]);
+  }, [loadedUsers]);
+
+  useEffect(() => {
+    const socket = new WebSocket(`wss://${CONFIG.apiHost}/api/users/ws/users/`);
+    // socket.onopen = () => {
+    //   console.log('WebSocket connected');
+    // };
+    socket.onerror = (errorEvent) => {
+      console.dir(errorEvent);
+      console.error('WebSocket error (toString):', errorEvent.toString());
+    };
+    // socket.onclose = (e) => {
+    //   console.log('WebSocket closed', e);
+    // };
+    socket.onmessage = (event) => {
+      const message = JSON.parse(event.data);
+      if (message.type === 'created' || message.type === 'updated') {
+        setTableData((prevData) => {
+          const existingItemIndex = prevData.findIndex(item => String(item.id) === String(message.item.id));
+          if (existingItemIndex !== -1) {
+            const updatedData = [...prevData];
+            updatedData[existingItemIndex] = message.item;
+            return updatedData;
+          }
+          return [message.item, ...prevData];
+        });
+      }
+      else if (message.type === 'deleted') {
+        setTableData((prevData) => prevData.filter(item => String(item.id) !== String(message.item.id)));
+      }
+    };
+    return () => {
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.close();
+      }
+    };
+  }, []);
+
 
   const dataFiltered = useMemo(() => applyFilter({
     inputData: tableData,
@@ -152,57 +159,61 @@ export function UserListView() {
     async (id) => {
       const deleteRow = tableData.filter((row) => row.id !== id);
 
-      const response = await axios.delete(`${CONFIG.apiUrl}/api_zoho/delete_user/${id}/`, {
+      const response = await axios.delete(`${CONFIG.apiUrl}/users/delete/user/${id}/`, {
         headers: {
           'Content-Type': 'application/json',
         },
         data: {
-          username: userLogged?.data.username,
+          userReporter: userLogged?.data,
         },
       });
 
-      if (response.status === 200) {
+      if (response.data.message) {
         setTableData(deleteRow);
         table.onUpdatePageDeleteRow(dataInPage.length);
-        toast.success('Delete success!');
+        toast.success(response.data.message);
       }
       else {
-        toast.error('Delete failed!');
+        toast.error(response.data.error);
       }
     },
-    [dataInPage.length, table, tableData, userLogged?.data.username]
+    [dataInPage.length, table, tableData, userLogged]
   );
 
-  const handleDeleteRows = useCallback(() => {
-    const deleteRows = tableData.filter((row) => !table.selected.includes(row.id));
+  const handleDeleteRows = useCallback(async () => {
+    try {
+      const rows = tableData.filter((row) => !table.selected.includes(row.id));
 
-    setTableData(deleteRows);
+      const payload = {
+        userIds: table.selected.filter((id) => id !== userLogged?.data.id),
+        userReporter: userLogged?.data,
+      }
 
-    table.onUpdatePageDeleteRows({
-      totalRowsInPage: dataInPage.length,
-      totalRowsFiltered: dataFiltered.length,
-    });
+      const response = await axios.delete(`${CONFIG.apiUrl}/users/delete/users/`, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        data: payload,
+      });
 
-    const payload = {
-      user_ids: table.selected,
-      username: userLogged?.data.username,
+      if (response.data.message) {
+        toast.success(response.data.message);
+        setTableData(rows);
+        table.onUpdatePageDeleteRows({
+          totalRowsInPage: dataInPage.length,
+          totalRowsFiltered: dataFiltered.length,
+        });
+        refetchUsers?.();
+      }
+      else {
+        toast.error(response.data.error);
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error(error.response.data.error);
     }
 
-    const response = axios.delete(`${CONFIG.apiUrl}/api_zoho/delete_users/`, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      data: payload,
-    });
-
-    if (response.status === 200) {
-      toast.success('Delete success!');
-    }
-    else {
-      toast.error('Delete failed!');
-    }
-
-  }, [dataFiltered.length, dataInPage.length, table, tableData, userLogged?.data.username]);
+  }, [dataFiltered.length, dataInPage.length, table, tableData, userLogged, refetchUsers]);
 
   const handleEditRow = useCallback(
     (id) => {
@@ -223,7 +234,7 @@ export function UserListView() {
     <>
       <DashboardContent>
         <CustomBreadcrumbs
-          heading="List"
+          // heading="List"
           links={[
             { name: 'Dashboard', href: paths.dashboard.general.analytics },
             { name: 'User', href: paths.dashboard.user.list },
@@ -271,7 +282,7 @@ export function UserListView() {
                     }
                   >
                     {['active', 'inactive'].includes(tab.value)
-                      ? tableData.filter((user) => user.status === tab.value).length
+                      ? tableData.filter((user) => tab.value === 'active' ? user.isActive : !user.isActive).length
                       : tableData.length}
                   </Label>
                 }
@@ -282,7 +293,7 @@ export function UserListView() {
           <UserTableToolbar
             filters={filters}
             onResetPage={table.onResetPage}
-            options={{ roles: _roles }}
+            options={{ roles: loadedUserRoles }}
           />
 
           {canReset && (
@@ -297,12 +308,12 @@ export function UserListView() {
           <Box sx={{ position: 'relative' }}>
             <TableSelectedAction
               dense={table.dense}
-              numSelected={table.selected.length}
-              rowCount={dataFiltered.length}
+              numSelected={table.selected.filter((id) => id !== userLogged?.data.id).length}
+              rowCount={dataFiltered.filter((row) => row.id !== userLogged?.data.id).length}
               onSelectAllRows={(checked) =>
                 table.onSelectAllRows(
                   checked,
-                  dataFiltered.map((row) => row.id)
+                  dataFiltered.filter((row) => row.id !== userLogged?.data.id).map((row) => row.id)
                 )
               }
               action={
@@ -314,8 +325,13 @@ export function UserListView() {
               }
             />
 
-            <Scrollbar>
-              <Table size={table.dense ? 'small' : 'medium'} sx={{ minWidth: !isMobile ? 960 : 380 }}>
+            <TableContainer sx={{
+              px: { md: 1 },
+              minWidth: !isMobile ? 960 : 380,
+              maxHeight: filters.state.status === 'all' ? 'calc(100vh - 380px)' : 'calc(100vh - 480px)',
+              overflowY: 'auto',
+            }} >
+              <Table size={table.dense ? 'small' : 'medium'} stickyHeader>
                 <TableHeadCustom
                   order={table.order}
                   orderBy={table.orderBy}
@@ -370,7 +386,7 @@ export function UserListView() {
                   <TableNoData notFound={notFound} />
                 </TableBody>
               </Table>
-            </Scrollbar>
+            </TableContainer>
           </Box>
 
           {/* <TablePaginationCustom
@@ -391,7 +407,7 @@ export function UserListView() {
         title="Delete"
         content={
           <>
-            Are you sure want to delete <strong> {table.selected.length} </strong> items?
+            Are you sure want to delete <strong> {table.selected.filter((id) => id !== userLogged?.data.id).length} </strong> items?
           </>
         }
         action={
@@ -426,7 +442,9 @@ function applyFilter({ inputData, comparator, filters }) {
 
   if (name) {
     inputData = inputData.filter(
-      (user) => user?.name?.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
+      (user) => user?.username?.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
+        user?.firstName?.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
+        user?.lastName?.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
         user?.email?.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
         user?.phoneNumber?.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
         user?.zipCode?.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
@@ -438,11 +456,16 @@ function applyFilter({ inputData, comparator, filters }) {
   }
 
   if (status !== 'all') {
-    inputData = inputData.filter((user) => user?.status === status);
+    if (status === 'active') {
+      inputData = inputData.filter((user) => user?.isActive);
+    }
+    else {
+      inputData = inputData.filter((user) => !user?.isActive);
+    }
   }
 
   if (role.length) {
-    inputData = inputData.filter((user) => role.includes(user?.role));
+    inputData = inputData.filter((user) => role.includes(user?.userRole.name));
   }
 
   return inputData;

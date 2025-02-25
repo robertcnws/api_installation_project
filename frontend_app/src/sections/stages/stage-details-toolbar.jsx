@@ -6,10 +6,10 @@ import Typography from '@mui/material/Typography';
 import { RouterLink } from 'src/routes/components';
 
 import { fDateTime } from 'src/utils/format-time';
+import { generateItemPrintablePDF } from 'src/utils/printable-pdf';
 
 import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
-import { generateItemPrintablePDF } from 'src/utils/printable-pdf';
 
 // ----------------------------------------------------------------------
 

@@ -1,8 +1,7 @@
+import axios from 'axios';
 import { z as zod } from 'zod';
 import { useMemo } from 'react';
 import { useForm } from 'react-hook-form';
-import axios from 'axios';
-import { CONFIG } from 'src/config-global';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { isValidPhoneNumber } from 'react-phone-number-input/input';
 
@@ -16,17 +15,20 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 
+import { CONFIG } from 'src/config-global';
 import { USER_STATUS_OPTIONS } from 'src/_mock';
 
+import { Label } from 'src/components/label';
 import { toast } from 'src/components/snackbar';
 import { Form, Field, schemaHelper } from 'src/components/hook-form';
-import { Label } from 'src/components/label';
+
+import { useDataContext } from 'src/auth/context/data/data-context';
 
 // ----------------------------------------------------------------------
 
 export const UserQuickEditSchema = zod.object({
-  // firstName: zod.string().min(1, { message: 'First name is required!' }),
-  // lastName: zod.string().min(1, { message: 'Last name is required!' }),
+  firstName: zod.string().min(1, { message: 'First name is required!' }),
+  lastName: zod.string().min(1, { message: 'Last name is required!' }),
   email: zod
     .string()
     .min(1, { message: 'Email is required!' })
@@ -51,23 +53,17 @@ export function UserQuickEditForm({ currentUser, open, onClose }) {
 
   const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
 
+  const { loadedUserRoles, refetchUsers } = useDataContext();
+
   const defaultValues = useMemo(
     () => ({
       id: currentUser?.id || '',
-      name: currentUser?.name || '',
       firstName: currentUser?.firstName || '',
       lastName: currentUser?.lastName || '',
       email: currentUser?.email || '',
       phoneNumber: currentUser?.phoneNumber || '',
-      address: currentUser?.address || '',
-      country: currentUser?.country || '',
-      state: currentUser?.state || '',
-      city: currentUser?.city || '',
-      zipCode: currentUser?.zipCode || '',
-      status: currentUser?.status,
-      company: currentUser?.company || '',
-      gender: currentUser?.gender || '',
-      role: currentUser?.role || '',
+      status: currentUser?.isActive ? 'active' : 'inactive',
+      role: currentUser?.userRole.id || '',
     }),
     [currentUser]
   );
@@ -85,14 +81,14 @@ export function UserQuickEditForm({ currentUser, open, onClose }) {
   } = methods;
 
   const onSubmit = handleSubmit(async (data) => {
-    const id = currentUser.id;
+    const {id} = currentUser;
     data = { 
       ...data, 
       username: currentUser.username, 
-      manager_username: userLogged?.data.username
+      userReporter: userLogged?.data
     };
 
-    const promise = axios.put(`${CONFIG.apiUrl}/api_zoho/manage_user/${id}/`, data);
+    const promise = axios.post(`${CONFIG.apiUrl}/users/edit/user/${id}/`, data);
 
     try {
       reset();
@@ -110,10 +106,14 @@ export function UserQuickEditForm({ currentUser, open, onClose }) {
 
       if (data.username === userLogged?.data.username) {
         localStorage.removeItem('userLogged');  
+        sessionStorage.removeItem('userLogged');
         /* eslint-disable object-shorthand */
         localStorage.setItem('userLogged', JSON.stringify({ data: data }));
+        sessionStorage.setItem('userLogged', JSON.stringify({ data: data }));
         /* eslint-enable object-shorthand */
       }
+
+      refetchUsers?.();
 
     } catch (error) {
       console.error(error);
@@ -123,10 +123,10 @@ export function UserQuickEditForm({ currentUser, open, onClose }) {
   return (
     <Dialog
       fullWidth
-      maxWidth={false}
+      maxWidth="lg"
       open={open}
       onClose={onClose}
-      PaperProps={{ sx: { maxWidth: 720 } }}
+      PaperProps={{ sx: { maxWidth: 920 } }}
     >
       <Form methods={methods} onSubmit={onSubmit}>
         <DialogTitle>Quick User Info Update</DialogTitle>
@@ -165,8 +165,8 @@ export function UserQuickEditForm({ currentUser, open, onClose }) {
             {/* <Box sx={{ display: { xs: 'none', sm: 'block' } }} /> */}
             <Field.Text name="email" label="Email address" />
 
-            {/* <Field.Text name="firstName" label="First name" />
-            <Field.Text name="lastName" label="Last name" /> */}
+            <Field.Text name="firstName" label="First name" />
+            <Field.Text name="lastName" label="Last name" />
             
             <Field.Phone name="phoneNumber" label="Phone number" />
 
@@ -190,24 +190,22 @@ export function UserQuickEditForm({ currentUser, open, onClose }) {
                 </MenuItem>
             </Field.Select> */}
             <Field.Select name="role" label="Role">
-                <MenuItem key="Admin" value="Admin">
-                  Admin
+              {loadedUserRoles.map((role) => (
+                <MenuItem key={role.id} value={role.id}>
+                  {role.name}
                 </MenuItem>
-                <MenuItem key="User" value="User">
-                  User
-                </MenuItem>
+              ))}
             </Field.Select>
           </Box>
         </DialogContent>
 
         <DialogActions>
-          <Button variant="outlined" onClick={onClose}>
-            Cancel
-          </Button>
-
           <LoadingButton type="submit" variant="contained" loading={isSubmitting}>
             Update
           </LoadingButton>
+          <Button variant="outlined" onClick={onClose}>
+            Cancel
+          </Button>
         </DialogActions>
       </Form>
     </Dialog>

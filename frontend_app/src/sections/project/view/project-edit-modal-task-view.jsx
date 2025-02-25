@@ -1,33 +1,35 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import axios from 'axios';
-import LoadingButton from '@mui/lab/LoadingButton';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
+
+import Autocomplete from '@mui/material/Autocomplete';
 import {
-    Dialog,
-    DialogTitle,
-    DialogActions,
-    Button,
     Box,
     Stack,
-    Typography,
-    IconButton,
-    Avatar,
-    TextField,
-    Chip,
+    Dialog,
+    Button,
     Select,
     MenuItem,
+    TextField,
+    Typography,
+    IconButton,
+    DialogTitle,
+    DialogActions,
 } from '@mui/material';
-import { CheckBox } from '@mui/icons-material';
-import Autocomplete from '@mui/material/Autocomplete';
-import { Iconify } from 'src/components/iconify';
-import { toast } from 'src/components/snackbar';
-import { CONFIG } from 'src/config-global';
+
 import { useBoolean } from 'src/hooks/use-boolean';
+
+import { CONFIG } from 'src/config-global';
 import { useProjectByIdQuery } from 'src/_mock/__projects';
-import { useDataContext } from 'src/auth/context/data/data-context';
+
 import { Label } from 'src/components/label';
-import { ProjectTaskUserAssigneesList } from '../project-task-user-assignees-list';
-import { ProjectTaskDetailsPriority } from '../project-task-details-priority';
+import { toast } from 'src/components/snackbar';
+import { Iconify } from 'src/components/iconify';
+
+import { useDataContext } from 'src/auth/context/data/data-context';
+
 import { ProjectTaskShareDialog } from '../project-task-share-dialog';
+import { ProjectTaskDetailsPriority } from '../project-task-details-priority';
+import { ProjectTaskUserAssigneesList } from '../project-task-user-assignees-list';
 
 
 
@@ -112,7 +114,7 @@ export function ProjectEditModalTaskView({ projectId, open, onClose }) {
 
     const handleChangeSelectedStatusTask = useCallback(
         (event) => {
-            const value = event.target.value;
+            const {value} = event.target;
             let filtered = [];
             setSelectedStatusTask(event.target.value);
             if (value !== 'all') {
@@ -250,8 +252,7 @@ export function ProjectEditModalTaskView({ projectId, open, onClose }) {
     const isUpdateDisabled = !selectedTask || usersAssignees.length === 0 || !priority || !isTaskStarted || selectedTask?.status === 'finished';
 
     const renderAddTaskUsers = (
-        <>
-            <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ p: 0.5 }}>
+        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ p: 0.5 }}>
                 <IconButton
                     size="small"
                     color="primary"
@@ -267,7 +268,6 @@ export function ProjectEditModalTaskView({ projectId, open, onClose }) {
                     <Iconify icon="mingcute:add-line" />
                 </IconButton>
             </Stack>
-        </>
     );
 
     return (

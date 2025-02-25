@@ -1,5 +1,5 @@
 import { useContext } from 'react';
-import { LoadingContext } from 'src/auth/context/loading-context';
+
 import Box from '@mui/material/Box';
 import Table from '@mui/material/Table';
 import Tooltip from '@mui/material/Tooltip';
@@ -7,17 +7,16 @@ import TableBody from '@mui/material/TableBody';
 import IconButton from '@mui/material/IconButton';
 import TableContainer from '@mui/material/TableContainer';
 import { tableCellClasses } from '@mui/material/TableCell';
-import { tablePaginationClasses } from '@mui/material/TablePagination';
 
 import { Iconify } from 'src/components/iconify';
 import {
   TableNoData,
   TableHeadCustom,
   TableSelectedAction,
-  TablePaginationCustom,
 } from 'src/components/table';
-
 import { TableCustomPaginationZohoStyleRow } from 'src/components/table/table-pagination-custom-zoho-style-row';
+
+import { LoadingContext } from 'src/auth/context/loading-context';
 
 import { ProjectTableRow } from './project-table-row';
 

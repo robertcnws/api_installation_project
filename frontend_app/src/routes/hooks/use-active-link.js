@@ -9,7 +9,7 @@ export function useActiveLink(itemPath, deep = true) {
   const pathHasParams = hasParams(itemPath);
 
   /* Start check */
-  const notValid = itemPath.startsWith('#') || isExternalLink(itemPath);
+  const notValid = itemPath?.startsWith('#') || isExternalLink(itemPath);
 
   if (notValid) {
     return false;

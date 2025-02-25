@@ -1,17 +1,19 @@
 // src/contexts/DataContext.jsx
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
-import { CONFIG } from 'src/config-global';
-import { _mock } from 'src/_mock/_mock';
-import { useProjectsQuery } from 'src/_mock/__projects';
-import { useNotificationsQuery } from 'src/_mock/__projects_notifications_users';
-import { useUsersQuery } from 'src/_mock/__users';
-import { useProjectPermissionsQuery } from 'src/_mock/__project_permissions';
-import { useStagesQuery } from 'src/_mock/__stages';
-import { useDefaultTasksQuery } from 'src/_mock/__default_tasks';
-import { useStagesTaskQuery } from 'src/_mock/__stages_task';
 import { useQuery } from '@tanstack/react-query';
-import { STORAGE_KEY } from 'src/auth/context/jwt/constant';
+import React, { useMemo, useState, useEffect, useContext, createContext } from 'react';
+
+import { _mock } from 'src/_mock/_mock';
+import { CONFIG } from 'src/config-global';
+import { useUsersQuery } from 'src/_mock/__users';
+import { useStagesQuery } from 'src/_mock/__stages';
+import { useProjectsQuery } from 'src/_mock/__projects';
+import { useUserRolesQuery } from 'src/_mock/__user_roles';
+import { useStagesTaskQuery } from 'src/_mock/__stages_task';
+import { useDefaultTasksQuery } from 'src/_mock/__default_tasks';
+import { useProjectPermissionsQuery } from 'src/_mock/__project_permissions';
+import { useNotificationsQuery } from 'src/_mock/__projects_notifications_users';
+
 
 const DataContext = createContext();
 export const useDataContext = () => useContext(DataContext);
@@ -19,13 +21,53 @@ export const useDataContext = () => useContext(DataContext);
 export const DataProvider = ({ children }) => {
   const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
 
-  const { data: projects, loading: loadingProjects, error: errorProjects, refetch: refetchProjects } = useProjectsQuery();
-  const { data: users, loading: loadingUsers, error: errorUsers } = useUsersQuery();
-  const { data: notifications, loading: loadingNotifications, error: errorNotifications } = useNotificationsQuery(userLogged?.data.username, 1, 100);
-  const { data: projectPermissions, loading: loadingProjectPermissions, error: errorProjectPermission } = useProjectPermissionsQuery();
-  const { data: stages, loading: loadingStages, error: errorStages, refetch: refetchStages } = useStagesQuery();
-  const { data: stagesTask, loading: loadingStagesTask, error: errorStagesTask, refetch: refetchStagesTask } = useStagesTaskQuery();
-  const { data: defaultTasks, loading: loadingDefaultTasks, error: errorDefaultTasks, refetch: refetchDefaultTasks } = useDefaultTasksQuery();
+  const { 
+    data: projects, 
+    loading: loadingProjects, 
+    error: errorProjects, 
+    refetch: refetchProjects 
+  } = useProjectsQuery();
+  const { 
+    data: users, 
+    loading: loadingUsers, 
+    error: errorUsers, 
+    refetch: refetchUsers 
+  } = useUsersQuery();
+  const { 
+    data: notifications, 
+    loading: loadingNotifications, 
+    error: errorNotifications, 
+    refetch: refetchNotifications 
+  } = useNotificationsQuery(null, userLogged?.data.username, 1, 100);
+  const { 
+    data: projectPermissions, 
+    loading: loadingProjectPermissions, 
+    error: errorProjectPermission 
+  } = useProjectPermissionsQuery();
+  const { 
+    data: stages, 
+    loading: loadingStages, 
+    error: errorStages, 
+    refetch: refetchStages 
+  } = useStagesQuery();
+  const { 
+    data: stagesTask, 
+    loading: loadingStagesTask, 
+    error: errorStagesTask, 
+    refetch: refetchStagesTask 
+  } = useStagesTaskQuery();
+  const { 
+    data: defaultTasks, 
+    loading: loadingDefaultTasks, 
+    error: errorDefaultTasks, 
+    refetch: refetchDefaultTasks 
+  } = useDefaultTasksQuery();
+  const { 
+    data: userRoles, 
+    loading: loadingUserRoles, 
+    error: errorUserRoles, 
+    refetch: refetchUserRoles 
+  } = useUserRolesQuery(['Superadmin']);
 
   const loading = loadingProjects || loadingNotifications || loadingUsers || loadingProjectPermissions;
   const error = errorProjects || errorNotifications || errorUsers || errorProjectPermission;
@@ -33,7 +75,7 @@ export const DataProvider = ({ children }) => {
   const _avatarUsers = useMemo(() => users.map((user, index) => ({
     ...user,
     name: `${user.firstName} ${user.lastName}`,
-    avatarUrl: _mock.image.avatar(index),
+    avatarUrl: user.avatarUrl ? user.avatarUrl : _mock.image.avatar(index),
   })), [users]);
 
   if (userLogged) {
@@ -42,8 +84,6 @@ export const DataProvider = ({ children }) => {
   }
 
   localStorage.setItem('userLogged', JSON.stringify(userLogged));
-
-  // console.log('1loadedProjects', projects);
 
   const typedProjects = useMemo(() => projects.map((project) => ({
     ...project,
@@ -61,6 +101,7 @@ export const DataProvider = ({ children }) => {
   const loadedProjects = useMemo(() => sortedProjects || [], [sortedProjects]);
   const loadedUsers = useMemo(() => _avatarUsers || [], [_avatarUsers]);
   const loadedProjectPermissions = useMemo(() => projectPermissions || [], [projectPermissions]);
+  const loadedUserRoles = useMemo(() => userRoles || [], [userRoles]);
 
   const orderedStages = useMemo(() => {
     const sortedStages = [...stages].sort((a, b) => a.order - b.order);
@@ -162,11 +203,14 @@ export const DataProvider = ({ children }) => {
       loadedProjects,
       refetchProjects,
       loadedNotifications,
+      refetchNotifications,
       loadedUsers,
+      refetchUsers,
       loadedProjectPermissions,
       loadedStages,
       loadedStagesTask,
       loadedDefaultTasks,
+      loadedUserRoles,
       loading,
       error,
       errorStages,
@@ -175,6 +219,9 @@ export const DataProvider = ({ children }) => {
       errorStagesTask,
       loadingStagesTask,
       refetchStagesTask,
+      loadingUserRoles,
+      errorUserRoles,
+      refetchUserRoles,
       errorDefaultTasks,
       loadingDefaultTasks,
       refetchDefaultTasks,
@@ -189,11 +236,14 @@ export const DataProvider = ({ children }) => {
       loadedProjects,
       refetchProjects,
       loadedNotifications,
+      refetchNotifications,
       loadedUsers,
+      refetchUsers,
       loadedProjectPermissions,
       loadedStages,
       loadedStagesTask,
       loadedDefaultTasks,
+      loadedUserRoles,
       loading,
       error,
       errorStages,
@@ -202,6 +252,9 @@ export const DataProvider = ({ children }) => {
       errorStagesTask,
       loadingStagesTask,
       refetchStagesTask,
+      loadingUserRoles,
+      errorUserRoles,
+      refetchUserRoles,
       errorDefaultTasks,
       loadingDefaultTasks,
       refetchDefaultTasks,

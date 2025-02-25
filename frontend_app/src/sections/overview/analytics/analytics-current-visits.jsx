@@ -1,14 +1,13 @@
 import React, { useEffect } from 'react';
+
 import Card from '@mui/material/Card';
 import Divider from '@mui/material/Divider';
-import { useTheme, alpha as hexAlpha } from '@mui/material/styles';
 import CardHeader from '@mui/material/CardHeader';
+import { useTheme, alpha as hexAlpha } from '@mui/material/styles';
 
 import { fNumber } from 'src/utils/format-number';
 
 import { Chart, useChart, ChartLegends } from 'src/components/chart';
-import { ModalSublistItems } from './view/modal-sublist-items';
-
 // ----------------------------------------------------------------------
 
 export function AnalyticsCurrentVisits({
@@ -102,7 +101,7 @@ export function AnalyticsCurrentVisits({
       },
       events: {
         dataPointSelection: (event, chartContext, config) => {
-          const dataPointIndex = config.dataPointIndex;
+          const {dataPointIndex} = config;
           const list = handleViewSublists(dataPointIndex);
 
           setModalTitle(
@@ -164,28 +163,7 @@ export function AnalyticsCurrentVisits({
           sx={{ p: 3, justifyContent: 'center' }}
         />
       </Card>
-
-      <ModalSublistItems
-        openModal={openModal}
-        setOpenModal={setOpenModal}
-        modalDataFiltered={modalDataFiltered}
-        modalTitle={modalTitle}
-        headersCSV={headersCSV}
-        modalButtonColor={modalButtonColor}
-        filters={filters}
-        handleFilterName={handleFilterName}
-        handleViewRow={handleViewRow}
-        userLogged={userLogged}
-        hasIgnoredErrors={hasIgnoredErrors}
-        ignoreErrorsSelected={ignoreErrorsSelected}
-        setIgnoreErrorsSelected={setIgnoreErrorsSelected}
-        handleCheckboxChange={handleCheckboxChange}
-        handleSelectAllIgnoreErrors={handleSelectAllIgnoreErrors}
-        valueIgnoreErrors={valueIgnoreErrors}
-        handleUpdateIgnoreErrors={handleUpdateIgnoreErrors}
-        isIgnore={isIgnore}
-        setIsIgnore={setIsIgnore}
-      />
+      
     </>
   );
 }

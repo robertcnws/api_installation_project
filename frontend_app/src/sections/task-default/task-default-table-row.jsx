@@ -1,6 +1,6 @@
 import React, { useContext } from 'react';
 
-import { LoadingContext } from 'src/auth/context/loading-context';
+import { Stack } from '@mui/material';
 import Button from '@mui/material/Button';
 import MenuList from '@mui/material/MenuList';
 import MenuItem from '@mui/material/MenuItem';
@@ -11,13 +11,14 @@ import IconButton from '@mui/material/IconButton';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
+import { CONFIG } from 'src/config-global';
 
 import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 import { usePopover, CustomPopover } from 'src/components/custom-popover';
-import { Stack } from '@mui/material';
-import { textTransform } from '@mui/system';
+
+import { LoadingContext } from 'src/auth/context/loading-context';
 
 // ----------------------------------------------------------------------
 
@@ -55,7 +56,7 @@ export function TaskDefaultTableRow({ row, selected, onEditRow, onSelectRow, onD
                 color={
                   (row.projectStageStatus === 'finished' && 'success') ||
                   (row.projectStageStatus === 'in progress' && 'info') ||
-                  (row.projectStageStatus === 'not started' && 'warning') ||
+                  (row.projectStageStatus === CONFIG.taskStatus.notStarted && 'warning') ||
                   (row.projectStageStatus === 'failed' && 'error') ||
                   'default'
                 }
@@ -99,7 +100,7 @@ export function TaskDefaultTableRow({ row, selected, onEditRow, onSelectRow, onD
                 color={
                   (row.projectStageStatus === 'finished' && 'success') ||
                   (row.projectStageStatus === 'in progress' && 'info') ||
-                  (row.projectStageStatus === 'not started' && 'warning') ||
+                  (row.projectStageStatus === CONFIG.taskStatus.notStarted && 'warning') ||
                   (row.projectStageStatus === 'failed' && 'error') ||
                   'default'
                 }

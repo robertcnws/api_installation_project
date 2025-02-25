@@ -1,7 +1,6 @@
-import { CONFIG } from 'src/config-global';
 import axios from 'axios';
-import { useCallback, useMemo, useState } from 'react';
-import { useDataContext } from 'src/auth/context/data/data-context';
+import { useMemo, useState, useCallback } from 'react';
+
 import { Box } from '@mui/material';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
@@ -10,9 +9,13 @@ import Avatar from '@mui/material/Avatar';
 import InputBase from '@mui/material/InputBase';
 import IconButton from '@mui/material/IconButton';
 
+import { CONFIG } from 'src/config-global';
+
 import { Iconify } from 'src/components/iconify';
 
 import { useMockedUser } from 'src/auth/hooks';
+import { useDataContext } from 'src/auth/context/data/data-context';
+
 import { ProjectDetailsCommentList } from '../../view/project-details-comment-list';
 
 
@@ -58,8 +61,7 @@ export function KanbanDetailsCommentInput({ comments, task, project, refetchProj
     [comment, project, task, userLogged, refetchProject, loadedUsers]);
 
   return (
-    <>
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0, maxHeight: 760, overflowY: 'auto' }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0, maxHeight: 760, overflowY: 'auto' }}>
         {comments.length > 0 && (
           <Box sx={{ ml: 3, width: '100%', display: 'flex', flexDirection: 'column', gap: 1, maxHeight: 580, overflowY: 'auto' }}>
             <ProjectDetailsCommentList comments={comments} project={project} refetchProject={refetchProject} />
@@ -93,6 +95,5 @@ export function KanbanDetailsCommentInput({ comments, task, project, refetchProj
           </Paper>
         </Stack>
       </Box>
-    </>
   );
 }

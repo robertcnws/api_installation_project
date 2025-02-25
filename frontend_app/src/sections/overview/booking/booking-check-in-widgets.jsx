@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
@@ -9,7 +11,6 @@ import { useResponsive } from 'src/hooks/use-responsive';
 import { fNumber } from 'src/utils/format-number';
 
 import { Chart, useChart } from 'src/components/chart';
-import { useState } from 'react';
 
 // ----------------------------------------------------------------------
 

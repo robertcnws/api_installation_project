@@ -1,8 +1,11 @@
-import { useContext, useMemo } from "react";
-import { LoadingContext } from "src/auth/context/loading-context";
+import { useMemo, useContext } from "react";
+
 import { Box } from "@mui/material";
-import { ProjectDetailsCommentInput } from "./project-details-comment-input";
+
+import { LoadingContext } from "src/auth/context/loading-context";
+
 import { ProjectDetailsCommentList } from "./project-details-comment-list";
+import { ProjectDetailsCommentInput } from "./project-details-comment-input";
 
 
 
@@ -14,7 +17,7 @@ export const ProjectDetailsCommentView = ({ project, refetchProject }) => {
 
     return (
         <>
-            {comments.length > 0 && (
+            {comments?.length > 0 && (
                 <Box sx={{ flexDirection: 'row', gap: 3, ml: 2, maxHeight: isMobile ? '100%' : 350, overflowY: 'auto' }}>
                     <ProjectDetailsCommentList comments={comments} project={project} refetchProject={refetchProject} />
                 </Box>

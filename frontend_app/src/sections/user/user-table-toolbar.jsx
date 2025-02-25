@@ -54,18 +54,18 @@ export function UserTableToolbar({ filters, options, onResetPage }) {
             value={filters.state.role}
             onChange={handleFilterRole}
             input={<OutlinedInput label="Role" />}
-            renderValue={(selected) => selected.map((value) => value).join(', ')}
+            renderValue={(selected) => selected.map((value) => value.name).join(', ')}
             inputProps={{ id: 'user-filter-role-select-label' }}
             MenuProps={{ PaperProps: { sx: { maxHeight: 240 } } }}
           >
             {options.roles.map((option) => (
-              <MenuItem key={option} value={option}>
+              <MenuItem key={option.id} value={option.name}>
                 <Checkbox
                   disableRipple
                   size="small"
-                  checked={filters.state.role.includes(option)}
+                  checked={filters.state.role.includes(option.name)}
                 />
-                {option}
+                {option.name}
               </MenuItem>
             ))}
           </Select>
@@ -76,7 +76,7 @@ export function UserTableToolbar({ filters, options, onResetPage }) {
             fullWidth
             value={filters.state.name}
             onChange={handleFilterName}
-            placeholder="Search users (NAME, EMAIL, PHONE NUMBER, ZIP CODE, STATE, CITY, ADDRESS or COUNTRY) ..."
+            placeholder="Search users (USERNAME, FIRST NAME, LAST NAME, EMAIL or PHONE NUMBER) ..."
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">

@@ -2,6 +2,7 @@ import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import { useTheme, alpha as hexAlpha } from '@mui/material/styles';
 
+import { fDate } from 'src/utils/format-time';
 import { fPercent, fCurrency } from 'src/utils/format-number';
 
 import { CONFIG } from 'src/config-global';
@@ -9,7 +10,6 @@ import { CONFIG } from 'src/config-global';
 import { Iconify } from 'src/components/iconify';
 import { SvgColor } from 'src/components/svg-color';
 import { Chart, useChart } from 'src/components/chart';
-import { fDate } from 'src/utils/format-time';
 
 // ----------------------------------------------------------------------
 

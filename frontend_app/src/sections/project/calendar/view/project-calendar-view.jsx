@@ -1,0 +1,235 @@
+import Calendar from '@fullcalendar/react'; // => request placed at the top
+
+import { useEffect } from 'react';
+import listPlugin from '@fullcalendar/list';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import timeGridPlugin from '@fullcalendar/timegrid';
+import timelinePlugin from '@fullcalendar/timeline';
+import interactionPlugin from '@fullcalendar/interaction';
+
+import Card from '@mui/material/Card';
+import Stack from '@mui/material/Stack';
+import Button from '@mui/material/Button';
+import Dialog from '@mui/material/Dialog';
+import { useTheme } from '@mui/material/styles';
+import Typography from '@mui/material/Typography';
+import DialogTitle from '@mui/material/DialogTitle';
+
+import { useBoolean } from 'src/hooks/use-boolean';
+import { useSetState } from 'src/hooks/use-set-state';
+
+import { fDate, fIsAfter, fIsBetween } from 'src/utils/format-time';
+
+import { DashboardContent } from 'src/layouts/dashboard';
+import { CALENDAR_COLOR_OPTIONS } from 'src/_mock/_calendar';
+import { updateEvent, useGetProjectEvents } from 'src/actions/calendar';
+
+import { Iconify } from 'src/components/iconify';
+
+import { StyledCalendar } from '../styles';
+import { useEvent } from '../hooks/use-event';
+import { ProjectCalendarForm } from '../project-calendar-form';
+import { useCalendar } from '../hooks/use-calendar';
+import { ProjectCalendarToolbar } from '../project-calendar-toolbar';
+import { ProjectCalendarFilters } from '../project-calendar-filters';
+import { ProjectCalendarFiltersResult } from '../project-calendar-filters-result';
+
+// ----------------------------------------------------------------------
+
+export function ProjectCalendarView({ projects, isOnlyWeek }) {
+
+  const theme = useTheme();
+
+  const openFilters = useBoolean();
+
+  const { events, eventsLoading } = useGetProjectEvents(projects?.filter((project) => project.startDate));
+
+  const filters = useSetState({
+    colors: [],
+    startDate: null,
+    endDate: null,
+  });
+
+  const dateError = fIsAfter(filters.state.startDate, filters.state.endDate);
+
+  const {
+    calendarRef,
+    //
+    view,
+    date,
+    //
+    onDatePrev,
+    onDateNext,
+    onDateToday,
+    onDropEvent,
+    onChangeView,
+    onSelectRange,
+    onClickEvent,
+    onResizeEvent,
+    onInitialView,
+    //
+    openForm,
+    onOpenForm,
+    onCloseForm,
+    //
+    selectEventId,
+    selectedRange,
+    //
+    onClickEventInFilters,
+  } = useCalendar();
+
+  const currentEvent = useEvent(events, selectEventId, selectedRange, openForm);
+
+  useEffect(() => {
+    onInitialView(isOnlyWeek ? 'listWeek' : null);
+  }, [onInitialView, isOnlyWeek]);
+
+  const canReset =
+    filters.state.colors.length > 0 || (!!filters.state.startDate && !!filters.state.endDate);
+
+  const dataFiltered = applyFilter({ inputData: events, filters: filters.state, dateError });
+
+  const renderResults = (
+    <ProjectCalendarFiltersResult
+      filters={filters}
+      totalResults={dataFiltered.length}
+      sx={{ mb: { xs: 3, md: 5 } }}
+    />
+  );
+
+  const flexProps = { flex: '0 0 auto', display: 'flex', flexDirection: 'column' };
+
+  return (
+    <>
+      <DashboardContent sx={{ ...flexProps }}>
+        {/* <Stack
+          direction="row"
+          alignItems="center"
+          justifyContent="space-between"
+          sx={{ mb: { xs: 3, md: 5 } }}
+        >
+          <Typography variant="h4">Calendar</Typography>
+          <Button
+            variant="contained"
+            startIcon={<Iconify icon="mingcute:add-line" />}
+            onClick={onOpenForm}
+          >
+            New event
+          </Button>
+        </Stack> */}
+
+        {canReset && renderResults}
+
+        <Card sx={{ ...flexProps, height: '60vh', minWidth: '105%', ml: '-2.5%' }}>
+          <StyledCalendar sx={{ ...flexProps, '.fc.fc-media-screen': { flex: '0 0 auto' }, minHeight: '100%' }}>
+            <ProjectCalendarToolbar
+              isOnlyWeek={isOnlyWeek}
+              date={fDate(date)}
+              view={isOnlyWeek ? 'listWeek' : view}
+              canReset={canReset}
+              loading={eventsLoading}
+              onNextDate={onDateNext}
+              onPrevDate={onDatePrev}
+              onToday={onDateToday}
+              onChangeView={onChangeView}
+              onOpenFilters={openFilters.onTrue}
+            />
+
+            <Calendar
+              weekends
+              editable
+              droppable
+              selectable={false}
+              rerenderDelay={10}
+              allDayMaintainDuration
+              eventResizableFromStart
+              ref={calendarRef}
+              initialDate={date}
+              initialView={isOnlyWeek ? 'listWeek' : view}
+              dayMaxEventRows={5}
+              eventDisplay="block"
+              events={dataFiltered}
+              headerToolbar={false}
+              select={onSelectRange}
+              eventClick={onClickEvent}
+              aspectRatio={3}
+              eventDrop={(arg) => {
+                onDropEvent(arg, updateEvent);
+              }}
+              eventResize={(arg) => {
+                onResizeEvent(arg, updateEvent);
+              }}
+              plugins={[
+                listPlugin,
+                dayGridPlugin,
+                timelinePlugin,
+                timeGridPlugin,
+                interactionPlugin,
+              ]}
+            />
+          </StyledCalendar>
+        </Card>
+      </DashboardContent>
+
+      <Dialog
+        fullWidth
+        maxWidth="xs"
+        open={openForm}
+        onClose={onCloseForm}
+        transitionDuration={{
+          enter: theme.transitions.duration.shortest,
+          exit: theme.transitions.duration.shortest - 80,
+        }}
+        PaperProps={{
+          sx: {
+            display: 'flex',
+            overflow: 'hidden',
+            flexDirection: 'column',
+            '& form': { minHeight: 0, display: 'flex', flex: '1 1 auto', flexDirection: 'column' },
+          },
+        }}
+      >
+        <DialogTitle sx={{ minHeight: 76 }}>
+          {openForm && <> {currentEvent?.id ? 'Edit' : 'Add'} installation event</>}
+        </DialogTitle>
+
+        <ProjectCalendarForm
+          currentEvent={currentEvent}
+          colorOptions={CALENDAR_COLOR_OPTIONS}
+          onClose={onCloseForm}
+        />
+      </Dialog>
+
+      <ProjectCalendarFilters
+        events={events}
+        filters={filters}
+        canReset={canReset}
+        dateError={dateError}
+        open={openFilters.value}
+        onClose={openFilters.onFalse}
+        onClickEvent={onClickEventInFilters}
+        colorOptions={CALENDAR_COLOR_OPTIONS}
+      />
+    </>
+  );
+}
+
+function applyFilter({ inputData, filters, dateError }) {
+  const { colors, startDate, endDate } = filters;
+
+  const stabilizedThis = inputData.map((el, index) => [el, index]);
+
+  inputData = stabilizedThis.map((el) => el[0]);
+
+  if (colors.length) {
+    inputData = inputData.filter((event) => colors.includes(event.color));
+  }
+
+  if (!dateError) {
+    if (startDate && endDate) {
+      inputData = inputData.filter((event) => fIsBetween(event.start, startDate, endDate));
+    }
+  }
+
+  return inputData;
+}

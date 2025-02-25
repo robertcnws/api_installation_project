@@ -7,6 +7,8 @@ import { VitePWA } from 'vite-plugin-pwa';
 // ----------------------------------------------------------------------
 
 const PORT = 3030;
+const HOST = '10.1.10.216';
+// const HOST = 'localhost';
 
 export default defineConfig({
   plugins: [
@@ -24,10 +26,13 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'robots.txt', 'apple-touch-icon.png'],
+      workbox: {
+        maximumFileSizeToCacheInBytes: 5000000,
+      },
       manifest: {
-        name: 'WMS App',
-        short_name: 'WMS App',
-        description: 'WMS APP',
+        name: 'NWS Home App',
+        short_name: 'NWS Home',
+        description: 'NWS Home',
         theme_color: '#ffffff',
         icons: [
           {
@@ -62,6 +67,13 @@ export default defineConfig({
       },
     ],
   },
-  server: { port: PORT, host: true },
-  preview: { port: PORT, host: true },
+  server: {
+    port: PORT,
+    host: HOST,
+    hmr: false,
+  },
+  preview: { 
+    port: PORT, 
+    host: HOST,
+  },
 });

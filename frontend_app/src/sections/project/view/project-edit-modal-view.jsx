@@ -1,65 +1,47 @@
-import { useState, useCallback, useMemo, useContext, useEffect } from 'react';
 import axios from 'axios';
-import { CONFIG } from 'src/config-global';
-
-import { LoadingContext } from 'src/auth/context/loading-context';
-
+import dayjs from 'dayjs';
 import { z as zod } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-
-import { useProjectByIdQuery } from 'src/_mock/__projects';
-
-import { toast } from 'src/components/snackbar';
-
-import { stripHtmlUsingDOM } from 'src/utils/helper';
+import { useForm, Controller } from 'react-hook-form';
+import { useMemo, useState, useEffect, useContext, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
+import { LoadingButton } from '@mui/lab';
 import Button from '@mui/material/Button';
-import Drawer from '@mui/material/Drawer';
 import Divider from '@mui/material/Divider';
-import Checkbox from '@mui/material/Checkbox';
-import TextField from '@mui/material/TextField';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
-import Autocomplete from '@mui/material/Autocomplete';
-import { varAlpha } from 'src/theme/styles';
-import { Avatar, Dialog, DialogActions, DialogTitle, Grid, MenuItem, MenuList, Paper, Tab, Tooltip } from '@mui/material';
-import { Form, Field, schemaHelper } from 'src/components/hook-form';
-import { Controller, useForm } from 'react-hook-form';
-import { useTabs } from 'src/hooks/use-tabs';
+import { Grid, Avatar, Dialog, Tooltip, MenuItem, MenuList, DialogTitle, DialogActions } from '@mui/material';
 
-import { useBoolean } from 'src/hooks/use-boolean';
-import dayjs from 'dayjs';
-import { CustomDateRangePicker, useDateRangePicker } from 'src/components/custom-date-range-picker';
-import { Label } from 'src/components/label';
-import { fData } from 'src/utils/format-number';
-import { fDate, fDateTime } from 'src/utils/format-time';
-import { CustomTabs } from 'src/components/custom-tabs';
-import { CustomPopover, usePopover } from 'src/components/custom-popover';
-
-import { Iconify } from 'src/components/iconify';
-import { Scrollbar } from 'src/components/scrollbar';
-import { fileFormat, FileThumbnail } from 'src/components/file-thumbnail';
-import { ConfirmDialog } from 'src/components/custom-dialog';
-import { useRouter } from 'src/routes/hooks';
 import { paths } from 'src/routes/paths';
+import { useRouter } from 'src/routes/hooks';
 
-import { LoadingButton } from '@mui/lab';
+import { useTabs } from 'src/hooks/use-tabs';
+import { useBoolean } from 'src/hooks/use-boolean';
 
-import { ProjectTaskDetailsPriority } from 'src/sections/project/project-task-details-priority';
-import { ProjectTaskShareDialog } from 'src/sections/project/project-task-share-dialog';
-import { ProjectTasksList } from 'src/sections/project/project-tasks-list';
-import { ProjectTaskDetails } from 'src/sections/project/project-task-details';
+import { stripHtmlUsingDOM } from 'src/utils/helper';
+
+import { CONFIG } from 'src/config-global';
+import { varAlpha } from 'src/theme/styles';
+import { useProjectByIdQuery } from 'src/_mock/__projects';
+
+import { Label } from 'src/components/label';
+import { toast } from 'src/components/snackbar';
+import { Iconify } from 'src/components/iconify';
+import { ConfirmDialog } from 'src/components/custom-dialog';
+import { Form, Field, schemaHelper } from 'src/components/hook-form';
+import { usePopover, CustomPopover } from 'src/components/custom-popover';
+import { useDateRangePicker, CustomDateRangePicker } from 'src/components/custom-date-range-picker';
+
 import { ProjectShareDialog } from 'src/sections/project/project-share-dialog';
 import { KanbanInputName } from 'src/sections/project/kanban/components/kanban-input-name';
 import { ProjectUserAssigneesList } from 'src/sections/project/project-user-assignees-list';
-import { ProjectDetailsAttachments } from 'src/sections/project/project-details-attachments';
-import { ProjectTaskUserAssigneesList } from 'src/sections/project/project-task-user-assignees-list';
+
+import { LoadingContext } from 'src/auth/context/loading-context';
 import { useDataContext } from 'src/auth/context/data/data-context';
-import { borderColor } from '@mui/system';
-import { ProjectEditTaskView } from './project-edit-task-view';
+
 
 
 // ----------------------------------------------------------------------
@@ -453,8 +435,7 @@ export function ProjectEditModalView({
     });
 
     const renderAddUsers = (
-        <>
-            <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ p: 0.5 }}>
+        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ p: 0.5 }}>
                 <IconButton
                     size="small"
                     color="primary"
@@ -470,7 +451,6 @@ export function ProjectEditModalView({
                     <Iconify icon="mingcute:add-line" />
                 </IconButton>
             </Stack>
-        </>
     );
 
     const renderMainInfo = (
@@ -564,11 +544,9 @@ export function ProjectEditModalView({
                                                     name="hasPermission"
                                                     labelPlacement="start"
                                                     label={
-                                                        <>
-                                                            <Typography variant="subtitle2" sx={{ mb: 0.5, color: 'warning.main' }}>
+                                                        <Typography variant="subtitle2" sx={{ mb: 0.5, color: 'warning.main' }}>
                                                                 Need Permission?
                                                             </Typography>
-                                                        </>
                                                     }
                                                     sx={{ mx: 0, width: 1, justifyContent: 'space-between' }}
                                                     onChange={(e) => onChange(e.target.checked)}
@@ -606,8 +584,7 @@ export function ProjectEditModalView({
                                     name="usersAssignees"
                                     control={control}
                                     render={({ field, fieldState: { error } }) => (
-                                        <>
-                                            <Box sx={{ width: '100%', color: !error ? 'text.secondary' : 'error.main', mt: -0.8 }}>
+                                        <Box sx={{ width: '100%', color: !error ? 'text.secondary' : 'error.main', mt: -0.8 }}>
                                                 {field.value.length > 0 ? (
                                                     <Box
                                                         component="ul"
@@ -643,8 +620,6 @@ export function ProjectEditModalView({
                                                     </Typography>
                                                 )}
                                             </Box>
-
-                                        </>
                                     )}
                                 />
                             </Stack>
@@ -662,8 +637,7 @@ export function ProjectEditModalView({
 
 
     const renderProject = (
-        <>
-            <Dialog fullWidth maxWidth="lg" open={open} onClose={onClose}>
+        <Dialog fullWidth maxWidth="lg" open={open} onClose={onClose}>
                 <DialogTitle>Update Project {projectData?.name} </DialogTitle>
 
                 <Form methods={methods} onSubmit={onSubmit}>
@@ -680,8 +654,7 @@ export function ProjectEditModalView({
                                     name="name"
                                     control={control}
                                     render={({ field, fieldState: { error } }) => (
-                                        <>
-                                            <Box sx={{ flexDirection: 'column', display: 'flex', width: '100%' }}>
+                                        <Box sx={{ flexDirection: 'column', display: 'flex', width: '100%' }}>
                                                 <KanbanInputName
                                                     {...field}
                                                     placeholder="Project name"
@@ -697,7 +670,6 @@ export function ProjectEditModalView({
                                                 />
                                                 {error && <Typography color="error" sx={{ fontSize: 'small' }}>{error.message}</Typography>}
                                             </Box>
-                                        </>
                                     )}
 
                                 />
@@ -770,7 +742,6 @@ export function ProjectEditModalView({
                     </DialogActions>
                 </Form>
             </Dialog>
-        </>
     )
 
     return (

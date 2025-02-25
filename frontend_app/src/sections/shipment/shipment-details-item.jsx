@@ -1,11 +1,14 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { paths } from 'src/routes/paths';
-import { useRouter } from 'src/routes/hooks';
+import React, { useState, useEffect, useCallback } from 'react';
+
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
 import CardHeader from '@mui/material/CardHeader';
-import { Grid, IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
+import { Grid, Table, TableRow, TableBody, TableCell, TableHead, IconButton, TableContainer } from '@mui/material';
+
+import { paths } from 'src/routes/paths';
+import { useRouter } from 'src/routes/hooks';
+
 import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
 
@@ -133,8 +136,7 @@ const renderPackages =
     <Stack spacing={2} alignItems="flex-start" sx={{ p: 3, textAlign: 'left', typography: 'body2' }}>
       <Grid container spacing={2}>
         {shipment.shipmentId && (
-          <>
-            <Grid container item xs={12}>
+          <Grid container item xs={12}>
               <Grid item xs={3}>
                 <Box sx={{ color: 'text.secondary' }}>ID: </Box>
               </Grid>
@@ -145,11 +147,9 @@ const renderPackages =
               </Grid>
 
             </Grid>
-          </>
         )}
         {shipment.shipmentNumber && (
-          <>
-            <Grid container item xs={12}>
+          <Grid container item xs={12}>
               <Grid item xs={3}>
                 <Box sx={{ color: 'text.secondary' }}>Number: </Box>
               </Grid>
@@ -160,11 +160,9 @@ const renderPackages =
               </Grid>
 
             </Grid>
-          </>
         )}
         {shipment.customerName && (
-          <>
-            <Grid container item xs={12}>
+          <Grid container item xs={12}>
               <Grid item xs={3}>
                 <Box sx={{ color: 'text.secondary' }}>Customer: </Box>
               </Grid>
@@ -175,11 +173,9 @@ const renderPackages =
               </Grid>
 
             </Grid>
-          </>
         )}
         {shipment.total && (
-          <>
-            <Grid container item xs={12}>
+          <Grid container item xs={12}>
               <Grid item xs={3}>
                 <Box sx={{ color: 'text.secondary' }}>Totals: </Box>
               </Grid>
@@ -209,11 +205,9 @@ const renderPackages =
               </Grid>
 
             </Grid>
-          </>
         )}
         {lineItems && lineItems.length > 0 && (
-          <>
-            <Grid container item xs={12}>
+          <Grid container item xs={12}>
               <Grid item xs={3}>
                 <Box sx={{ color: 'text.secondary' }}>Items (Products): </Box>
               </Grid>
@@ -222,11 +216,9 @@ const renderPackages =
               </Grid>
 
             </Grid>
-          </>
         )}
         {packages && packages.length > 0 && (
-          <>
-            <Grid container item xs={12}>
+          <Grid container item xs={12}>
               <Grid item xs={3}>
                 <Box sx={{ color: 'text.secondary' }}>Packages: </Box>
               </Grid>
@@ -235,7 +227,6 @@ const renderPackages =
               </Grid>
 
             </Grid>
-          </>
         )}
       </Grid>
     </Stack>

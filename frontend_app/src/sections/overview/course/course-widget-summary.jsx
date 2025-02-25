@@ -7,7 +7,6 @@ import { fNumber } from 'src/utils/format-number';
 import { varAlpha } from 'src/theme/styles';
 
 import { SvgColor } from 'src/components/svg-color';
-import AnimatedIcon from 'src/components/animate/animated-icon';
 
 // ----------------------------------------------------------------------
 

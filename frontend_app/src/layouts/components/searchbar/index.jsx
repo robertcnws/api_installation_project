@@ -82,6 +82,7 @@ export function Searchbar({ data: navItems = [], sx, ...other }) {
       .map((group, index) => (
         <Box component="ul" key={`${group}-${index}`}>
           {dataGroups[group].map((item) => {
+
             const { title, path } = item;
 
             const partsTitle = parse(title, match(title, searchQuery));

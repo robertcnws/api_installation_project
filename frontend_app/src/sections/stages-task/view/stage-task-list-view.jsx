@@ -1,28 +1,29 @@
-import { useState, useCallback, useEffect, useContext, useMemo } from 'react';
 import axios from 'axios';
+import { useMemo, useState, useEffect, useContext, useCallback } from 'react';
+
 import Box from '@mui/material/Box';
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
 import Card from '@mui/material/Card';
 import Table from '@mui/material/Table';
+import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
 import Tooltip from '@mui/material/Tooltip';
+import { LinearProgress } from '@mui/material';
 import TableBody from '@mui/material/TableBody';
-import TableContainer from '@mui/material/TableContainer';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
-import Alert from '@mui/material/Alert';
-
-import { LinearProgress } from '@mui/material';
+import TableContainer from '@mui/material/TableContainer';
 
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
+import { RouterLink } from 'src/routes/components';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 import { useSetState } from 'src/hooks/use-set-state';
 
-import { DashboardContent } from 'src/layouts/dashboard';
 import { CONFIG } from 'src/config-global';
+import { DashboardContent } from 'src/layouts/dashboard';
 
 import { Label } from 'src/components/label';
 import { toast } from 'src/components/snackbar';
@@ -30,12 +31,7 @@ import { Iconify } from 'src/components/iconify';
 import { Scrollbar } from 'src/components/scrollbar';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 import { CustomBreadcrumbs } from 'src/components/custom-breadcrumbs';
-
-import { LoadingContext } from 'src/auth/context/loading-context';
-import { useDataContext } from 'src/auth/context/data/data-context';
-
 import { TableCustomPaginationZohoStyleRow } from 'src/components/table/table-pagination-custom-zoho-style-row';
-
 import {
   useTable,
   rowInPage,
@@ -44,7 +40,9 @@ import {
   TableHeadCustom,
   TableSelectedAction,
 } from 'src/components/table';
-import { RouterLink } from 'src/routes/components';
+
+import { LoadingContext } from 'src/auth/context/loading-context';
+import { useDataContext } from 'src/auth/context/data/data-context';
 
 import { StageTaskTableRow } from '../stage-task-table-row';
 import { StageTaskTableToolbar } from '../stage-task-table-toolbar';
@@ -149,16 +147,16 @@ export function StageTaskListView() {
 
   useEffect(() => {
     const socket = new WebSocket(`wss://${CONFIG.apiHost}/api/projects/ws/stages-task/`);
-    socket.onopen = () => {
-      console.log('WebSocket connected');
-    };
+    // socket.onopen = () => {
+    //   console.log('WebSocket connected');
+    // };
     socket.onerror = (errorEvent) => {
       console.dir(errorEvent);
       console.error('WebSocket error (toString):', errorEvent.toString());
     };
-    socket.onclose = (e) => {
-      console.log('WebSocket closed', e);
-    };
+    // socket.onclose = (e) => {
+    //   console.log('WebSocket closed', e);
+    // };
     socket.onmessage = (event) => {
       const message = JSON.parse(event.data);
       if (message.type === 'created' || message.type === 'updated') {

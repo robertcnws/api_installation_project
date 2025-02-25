@@ -3,6 +3,7 @@ import { useState, useCallback } from 'react';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
+import { Tooltip } from '@mui/material';
 import Button from '@mui/material/Button';
 import Avatar from '@mui/material/Avatar';
 import Divider from '@mui/material/Divider';
@@ -16,12 +17,9 @@ import AvatarGroup, { avatarGroupClasses } from '@mui/material/AvatarGroup';
 import { useBoolean } from 'src/hooks/use-boolean';
 import { useCopyToClipboard } from 'src/hooks/use-copy-to-clipboard';
 
-import { fData } from 'src/utils/format-number';
+import { fDate } from 'src/utils/format-time';
 
 import { CONFIG } from 'src/config-global';
-
-import { fDate } from 'src/utils/format-time';
-import { Tooltip } from '@mui/material';
 
 import { toast } from 'src/components/snackbar';
 import { Iconify } from 'src/components/iconify';
@@ -160,8 +158,7 @@ export function ProjectFolderItem({
   );
 
   const renderAvatar = (
-    <>
-      <AvatarGroup
+    <AvatarGroup
         max={3}
         sx={{
           [`& .${avatarGroupClasses.avatar}`]: {
@@ -178,7 +175,6 @@ export function ProjectFolderItem({
           </Tooltip>
         ))}
       </AvatarGroup>
-    </>
   );
 
   return (

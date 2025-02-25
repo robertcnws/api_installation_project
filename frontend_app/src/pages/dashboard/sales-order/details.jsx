@@ -1,14 +1,13 @@
-import React, { useEffect, useState } from 'react';
-
 import { Helmet } from 'react-helmet-async';
+import React, { useState, useEffect } from 'react';
 
 import { useParams } from 'src/routes/hooks';
-
-import { useDataContext } from 'src/auth/context/data/data-context';
 
 import { CONFIG } from 'src/config-global';
 
 import { SalesOrderDetailsView } from 'src/sections/sales-order/view';
+
+import { useDataContext } from 'src/auth/context/data/data-context';
 
 // ----------------------------------------------------------------------
 

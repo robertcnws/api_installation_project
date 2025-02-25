@@ -1,11 +1,14 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { paths } from 'src/routes/paths';
-import { useRouter } from 'src/routes/hooks';
+import React, { useState, useEffect, useCallback } from 'react';
+
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
 import CardHeader from '@mui/material/CardHeader';
-import { Grid, IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
+import { Grid, Table, TableRow, TableBody, TableCell, TableHead, IconButton, TableContainer } from '@mui/material';
+
+import { paths } from 'src/routes/paths';
+import { useRouter } from 'src/routes/hooks';
+
 import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
 
@@ -91,8 +94,7 @@ export function OrderDetailsItems({ order }) {
     <Stack spacing={2} alignItems="flex-start" sx={{ p: 3, textAlign: 'left', typography: 'body2' }}>
       <Grid container spacing={2}>
         {order.salesorderId && (
-          <>
-            <Grid container item xs={12}>
+          <Grid container item xs={12}>
               <Grid item xs={3}>
                 <Box sx={{ color: 'text.secondary' }}>ID: </Box>
               </Grid>
@@ -103,11 +105,9 @@ export function OrderDetailsItems({ order }) {
               </Grid>
 
             </Grid>
-          </>
         )}
         {order.customerName && (
-          <>
-            <Grid container item xs={12}>
+          <Grid container item xs={12}>
               <Grid item xs={3}>
                 <Box sx={{ color: 'text.secondary' }}>Customer: </Box>
               </Grid>
@@ -118,11 +118,9 @@ export function OrderDetailsItems({ order }) {
               </Grid>
 
             </Grid>
-          </>
         )}
         {order.totalQuantity && (
-          <>
-            <Grid container item xs={12}>
+          <Grid container item xs={12}>
               <Grid item xs={3}>
                 <Box sx={{ color: 'text.secondary' }}>Total Quantity: </Box>
               </Grid>
@@ -133,11 +131,9 @@ export function OrderDetailsItems({ order }) {
               </Grid>
 
             </Grid>
-          </>
         )}
         {order.total && (
-          <>
-            <Grid container item xs={12}>
+          <Grid container item xs={12}>
               <Grid item xs={3}>
                 <Box sx={{ color: 'text.secondary' }}>Totals: </Box>
               </Grid>
@@ -177,11 +173,9 @@ export function OrderDetailsItems({ order }) {
               </Grid>
 
             </Grid>
-          </>
         )}
         {lineItems && lineItems.length > 0 && (
-          <>
-            <Grid container item xs={12}>
+          <Grid container item xs={12}>
               <Grid item xs={3}>
                 <Box sx={{ color: 'text.secondary' }}>Items (Products): </Box>
               </Grid>
@@ -190,7 +184,6 @@ export function OrderDetailsItems({ order }) {
               </Grid>
 
             </Grid>
-          </>
         )}
       </Grid>
     </Stack>

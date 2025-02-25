@@ -1,14 +1,7 @@
-import { useState, useCallback, useContext, useEffect } from 'react';
-
-import { LoadingContext } from 'src/auth/context/loading-context';
-
-import { Label } from 'src/components/label';
-
-import { useProjectByIdQuery } from 'src/_mock/__projects'
+import { useState, useContext, useCallback } from 'react';
 
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
-import Avatar from '@mui/material/Avatar';
 import Divider from '@mui/material/Divider';
 import MenuList from '@mui/material/MenuList';
 import MenuItem from '@mui/material/MenuItem';
@@ -17,25 +10,27 @@ import { useTheme } from '@mui/material/styles';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import ListItemText from '@mui/material/ListItemText';
+import { List, Tooltip, ListItem } from '@mui/material';
 import TableRow, { tableRowClasses } from '@mui/material/TableRow';
 import TableCell, { tableCellClasses } from '@mui/material/TableCell';
-import AvatarGroup, { avatarGroupClasses } from '@mui/material/AvatarGroup';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 import { useDoubleClick } from 'src/hooks/use-double-click';
 import { useCopyToClipboard } from 'src/hooks/use-copy-to-clipboard';
 
-import { fData } from 'src/utils/format-number';
-import { fDate, fTime } from 'src/utils/format-time';
+import { fDate } from 'src/utils/format-time';
 
+import { CONFIG } from 'src/config-global';
 import { varAlpha } from 'src/theme/styles';
-import { Icon, List, ListItem, Table, TableBody, Tooltip } from '@mui/material';
 
+import { Label } from 'src/components/label';
 import { toast } from 'src/components/snackbar';
 import { Iconify } from 'src/components/iconify';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 import { FileThumbnail } from 'src/components/file-thumbnail';
 import { usePopover, CustomPopover } from 'src/components/custom-popover';
+
+import { LoadingContext } from 'src/auth/context/loading-context';
 
 import { ProjectShareDialog } from './project-share-dialog';
 import { ProjectFileDetails } from './project-file-details';
@@ -209,7 +204,7 @@ export function ProjectTableRow({
                 row?.currentStage?.name === 'Preparation' ? 'default' : 
                 row?.currentStage?.name === 'Coordination' ? 'secondary' : 
                 row?.currentStage?.name === 'Installation' ? 'info' : 
-                row?.currentStage?.name === 'Permission' ? 'warning' : 'success'
+                row?.currentStage?.name === CONFIG.stages.permission ? 'warning' : 'success'
               }>{row?.currentStage?.name}</Label>
             </TableCell>
 
@@ -246,13 +241,13 @@ export function ProjectTableRow({
                   sx={{ whiteSpace: 'nowrap', cursor: 'pointer', }}
                 >
                   <Stack direction="row" alignItems="center" spacing={1} sx={{
-                    color: stageOrder > itemOrder && stageName !== 'Permission' && !hasPermission ? 'default.main' :
-                      stageOrder === itemOrder && stageName !== 'Permission' && !hasPermission ? 'info.main' :
-                        stageName === 'Permission' && hasPermission && percentage < 100 ? 'info.main' :
+                    color: stageOrder > itemOrder && stageName !== CONFIG.stages.permission && !hasPermission ? 'default.main' :
+                      stageOrder === itemOrder && stageName !== CONFIG.stages.permission && !hasPermission ? 'info.main' :
+                        stageName === CONFIG.stages.permission && hasPermission && percentage < 100 ? 'info.main' :
                           stageOrder > itemOrder ? 'default.main' :
                             stageOrder === itemOrder ? 'info.main' : 'success.main'
                   }}>
-                    {!hasPermission || stageName !== 'Permission' ? (
+                    {!hasPermission || stageName !== CONFIG.stages.permission ? (
                       <Tooltip title={
                         stageOrder > itemOrder ? `${stageName} is ahead of current stage` :
                           stageOrder === itemOrder && percentage === 0 ? `${stageName} is current stage` :
@@ -338,14 +333,14 @@ export function ProjectTableRow({
 
 
                 const color =
-                  stageOrder > itemOrder && stageName !== 'Permission' && !hasPermission ? 'default.main' :
-                    stageOrder === itemOrder && stageName !== 'Permission' && !hasPermission ? 'info.main' :
-                      stageName === 'Permission' && hasPermission && percentage < 100 ? 'info.main' :
+                  stageOrder > itemOrder && stageName !== CONFIG.stages.permission && !hasPermission ? 'default.main' :
+                    stageOrder === itemOrder && stageName !== CONFIG.stages.permission && !hasPermission ? 'info.main' :
+                      stageName === CONFIG.stages.permission && hasPermission && percentage < 100 ? 'info.main' :
                         stageOrder > itemOrder ? 'default.main' :
                           stageOrder === itemOrder ? 'info.main' : 'success.main'
 
                 const icon =
-                  !hasPermission || stageName !== 'Permission' ? (stageOrder > itemOrder ? "jam:pie-chart-alt" :
+                  !hasPermission || stageName !== CONFIG.stages.permission ? (stageOrder > itemOrder ? "jam:pie-chart-alt" :
                     stageOrder === itemOrder && percentage === 0 ? "icon-park-solid:pie" :
                       stageOrder === itemOrder && percentage > 0 && percentage < 25 ? "icon-park-solid:pie-two" :
                         stageOrder === itemOrder && percentage >= 25 && percentage < 50 ? "icon-park-solid:pie-four" :

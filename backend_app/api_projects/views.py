@@ -14,6 +14,8 @@ from .models import (
     ProjectTracking,
     ProjectDefaultTask,
     ProjectTaskComment,
+    ProjectNotification,
+    ProjectNotificationUser
 )
 from .s3_utils import (
     upload_attachment_to_s3, 
@@ -23,7 +25,7 @@ from .s3_utils import (
 from .data_util import (
     transform_data_to_mongo,
     parse_custom_date,
-    create_default_task_number,
+    create_notification,
     create_project_number,
     fix_order,
     fix_order_after_edit,
@@ -77,6 +79,13 @@ def delete_project_file(request, id, folder, file):
             },
         )
         tracking.save()
+        
+        if user_reporter:
+            module='projects'
+            info=f'has deleted file attachment in project {obj.name}'
+            info_id=obj.id
+            type='delete_project_file'
+            create_notification(module, info_id, info, type, user_reporter['username'])
             
         return Response({'message': 'Project file deleted successfully'})
     except Exception as e:
@@ -122,6 +131,13 @@ def delete_default_task_file(request, projectId, id, folder, file):
             },
         )
         tracking.save()
+        
+        if user_reporter:
+            module='projects'
+            info=f'has deleted file attachment from task {task['project_default_task']['name']} in project {project.name}'
+            info_id=project.id
+            type='delete_task_file'
+            create_notification(module, info_id, info, type, user_reporter['username'])
             
         return Response({'message': 'Project file deleted successfully'})
     except Exception as e:
@@ -143,13 +159,21 @@ def create_project(request):
     user_reporter = json.loads(data.get('userReporter', None))
     
     permission = ProjectPermissions.objects(name='full access').first()
+    if not permission:
+        permission = ProjectPermissions(
+            name='full access',
+            description='Full access to project',
+        )
+        permission.save()
     permission = transform_data_to_mongo(permission)
     
     users_assignees = json.loads(data.get('usersAssignees', []))
     
-    user_manager = json.loads(data.get('userManager', None))
+    user_manager = data.get('userManager', None)
     
-    has_permission = data.get('hasPermission', False)
+    has_permission_str = data.get('hasPermission', 'false') if data.get('hasPermission') else None
+    if has_permission_str:
+        has_permission = True if has_permission_str.lower() == 'true' else False
     
     current_stage = ProjectStage.objects(name='Preparation').first()
     
@@ -159,6 +183,10 @@ def create_project(request):
         user['project_permissions'] = [permission]
     
     user_reporter['project_permissions'] = [permission]
+    
+    sales_order = json.loads(data.get('salesOrder'))
+
+    number = create_project_number(sales_order.get('salesorder_number'))
     
     project_attachments = []
     files = request.FILES.getlist('projectAttachments')
@@ -179,7 +207,7 @@ def create_project(request):
             
     project_attachments = sorted(project_attachments, key=lambda x: x['name'], reverse=True)
     
-    default_tasks = ProjectDefaultTask.objects().all().order_by('order')
+    default_tasks = ProjectDefaultTask.objects.all().order_by('order')
     
     list_default_tasks_info = []
     
@@ -201,7 +229,7 @@ def create_project(request):
         project = Project(
             name=data.get('name', ''),
             description=data.get('description'), 
-            sales_order=json.loads(data.get('salesOrder')), 
+            sales_order=sales_order, 
             users_assignees=users_assignees,
             # start_date=start_date,
             # end_date=end_date,
@@ -212,7 +240,7 @@ def create_project(request):
             current_stage=current_stage,    
             user_reporter=user_reporter,
             project_attachments=project_attachments,
-            number=create_project_number(data.get('salesOrder').get('salesorder_number')),
+            number=number,
             user_manager=user_manager,
             has_permission=has_permission,
             project_default_tasks=list_default_tasks_info,
@@ -230,6 +258,13 @@ def create_project(request):
         )
         tracking.save()
         
+        if user_reporter:
+            module='projects'
+            info=f'has created new project {project.name}'
+            info_id=project.id
+            type='create_project'
+            create_notification(module, info_id, info, type, user_reporter['username'])
+        
         return Response({
             'message': 'Project created successfully',
             'data': json.loads(project.to_json())
@@ -237,7 +272,6 @@ def create_project(request):
 
     except Exception as e:
         return Response({'error': str(e)}, status=500)
-    
     
 
 #############################################
@@ -341,6 +375,13 @@ def create_projects(request):
         },
     )
     tracking.save()
+    
+    if user_reporter:
+        module='projects'
+        info=f'has created {count} new projects'
+        info_id='list'
+        type='create_projects'
+        create_notification(module, info_id, info, type, user_reporter['username'])
         
     return Response({
         'message': f'{count} Project(s) created successfully',
@@ -441,6 +482,13 @@ def update_project(request, id):
         },
     )
     tracking.save()
+    
+    if user_reporter:
+        module='projects'
+        info=f'has updated project {project.name}'
+        info_id=project.id
+        type='update_project'
+        create_notification(module, info_id, info, type, user_reporter['username'])
         
     return Response({
         'message': 'Project updated successfully',
@@ -483,6 +531,13 @@ def change_project_permission(request, id):
         },
     )
     tracking.save()
+    
+    if user_reporter:
+        module='projects'
+        info=f'has changed permission in project {project.name}'
+        info_id=project.id
+        type='change_project_permission'
+        create_notification(module, info_id, info, type, user_reporter['username'])
         
     return Response({
         'message': 'Project updated successfully',
@@ -521,6 +576,13 @@ def change_project_address(request, id):
         },
     )
     tracking.save()
+    
+    if user_reporter:
+        module='projects'
+        info=f'has changed address in project {project.name}'
+        info_id=project.id
+        type='change_project_address'
+        create_notification(module, info_id, info, type, user_reporter['username'])
         
     return Response({
         'message': 'Project updated successfully',
@@ -558,6 +620,13 @@ def add_project_users_assignees(request, id):
         },
     )
     tracking.save()
+    
+    if user_reporter:
+        module='projects'
+        info=f'has added users assignees in project {project.name}'
+        info_id=project.id
+        type='add_project_users_assignees'
+        create_notification(module, info_id, info, type, user_reporter['username'])
         
     return Response({
         'message': 'Project users assignees added successfully',
@@ -593,6 +662,12 @@ def delete_project(request, id):
             },
         )
         tracking.save()
+        if user_reporter:
+            module='projects'
+            info=f'has deleted project {project.name}'
+            info_id=project.id
+            type='delete_project'
+            create_notification(module, info_id, info, type, user_reporter['username'])
         return Response({'message': 'Project deleted successfully'})
     except Exception as e:
         return Response({'error': str(e)}, status=500)
@@ -637,6 +712,12 @@ def delete_projects(request):
             },
         )
         tracking.save()
+        if user_reporter:
+            module='projects'
+            info=f'has deleted {len(ids)} projects'
+            info_id='list'
+            type='delete_projects'
+            create_notification(module, info_id, info, type, user_reporter['username'])
         return Response({'message': 'Projects deleted successfully'})
     except Exception as e:
         return Response({'error': str(e)}, status=500)
@@ -682,6 +763,12 @@ def delete_project_user(request, id, userId):
                 },
             )
             tracking.save()
+        if user_reporter:
+            module='projects'
+            info=f'has deleted user {tracking_info["username"]} from project {project.name}'
+            info_id=project.id
+            type='delete_project_user'
+            create_notification(module, info_id, info, type, user_reporter['username'])
         return Response({'message': 'Project user deleted successfully'})
     except Exception as e:
         return Response({'error': str(e)}, status=500)
@@ -740,6 +827,12 @@ def create_stage(request):
             },
         )
         tracking.save()
+        if user_reporter:
+            module='stages'
+            info=f'has created new stage {stage.name}'
+            info_id=stage.id
+            type='create_stage'
+            create_notification(module, info_id, info, type, user_reporter['username'])
         return Response({'message': 'Stage created successfully'})
     except Exception as e:
         return Response({'error': str(e)}, status=500)
@@ -781,6 +874,12 @@ def edit_stage(request, id):
             },
         )
         tracking.save()
+        if user_reporter:
+            module='stages'
+            info=f'has updated stage {stage.name}'
+            info_id=stage.id
+            type='update_stage'
+            create_notification(module, info_id, info, type, user_reporter['username'])
         return Response({'message': 'Stage updated successfully'})
     except Exception as e:
         return Response({'error': str(e)}, status=500)
@@ -810,6 +909,12 @@ def delete_stage(request, id):
             },
         )
         tracking.save()
+        if user_reporter:
+            module='stages'
+            info=f'has deleted stage {stage.name}'
+            info_id=stage.id
+            type='delete_stage'
+            create_notification(module, info_id, info, type, user_reporter['username'])
         return Response({'message': 'Stage deleted successfully'})
     except Exception as e:
         return Response({'error': str(e)}, status=500)
@@ -839,6 +944,12 @@ def delete_stages(request):
             },
         )
         tracking.save()
+        if user_reporter:
+            module='stages'
+            info=f'has deleted {len(ids)} stages'
+            info_id='list'
+            type='delete_stages'
+            create_notification(module, info_id, info, type, user_reporter['username'])
         return Response({'message': 'Stages deleted successfully'})
     except Exception as e:
         return Response({'error': str(e)}, status=500)
@@ -880,6 +991,12 @@ def create_stage_task(request):
             },
         )
         tracking.save()
+        if user_reporter:
+            module='stage_tasks'
+            info=f'has created new stage task {stage.name}'
+            info_id=stage.id
+            type='create_stage_task'
+            create_notification(module, info_id, info, type, user_reporter['username'])
         return Response({'message': 'Stage task created successfully'})
     except Exception as e:
         return Response({'error': str(e)}, status=500)
@@ -921,6 +1038,12 @@ def edit_stage_task(request, id):
             },
         )
         tracking.save()
+        if user_reporter:
+            module='stage_tasks'
+            info=f'has updated stage task {stage.name}'
+            info_id=stage.id
+            type='update_stage_task'
+            create_notification(module, info_id, info, type, user_reporter['username'])
         return Response({'message': 'Stage task updated successfully'})
     except Exception as e:
         return Response({'error': str(e)}, status=500)
@@ -950,6 +1073,12 @@ def delete_stage_task(request, id):
             },
         )
         tracking.save()
+        if user_reporter:
+            module='stage_tasks'
+            info=f'has deleted stage task {stage.name}'
+            info_id=stage.id
+            type='delete_stage_task'
+            create_notification(module, info_id, info, type, user_reporter['username'])
         return Response({'message': 'Stage task deleted successfully'})
     except Exception as e:
         return Response({'error': str(e)}, status=500)
@@ -979,6 +1108,12 @@ def delete_stages_task(request):
             },
         )
         tracking.save()
+        if user_reporter:
+            module='stage_tasks'
+            info=f'has deleted {len(ids)} stages tasks'
+            info_id='list'
+            type='delete_stage_tasks'
+            create_notification(module, info_id, info, type, user_reporter['username'])
         return Response({'message': 'Stages task deleted successfully'})
     except Exception as e:
         return Response({'error': str(e)}, status=500)
@@ -1005,7 +1140,7 @@ def create_project_task(request):
     if not project:
         return Response({'error': 'Project not found'}, status=404)
     
-    project = transform_data_to_mongo(project, exclude_fields=['project_tasks'])
+    project = transform_data_to_mongo(project, include_fields=['id', 'name', 'number'])
     
     users_assignees = json.loads(data.get('usersAssignees', []))
     
@@ -1074,6 +1209,13 @@ def create_project_task(request):
         )
         tracking.save()
         
+        if user_reporter:
+            module='project_tasks'
+            info=f'has created new task {project_task["name"]} in project {project.name}'
+            info_id=project_task['id']
+            type='create_project_task'
+            create_notification(module, info_id, info, type, user_reporter['username'])
+        
         return Response({
             'message': 'Project task created successfully',
             'data': project_task
@@ -1111,7 +1253,7 @@ def update_project_task(request, id):
     if not project:
         return Response({'error': 'Project not found'}, status=404)
     
-    project = transform_data_to_mongo(project, exclude_fields=['project_tasks'])
+    project = transform_data_to_mongo(project, include_fields=['id', 'name', 'number'])
     
     users_assignees = json.loads(data.get('usersAssignees', []))
     
@@ -1185,6 +1327,13 @@ def update_project_task(request, id):
         },
     )
     tracking.save()
+    
+    if user_reporter:
+        module='project_tasks'
+        info=f'has updated task {project_task["name"]} in project {project.name}'
+        info_id=project_task['id']
+        type='update_project_task'
+        create_notification(module, info_id, info, type, user_reporter['username'])
         
     return Response({
         'message': 'Project task updated successfully',
@@ -1236,6 +1385,13 @@ def add_project_task_users_assignees(request, projectId, id):
         },
     )
     tracking.save()
+    
+    if user_reporter:
+        module='projects'
+        info=f'has added users assignees in project task {project_task["project_default_task"]["name"]} in project {project.name}'
+        info_id=project.id
+        type='add_project_default_task_users_assignees'
+        create_notification(module, info_id, info, type, user_reporter['username'])
         
     return Response({
         'message': 'Project task users assignees added successfully',
@@ -1279,6 +1435,14 @@ def delete_project_task(request, projectId, id):
             },
         )
         tracking.save()
+        
+        if user_reporter:
+            module='projects'
+            info=f'has deleted task {project_task.name} in project {project.name}'
+            info_id=project.id
+            type='delete_project_task'
+            create_notification(module, info_id, info, type, user_reporter['username'])
+            
         return Response({'message': 'Project task deleted successfully'})
     except Exception as e:
         return Response({'error': str(e)}, status=500)
@@ -1332,6 +1496,13 @@ def delete_project_task_user(request, projectId, id, userId):
                 },
             )
             tracking.save()
+            
+        if user_reporter:
+            module='projects'
+            info=f'has deleted user {tracking_info["username"]} from task {project_task["project_default_task"]["name"]} in project {project.name}'
+            info_id=project.id
+            type='delete_project_task_user'
+            create_notification(module, info_id, info, type, user_reporter['username'])
         return Response({'message': 'Project task user deleted successfully'})
     except Exception as e:
         return Response({'error': str(e)}, status=500)
@@ -1404,6 +1575,14 @@ def create_default_task(request):
             },
         )
         tracking.save()
+        
+        if user_reporter:
+            module='default_tasks'
+            info=f'has created new default task {task.name}'
+            info_id=task.id
+            type='create_default_task'
+            create_notification(module, info_id, info, type, user_reporter['username'])
+            
         return Response({'message': 'Default task created successfully'})
     except Exception as e:
         return Response({'error': str(e)}, status=500)
@@ -1479,6 +1658,14 @@ def edit_default_task(request, id):
             },
         )
         tracking.save()
+        
+        if user_reporter:
+            module='default_tasks'
+            info=f'has updated default task {default_task.name}'
+            info_id=default_task.id
+            type='update_default_task'
+            create_notification(module, info_id, info, type, user_reporter['username'])
+            
         return Response({'message': 'Stage updated successfully'})
     except Exception as e:
         return Response({'error': str(e)}, status=500)
@@ -1519,6 +1706,14 @@ def delete_default_task(request, id):
             },
         )
         tracking.save()
+        
+        if user_reporter:
+            module='default_tasks'
+            info=f'has deleted default task {default_task.name}'
+            info_id=default_task.id
+            type='delete_default_task'
+            create_notification(module, info_id, info, type, user_reporter['username'])
+            
         return Response({'message': 'Default task deleted successfully'})
     except Exception as e:
         return Response({'error': str(e)}, status=500)
@@ -1559,6 +1754,14 @@ def delete_default_tasks(request):
             },
         )
         tracking.save()
+        
+        if user_reporter:
+            module='default_tasks'
+            info=f'has deleted {len(ids)} default tasks'
+            info_id='list'
+            type='delete_default_tasks'
+            create_notification(module, info_id, info, type, user_reporter['username'])
+            
         return Response({'message': 'Default tasks deleted successfully'})
     except Exception as e:
         return Response({'error': str(e)}, status=500)
@@ -1618,7 +1821,7 @@ def change_status_project_default_task(request, projectId, id):
                 action=f'change stage project ({project.id} - {project.name})',
                 created_time=timezone.now(),
                 managed_data={
-                    'data': transform_data_to_mongo(project, exclude_fields=['sales_order', 'project_tasks', 'project_default_tasks', 'project_attachments'])
+                    'data': transform_data_to_mongo(project, include_fields=['id', 'name', 'number', 'current_stage', 'project_history'])
                 },
             )
             tracking.save()
@@ -1631,10 +1834,18 @@ def change_status_project_default_task(request, projectId, id):
             action=f'change status default task ({task["project_default_task"]["id"]} - {task["project_default_task"]["name"]})',
             created_time=timezone.now(),
             managed_data={
-                'data': transform_data_to_mongo(project, exclude_fields=['sales_order', 'project_tasks'])
+                'data': transform_data_to_mongo(project, include_fields=['id', 'name', 'number', 'current_stage', 'project_default_tasks'])
             },
         )
         tracking.save()
+        
+        if user_reporter:
+            module='projects'
+            info=f'has changed status in task {task["project_default_task"]["name"]} in project {project.name}'
+            info_id=project.id
+            type='change_status_project_default_task'
+            create_notification(module, info_id, info, type, user_reporter['username'])
+            
         return Response({'message': 'Status in default task updated successfully'})
     except Exception as e:
         return Response({'error': str(e)}, status=500)
@@ -1676,10 +1887,18 @@ def change_priority_project_default_task(request, projectId, id):
             action=f'change priority default task ({task["project_default_task"]["id"]} - {task["project_default_task"]["name"]})',
             created_time=timezone.now(),
             managed_data={
-                'data': transform_data_to_mongo(project, exclude_fields=['sales_order', 'project_tasks'])
+                'data': transform_data_to_mongo(project, include_fields=['id', 'name', 'number', 'current_stage', 'project_default_tasks'])
             },
         )
         tracking.save()
+        
+        if user_reporter:
+            module='projects'
+            info=f'has changed priority in task {task["project_default_task"]["name"]} in project {project.name}'
+            info_id=project.id
+            type='change_priority_project_default_task'
+            create_notification(module, info_id, info, type, user_reporter['username'])
+            
         return Response({'message': 'Status in default task updated successfully'})
     except Exception as e:
         return Response({'error': str(e)}, status=500)
@@ -1735,10 +1954,17 @@ def upload_files_to_project(request, id):
         action=f'upload files to project ({project.id} - {project.name})',
         created_time=timezone.now(),
         managed_data={
-            'data': transform_data_to_mongo(project, exclude_fields=['sales_order', 'project_tasks', 'project_default_tasks'])
+            'data': transform_data_to_mongo(project, include_fields=['id', 'name', 'number', 'current_stage', 'project_attachments'])
         },
     )
     tracking.save()
+    
+    if user_reporter:
+        module='projects'
+        info=f'has uploaded file attachments to project {project.name}'
+        info_id=project.id
+        type='upload_files_to_project'
+        create_notification(module, info_id, info, type, user_reporter['username'])
         
     return Response({
         'message': 'Uploaded files to project successfully',
@@ -1811,10 +2037,17 @@ def upload_files_to_default_task(request, projectId, id):
         action=f'upload files to default task ({task['project_default_task']['_id']} - {task['project_default_task']['name']} in project {project.id} - {project.name})',
         created_time=timezone.now(),
         managed_data={
-            'data': transform_data_to_mongo(project, exclude_fields=['sales_order', 'project_tasks'])
+            'data': transform_data_to_mongo(project, include_fields=['id', 'name', 'number', 'current_stage', 'project_default_tasks'])
         },
     )
     tracking.save()
+    
+    if user_reporter:
+        module='projects'
+        info=f'has uploaded file attachments to task {task["project_default_task"]["name"]} in project {project.name}'
+        info_id=project.id
+        type='upload_files_to_default_task'
+        create_notification(module, info_id, info, type, user_reporter['username'])
         
     return Response({
         'message': 'Uploaded files to default task successfully',
@@ -1859,7 +2092,7 @@ def create_project_comment(request, id):
         created_time=timezone.now(),
         last_modified_time=timezone.now(),
         user_reporter=user_reporter,
-        project=transform_data_to_mongo(project, exclude_fields=['sales_order', 'project_tasks', 'project_comments']),
+        project=transform_data_to_mongo(project, include_fields=['id', 'name', 'number', 'current_stage']),
         project_default_task=task if task else None,
         project_default_task_comment_attachments=[]
     )
@@ -1871,7 +2104,7 @@ def create_project_comment(request, id):
     
     
     project.last_modified_time = timezone.now()
-    project.project_comments = sorted_comments if sorted_comments else project.project_comments
+    project.project_comments = sorted_comments
         
     project.save()
     
@@ -1880,10 +2113,17 @@ def create_project_comment(request, id):
         action=f'create comment in project ({project.id} - {project.name})',
         created_time=timezone.now(),
         managed_data={
-            'data': transform_data_to_mongo(project, exclude_fields=['sales_order', 'project_tasks', 'project_default_tasks'])
+            'data': transform_data_to_mongo(project, include_fields=['id', 'name', 'number', 'current_stage', 'project_comments'])
         },
     )
     tracking.save()
+    
+    if user_reporter:
+        module='projects'
+        info=f'has created comment in project {project.name}'
+        info_id=project.id
+        type='create_project_comment'
+        create_notification(module, info_id, info, type, user_reporter['username'])
         
     return Response({
         'message': 'Comment in project created successfully',
@@ -1926,21 +2166,30 @@ def edit_project_comment(request, id, projectId):
     
     existing_comment = ProjectTaskComment.objects(id=id).first()
     
-    if not existing_comment:
-        return Response({'error': 'Comment not found'}, status=404)
-    
-    existing_comment.comment = text_comment
-    existing_comment.last_modified_time = timezone.now()
-    existing_comment.user_reporter = user_reporter
-    existing_comment.project = transform_data_to_mongo(project, exclude_fields=['sales_order', 'project_tasks', 'project_comments'])
-    existing_comment.project_default_task = task if task else None
-    existing_comment.save()
+    if existing_comment:
+        existing_comment.comment = text_comment
+        existing_comment.last_modified_time = timezone.now()
+        existing_comment.user_reporter = user_reporter
+        existing_comment.project = transform_data_to_mongo(project, include_fields=['id', 'name', 'number', 'current_stage'])
+        existing_comment.project_default_task = task if task else None
+        existing_comment.save()
+    else:
+        existing_comment = ProjectTaskComment(
+            comment=text_comment,
+            created_time=timezone.now(),
+            last_modified_time=timezone.now(),
+            user_reporter=user_reporter,
+            project=transform_data_to_mongo(project, include_fields=['id', 'name', 'number', 'current_stage']),
+            project_default_task=task if task else None,
+            project_default_task_comment_attachments=[]
+        )
+        existing_comment.save()
     
     last_comments.append(transform_data_to_mongo(existing_comment))
     sorted_comments = sorted(last_comments, key=lambda x: to_aware(x['created_time']), reverse=True)
     
     project.last_modified_time = timezone.now()
-    project.project_comments = sorted_comments if sorted_comments else project.project_comments
+    project.project_comments = sorted_comments
         
     project.save()
     
@@ -1949,10 +2198,17 @@ def edit_project_comment(request, id, projectId):
         action=f'edit comment ({existing_comment.id}) in project ({project.id} - {project.name})',
         created_time=timezone.now(),
         managed_data={
-            'data': transform_data_to_mongo(project, exclude_fields=['sales_order', 'project_tasks', 'project_default_tasks'])
+            'data': transform_data_to_mongo(project, include_fields=['id', 'name', 'number', 'current_stage', 'project_comments'])
         },
     )
     tracking.save()
+    
+    if user_reporter:
+        module='projects'
+        info=f'has updated comment in project {project.name}'
+        info_id=project.id
+        type='update_project_comment'
+        create_notification(module, info_id, info, type, user_reporter['username'])
         
     return Response({
         'message': 'Comment in project edited successfully',
@@ -1973,7 +2229,9 @@ def delete_project_comment(request, id, projectId):
         return Response({'error': 'Project not found'}, status=404)
     
     last_comments = project.project_comments if project.project_comments else []
-    last_comments = [comment for comment in last_comments if str(comment['id']) != id]
+    
+    last_comments = [comment for comment in last_comments if str(comment['id']) != str(id)]
+    last_comments = last_comments if last_comments else []
             
     data = request.data
     
@@ -1981,33 +2239,116 @@ def delete_project_comment(request, id, projectId):
     
     existing_comment = ProjectTaskComment.objects(id=id).first()
     
-    if not existing_comment:
-        return Response({'error': 'Comment not found'}, status=404)
-    
-    existing_comment.delete()
+    if existing_comment:
+        existing_comment.delete()
     
     sorted_comments = sorted(last_comments, key=lambda x: to_aware(x['created_time']), reverse=True)
     
     project.last_modified_time = timezone.now()
-    project.project_comments = sorted_comments if sorted_comments else project.project_comments
+    project.project_comments = sorted_comments
         
     project.save()
     
     tracking = ProjectTracking(
         user_reporter=user_reporter,
-        action=f'delete comment ({existing_comment.id}) in project ({project.id} - {project.name})',
+        action=f'delete comment in project ({project.id} - {project.name})',
         created_time=timezone.now(),
         managed_data={
-            'data': transform_data_to_mongo(project, exclude_fields=['sales_order', 'project_tasks', 'project_default_tasks'])
+            'data': transform_data_to_mongo(project, include_fields=['id', 'name', 'number', 'current_stage', 'project_comments'])
         },
     )
     tracking.save()
+    
+    if user_reporter:
+        module='projects'
+        info=f'has deleted comment in project {project.name}'
+        info_id=project.id
+        type='delete_project_comment'
+        create_notification(module, info_id, info, type, user_reporter['username'])
         
     return Response({
         'message': 'Comment in project deleted successfully',
         'data': json.loads(project.to_json())
     }, status=201)
     
+
+#############################################
+# REMOVE ALL NOTIFICATIONS
+#############################################
+
+    
+@api_view(['DELETE'])
+@permission_classes([AllowAny])
+def remove_old_notifications(request):
+    now = timezone.now()
+    days_ago = now - timezone.timedelta(days=7)
+    ProjectNotificationUser.objects(updated_at__lt=days_ago).delete()
+    ProjectNotification.objects(updated_at__lt=days_ago).delete()
+    return Response({'message': '7 days old Notifications removed successfully'}, status=200)
+
+
+
+#############################################
+# DELETE NOTIFICATIONS
+#############################################
+
+    
+@api_view(['DELETE'])
+@permission_classes([AllowAny])
+def delete_notifications(request):
+    data = request.data
+    userReporter = data.get('userReporter', None)
+    if not userReporter:
+        return Response({'error': 'User not found'}, status=404)
+    notification_ids = data.get('notificationIds', [])
+    notifications = ProjectNotificationUser.objects(id__in=notification_ids).all()
+    tracking_info = [transform_data_to_mongo(notification) for notification in notifications]
+    notifications.delete()
+    
+    tracking = ProjectTracking(
+        user_reporter=userReporter,
+        action=f'delete notifications',
+        created_time=timezone.now(),
+        managed_data={
+            'data': tracking_info
+        },
+    )
+    tracking.save()
+    
+    return Response({'message': 'Notifications marked as read successfully'}, status=200)
+
+
+#############################################
+# MARK AS READ NOTIFICATIONS
+#############################################
+
+    
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def mark_as_read_notifications(request):
+    data = request.data
+    userReporter = data.get('userReporter', None)
+    if not userReporter:
+        return Response({'error': 'User not found'}, status=404)
+    notification_ids = data.get('notificationIds', [])
+    notifications = ProjectNotificationUser.objects(id__in=notification_ids).all()
+    for notification in notifications:
+        notification.read = True
+        notification.save()
+        
+    tracking_info = [transform_data_to_mongo(notification) for notification in notifications]
+    
+    tracking = ProjectTracking(
+        user_reporter=userReporter,
+        action=f'mark as read notifications',
+        created_time=timezone.now(),
+        managed_data={
+            'data': tracking_info
+        },
+    )
+    tracking.save()
+    
+    return Response({'message': 'Notifications marked as read successfully'}, status=200)
     
 
 

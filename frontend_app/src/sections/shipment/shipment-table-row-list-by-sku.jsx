@@ -1,14 +1,11 @@
-import React, { useEffect, useState, useContext, useCallback, useMemo } from 'react';
-import { LoadingContext } from 'src/auth/context/loading-context';
-import { paths } from 'src/routes/paths';
-import { useRouter } from 'src/routes/hooks';
-import { usePackagesQuery } from 'src/_mock/_package';
-import Box from '@mui/material/Box';
+import React, { useMemo, useState, useContext, useCallback } from 'react';
+
 import Link from '@mui/material/Link';
+import Grid from '@mui/material/Grid';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
-import Avatar from '@mui/material/Avatar';
+import { Typography } from '@mui/material';
 import MenuList from '@mui/material/MenuList';
 import Collapse from '@mui/material/Collapse';
 import MenuItem from '@mui/material/MenuItem';
@@ -17,15 +14,22 @@ import Checkbox from '@mui/material/Checkbox';
 import TableCell from '@mui/material/TableCell';
 import IconButton from '@mui/material/IconButton';
 import ListItemText from '@mui/material/ListItemText';
-import Grid from '@mui/material/Grid';
+
+import { paths } from 'src/routes/paths';
+import { useRouter } from 'src/routes/hooks';
+
 import { useBoolean } from 'src/hooks/use-boolean';
-import { fCurrency } from 'src/utils/format-number';
-import { fDate, fTime } from 'src/utils/format-time';
+
+import { fDate } from 'src/utils/format-time';
+
+import { usePackagesQuery } from 'src/_mock/_package';
+
 import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 import { usePopover, CustomPopover } from 'src/components/custom-popover';
-import { Table, TableBody, TableContainer, TableHead, Typography } from '@mui/material';
+
+import { LoadingContext } from 'src/auth/context/loading-context';
 
 export function ShipmentTableRowListBySku({ row, selected, onViewRow, onSelectRow, onDeleteRow }) {
   const router = useRouter();
@@ -233,8 +237,7 @@ export function ShipmentTableRowListBySku({ row, selected, onViewRow, onSelectRo
                     <Grid item xs={11}>
                       <ListItemText
                         secondary={
-                          <>
-                            <Grid container spacing={1}>
+                          <Grid container spacing={1}>
                               <Grid item xs={!isMobile ? 3 : 7.9}>
                                 # Shipment: <strong> </strong>
                                 <Link color="inherit" onClick={() => handleViewShipment(item.shipmentId)} underline="always" sx={{ cursor: 'pointer' }}>
@@ -252,7 +255,6 @@ export function ShipmentTableRowListBySku({ row, selected, onViewRow, onSelectRo
                                 </Typography>
                               </Grid>
                             </Grid>
-                          </>
                         }
                         primaryTypographyProps={{ variant: 'body2' }}
                         secondaryTypographyProps={{

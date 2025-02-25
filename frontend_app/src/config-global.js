@@ -11,8 +11,12 @@ export const CONFIG = {
   assetsDir: import.meta.env.VITE_ASSETS_DIR ?? '',
   apiUrl: import.meta.env.VITE_BACKEND_URL ?? '',
   apiHost: import.meta.env.VITE_BACKEND_HOST ?? '',
+  apiPort: import.meta.env.VITE_BACKEND_PORT ?? 543,
   apiDomain: import.meta.env.VITE_BACKEND_DOMAIN ?? '',
   pollingInterval: import.meta.env.VITE_POLLING_INTERVAL ?? 10000,
+  frontendHost: import.meta.env.VITE_FRONTEND_HOST ?? '',
+  frontendUrl: import.meta.env.VITE_FRONTEND_URL ?? '',
+  frontendPort: import.meta.env.VITE_FRONTEND_PORT ?? 3000,
   permissions: {
     system: import.meta.env.VITE_PERMISSION_SYSTEM_NAME ?? '',
     moduleSalesOrders: import.meta.env.VITE_PERMISSION_MODULE_SALES_ORDERS_NAME ?? '',
@@ -24,6 +28,25 @@ export const CONFIG = {
     operationUpdate: import.meta.env.VITE_PERMISSION_OPERATION_UPDATE_NAME ?? '',
     operationEdit: import.meta.env.VITE_PERMISSION_OPERATION_EDIT_NAME ?? '',
     operationDelete: import.meta.env.VITE_PERMISSION_OPERATION_DELETE_NAME ?? '',
+  },
+  stages: {
+    preparation: import.meta.env.VITE_STAGE_PREPARATION ?? '',
+    coordination: import.meta.env.VITE_STAGE_COORDINATION ?? '',
+    installation: import.meta.env.VITE_STAGE_INSTALLATION ?? '',
+    permission: import.meta.env.VITE_STAGE_PERMISSION ?? '',
+    closing: import.meta.env.VITE_STAGE_CLOSING ?? '',
+  },
+  taskStatus: {
+    notStarted: import.meta.env.VITE_TASK_STATUS_NOT_STARTED ?? '',
+    inProgress: import.meta.env.VITE_TASK_STATUS_IN_PROGRESS ?? '',
+    finished: import.meta.env.VITE_TASK_STATUS_FINISHED ?? '',
+  },
+  roles: {
+    superadmin: import.meta.env.VITE_ROLE_SUPERADMIN ?? '',
+    manager: import.meta.env.VITE_ROLE_MANAGER ?? '',
+    installer: import.meta.env.VITE_ROLE_INSTALLER ?? '',
+    seller: import.meta.env.VITE_ROLE_SELLER ?? '',
+    client: import.meta.env.VITE_ROLE_CLIENT ?? '',
   },
   // aws: {
   //   accessKeyId: import.meta.env.VITE_AWS_ACCESS_KEY_ID ?? '',

@@ -8,10 +8,8 @@ import { paths } from 'src/routes/paths';
 import { ORDER_STATUS_OPTIONS } from 'src/_mock';
 import { DashboardContent } from 'src/layouts/dashboard';
 
-import { ShipmentDetailsInfo } from '../shipment-details-info';
 import { ShipmentDetailsItems } from '../shipment-details-item';
 import { ShipmentDetailsToolbar } from '../shipment-details-toolbar';
-import { ShipmentDetailsHistory } from '../shipment-details-history';
 
 // ----------------------------------------------------------------------
 

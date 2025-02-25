@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
+
 import Card from '@mui/material/Card';
 import CardHeader from '@mui/material/CardHeader';
-import { css } from '@emotion/react';
 import { useTheme, alpha as hexAlpha } from '@mui/material/styles';
 
 import { Chart, useChart } from 'src/components/chart';
-import { ModalSublistItems } from './view/modal-sublist-items';
 
 // ----------------------------------------------------------------------
 
@@ -97,7 +96,7 @@ export function AnalyticsWebsiteVisits({
     chart: {
       events: {
         dataPointSelection: (event, chartContext, config) => {
-          const seriesIndex = config.seriesIndex;
+          const {seriesIndex} = config;
           const list = handleViewSublists(seriesIndex);
           setModalTitle(
             seriesIndex === 0 ? `${list.length} Items (Quantity Matched 100 %)` :
@@ -144,18 +143,6 @@ export function AnalyticsWebsiteVisits({
           sx={{ py: 2.5, pl: 1, pr: 2.5 }}
         />
       </Card>
-
-      <ModalSublistItems
-        openModal={openModal}
-        setOpenModal={setOpenModal}
-        modalDataFiltered={modalDataFiltered}
-        modalTitle={modalTitle}
-        modalButtonColor={modalButtonColor}
-        filters={filters}
-        handleFilterName={handleFilterName}
-        handleViewRow={handleViewRow}
-        table={table}
-      />
     </>
   );
 }

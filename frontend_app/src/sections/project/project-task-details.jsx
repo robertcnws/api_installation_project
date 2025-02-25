@@ -1,26 +1,32 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
-import { stripHtmlUsingDOM } from 'src/utils/helper';
 import axios from 'axios';
-import { CONFIG } from 'src/config-global';
+import dayjs from 'dayjs';
 import { z as zod } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Controller, useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
+import React, { useMemo, useState, useCallback } from 'react';
+
 import LoadingButton from '@mui/lab/LoadingButton';
-import { Box, Stack, Button, Tooltip, IconButton, Chip, Typography } from '@mui/material';
+import { Box, Chip, Stack, Button, Tooltip, IconButton, Typography } from '@mui/material';
+
+import { useBoolean } from 'src/hooks/use-boolean';
+
+import { stripHtmlUsingDOM } from 'src/utils/helper';
+
+import { CONFIG } from 'src/config-global';
 import { varAlpha } from 'src/theme/styles';
-import dayjs from 'dayjs';
-import { CustomDateRangePicker, useDateRangePicker } from 'src/components/custom-date-range-picker';
-import { toast } from 'src/components/snackbar';
-import { Form, Field, schemaHelper } from 'src/components/hook-form';
+
 import { Label } from 'src/components/label';
+import { toast } from 'src/components/snackbar';
 import { Iconify } from 'src/components/iconify';
 import { ConfirmDialog } from 'src/components/custom-dialog';
-import { useBoolean } from 'src/hooks/use-boolean';
-import { ProjectTaskDetailsPriority } from './project-task-details-priority';
-import { ProjectTaskUserAssigneesList } from './project-task-user-assignees-list';
+import { Form, Field, schemaHelper } from 'src/components/hook-form';
+import { useDateRangePicker, CustomDateRangePicker } from 'src/components/custom-date-range-picker';
+
+import { ProjectTaskShareDialog } from './project-task-share-dialog';
 import { KanbanInputName } from '../kanban/components/kanban-input-name';
 import { ProjectDetailsAttachments } from './project-details-attachments';
-import { ProjectTaskShareDialog } from './project-task-share-dialog';
+import { ProjectTaskDetailsPriority } from './project-task-details-priority';
+import { ProjectTaskUserAssigneesList } from './project-task-user-assignees-list';
 
 
 
@@ -258,8 +264,7 @@ export function ProjectTaskDetails({
     });
 
     const renderAddTaskUsers = (
-        <>
-            <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ p: 0.5 }}>
+        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ p: 0.5 }}>
                 <IconButton
                     size="small"
                     color="primary"
@@ -275,7 +280,6 @@ export function ProjectTaskDetails({
                     <Iconify icon="mingcute:add-line" />
                 </IconButton>
             </Stack>
-        </>
     );
 
     const renderTaskAttachments = (

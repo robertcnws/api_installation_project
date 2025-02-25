@@ -1,49 +1,35 @@
 import dayjs from 'dayjs';
-import { useState, useCallback, useMemo, useEffect } from 'react';
-import { CONFIG } from 'src/config-global';
 import axios from 'axios';
+import { toast } from 'sonner';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
 import Tab from '@mui/material/Tab';
-import Chip from '@mui/material/Chip';
 import Drawer from '@mui/material/Drawer';
 import Button from '@mui/material/Button';
 import Avatar from '@mui/material/Avatar';
+import { InputBase } from '@mui/material';
 import Tooltip from '@mui/material/Tooltip';
 import { styled } from '@mui/material/styles';
-import Checkbox from '@mui/material/Checkbox';
-import TextField from '@mui/material/TextField';
-import FormGroup from '@mui/material/FormGroup';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
-import LinearProgress from '@mui/material/LinearProgress';
-import FormControlLabel from '@mui/material/FormControlLabel';
 
 import { useTabs } from 'src/hooks/use-tabs';
 import { useBoolean } from 'src/hooks/use-boolean';
 
+import { CONFIG } from 'src/config-global';
 import { varAlpha } from 'src/theme/styles';
-import { toast } from 'sonner';
 
 import { Label } from 'src/components/label';
-
 import { Iconify } from 'src/components/iconify';
 import { Scrollbar } from 'src/components/scrollbar';
 import { CustomTabs } from 'src/components/custom-tabs';
-import { useDateRangePicker, CustomDateRangePicker } from 'src/components/custom-date-range-picker';
-import { InputBase } from '@mui/material';
+
 import { KanbanDetailsToolbar } from './kanban-details-toolbar';
-import { KanbanInputName } from '../components/kanban-input-name';
-import { KanbanDetailsPriority } from './kanban-details-priority';
-import { KanbanDetailsAttachments } from './kanban-details-attachments';
-import { KanbanDetailsCommentList } from './kanban-details-comment-list';
 import { KanbanDetailsCommentInput } from './kanban-details-comment-input';
 import { KanbanContactsDialog } from '../components/kanban-contacts-dialog';
 import { ProjectTaskDetailsPriority } from '../../project-task-details-priority';
 import { KanbanDetailsTaskAttachments } from './kanban-details-task-attachments';
-
-
-
 
 // ----------------------------------------------------------------------
 
@@ -118,7 +104,7 @@ export function KanbanDetails({ project, refetchProject, task, openDetails, onUp
       });
       if (project.hasPermission) {
         const permissionTasks = sortedTasks?.filter(
-          (t) => t.project_default_task?.project_stage?.name === 'Permission' && t.status === 'not started'
+          (t) => t.project_default_task?.project_stage?.name === CONFIG.stages.permission && t.status === CONFIG.taskStatus.notStarted
         );
         filtered.push(...permissionTasks);
       }
@@ -153,7 +139,7 @@ export function KanbanDetails({ project, refetchProject, task, openDetails, onUp
 
         const taskId = task.project_default_task.id;
 
-        const id = project.id;
+        const {id} = project;
 
         const response = await axios.post(`${CONFIG.apiUrl}/projects/upload/project/${id}/task/${taskId}/file/`, formData, {
           headers: {
@@ -195,6 +181,7 @@ export function KanbanDetails({ project, refetchProject, task, openDetails, onUp
 
       const taskId = updatedTask?.project_default_task._id;
       const projectId = project?.id;
+
       try {
         const promise = axios.post(`${CONFIG.apiUrl}/projects/update/project/${projectId}/task/${taskId}/change-status/`, {
           userReporter: userLogged?.data,
@@ -260,20 +247,20 @@ export function KanbanDetails({ project, refetchProject, task, openDetails, onUp
         {(loadedTasks?.length > 0 &&
           loadedTasks?.some((t) => t.project_default_task.id === task.project_default_task.id)) ? (
           <>
-            {task && task.status === 'not started' && (
+            {task && task.status === CONFIG.taskStatus.notStarted && (
               <Button
                 variant="soft"
                 color="info"
                 size="medium"
                 startIcon={<Iconify icon="vaadin:start-cog" />}
                 sx={{ ml: 2.5, height: 50 }}
-                disabled={!task || task.status !== 'not started' || task?.users_assignees?.length === 0 || !priority}
+                disabled={!task || task.status !== CONFIG.taskStatus.notStarted || task?.users_assignees?.length === 0 || !priority}
                 onClick={() => handleManageTask('start')}
               >
                 Start Task
               </Button>
             )}
-            {task && task.status !== 'not started' && task.status !== 'finished' && (
+            {task && task.status !== CONFIG.taskStatus.notStarted && task.status !== 'finished' && (
               <Button
                 variant="soft"
                 color="success"

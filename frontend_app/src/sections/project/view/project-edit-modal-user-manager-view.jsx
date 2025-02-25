@@ -1,39 +1,29 @@
-import { useState, useCallback, useMemo, useContext, useEffect } from 'react';
 import axios from 'axios';
-import { CONFIG } from 'src/config-global';
-
-import { LoadingContext } from 'src/auth/context/loading-context';
-
 import { z as zod } from 'zod';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-
-import { useProjectByIdQuery } from 'src/_mock/__projects';
-
-import { toast } from 'src/components/snackbar';
-
+import { useMemo, useState, useEffect, useContext, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
+import { LoadingButton } from '@mui/lab';
 import Button from '@mui/material/Button';
-import Divider from '@mui/material/Divider';
-import IconButton from '@mui/material/IconButton';
-import { Avatar, Dialog, DialogActions, DialogTitle } from '@mui/material';
-import { Form, Field, schemaHelper } from 'src/components/hook-form';
-import { useForm } from 'react-hook-form';
+import { Avatar, Dialog, DialogTitle, DialogActions } from '@mui/material';
+
+import { paths } from 'src/routes/paths';
+import { useRouter } from 'src/routes/hooks';
+
 import { useTabs } from 'src/hooks/use-tabs';
 
-import { useBoolean } from 'src/hooks/use-boolean';
-import dayjs from 'dayjs';
-import { useDateRangePicker } from 'src/components/custom-date-range-picker';
+import { CONFIG } from 'src/config-global';
+import { useProjectByIdQuery } from 'src/_mock/__projects';
+
+import { toast } from 'src/components/snackbar';
 import { usePopover } from 'src/components/custom-popover';
+import { Form, Field, schemaHelper } from 'src/components/hook-form';
 
-import { Iconify } from 'src/components/iconify';
-import { useRouter } from 'src/routes/hooks';
-import { paths } from 'src/routes/paths';
-
-import { LoadingButton } from '@mui/lab';
-
+import { LoadingContext } from 'src/auth/context/loading-context';
 import { useDataContext } from 'src/auth/context/data/data-context';
 
 
@@ -200,8 +190,7 @@ export function ProjectEditModalUserManagerView({
     });
 
     const renderProject = (
-        <>
-            <Dialog fullWidth maxWidth="md" open={open} onClose={onClose}>
+        <Dialog fullWidth maxWidth="md" open={open} onClose={onClose}>
                 <DialogTitle>{isEdit ? 'Update' : 'Add'} Manager to Project {projectData?.name} </DialogTitle>
 
                 <Form methods={methods} onSubmit={onSubmit}>
@@ -275,7 +264,6 @@ export function ProjectEditModalUserManagerView({
                     </DialogActions>
                 </Form>
             </Dialog>
-        </>
     )
 
     return (

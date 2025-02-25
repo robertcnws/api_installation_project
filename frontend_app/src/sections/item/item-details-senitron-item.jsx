@@ -1,18 +1,20 @@
-import React, { useContext, useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
+import React, { useMemo, useState, useEffect, useContext } from 'react';
+
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
 import CardHeader from '@mui/material/CardHeader';
 import IconButton from '@mui/material/IconButton';
+import { Grid, Table, Tooltip, TableBody, TableContainer } from '@mui/material';
 
-
-import { Iconify } from 'src/components/iconify';
-import { Label } from 'src/components/label';
-import { Grid, Table, TableBody, TableContainer, Tooltip } from '@mui/material';
-import { LoadingContext } from 'src/auth/context/loading-context';
-import { TableNoData } from 'src/components/table';
 import { CONFIG } from 'src/config-global';
+
+import { Label } from 'src/components/label';
+import { Iconify } from 'src/components/iconify';
+import { TableNoData } from 'src/components/table';
+
+import { LoadingContext } from 'src/auth/context/loading-context';
 
 
 // ----------------------------------------------------------------------
@@ -47,8 +49,7 @@ export function ItemDetailsSenitronItems({ item }) {
     <Stack spacing={1} alignItems="flex-start" sx={{ p: 3, textAlign: 'left', typography: 'body2' }}>
       <Grid container spacing={2}>
         {currentItem?.itemNumber && (
-          <>
-            <Grid container item xs={12}>
+          <Grid container item xs={12}>
               <Grid item xs={3}>
                 <Box sx={{ color: 'text.secondary' }}>Item Number: </Box>
               </Grid>
@@ -58,11 +59,9 @@ export function ItemDetailsSenitronItems({ item }) {
                 </Box>
               </Grid>
             </Grid>
-          </>
         )}
         {currentItem?.handheldReader && (
-          <>
-            <Grid container item xs={12}>
+          <Grid container item xs={12}>
               <Grid item xs={3}>
                 <Box sx={{ color: 'text.secondary' }}>Hand Held Reader: </Box>
               </Grid>
@@ -72,11 +71,9 @@ export function ItemDetailsSenitronItems({ item }) {
                 </Box>
               </Grid>
             </Grid>
-          </>
         )}
         {currentItem?.senitronItem?.tagsCount && (
-          <>
-            <Grid container item xs={12}>
+          <Grid container item xs={12}>
               <Grid item xs={3}>
                 <Box sx={{ color: 'text.secondary' }}>Tags Count: </Box>
               </Grid>
@@ -86,7 +83,6 @@ export function ItemDetailsSenitronItems({ item }) {
                 </Box>
               </Grid>
             </Grid>
-          </>
         )}
         {currentItem?.senitronItem?.qty && (
           <Grid container item xs={12}>

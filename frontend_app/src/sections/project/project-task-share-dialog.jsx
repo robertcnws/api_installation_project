@@ -1,21 +1,17 @@
 import { z as zod } from 'zod';
-import { Avatar, Chip } from '@mui/material';
-import { Field, Form } from 'src/components/hook-form';
-import { useEffect, useMemo, useState } from 'react';
-import { useForm, FormProvider } from 'react-hook-form';
+import { useMemo, useEffect } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm, FormProvider } from 'react-hook-form';
+
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
-import TextField from '@mui/material/TextField';
+import { Chip, Avatar } from '@mui/material';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogActions from '@mui/material/DialogActions';
-import InputAdornment from '@mui/material/InputAdornment';
 
-import { Iconify } from 'src/components/iconify';
-import { Scrollbar } from 'src/components/scrollbar';
+import { Field } from 'src/components/hook-form';
 
-import { ProjectInvitedItem } from './project-invited-item';
 
 
 // ----------------------------------------------------------------------

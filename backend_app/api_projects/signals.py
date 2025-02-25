@@ -5,6 +5,7 @@ from .models import (
     ProjectTaskStage, 
     Project,
     ProjectDefaultTask,
+    ProjectNotificationUser,
 )
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
@@ -292,6 +293,52 @@ def project_by_id_deleted(sender, document, **kwargs):
     }
     async_to_sync(channel_layer.group_send)(group_name, serialize_datetime(event))
     
+##########################################################################    
+# Project Notification User
+##########################################################################
+
+def project_notification_user_saved(sender, document, **kwargs):
+    created = kwargs.get('created', False)
+    channel_layer = get_channel_layer()
+    event = {
+        'type': 'project_notification_user_update',
+        'message': {
+            'type': 'created' if created else 'updated',
+            "item": {
+                "id": str(document.id),
+                "notification": document.notification,
+                "username": document.username,
+                "user": document.user,
+                "read": document.read,
+                "createdTime": document.created_time,
+                "lastModifiedTime": document.last_modified_time,
+            }
+
+        }
+    }
+    async_to_sync(channel_layer.group_send)('project_notification_user', serialize_datetime(event))
+
+
+def project_notification_user_deleted(sender, document, **kwargs):
+    channel_layer = get_channel_layer()
+    event = {
+        'type': 'project_notification_user_update',
+        'message': {
+            'type': 'deleted',
+            "item": {
+                "id": str(document.id),
+                "notification": document.notification,
+                "username": document.username,
+                "user": document.user,
+                "read": document.read,
+                "createdTime": document.created_time,
+                "lastModifiedTime": document.last_modified_time,
+            }
+        }
+    }
+    async_to_sync(channel_layer.group_send)('project_notification_user', serialize_datetime(event))
+    
+    
 signals.post_save.connect(project_by_id_saved, sender=Project)
 signals.post_delete.connect(project_by_id_deleted, sender=Project)
 signals.post_save.connect(project_stage_saved, sender=ProjectStage)
@@ -302,3 +349,5 @@ signals.post_save.connect(project_saved, sender=Project)
 signals.post_delete.connect(project_deleted, sender=Project)
 signals.post_save.connect(project_default_task_saved, sender=ProjectDefaultTask)
 signals.post_delete.connect(project_default_task_deleted, sender=ProjectDefaultTask)
+signals.post_save.connect(project_notification_user_saved, sender=ProjectNotificationUser)
+signals.post_delete.connect(project_notification_user_deleted, sender=ProjectNotificationUser)

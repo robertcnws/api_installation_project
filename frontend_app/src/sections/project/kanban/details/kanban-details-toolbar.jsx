@@ -10,10 +10,12 @@ import IconButton from '@mui/material/IconButton';
 import { useBoolean } from 'src/hooks/use-boolean';
 import { useResponsive } from 'src/hooks/use-responsive';
 
+import { CONFIG } from 'src/config-global';
+
+import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 import { usePopover, CustomPopover } from 'src/components/custom-popover';
-import { Label } from 'src/components/label';
 
 // ----------------------------------------------------------------------
 
@@ -66,7 +68,7 @@ export function KanbanDetailsToolbar({
           // onClick={popover.onOpen}
           // disabled
           sx={{
-            bgcolor: status === 'not started' ? 'warning.lighter' :
+            bgcolor: status === CONFIG.taskStatus.notStarted ? 'warning.lighter' :
               status === 'in progress' ? 'info.lighter' : 'success.lighter'
           }}
         >

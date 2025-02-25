@@ -1,13 +1,11 @@
-import React, { useEffect, useState, useContext, useCallback } from 'react';
-import { LoadingContext } from 'src/auth/context/loading-context';
-import { paths } from 'src/routes/paths';
-import { useRouter } from 'src/routes/hooks';
-import Box from '@mui/material/Box';
+import React, { useState, useEffect, useContext, useCallback } from 'react';
+
 import Link from '@mui/material/Link';
+import Grid from '@mui/material/Grid';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
-import Avatar from '@mui/material/Avatar';
+import { Typography } from '@mui/material';
 import MenuList from '@mui/material/MenuList';
 import Collapse from '@mui/material/Collapse';
 import MenuItem from '@mui/material/MenuItem';
@@ -16,15 +14,20 @@ import Checkbox from '@mui/material/Checkbox';
 import TableCell from '@mui/material/TableCell';
 import IconButton from '@mui/material/IconButton';
 import ListItemText from '@mui/material/ListItemText';
-import Grid from '@mui/material/Grid';
+
+import { paths } from 'src/routes/paths';
+import { useRouter } from 'src/routes/hooks';
+
 import { useBoolean } from 'src/hooks/use-boolean';
-import { fCurrency } from 'src/utils/format-number';
+
 import { fDate, fTime } from 'src/utils/format-time';
+
 import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 import { usePopover, CustomPopover } from 'src/components/custom-popover';
-import { Typography } from '@mui/material';
+
+import { LoadingContext } from 'src/auth/context/loading-context';
 
 export function OrderTableRow({ row, selected, onViewRow, onSelectRow, onDeleteRow }) {
   const router = useRouter();

@@ -1,7 +1,7 @@
 // ----------------------------------------------------------------------
 
 export const hasParams = (url) => {
-  const queryString = url.split('?')[1];
+  const queryString = url?.split('?')[1];
   return queryString ? new URLSearchParams(queryString).toString().length > 0 : false;
 };
 
@@ -39,5 +39,5 @@ export function removeParams(url) {
 // ----------------------------------------------------------------------
 
 export function isExternalLink(url) {
-  return url.startsWith('http');
+  return url?.startsWith('http');
 }

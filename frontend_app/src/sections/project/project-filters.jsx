@@ -1,12 +1,13 @@
-import { useCallback, useContext, useEffect, useState } from 'react';
+import { useState, useEffect, useContext, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
+import CheckBox from '@mui/material/Checkbox';
 import TextField from '@mui/material/TextField';
 import CardActionArea from '@mui/material/CardActionArea';
 import InputAdornment from '@mui/material/InputAdornment';
-import CheckBox from '@mui/material/Checkbox';
+import { Divider, MenuItem, MenuList, IconButton, Typography, ListItemIcon, ListItemText } from '@mui/material';
 
 import { fDateRangeShortLabel } from 'src/utils/format-time';
 
@@ -14,12 +15,10 @@ import { varAlpha } from 'src/theme/styles';
 
 import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
-import { FileThumbnail } from 'src/components/file-thumbnail';
 import { usePopover, CustomPopover } from 'src/components/custom-popover';
 import { CustomDateRangePicker } from 'src/components/custom-date-range-picker';
-import { Divider, IconButton, ListItemIcon, ListItemText, MenuItem, MenuList, Typography } from '@mui/material';
+
 import { LoadingContext } from 'src/auth/context/loading-context';
-import { maxHeight, width } from '@mui/system';
 
 // ----------------------------------------------------------------------
 
@@ -198,7 +197,7 @@ export function ProjectFilters({
   );
 
   const renderCustomFilters = (
-    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', minWidth: 200, p: 0 }}>
+    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', minWidth: 100, p: 0 }}>
       <Box
         onClick={(e) => {
           popoverCustom.onOpen(e);
@@ -241,14 +240,14 @@ export function ProjectFilters({
           vertical: 'top',
           horizontal: 'left',
         }}
-        slotProps={{ paper: { sx: { p: 0, width: 500, ml: !isMobile ? -5 : 0 } } }}
-        sx={{ maxHeight: 800, overflowY: 'auto' }}
+        slotProps={{ paper: { sx: { p: 0, width: 302, ml: !isMobile ? -5 : 0 } } }}
+        sx={{ maxHeight: 800, overflowY: 'auto', overflowX: 'hidden' }}
       >
         <Stack spacing={0} sx={{ py: -1 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', width: 500, p: 0 }}>
             <MenuList sx={{ p: 0 }}>
               <MenuItem sx={{ p: 0.5 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 0 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 0, mt: 1, ml: 1 }}>
                   <TextField
                     value={filters.state.name}
                     onChange={handleFilterName}
@@ -274,7 +273,7 @@ export function ProjectFilters({
                         </InputAdornment>
                       ),
                     }}
-                    sx={{ width: { xs: 365, md: 485 } }}
+                    sx={{ width: '100%' }}
                   />
                 </Box>
               </MenuItem>
@@ -370,7 +369,7 @@ export function ProjectFilters({
               <MenuItem onClick={onOpenDateRange}>
                 {renderFilterDate(true)}
               </MenuItem> */}
-              <MenuItem sx={{ py: 0 }} />
+              <MenuItem sx={{ py: 0, mb: 1 }} />
             </MenuList>
           </Box>
         </Stack>

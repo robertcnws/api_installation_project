@@ -1,19 +1,19 @@
-import React, { useContext, useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
+import React, { useMemo, useState, useEffect, useContext } from 'react';
+
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
 import CardHeader from '@mui/material/CardHeader';
 import IconButton from '@mui/material/IconButton';
+import { Grid, Table, Tooltip, TableRow, TableBody, TableCell, TableHead, TableContainer, TextareaAutosize } from '@mui/material';
 
-import { fDateTime } from 'src/utils/format-time';
-
-
-import { Iconify } from 'src/components/iconify';
-import { Label } from 'src/components/label';
-import { Grid, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextareaAutosize, Tooltip } from '@mui/material';
-import { LoadingContext } from 'src/auth/context/loading-context';
 import { CONFIG } from 'src/config-global';
+
+import { Label } from 'src/components/label';
+import { Iconify } from 'src/components/iconify';
+
+import { LoadingContext } from 'src/auth/context/loading-context';
 
 
 // ----------------------------------------------------------------------
@@ -54,8 +54,7 @@ export function SalesOrderDetailsItems({ salesOrder, setSalesOrder, setUpdating,
     <Stack spacing={1} alignItems="flex-start" sx={{ p: 3, textAlign: 'left', typography: 'body2' }}>
       <Grid container spacing={2}>
         {salesOrder && salesOrder?.salesorder_id && (
-          <>
-            <Grid container item xs={12}>
+          <Grid container item xs={12}>
               <Grid item xs={3}>
                 <Box sx={{ color: 'text.secondary' }}>ID: </Box>
               </Grid>
@@ -65,11 +64,9 @@ export function SalesOrderDetailsItems({ salesOrder, setSalesOrder, setUpdating,
                 </Box>
               </Grid>
             </Grid>
-          </>
         )}
         {salesOrder && salesOrder?.customer_name && (
-          <>
-            <Grid container item xs={12}>
+          <Grid container item xs={12}>
               <Grid item xs={3}>
                 <Box sx={{ color: 'text.secondary' }}>Customer: </Box>
               </Grid>
@@ -79,7 +76,6 @@ export function SalesOrderDetailsItems({ salesOrder, setSalesOrder, setUpdating,
                 </Box>
               </Grid>
             </Grid>
-          </>
         )}
         {salesOrder && salesOrder?.customer && (
           <>
@@ -106,8 +102,7 @@ export function SalesOrderDetailsItems({ salesOrder, setSalesOrder, setUpdating,
           </>
         )}
         {salesOrder && salesOrder?.salesperson_name && (
-          <>
-            <Grid container item xs={12}>
+          <Grid container item xs={12}>
               <Grid item xs={3}>
                 <Box sx={{ color: 'text.secondary' }}>Sales Person: </Box>
               </Grid>
@@ -117,11 +112,9 @@ export function SalesOrderDetailsItems({ salesOrder, setSalesOrder, setUpdating,
                 </Box>
               </Grid>
             </Grid>
-          </>
         )}
         {salesOrder && salesOrder?.total && (
-          <>
-            <Grid container item xs={12}>
+          <Grid container item xs={12}>
               <Grid item xs={3}>
                 <Box sx={{ color: 'text.secondary' }}>Total Amount: </Box>
               </Grid>
@@ -131,11 +124,9 @@ export function SalesOrderDetailsItems({ salesOrder, setSalesOrder, setUpdating,
                 </Box>
               </Grid>
             </Grid>
-          </>
         )}
         {salesOrder && salesOrder?.line_items && (
-          <>
-            <Grid container item xs={12}>
+          <Grid container item xs={12}>
               <Grid item xs={3}>
                 <Box sx={{ color: 'text.secondary' }}>Items: </Box>
               </Grid>
@@ -187,7 +178,6 @@ export function SalesOrderDetailsItems({ salesOrder, setSalesOrder, setUpdating,
                 </TableContainer>
               </Grid>
             </Grid>
-          </>
         )}
       </Grid>
     </Stack>

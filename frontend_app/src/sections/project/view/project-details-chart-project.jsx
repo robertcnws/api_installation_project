@@ -1,10 +1,9 @@
-import React, { useEffect } from 'react';
+import React from 'react';
+
 import Card from '@mui/material/Card';
 import Divider from '@mui/material/Divider';
-import { useTheme, alpha as hexAlpha } from '@mui/material/styles';
 import CardHeader from '@mui/material/CardHeader';
-
-import { fNumber } from 'src/utils/format-number';
+import { useTheme, alpha as hexAlpha } from '@mui/material/styles';
 
 import { Chart, useChart, ChartLegends } from 'src/components/chart';
 
@@ -42,7 +41,7 @@ export function ProjectDetailsChartProject({
       },
       events: {
         dataPointSelection: (event, chartContext, config) => {
-          const dataPointIndex = config.dataPointIndex;
+          const {dataPointIndex} = config;
         },
       },
     },
@@ -50,8 +49,7 @@ export function ProjectDetailsChartProject({
   });
 
   return (
-    <>
-      <Card sx={{ width: '100%'}} {...other}>
+    <Card sx={{ width: '100%'}} {...other}>
         <CardHeader title={chart?.title} subheader={chart?.subheader} />
 
         <Chart
@@ -71,6 +69,5 @@ export function ProjectDetailsChartProject({
           sx={{ p: 3, justifyContent: 'center' }}
         />
       </Card>
-    </>
   );
 }

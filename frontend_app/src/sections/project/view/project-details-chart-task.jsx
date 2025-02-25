@@ -1,8 +1,9 @@
-import React, { useEffect } from 'react';
+import React from 'react';
+
 import Card from '@mui/material/Card';
 import Divider from '@mui/material/Divider';
-import { useTheme, alpha as hexAlpha } from '@mui/material/styles';
 import CardHeader from '@mui/material/CardHeader';
+import { useTheme, alpha as hexAlpha } from '@mui/material/styles';
 
 import { fNumber } from 'src/utils/format-number';
 
@@ -16,9 +17,9 @@ export function ProjectDetailsChartTask({
 }) {
   const theme = useTheme();
 
-  const chartSeries = chart.series.map((item) => item.value);
-
-  const chartColors = chart.colors ?? [
+  const seriesData = Array.isArray(chart?.series) ? chart?.series : [];
+  const chartSeries = seriesData?.map((item) => item.value);
+  const chartColors = chart?.colors ?? [
     hexAlpha(theme.palette.warning.dark, 0.8),
     hexAlpha(theme.palette.info.main, 0.8),
     hexAlpha(theme.palette.success.main, 0.8),
@@ -38,7 +39,7 @@ export function ProjectDetailsChartTask({
       }
     },
     colors: chartColors,
-    labels: chart.series.map(item => item.label),
+    labels: chart?.series.map(item => item?.label),
     stroke: { width: 0 },
     dataLabels: { enabled: true, dropShadow: { enabled: false } },
     tooltip: {
@@ -50,21 +51,20 @@ export function ProjectDetailsChartTask({
     plotOptions: { pie: { donut: { labels: { show: false } } } },
   };
   
-  const extraOptions = chart.options || {};
-  const mergedChart = { ...baseOptions.chart, ...(extraOptions.chart || {}), type: 'pie' };
+  const extraOptions = chart?.options || {};
+  const mergedChart = { ...baseOptions?.chart, ...(extraOptions?.chart || {}), type: 'pie' };
   const finalOptions = { ...baseOptions, ...extraOptions, chart: mergedChart };
   
   const chartOptions = useChart(finalOptions);
 
   return (
-    <>
-      <Card sx={{ width: '100%' }} {...other}>
+    <Card sx={{ width: '100%' }} {...other}>
         <CardHeader title={chart?.title} subheader={chart?.subheader} />
 
         <Chart
           type="pie"
-          series={chartSeries}
-          options={chartOptions}
+          series={chartSeries || []}
+          options={chartOptions || {}}
           //   width={{ xs: 200, xl: 220 }}
           //   height={{ xs: 200, xl: 220 }}
           sx={{ my: 1, }}
@@ -78,6 +78,5 @@ export function ProjectDetailsChartTask({
           sx={{ p: 3, justifyContent: 'center' }}
         />
       </Card>
-    </>
   );
 }

@@ -1,42 +1,31 @@
-import { useState, useCallback, useMemo, useContext, useEffect } from 'react';
 import axios from 'axios';
-import { CONFIG } from 'src/config-global';
-
-import { LoadingContext } from 'src/auth/context/loading-context';
-
+import dayjs from 'dayjs';
 import { z as zod } from 'zod';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-
-import { useProjectByIdQuery } from 'src/_mock/__projects';
-
-import { toast } from 'src/components/snackbar';
-
+import { useMemo, useState, useEffect, useContext, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
-import Button from '@mui/material/Button';
-import Divider from '@mui/material/Divider';
-import IconButton from '@mui/material/IconButton';
-import Typography from '@mui/material/Typography';
-import { varAlpha } from 'src/theme/styles';
-import { Dialog, DialogActions, DialogTitle, Grid, MenuItem, MenuList, Tooltip } from '@mui/material';
-import { Form } from 'src/components/hook-form';
-import { useForm } from 'react-hook-form';
-import { useTabs } from 'src/hooks/use-tabs';
-
-import { useBoolean } from 'src/hooks/use-boolean';
-import dayjs from 'dayjs';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { CustomDateRangePicker, useDateRangePicker } from 'src/components/custom-date-range-picker';
-import { CustomPopover, usePopover } from 'src/components/custom-popover';
-
-import { Iconify } from 'src/components/iconify';
-import { ConfirmDialog } from 'src/components/custom-dialog';
-import { useRouter } from 'src/routes/hooks';
-import { paths } from 'src/routes/paths';
-
 import { LoadingButton } from '@mui/lab';
+import Button from '@mui/material/Button';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { Grid, Dialog, DialogTitle, DialogActions } from '@mui/material';
 
+import { paths } from 'src/routes/paths';
+import { useRouter } from 'src/routes/hooks';
+
+import { useTabs } from 'src/hooks/use-tabs';
+import { useBoolean } from 'src/hooks/use-boolean';
+
+import { CONFIG } from 'src/config-global';
+import { useProjectByIdQuery } from 'src/_mock/__projects';
+
+import { toast } from 'src/components/snackbar';
+import { Form } from 'src/components/hook-form';
+import { usePopover } from 'src/components/custom-popover';
+
+import { LoadingContext } from 'src/auth/context/loading-context';
 import { useDataContext } from 'src/auth/context/data/data-context';
 
 
@@ -233,8 +222,7 @@ export function ProjectEditModalDatesView({
 
 
     const renderProject = (
-        <>
-            <Dialog fullWidth maxWidth="xs" open={open} onClose={onClose}>
+        <Dialog fullWidth maxWidth="xs" open={open} onClose={onClose}>
                 <DialogTitle>{isEdit ? 'Update' : 'Add'} {isStartDate ? 'Install': 'Closing'} date to Project {itemById?.name} </DialogTitle>
 
                 <Form methods={methods} onSubmit={onSubmit}>
@@ -250,7 +238,7 @@ export function ProjectEditModalDatesView({
 
                     </Stack>
                     <DialogActions>
-                        <LoadingButton type="submit" variant="contained" loading={isSubmitting}>
+                        <LoadingButton type="submit" variant="contained" loading={isSubmitting} disabled={!selectedDate}>
                             {isEdit ? 'Update' : 'Add'}
                         </LoadingButton>
                         <Button variant="outlined" onClick={onClose}>
@@ -259,15 +247,12 @@ export function ProjectEditModalDatesView({
                     </DialogActions>
                 </Form>
             </Dialog>
-        </>
     )
 
     return (
-        <>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
                 {/* Tabs alineados a la izquierda */}
                 <Box sx={{ flexGrow: 1, borderRadius: 1 }}>{renderProject}</Box>
             </Box>
-        </>
     );
 }

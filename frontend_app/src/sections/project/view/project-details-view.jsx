@@ -1,31 +1,33 @@
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
+import axios from 'axios';
+import { useRouter } from 'src/routes/hooks';
 
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
+import { Typography } from '@mui/material';
 
 import { paths } from 'src/routes/paths';
 
 import { useTabs } from 'src/hooks/use-tabs';
 
+import { CONFIG } from 'src/config-global';
+import { toast } from 'src/components/snackbar';
 import { DashboardContent } from 'src/layouts/dashboard';
-import { JOB_DETAILS_TABS, JOB_PUBLISH_OPTIONS } from 'src/_mock';
+import { useProjectByIdQuery } from 'src/_mock/__projects';
 
 import { Label } from 'src/components/label';
+import { ConfirmDialog } from 'src/components/custom-dialog';
 
 import { useDataContext } from 'src/auth/context/data/data-context';
-import { useProjectByIdQuery } from 'src/_mock/__projects';
-import { CONFIG } from 'src/config-global';
-import { useBoolean } from 'src/hooks/use-boolean';
-import { Typography } from '@mui/material';
-import { ConfirmDialog } from 'src/components/custom-dialog';
+
+import { ProjectEditModalView } from './project-edit-modal-view';
 import { ProjectDetailsToolbar } from '../project-details-toolbar';
 import { ProjectDetailsContent } from '../project-details-content';
-import { ProjectDetailsTasks } from '../project-details-tasks';
 import { ProjectDetailsTaskView } from './project-details-task-view';
-import { ProjectEditModalView } from './project-edit-modal-view';
 import { ProjectEditModalTaskView } from './project-edit-modal-task-view';
-import { ProjectDetailsAttachmentView } from './project-details-attachment-view';
 import { ProjectDetailsCommentView } from './project-details-comment-view';
+import { ProjectDetailsAttachmentView } from './project-details-attachment-view';
+
 
 
 
@@ -37,15 +39,12 @@ import { ProjectDetailsCommentView } from './project-details-comment-view';
 
 export function ProjectDetailsView({ projectId }) {
 
+    const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
+
+    const router = useRouter();
+
     const {
         loadedProjects,
-        loadedUsers,
-        loadedProjectPermissions,
-        loadedStages,
-        loadedStagesTask,
-        setTableData,
-        refetchProjects,
-        refetchSalesOrders,
     } = useDataContext();
 
     const DETAILS_TABS = [
@@ -80,19 +79,18 @@ export function ProjectDetailsView({ projectId }) {
 
     useEffect(() => {
         const socket = new WebSocket(`wss://${CONFIG.apiHost}/api/projects/ws/project/${projectId}/`);
-        socket.onopen = () => {
-            console.log('WebSocket connected');
-        };
+        // socket.onopen = () => {
+        //     console.log('WebSocket connected');
+        // };
         socket.onerror = (errorEvent) => {
             console.dir(errorEvent);
             console.error('WebSocket error (toString):', errorEvent.toString());
         };
-        socket.onclose = (e) => {
-            console.log('WebSocket closed', e);
-        };
+        // socket.onclose = (e) => {
+        //     console.log('WebSocket closed', e);
+        // };
         socket.onmessage = (event) => {
             const message = JSON.parse(event.data);
-            console.log('Received message:', message);
             if (message.type === 'created' || message.type === 'updated') {
                 setItemById((prevData) => {
                     if (prevData?.id === message.item.id) {
@@ -136,14 +134,14 @@ export function ProjectDetailsView({ projectId }) {
     const totalTasks = useMemo(() => (
         itemById?.hasPermission ?
             itemById?.projectDefaultTasks?.length :
-            itemById?.projectDefaultTasks?.filter((task) => task.project_default_task.project_stage.name !== 'Permission')?.length
+            itemById?.projectDefaultTasks?.filter((task) => task.project_default_task.project_stage.name !== CONFIG.stages.permission)?.length
             || 0), [itemById]
     );
 
 
     const tasks = useMemo(() =>
         itemById?.hasPermission ? itemById?.projectDefaultTasks :
-            itemById?.projectDefaultTasks?.filter((task) => task.project_default_task.project_stage.name !== 'Permission') || [], [itemById]
+            itemById?.projectDefaultTasks?.filter((task) => task.project_default_task.project_stage.name !== CONFIG.stages.permission) || [], [itemById]
     );
 
     const [openEdit, setOpenEdit] = useState(false);
@@ -151,6 +149,21 @@ export function ProjectDetailsView({ projectId }) {
     const [openEditTask, setOpenEditTask] = useState(false);
 
     const tabs = useTabs('overview');
+
+    const onDelete = useCallback(
+        async (id) => {
+            try {
+                await axios.delete(`${CONFIG.apiUrl}/projects/delete/project/${id}/`, {
+                    data: {
+                        userReporter: userLogged?.data
+                    },
+                });
+                toast.success('Delete success!');
+                router.push(paths.dashboard.project.list);
+            } catch (error) {
+                console.error(error);
+            }
+        }, [userLogged?.data, router]);
 
 
 
@@ -187,15 +200,18 @@ export function ProjectDetailsView({ projectId }) {
             <DashboardContent>
                 <ProjectDetailsToolbar
                     project={itemById}
-                    backLink={paths.dashboard.project.root}
+                    backLink={
+                        localStorage.getItem('backFromProjectDetails') === 'analytics' ? paths.dashboard.general.analytics : paths.dashboard.project.list
+                    }
                     editLink={paths.dashboard.project.edit(`${itemById?.id}`)}
                     openEdit={tabs.value === 'overview' ? openEdit : tabs.value === 'tasks' ? openEditTask : null}
                     setOpenEdit={tabs.value === 'overview' ? setOpenEdit : tabs.value === 'tasks' ? setOpenEditTask : null}
                     type={tabs.value === 'overview' ? 'project' : tabs.value === 'tasks' ? 'tasks' : null}
+                    onDelete={() => onDelete(itemById?.id)}
                 />
                 {renderTabs}
 
-                {tabs.value === 'overview' && <ProjectDetailsContent project={itemById} refetchProject={refetchProject} setOpenEdit={setOpenEdit}/>}
+                {tabs.value === 'overview' && <ProjectDetailsContent project={itemById} refetchProject={refetchProject} setOpenEdit={setOpenEdit} />}
 
                 {(tabs.value === 'tasks' && itemById.userManager?.username) && <ProjectDetailsTaskView project={itemById} refetchProject={refetchProject} tasks={tasks ?? []} hasPermission={itemById?.hasPermission} />}
 
@@ -216,11 +232,9 @@ export function ProjectDetailsView({ projectId }) {
                 title={`Invalid Action to reach: ${tabs.value}`}
                 maxWidth="xs"
                 content={
-                    <>
-                        <Typography variant="body2">
-                            <b>You need to add a responsable to perform that action</b>
-                        </Typography>
-                    </>
+                    <Typography variant="body2">
+                        <b>You need to add a responsable to perform that action</b>
+                    </Typography>
                 }
             />
         </>

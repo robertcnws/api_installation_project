@@ -1,7 +1,5 @@
-import { useEffect } from 'react';
 import { gql, useQuery } from '@apollo/client';
-import { CONFIG } from 'src/config-global';
-import { _mock } from './_mock';
+
 
 
 const GET_ALL_PROJECT_PERMISSIONS = gql`
@@ -17,7 +15,11 @@ const GET_ALL_PROJECT_PERMISSIONS = gql`
 
 export const useProjectPermissionsQuery = () => {
 
-  const { loading, error, data, startPolling, stopPolling } = useQuery(GET_ALL_PROJECT_PERMISSIONS);
+  const { loading, error, data, startPolling, stopPolling } = useQuery(GET_ALL_PROJECT_PERMISSIONS, {
+    context: {
+      clientName: 'Projects',
+    },
+  });
 
   const projectPermissions = data?.allProjectPermissions || [];
 

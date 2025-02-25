@@ -1,17 +1,9 @@
-import { useState, useCallback, useMemo, useContext, useEffect } from 'react';
 import axios from 'axios';
-import { CONFIG } from 'src/config-global';
-
-import { LoadingContext } from 'src/auth/context/loading-context';
-
+import dayjs from 'dayjs';
 import { z as zod } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-
-import { useProjectByIdQuery } from 'src/_mock/__projects';
-
-import { toast } from 'src/components/snackbar';
-
-import { stripHtmlUsingDOM } from 'src/utils/helper';
+import { useForm, Controller } from 'react-hook-form';
+import { useMemo, useState, useEffect, useContext, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
@@ -19,40 +11,36 @@ import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import Drawer from '@mui/material/Drawer';
 import Divider from '@mui/material/Divider';
-import Checkbox from '@mui/material/Checkbox';
-import TextField from '@mui/material/TextField';
+import { Tab, Tooltip } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
-import Autocomplete from '@mui/material/Autocomplete';
-import { varAlpha } from 'src/theme/styles';
-import { Tab, Tooltip } from '@mui/material';
-import { Form, Field, schemaHelper } from 'src/components/hook-form';
-import { Controller, useForm } from 'react-hook-form';
+
 import { useTabs } from 'src/hooks/use-tabs';
-
 import { useBoolean } from 'src/hooks/use-boolean';
-import dayjs from 'dayjs';
-import { CustomDateRangePicker, useDateRangePicker } from 'src/components/custom-date-range-picker';
-import { Label } from 'src/components/label';
-import { fData } from 'src/utils/format-number';
-import { fDateTime } from 'src/utils/format-time';
-import { CustomTabs } from 'src/components/custom-tabs';
 
+import { stripHtmlUsingDOM } from 'src/utils/helper';
+
+import { CONFIG } from 'src/config-global';
+import { varAlpha } from 'src/theme/styles';
+import { useProjectByIdQuery } from 'src/_mock/__projects';
+
+import { Label } from 'src/components/label';
+import { toast } from 'src/components/snackbar';
 import { Iconify } from 'src/components/iconify';
 import { Scrollbar } from 'src/components/scrollbar';
-import { fileFormat, FileThumbnail } from 'src/components/file-thumbnail';
+import { CustomTabs } from 'src/components/custom-tabs';
 import { ConfirmDialog } from 'src/components/custom-dialog';
+import { Form, Field, schemaHelper } from 'src/components/hook-form';
+import { useDateRangePicker, CustomDateRangePicker } from 'src/components/custom-date-range-picker';
 
+import { LoadingContext } from 'src/auth/context/loading-context';
+
+import { ProjectTasksList } from './project-tasks-list';
 import { ProjectShareDialog } from './project-share-dialog';
-import { ProjectInvitedItem } from './project-invited-item';
+import { ProjectTaskDetails } from './project-task-details';
 import { KanbanInputName } from '../kanban/components/kanban-input-name';
 import { ProjectUserAssigneesList } from './project-user-assignees-list';
 import { ProjectDetailsAttachments } from './project-details-attachments';
-import { ProjectTaskUserAssigneesList } from './project-task-user-assignees-list';
-import { ProjectTaskShareDialog } from './project-task-share-dialog';
-import { ProjectTaskDetailsPriority } from './project-task-details-priority';
-import { ProjectTaskDetails } from './project-task-details';
-import { ProjectTasksList } from './project-tasks-list';
 
 
 
@@ -422,8 +410,7 @@ export function ProjectFileDetails({
   );
 
   const renderAddUsers = (
-    <>
-      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ p: 0.5 }}>
+    <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ p: 0.5 }}>
         <IconButton
           size="small"
           color="primary"
@@ -439,12 +426,10 @@ export function ProjectFileDetails({
           <Iconify icon="mingcute:add-line" />
         </IconButton>
       </Stack>
-    </>
   );
 
   const renderAddTasks = (
-    <>
-      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ p: 0.5 }}>
+    <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ p: 0.5 }}>
         <IconButton
           size="small"
           color="primary"
@@ -460,7 +445,6 @@ export function ProjectFileDetails({
           <Iconify icon="mingcute:add-line" />
         </IconButton>
       </Stack>
-    </>
   );
 
   const renderMainInfo = (
@@ -661,8 +645,7 @@ export function ProjectFileDetails({
       </Stack>
 
       {toggleTaskInfo.value && (
-        <>
-          <Box sx={{ width: expanded ? '40%' : '85%', color: 'text.secondary', mt: -0.8, ml: 11 }}>
+        <Box sx={{ width: expanded ? '40%' : '85%', color: 'text.secondary', mt: -0.8, ml: 11 }}>
             {projectData?.projectTasks?.length > 0 ? (
               <Box component="ul" sx={{ pl: 2, pr: 1 }}>
                 {projectData?.projectTasks?.map((task, index) => (
@@ -686,7 +669,6 @@ export function ProjectFileDetails({
             )}
 
           </Box>
-        </>
       )}
     </Stack>
   );
@@ -708,9 +690,7 @@ export function ProjectFileDetails({
       </Stack>
 
       {toggleProjectAttachments.value && (
-        <>
-
-          <Stack direction="row" sx={{ typography: 'caption', textTransform: 'capitalize' }}>
+        <Stack direction="row" sx={{ typography: 'caption', textTransform: 'capitalize' }}>
             <Box component="span" sx={{ width: 80, color: 'text.secondary', mr: 2 }}>
               Files
             </Box>
@@ -734,7 +714,6 @@ export function ProjectFileDetails({
               )}
             />
           </Stack>
-        </>
       )}
     </Stack>
   );

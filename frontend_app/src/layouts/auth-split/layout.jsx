@@ -11,10 +11,10 @@ import { Logo } from 'src/components/logo';
 
 import { Section } from './section';
 import { Main, Content } from './main';
+import { CustomFooter } from '../main/footer';
 import { HeaderSection } from '../core/header-section';
 import { LayoutSection } from '../core/layout-section';
 import { SettingsButton } from '../components/settings-button';
-import { CustomFooter, Footer, HomeFooter } from '../main/footer';
 
 // ----------------------------------------------------------------------
 
@@ -46,21 +46,19 @@ export function AuthSplitLayout({ sx, section, children, header }) {
                 </Box>
               </>
             ),
-            rightArea: (
-              <Box display="flex" alignItems="center" gap={{ xs: 1, sm: 1.5 }}>
-                {/* -- Help link -- */}
-                <Link
-                  href={paths.faqs}
-                  component={RouterLink}
-                  color="inherit"
-                  sx={{ typography: 'subtitle2' }}
-                >
-                  Need help?
-                </Link>
-                {/* -- Settings button -- */}
-                <SettingsButton />
-              </Box>
-            ),
+            // rightArea: (
+            //   <Box display="flex" alignItems="center" gap={{ xs: 1, sm: 1.5 }}>
+            //     <Link
+            //       href={paths.faqs}
+            //       component={RouterLink}
+            //       color="inherit"
+            //       sx={{ typography: 'subtitle2' }}
+            //     >
+            //       Need help?
+            //     </Link>
+            //     <SettingsButton />
+            //   </Box>
+            // ),
           }}
         />
       }

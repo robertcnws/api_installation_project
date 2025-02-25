@@ -1,15 +1,23 @@
-import {
-  ApolloClient,
-  InMemoryCache,
-  ApolloProvider,
-  HttpLink,
-  split,
-} from '@apollo/client';
+import { split, HttpLink, ApolloClient, InMemoryCache } from '@apollo/client';
+
 import { CONFIG } from '../config-global';
 
+const httpLinkProjects = new HttpLink({
+  uri: `${CONFIG.apiUrl}/projects/graphql/`,
+});
+
+const httpLinkUsers = new HttpLink({
+  uri: `${CONFIG.apiUrl}/users/graphql/`,
+});
+
+const splitLink = split(
+  (operation) => operation.getContext().clientName === 'Projects',
+  httpLinkProjects,
+  httpLinkUsers
+);
 
 const client = new ApolloClient({
-  uri: `${CONFIG.apiUrl}/projects/graphql/`, 
+  link: splitLink,
   cache: new InMemoryCache(),
 });
 

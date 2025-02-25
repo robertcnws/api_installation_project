@@ -25,6 +25,9 @@ urlpatterns = [
     path('create/project/<str:id>/comment/', views.create_project_comment, name='create_project_comment'),
     path('edit/project/<str:projectId>/comment/<str:id>/', views.edit_project_comment, name='edit_project_comment'),
     path('delete/project/<str:projectId>/comment/<str:id>/', views.delete_project_comment, name='delete_project_comment'),
+    path('delete/old-notifications/', views.remove_old_notifications, name='remove_old_notifications'),
+    path('mark-read/notifications/', views.mark_as_read_notifications, name='mark_as_read_notifications'),
+    path('delete/notifications/', views.delete_notifications, name='delete_notifications'),
     # PROJECT TASKS
     path('create/project/task/', views.create_project_task, name='create_project_task'),
     path('update/project/task/<str:id>/', views.update_project_task, name='update_project_task'),

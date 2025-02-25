@@ -39,9 +39,10 @@
 
 // export default MatchGauge;
 
+import React, { useState, useEffect } from 'react';
+
 // src/MatchGauge.js
 import { Box } from '@mui/material';
-import React, { useEffect, useState } from 'react';
 
 const MatchGauge = ({ percentage }) => {
     const normalizedPercentage = Math.max(0, Math.min(percentage, 100));

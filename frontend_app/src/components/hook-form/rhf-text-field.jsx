@@ -2,6 +2,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 
 import TextField from '@mui/material/TextField';
 import { IconButton, InputAdornment } from '@mui/material';
+
 import { Iconify } from '../iconify';
 
 // ----------------------------------------------------------------------
@@ -33,7 +34,7 @@ export function RHFTextField({ name, helperText, type, ...other }) {
           value={type === 'number' && field.value === 0 ? '' : field.value}
           onChange={(event) => {
             if (type === 'number') {
-              const value = event.target.value;
+              const {value} = event.target;
               setValue(name, value === '' ? '' : Number(value));
             } else {
               field.onChange(event.target.value);

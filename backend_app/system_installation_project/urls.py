@@ -23,4 +23,5 @@ urlpatterns = [
     path('api/integration/', include('api_integration.urls')),
     path('api/authorization/', include('api_authorization.urls')),
     path('api/projects/', include('api_projects.urls')),
+    path('api/users/', include('api_users.urls')),
 ]

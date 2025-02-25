@@ -8,10 +8,10 @@ import { RouterLink } from 'src/routes/components';
 import { Logo } from 'src/components/logo';
 
 import { Main, CompactContent } from './main';
+import { CustomFooter } from '../main/footer';
 import { LayoutSection } from '../core/layout-section';
 import { HeaderSection } from '../core/header-section';
 import { SettingsButton } from '../components/settings-button';
-import { CustomFooter, Footer } from '../main/footer';
 
 // ----------------------------------------------------------------------
 
@@ -35,21 +35,19 @@ export function SimpleLayout({ sx, children, header, content }) {
               </Alert>
             ),
             leftArea: <Logo />,
-            rightArea: (
-              <Box display="flex" alignItems="center" gap={{ xs: 1, sm: 1.5 }}>
-                {/* -- Help link -- */}
-                <Link
-                  href={paths.faqs}
-                  component={RouterLink}
-                  color="inherit"
-                  sx={{ typography: 'subtitle2' }}
-                >
-                  Need help?
-                </Link>
-                {/* -- Settings button -- */}
-                <SettingsButton />
-              </Box>
-            ),
+            // rightArea: (
+            //   <Box display="flex" alignItems="center" gap={{ xs: 1, sm: 1.5 }}>
+            //     <Link
+            //       href={paths.faqs}
+            //       component={RouterLink}
+            //       color="inherit"
+            //       sx={{ typography: 'subtitle2' }}
+            //     >
+            //       Need help?
+            //     </Link>
+            //     <SettingsButton />
+            //   </Box>
+            // ),
           }}
         />
       }
