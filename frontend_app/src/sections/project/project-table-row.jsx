@@ -1,4 +1,4 @@
-import { useState, useContext, useCallback } from 'react';
+import React, { useState, useContext, useCallback, useMemo } from 'react';
 
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
@@ -18,6 +18,8 @@ import { useBoolean } from 'src/hooks/use-boolean';
 import { useDoubleClick } from 'src/hooks/use-double-click';
 import { useCopyToClipboard } from 'src/hooks/use-copy-to-clipboard';
 
+import { listRolesAndSubroles, verifyPermissions } from 'src/utils/check-permissions';
+
 import { fDate } from 'src/utils/format-time';
 
 import { CONFIG } from 'src/config-global';
@@ -30,10 +32,14 @@ import { ConfirmDialog } from 'src/components/custom-dialog';
 import { FileThumbnail } from 'src/components/file-thumbnail';
 import { usePopover, CustomPopover } from 'src/components/custom-popover';
 
+import { useDataContext } from 'src/auth/context/data/data-context';
+
 import { LoadingContext } from 'src/auth/context/loading-context';
 
 import { ProjectShareDialog } from './project-share-dialog';
 import { ProjectFileDetails } from './project-file-details';
+
+
 
 
 // ----------------------------------------------------------------------
@@ -49,11 +55,14 @@ export function ProjectTableRow({
   loadedProjectPermissions,
   loadedStages,
   loadedStagesTask,
+  listPermissions,
   setTableData,
   refetchProjects,
 }) {
 
   const [rowUpdated, setRowUpdated] = useState(null);
+
+  const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
 
   // useEffect(() => {
   //   if (item) {
@@ -140,14 +149,21 @@ export function ProjectTableRow({
           ...(details.value && { [`& .${tableCellClasses.root}`]: { ...defaultStyles } }),
         }}
       >
-        <TableCell padding="checkbox">
-          <Checkbox
-            checked={selected}
-            onDoubleClick={() => console.info('ON DOUBLE CLICK')}
-            onClick={onSelectRow}
-            inputProps={{ id: `row-checkbox-${row?.id}`, 'aria-label': `row-checkbox` }}
-          />
-        </TableCell>
+        {(verifyPermissions(
+          listPermissions,
+          CONFIG.permissions.system,
+          CONFIG.permissions.moduleProjects,
+          CONFIG.permissions.operationDelete
+        ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) && (
+            <TableCell padding="checkbox">
+              <Checkbox
+                checked={selected}
+                onDoubleClick={() => console.info('ON DOUBLE CLICK')}
+                onClick={onSelectRow}
+                inputProps={{ id: `row-checkbox-${row?.id}`, 'aria-label': `row-checkbox` }}
+              />
+            </TableCell>
+          )}
 
         {!isMobile ? (
           <>
@@ -201,10 +217,11 @@ export function ProjectTableRow({
               sx={{ whiteSpace: 'nowrap', cursor: 'pointer', }}
             >
               <Label color={
-                row?.currentStage?.name === 'Preparation' ? 'default' : 
-                row?.currentStage?.name === 'Coordination' ? 'secondary' : 
-                row?.currentStage?.name === 'Installation' ? 'info' : 
-                row?.currentStage?.name === CONFIG.stages.permission ? 'warning' : 'success'
+                row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ? 'default' :
+                  row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ? 'secondary' :
+                    row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1 ? 'info' :
+                      row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.permission.toLowerCase()) !== -1 ? 'warning' :
+                        row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.closing.toLowerCase()) !== -1 ? 'success' : 'error'
               }>{row?.currentStage?.name}</Label>
             </TableCell>
 
@@ -244,8 +261,9 @@ export function ProjectTableRow({
                     color: stageOrder > itemOrder && stageName !== CONFIG.stages.permission && !hasPermission ? 'default.main' :
                       stageOrder === itemOrder && stageName !== CONFIG.stages.permission && !hasPermission ? 'info.main' :
                         stageName === CONFIG.stages.permission && hasPermission && percentage < 100 ? 'info.main' :
-                          stageOrder > itemOrder ? 'default.main' :
-                            stageOrder === itemOrder ? 'info.main' : 'success.main'
+                          stageName === CONFIG.stages.permission && !hasPermission ? 'default.main' :
+                            stageOrder > itemOrder ? 'default.main' :
+                              stageOrder === itemOrder ? 'info.main' : 'success.main'
                   }}>
                     {!hasPermission || stageName !== CONFIG.stages.permission ? (
                       <Tooltip title={
@@ -266,16 +284,18 @@ export function ProjectTableRow({
                       </Tooltip>
                     ) : (
                       <Tooltip title={
-                        percentage === 0 ? `${stageName} is not started` :
-                          percentage > 0 && percentage < 50 ? `${stageName} is ${percentage.toFixed(2)} % completed` :
-                            percentage >= 50 && percentage < 100 ? `${stageName} is ${percentage.toFixed(2)} % completed` :
-                              `${stageName} is ${percentage.toFixed(2)} % completed`
+                        !hasPermission ? `${stageName} is not available` :
+                          percentage === 0 ? `${stageName} is not started` :
+                            percentage > 0 && percentage < 50 ? `${stageName} is ${percentage.toFixed(2)} % completed` :
+                              percentage >= 50 && percentage < 100 ? `${stageName} is ${percentage.toFixed(2)} % completed` :
+                                `${stageName} is ${percentage.toFixed(2)} % completed`
                       } placement="top" arrow>
                         <Iconify sx={{ width: '14px' }} icon={
-                          percentage === 0 ? "icon-park-solid:pie" :
-                            percentage > 0 && percentage < 25 ? "icon-park-solid:pie-two" :
-                              percentage >= 25 && percentage < 50 ? "icon-park-solid:pie-four" :
-                                percentage >= 50 && percentage < 100 ? "icon-park-solid:pie-six" : "garden:circle-full-fill-12"
+                          !hasPermission ? "jam:pie-chart-alt" :
+                            percentage === 0 ? "icon-park-solid:pie" :
+                              percentage > 0 && percentage < 25 ? "icon-park-solid:pie-two" :
+                                percentage >= 25 && percentage < 50 ? "icon-park-solid:pie-four" :
+                                  percentage >= 50 && percentage < 100 ? "icon-park-solid:pie-six" : "garden:circle-full-fill-12"
                           // stageOrder === itemOrder ? "mdi:circle-half-full" : "garden:circle-full-fill-12"
                         } />
                       </Tooltip>
@@ -393,7 +413,6 @@ export function ProjectTableRow({
           <MenuItem
             onClick={() => {
               popover.onClose();
-              // details.onTrue();
               onViewRow();
             }}
           >
@@ -401,38 +420,27 @@ export function ProjectTableRow({
             View Project
           </MenuItem>
 
-          {/* <MenuItem
-            onClick={onKanbanView}
-          >
-            <Iconify icon="bi:kanban" />
-            Kanban Project
-          </MenuItem>
-
-          <MenuItem
-            onClick={() => {
-              popover.onClose();
-              // details.onTrue();
-              onViewRow();
-            }}
-          >
-            <Iconify icon="typcn:edit" />
-            View Project
-          </MenuItem> */}
-
-          <Divider sx={{ borderStyle: 'dashed' }} />
-
-          <MenuItem
-            onClick={() => {
-              confirm.onTrue();
-              popover.onClose();
-            }}
-            sx={{ color: 'error.main' }}
-          >
-            <Iconify icon="solar:trash-bin-trash-bold" />
-            Delete Project
-          </MenuItem>
+          {verifyPermissions(
+            listPermissions,
+            CONFIG.permissions.system,
+            CONFIG.permissions.moduleProjects,
+            CONFIG.permissions.operationDelete
+          ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.superadmin) ? [
+            <Divider key="divider" sx={{ borderStyle: 'dashed' }} />,
+            <MenuItem
+              key="delete"
+              onClick={() => {
+                confirm.onTrue();
+                popover.onClose();
+              }}
+              sx={{ color: 'error.main' }}
+            >
+              <Iconify icon="solar:trash-bin-trash-bold" />
+              Delete Project
+            </MenuItem>
+          ] : null}
         </MenuList>
-      </CustomPopover>
+      </CustomPopover >
 
       <ProjectFileDetails
         item={row}

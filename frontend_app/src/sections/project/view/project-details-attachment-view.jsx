@@ -1,13 +1,14 @@
-import { useState, useEffect, useContext, useCallback } from 'react';
+import { useState, useEffect, useContext, useCallback, useMemo } from 'react';
 
 import Card from '@mui/material/Card';
 import Grid from '@mui/material/Unstable_Grid2';
-import { Box, Select, MenuItem, TextField, Autocomplete } from '@mui/material';
+import { Box, Select, MenuItem, TextField, Autocomplete, ListItem } from '@mui/material';
 
 import { CONFIG } from 'src/config-global';
 import { useProjectByIdQuery } from 'src/_mock/__projects';
 
 import { Iconify } from 'src/components/iconify';
+import { availableTasks } from 'src/utils/project-tasks-utils';
 
 import { LoadingContext } from 'src/auth/context/loading-context';
 import { useDataContext } from 'src/auth/context/data/data-context';
@@ -15,9 +16,14 @@ import { useDataContext } from 'src/auth/context/data/data-context';
 import { ProjectEditAttachments } from './project-edit-attachments';
 import { ProjectEditTaskAttachments } from './project-edit-task-attachments';
 
+
 // ----------------------------------------------------------------------
 
 export function ProjectDetailsAttachmentView({ projectId }) {
+
+    const {
+        listPermissions,
+    } = useDataContext();
 
     const TASK_STATUS_OPTIONS = [
         { value: 'not started', label: 'Not Started Tasks' },
@@ -44,6 +50,13 @@ export function ProjectDetailsAttachmentView({ projectId }) {
 
     const [newFiles, setNewFiles] = useState([]);
 
+    const finalStages = useMemo(() => {
+        if (loadedStages) {
+            return loadedStages.filter((stage) => stage.name.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) === -1);
+        }
+        return [];
+    }, [loadedStages]);
+
     useEffect(() => {
         if (refetchProject) {
             refetchProject?.();
@@ -52,28 +65,7 @@ export function ProjectDetailsAttachmentView({ projectId }) {
 
     useEffect(() => {
         if (project) {
-            const tasks = project?.projectDefaultTasks?.map((task) => ({
-                ...task,
-                number: `T-${String(task.project_default_task.order).padStart(3, "0")}`,
-            }));
-            const sortedTasks = tasks?.sort(
-                (a, b) => a.project_default_task.order - b.project_default_task.order
-            );
-            let foundNotStarted = false;
-            const filtered = sortedTasks?.filter((task) => {
-                if (task.status !== "not started") return true;
-                if (!foundNotStarted) {
-                    foundNotStarted = true;
-                    return true;
-                }
-                return false;
-            });
-            if (project?.hasPermission) {
-                const permissionTasks = tasks?.filter(
-                    (task) => task.project_default_task?.project_stage?.name === CONFIG.stages.permission && task.status === CONFIG.taskStatus.notStarted
-                );
-                filtered.push(...permissionTasks);
-            }
+            const filtered = availableTasks(project, project?.projectDefaultTasks, CONFIG);
             setLoadedTasks(filtered);
             setFilteredTasks(filtered.filter((task) => task.status === selectedStatusTask));
         }
@@ -82,7 +74,7 @@ export function ProjectDetailsAttachmentView({ projectId }) {
 
     const handleChangeSelectedStatusTask = useCallback(
         (event) => {
-            const {value} = event.target;
+            const { value } = event.target;
             let filtered = [];
             setSelectedStatusTask(event.target.value);
             if (value !== 'all') {
@@ -112,8 +104,9 @@ export function ProjectDetailsAttachmentView({ projectId }) {
                     id={projectId}
                     name={project?.name}
                     type="project"
-                    loadedStages={loadedStages}
+                    loadedStages={finalStages}
                     isMobile={isMobile}
+                    listPermissions={listPermissions}
                 />
             )}
         </Card>
@@ -164,7 +157,7 @@ export function ProjectDetailsAttachmentView({ projectId }) {
                         }
 
                         return (
-                            <li
+                            <ListItem
                                 {...props}
                                 key={`${stage.project_default_task.id}-${index}-${stage.status}`}
                                 style={{
@@ -179,7 +172,7 @@ export function ProjectDetailsAttachmentView({ projectId }) {
                                     {stage.project_default_task.project_stage.name} {stage.number} -- {stage.project_default_task.name} <br />
                                     <strong>({stage.status})</strong>
                                 </span>
-                            </li>
+                            </ListItem>
                         );
                     }}
                     renderInput={(params) => (
@@ -201,6 +194,7 @@ export function ProjectDetailsAttachmentView({ projectId }) {
                         name={project?.name}
                         type="task"
                         isMobile={isMobile}
+                        listPermissions={listPermissions}
                     />
                 </Box>
             )}

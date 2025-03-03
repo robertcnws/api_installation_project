@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
@@ -35,6 +35,10 @@ export function KanbanDetailsToolbar({
 
   const [status, setStatus] = useState(taskStatus);
 
+  useEffect(() => {
+    setStatus(taskStatus);
+  }, [taskStatus]);
+
   const handleChangeStatus = useCallback(
     (newValue) => {
       popover.onClose();
@@ -68,8 +72,10 @@ export function KanbanDetailsToolbar({
           // onClick={popover.onOpen}
           // disabled
           sx={{
-            bgcolor: status === CONFIG.taskStatus.notStarted ? 'warning.lighter' :
-              status === 'in progress' ? 'info.lighter' : 'success.lighter'
+            bgcolor: status === CONFIG.taskStatus.notStarted ? 'grey.300' :
+              status === 'in progress' ? 'warning.lighter' : 'success.lighter',
+            color: status === CONFIG.taskStatus.notStarted ? 'grey.700' :
+              status === 'in progress' ? 'warning.main' : 'success.main'
           }}
         >
           {status}

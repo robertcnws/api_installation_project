@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
@@ -25,10 +25,12 @@ import { toast } from 'src/components/snackbar';
 import { Iconify } from 'src/components/iconify';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 import { usePopover, CustomPopover } from 'src/components/custom-popover';
+import { isInstaller, listRolesAndSubroles, verifyPermissions } from 'src/utils/check-permissions';
 
 import { ProjectShareDialog } from './project-share-dialog';
 import { ProjectFileDetails } from './project-file-details';
 import { ProjectNewFolderDialog } from './project-new-folder-dialog';
+
 
 
 
@@ -45,9 +47,13 @@ export function ProjectFolderItem({
   loadedProjectPermissions,
   loadedStages,
   loadedStagesTask,
+  listPermissions,
   setTableData,
   refetchProjects,
   ...other }) {
+
+  const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);  
+
   const { copy } = useCopyToClipboard();
 
   const share = useBoolean();
@@ -107,7 +113,7 @@ export function ProjectFolderItem({
       onMouseLeave={checkbox.onFalse}
       sx={{ width: 36, height: 36 }}
     >
-      {(checkbox.value || selected) && onSelect ? (
+      {(checkbox.value || selected) && onSelect && !isInstaller(userLogged?.data?.user_role?.name) ? (
         <Checkbox
           checked={selected}
           onClick={onSelect}
@@ -120,6 +126,9 @@ export function ProjectFolderItem({
           component="img"
           src={`${CONFIG.assetsDir}/assets/icons/files/ic-folder.svg`}
           sx={{ width: 1, height: 1 }}
+          onClick={
+            isInstaller(userLogged?.data?.user_role?.name) ? onViewRow : null
+          }
         />
       )}
     </Box>
@@ -142,7 +151,7 @@ export function ProjectFolderItem({
               bgcolor: 'currentColor',
             }}
           />
-          (On Date: {fDate(folder.salesOrder.date)})
+          (On Date: <b>{fDate(folder.startDate)}</b>)
         </>
       }
       primaryTypographyProps={{ noWrap: true, typography: 'subtitle1' }}
@@ -206,7 +215,7 @@ export function ProjectFolderItem({
 
         {renderText}
 
-        {!!folder?.usersAssignees?.length && renderAvatar}
+        {(!!folder?.usersAssignees?.length && !isInstaller(userLogged?.data?.user_role?.name)) && renderAvatar}
       </Paper>
 
       <CustomPopover
@@ -227,18 +236,25 @@ export function ProjectFolderItem({
             View Project
           </MenuItem>
 
-          <Divider sx={{ borderStyle: 'dashed' }} />
-
-          <MenuItem
-            onClick={() => {
-              confirm.onTrue();
-              popover.onClose();
-            }}
-            sx={{ color: 'error.main' }}
-          >
-            <Iconify icon="solar:trash-bin-trash-bold" />
-            Delete Project
-          </MenuItem>
+          {verifyPermissions(
+            listPermissions,
+            CONFIG.permissions.system,
+            CONFIG.permissions.moduleProjects,
+            CONFIG.permissions.operationDelete
+          ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.superadmin) ? [
+            <Divider key="divider" sx={{ borderStyle: 'dashed' }} />,
+            <MenuItem
+              key="delete"
+              onClick={() => {
+                confirm.onTrue();
+                popover.onClose();
+              }}
+              sx={{ color: 'error.main' }}
+            >
+              <Iconify icon="solar:trash-bin-trash-bold" />
+              Delete Project
+            </MenuItem>
+          ] : null}
         </MenuList>
       </CustomPopover>
 

@@ -16,11 +16,15 @@ import { CardHeader, Table, TableBody, TableContainer } from '@mui/material';
 import { CONFIG } from 'src/config-global';
 import { Scrollbar } from 'src/components/scrollbar';
 import { Label } from 'src/components/label';
+import { useRouter } from 'src/routes/hooks';
+import { paths } from 'src/routes/paths';
 
 // ----------------------------------------------------------------------
 
 export function ProjectsStageToday({ title, list, stage, ...other }) {
     // const theme = useTheme();
+
+    const router = useRouter();
 
     localStorage.setItem('backFromProjectDetails', 'analytics');
 
@@ -37,6 +41,7 @@ export function ProjectsStageToday({ title, list, stage, ...other }) {
                                 key={item.id}
                                 item={item}
                                 stage={stage}
+                                router={router}
                                 sx={{
                                     // color: colors[index],
                                     px: 2.5,
@@ -60,7 +65,7 @@ export function ProjectsStageToday({ title, list, stage, ...other }) {
     );
 }
 
-function Item({ item, sx, stage, ...other }) {
+function Item({ item, sx, stage, router, ...other }) {
     const tasks = item?.projectDefaultTasks.filter(
         p => p.project_default_task.project_stage.name.toLowerCase().indexOf(stage.toLowerCase()) !== -1
     );
@@ -68,13 +73,11 @@ function Item({ item, sx, stage, ...other }) {
     const percent = totals / tasks.length;
 
     const color = percent === 100 ? 'success.main' :
-        percent < 100 && percent >= 50 ? 'info.main' :
-            percent < 50 && percent >= 25 ? 'warning.main' : 'error.main'
+        percent < 100 && percent > 0 ? 'warning.main' : 'background.neutral';
     sx = {
         ...sx,
         color: percent === 100 ? 'success.main' :
-            percent < 100 && percent >= 50 ? 'info.main' :
-                percent < 50 && percent >= 25 ? 'warning.main' : 'error.main'
+            percent < 100 && percent > 0 ? 'warning.main' : 'background.neutral'
     };
 
     return (
@@ -104,13 +107,26 @@ function Item({ item, sx, stage, ...other }) {
                     <Link
                         variant="subtitle2"
                         color={item.hasPermission ? "error" : "inherit"}
-                        noWrap sx={{ color: item.hasPermission ? 'secondary.main' : 'text.primary', cursor: 'pointer' }}
-                        href={`installation/${item.id}/details`}
+                        noWrap sx={{ color: 'text.primary', cursor: 'pointer' }}
+                        href='#'
+                        onClick={(e) => {
+                            e.preventDefault();
+                            localStorage.setItem('projectId', item.id);
+                            router.push(paths.dashboard.project.details(item.id));
+                        }}
                     >
                         {item.name}
                     </Link>
                     {item.hasPermission && (
-                        <Label color='secondary' sx={{ textTransform: 'capitalize', fontSize: 'x-small' }}>
+                        <Label
+                            color='warning'
+                            variant='outlined'
+                            sx={{
+                                textTransform: 'capitalize', 
+                                fontSize: '9px',
+                                p: 0.5
+                            }}
+                        >
                             Need Permission
                         </Label>
                     )}

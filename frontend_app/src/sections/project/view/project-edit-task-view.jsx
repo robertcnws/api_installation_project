@@ -15,6 +15,7 @@ import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
 import { Form, Field, schemaHelper } from 'src/components/hook-form';
 import { useDateRangePicker } from 'src/components/custom-date-range-picker';
+import { availableTasks } from 'src/utils/project-tasks-utils';
 
 import { ProjectTaskShareDialog } from 'src/sections/project/project-task-share-dialog';
 import { ProjectDetailsAttachments } from 'src/sections/project/project-details-attachments';
@@ -22,6 +23,7 @@ import { ProjectTaskDetailsPriority } from 'src/sections/project/project-task-de
 import { ProjectTaskUserAssigneesList } from 'src/sections/project/project-task-user-assignees-list';
 
 import ProjectEditTaskViewTaskList from './project-edit-task-view-task-list';
+
 
 
 
@@ -60,28 +62,7 @@ export function ProjectEditTaskView({
 
     useEffect(() => {
         if (projectData) {
-            const tasks = projectData?.projectDefaultTasks?.map((task) => ({
-                ...task,
-                number: `T-${String(task.project_default_task.order).padStart(3, "0")}`,
-            }));
-            let foundNotStarted = false;
-            const filteredTasks = tasks.filter((task) => {
-                if (task.status !== "not started") return true;
-                if (!foundNotStarted) {
-                    foundNotStarted = true;
-                    return true;
-                }
-                return false;
-            });
-            if (projectData.hasPermission) {
-                const permissionTasks = tasks.filter(
-                    (task) => task.project_default_task?.project_stage?.name === CONFIG.stages.permission && task.status === CONFIG.taskStatus.notStarted
-                );
-                filteredTasks.push(...permissionTasks);
-            }
-            const sortedTasks = filteredTasks.sort(
-                (a, b) => a.project_default_task.order - b.project_default_task.order
-            );
+            const sortedTasks = availableTasks(projectData, projectData?.projectDefaultTasks, CONFIG);
 
             setLoadedTasks(sortedTasks);
         }

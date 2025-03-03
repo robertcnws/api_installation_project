@@ -133,10 +133,8 @@ const ItemBase = forwardRef(({ task, stateProps, sx, ...other }, ref) => {
         flexGrow={1}
         direction="row"
         alignItems="center"
-        sx={{ 
-          typography: 'caption', 
-          color: task?.percentage === 0 ? 'error.main' :
-            task?.percentage === 100 ? 'success.main' : 'info.main'
+        sx={{
+          typography: 'caption',
         }}
       >
         {/* <Iconify width={16} icon="solar:chat-round-dots-bold" sx={{ mr: 0.25 }} />
@@ -154,8 +152,22 @@ const ItemBase = forwardRef(({ task, stateProps, sx, ...other }, ref) => {
           </>
         )}
 
-        <Iconify width={16} icon="fluent:document-multiple-percent-24-filled" sx={{ mr: 0.25 }} />
-        <Box component="span">{task?.percentage.toFixed(2)}</Box>
+        <Iconify
+          width={16}
+          icon="fluent:document-multiple-percent-24-filled"
+          sx={{
+            mr: 0.25,
+            ml: 1,
+            color: task?.percentage === 0 ? 'grey.500' :
+              task?.percentage === 100 ? 'success.main' : 'warning.main'
+          }}
+        />
+        <Box component="span" sx={{
+          color: task?.percentage === 0 ? 'grey.500' :
+            task?.percentage === 100 ? 'success.main' : 'warning.main'
+        }}>
+          {task?.percentage.toFixed(2)}
+        </Box>
 
       </Stack>
 

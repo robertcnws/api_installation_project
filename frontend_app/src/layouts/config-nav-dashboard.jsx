@@ -93,21 +93,23 @@ export const navData = () => [
           // },
         ],
       },
-      {
-        title: 'Sales Orders',
-        path: paths.dashboard.salesOrder.root,
-        icon: ICONS.salesOrder,
-        children: [
-          {
-            title: 'List',
-            path: paths.dashboard.salesOrder.list,
-            onClick: () => {
-              alert('List');
-            }
-          },
-        ],
-      },
-      ...(userLogged && listRolesAndSubroles(userLogged?.data.user_role.name).includes(CONFIG.roles.manager) ? [
+      ...(userLogged && listRolesAndSubroles(userLogged?.data.user_role.name).includes(CONFIG.roles.administrator) ? [
+        {
+          title: 'Sales Orders',
+          path: paths.dashboard.salesOrder.root,
+          icon: ICONS.salesOrder,
+          children: [
+            {
+              title: 'List',
+              path: paths.dashboard.salesOrder.list,
+              onClick: () => {
+                alert('List');
+              }
+            },
+          ],
+        },
+      ] : []),
+      ...(userLogged && listRolesAndSubroles(userLogged?.data.user_role.name).includes(CONFIG.roles.projectManager) ? [
         {
           title: 'Users',
           path: paths.dashboard.user.root,
@@ -192,7 +194,7 @@ export const navData = () => [
           ],
         },
       ] : []),
-      
+
     ],
   },
 ];

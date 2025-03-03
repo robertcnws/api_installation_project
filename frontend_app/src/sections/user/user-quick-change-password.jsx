@@ -22,22 +22,26 @@ import { useDataContext } from 'src/auth/context/data/data-context';
 
 // ----------------------------------------------------------------------
 
-export const UserQuickChangePasswordSchema = zod.object({
-  password: zod.string().min(6, { message: 'Password must be at least 6 characters!' }),
-  newPassword: zod.string().min(6, { message: 'New password must be at least 6 characters!' }),
-  confirmPassword: zod.string().min(6, { message: 'Confirm password must be at least 6 characters!' }),
-}).refine((data) => data.newPassword === data.confirmPassword, {
-  message: "Passwords must match",
-  path: ["confirmPassword"],
-});
-
-// ----------------------------------------------------------------------
-
-export function UserQuickChangePasswordForm({ currentUser, open, onClose }) {
+export function UserQuickChangePasswordForm({ currentUser, open, onClose, isSameUser = false }) {
 
   const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
 
   const { loadedUserRoles, refetchUsers } = useDataContext();
+
+  const UserQuickChangePasswordSchema = isSameUser ? zod.object({
+    password: zod.string().min(6, { message: 'Password must be at least 6 characters!' }),
+    newPassword: zod.string().min(6, { message: 'New password must be at least 6 characters!' }),
+    confirmPassword: zod.string().min(6, { message: 'Confirm password must be at least 6 characters!' }),
+  }).refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Passwords must match",
+    path: ["confirmPassword"],
+  }) : zod.object({
+    newPassword: zod.string().min(6, { message: 'New password must be at least 6 characters!' }),
+    confirmPassword: zod.string().min(6, { message: 'Confirm password must be at least 6 characters!' }),
+  }).refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Passwords must match",
+    path: ["confirmPassword"],
+  })
 
   const defaultValues = useMemo(
     () => ({
@@ -63,24 +67,26 @@ export function UserQuickChangePasswordForm({ currentUser, open, onClose }) {
   } = methods;
 
   const onSubmit = handleSubmit(async (data) => {
-    const {id} = currentUser;
+    const { id } = currentUser;
+    console.log('isSameUser', isSameUser);
     const payload = {
       ...data,
+      isSameUser: isSameUser ? 'same' : 'different',
     };
 
     try {
       const promise = axios.post(`${CONFIG.apiUrl}/users/change-password/${id}/`, payload, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-      
+
       toast.promise(promise, {
         loading: 'Loading...',
         success: 'Update success!',
         error: 'Update error!',
       });
-      
+
       const response = await promise;
-      
+
       if (response.data && response.data.error) {
         setError('password', { type: 'server', message: response.data.error });
         return;
@@ -88,9 +94,9 @@ export function UserQuickChangePasswordForm({ currentUser, open, onClose }) {
 
       reset();
       onClose();
-      
+
       if (payload.username === userLogged?.data.username) {
-        localStorage.removeItem('userLogged');  
+        localStorage.removeItem('userLogged');
         sessionStorage.removeItem('userLogged');
         localStorage.setItem('userLogged', JSON.stringify({ data: payload }));
         sessionStorage.setItem('userLogged', JSON.stringify({ data: payload }));
@@ -126,7 +132,9 @@ export function UserQuickChangePasswordForm({ currentUser, open, onClose }) {
             display="grid"
             gridTemplateColumns={{ xs: 'repeat(1, 1fr)', sm: 'repeat(1, 1fr)' }}
           >
-            <Field.Text name="password" label="Current Password" type="password" />
+            {isSameUser && (
+              <Field.Text name="password" label="Current Password" type="password" />
+            )}
             <Field.Text name="newPassword" label="New Password" type="password" />
             <Field.Text name="confirmPassword" label="Confirm Password" type="password" />
           </Box>

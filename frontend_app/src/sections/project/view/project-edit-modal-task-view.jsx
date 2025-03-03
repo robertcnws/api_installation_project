@@ -14,6 +14,7 @@ import {
     IconButton,
     DialogTitle,
     DialogActions,
+    ListItem,
 } from '@mui/material';
 
 import { useBoolean } from 'src/hooks/use-boolean';
@@ -27,9 +28,12 @@ import { Iconify } from 'src/components/iconify';
 
 import { useDataContext } from 'src/auth/context/data/data-context';
 
+import { availableTasks } from 'src/utils/project-tasks-utils';
+
 import { ProjectTaskShareDialog } from '../project-task-share-dialog';
 import { ProjectTaskDetailsPriority } from '../project-task-details-priority';
 import { ProjectTaskUserAssigneesList } from '../project-task-user-assignees-list';
+
 
 
 
@@ -73,28 +77,7 @@ export function ProjectEditModalTaskView({ projectId, open, onClose }) {
 
     useEffect(() => {
         if (project) {
-            const tasks = project?.projectDefaultTasks?.map((task) => ({
-                ...task,
-                number: `T-${String(task.project_default_task.order).padStart(3, "0")}`,
-            }));
-            const sortedTasks = tasks?.sort(
-                (a, b) => a.project_default_task.order - b.project_default_task.order
-            );
-            let foundNotStarted = false;
-            const filtered = sortedTasks?.filter((task) => {
-                if (task.status !== "not started") return true;
-                if (!foundNotStarted) {
-                    foundNotStarted = true;
-                    return true;
-                }
-                return false;
-            });
-            if (project.hasPermission) {
-                const permissionTasks = tasks?.filter(
-                    (task) => task.project_default_task?.project_stage?.name === 'Permission' && task.status === 'not started'
-                );
-                filtered.push(...permissionTasks);
-            }
+            const filtered = availableTasks(project, project?.projectDefaultTasks, CONFIG);
             setLoadedTasks(filtered);
             setFilteredTasks(filtered);
         }
@@ -114,7 +97,7 @@ export function ProjectEditModalTaskView({ projectId, open, onClose }) {
 
     const handleChangeSelectedStatusTask = useCallback(
         (event) => {
-            const {value} = event.target;
+            const { value } = event.target;
             let filtered = [];
             setSelectedStatusTask(event.target.value);
             if (value !== 'all') {
@@ -253,21 +236,21 @@ export function ProjectEditModalTaskView({ projectId, open, onClose }) {
 
     const renderAddTaskUsers = (
         <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ p: 0.5 }}>
-                <IconButton
-                    size="small"
-                    color="primary"
-                    onClick={shareTask.onTrue}
-                    sx={{
-                        width: 24,
-                        height: 24,
-                        bgcolor: 'primary.main',
-                        color: 'primary.contrastText',
-                        '&:hover': { bgcolor: 'primary.dark' },
-                    }}
-                >
-                    <Iconify icon="mingcute:add-line" />
-                </IconButton>
-            </Stack>
+            <IconButton
+                size="small"
+                color="primary"
+                onClick={shareTask.onTrue}
+                sx={{
+                    width: 24,
+                    height: 24,
+                    bgcolor: 'primary.main',
+                    color: 'primary.contrastText',
+                    '&:hover': { bgcolor: 'primary.dark' },
+                }}
+            >
+                <Iconify icon="mingcute:add-line" />
+            </IconButton>
+        </Stack>
     );
 
     return (
@@ -322,41 +305,32 @@ export function ProjectEditModalTaskView({ projectId, open, onClose }) {
                                 }
                                 value={selectedTask ?? null}
                                 onChange={handleTaskChange}
-                                renderOption={(props, stage, index) => {
-                                    // Determinamos el icono y el color según el estado
-                                    let icon; let color;
-                                    if (stage.status === 'not started') {
-                                        icon = 'mdi:restart-off'; // ejemplo de icono para "not started"
-                                        color = '#ed6c02'; // color warning
-                                    } else if (stage.status === 'in progress') {
-                                        icon = 'carbon:executable-program'; // reemplaza por el icono que prefieras para "in progress"
-                                        color = '#0288d1'; // color info
-                                    } else if (stage.status === 'finished') {
-                                        icon = 'rivet-icons:inbox-complete'; // ejemplo de icono para "finished"
-                                        color = '#2e7d32'; // color success
+                                renderOption={(props, option) => {
+                                    const key = `${option.project_default_task.id || option.project_default_task._id}-${projectId}`;
+                                    let icon;
+                                    let color;
+                                    if (option.status === 'not started') {
+                                        icon = 'mdi:restart-off';
+                                        color = '#ed6c02';
+                                    } else if (option.status === 'in progress') {
+                                        icon = 'carbon:executable-program';
+                                        color = '#0288d1';
+                                    } else if (option.status === 'finished') {
+                                        icon = 'rivet-icons:inbox-complete';
+                                        color = '#2e7d32';
                                     } else {
-                                        icon = 'material-symbols:sms-failed'; // icono para estados no previstos
-                                        color = '#d32f2f'; // color error
+                                        icon = 'material-symbols:sms-failed';
+                                        color = '#d32f2f';
                                     }
-
                                     return (
-                                        <li
-                                            {...props}
-                                            key={`${stage.project_default_task.id}-${index}`}
-                                            style={{
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                color,
-                                                padding: '4px 8px'
-                                            }}
-                                        >
-                                            {/* Icono a la izquierda */}
+                                        <ListItem {...props} key={key} style={{ display: 'flex', alignItems: 'center', color, padding: '4px 8px' }}>
                                             <Iconify icon={icon} sx={{ mr: 1 }} />
                                             <span>
-                                                {stage.project_default_task.project_stage.name} {stage.number} -- {stage.project_default_task.name} <br />
-                                                <strong>({stage.status})</strong>
+                                                {option.project_default_task.project_stage.name} {option.number} -- {option.project_default_task.name}
+                                                <br />
+                                                <strong>({option.status})</strong>
                                             </span>
-                                        </li>
+                                        </ListItem>
                                     );
                                 }}
                                 renderInput={(params) => (

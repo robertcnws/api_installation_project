@@ -78,7 +78,7 @@ export function ProjectEditModalView({
     const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
 
     const rangePicker = useDateRangePicker(
-        item?.startDate ?  dayjs(item?.startDate) : dayjs(new Date()), 
+        item?.startDate ? dayjs(item?.startDate) : dayjs(new Date()),
         item?.endDate ? dayjs(item?.endDate) : dayjs(new Date())
     );
 
@@ -436,21 +436,21 @@ export function ProjectEditModalView({
 
     const renderAddUsers = (
         <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ p: 0.5 }}>
-                <IconButton
-                    size="small"
-                    color="primary"
-                    onClick={share.onTrue}
-                    sx={{
-                        width: 24,
-                        height: 24,
-                        bgcolor: 'primary.main',
-                        color: 'primary.contrastText',
-                        '&:hover': { bgcolor: 'primary.dark' },
-                    }}
-                >
-                    <Iconify icon="mingcute:add-line" />
-                </IconButton>
-            </Stack>
+            <IconButton
+                size="small"
+                color="primary"
+                onClick={share.onTrue}
+                sx={{
+                    width: 24,
+                    height: 24,
+                    bgcolor: 'primary.main',
+                    color: 'primary.contrastText',
+                    '&:hover': { bgcolor: 'primary.dark' },
+                }}
+            >
+                <Iconify icon="mingcute:add-line" />
+            </IconButton>
+        </Stack>
     );
 
     const renderMainInfo = (
@@ -545,8 +545,8 @@ export function ProjectEditModalView({
                                                     labelPlacement="start"
                                                     label={
                                                         <Typography variant="subtitle2" sx={{ mb: 0.5, color: 'warning.main' }}>
-                                                                Need Permission?
-                                                            </Typography>
+                                                            Need Permission?
+                                                        </Typography>
                                                     }
                                                     sx={{ mx: 0, width: 1, justifyContent: 'space-between' }}
                                                     onChange={(e) => onChange(e.target.checked)}
@@ -585,41 +585,41 @@ export function ProjectEditModalView({
                                     control={control}
                                     render={({ field, fieldState: { error } }) => (
                                         <Box sx={{ width: '100%', color: !error ? 'text.secondary' : 'error.main', mt: -0.8 }}>
-                                                {field.value.length > 0 ? (
-                                                    <Box
-                                                        component="ul"
-                                                        sx={{
-                                                            pl: 2,
-                                                            pr: 1,
-                                                            maxHeight: !isMobile ? 250 : '100%',
-                                                            overflowY: !isMobile ? 'auto' : 'hidden',
-                                                            color: !error ? 'default' : 'error.main',
-                                                        }}
-                                                    >
-                                                        {field.value.map((person, index) => (
-                                                            <ProjectUserAssigneesList
-                                                                key={`${index}-${person?.id}`}
-                                                                project={itemById}
-                                                                person={person}
-                                                                setProjectData={setProjectData}
-                                                                setValue={setValue}
-                                                                watch={watch}
-                                                                loadedProjectPermissions={loadedProjectPermissions}
-                                                                handleRemoveUserAssignee={handleRemoveUserAssignee}
-                                                            />
-                                                        ))}
-                                                    </Box>
-                                                ) : (
-                                                    <Box component="label" sx={{ pl: 2, pr: 1 }}>
-                                                        <Label color={error ? "error" : "warning"} sx={{ marginTop: 5, marginLeft: 1 }}>Add users to project</Label>
-                                                    </Box>
-                                                )}
-                                                {error && (
-                                                    <Typography variant="caption" color="error">
-                                                        {error.message}
-                                                    </Typography>
-                                                )}
-                                            </Box>
+                                            {field.value.length > 0 ? (
+                                                <Box
+                                                    component="ul"
+                                                    sx={{
+                                                        pl: 2,
+                                                        pr: 1,
+                                                        maxHeight: !isMobile ? 250 : '100%',
+                                                        overflowY: !isMobile ? 'auto' : 'hidden',
+                                                        color: !error ? 'default' : 'error.main',
+                                                    }}
+                                                >
+                                                    {field.value.map((person, index) => (
+                                                        <ProjectUserAssigneesList
+                                                            key={`${index}-${person?.id}`}
+                                                            project={itemById}
+                                                            person={person}
+                                                            setProjectData={setProjectData}
+                                                            setValue={setValue}
+                                                            watch={watch}
+                                                            loadedProjectPermissions={loadedProjectPermissions}
+                                                            handleRemoveUserAssignee={handleRemoveUserAssignee}
+                                                        />
+                                                    ))}
+                                                </Box>
+                                            ) : (
+                                                <Box component="label" sx={{ pl: 2, pr: 1 }}>
+                                                    <Label color={error ? "error" : "warning"} sx={{ marginTop: 5, marginLeft: 1 }}>Add users to project</Label>
+                                                </Box>
+                                            )}
+                                            {error && (
+                                                <Typography variant="caption" color="error">
+                                                    {error.message}
+                                                </Typography>
+                                            )}
+                                        </Box>
                                     )}
                                 />
                             </Stack>
@@ -638,120 +638,117 @@ export function ProjectEditModalView({
 
     const renderProject = (
         <Dialog fullWidth maxWidth="lg" open={open} onClose={onClose}>
-                <DialogTitle>Update Project {projectData?.name} </DialogTitle>
+            <DialogTitle>Update Project {projectData?.name} </DialogTitle>
 
-                <Form methods={methods} onSubmit={onSubmit}>
+            <Form methods={methods} onSubmit={onSubmit}>
 
-                    <Stack
-                        spacing={2.5}
-                        justifyContent="center"
-                        sx={{ p: 2.5 }}
-                    >
+                <Stack
+                    spacing={2.5}
+                    justifyContent="center"
+                    sx={{ p: 2.5 }}
+                >
 
-                        <Box sx={{ flexDirection: !isMobile ? 'row' : 'column', display: 'flex' }}>
-                            <Box sx={{ flexDirection: 'row', display: 'flex', width: !isMobile ? '70%' : '100%' }}>
-                                <Controller
-                                    name="name"
-                                    control={control}
-                                    render={({ field, fieldState: { error } }) => (
-                                        <Box sx={{ flexDirection: 'column', display: 'flex', width: '100%' }}>
-                                                <KanbanInputName
-                                                    {...field}
-                                                    placeholder="Project name"
-                                                    value={field.value}
-                                                    onChange={(e) => {
-                                                        const newValue = e.target.value;
-                                                        field.onChange(newValue);
-                                                    }}
-                                                    onBlur={field.onBlur}
-                                                    inputProps={{ id: `input-task-${projectData?.name}` }}
-                                                    sx={{ borderColor: error ? 'error.main' : 'grey.500', width: '100%', height: 55 }}
-                                                    error={error}
-                                                />
-                                                {error && <Typography color="error" sx={{ fontSize: 'small' }}>{error.message}</Typography>}
-                                            </Box>
-                                    )}
+                    <Box sx={{ flexDirection: !isMobile ? 'row' : 'column', display: 'flex' }}>
+                        <Box sx={{ flexDirection: 'row', display: 'flex', width: !isMobile ? '70%' : '100%' }}>
+                            <Controller
+                                name="name"
+                                control={control}
+                                render={({ field, fieldState: { error } }) => (
+                                    <Box sx={{ flexDirection: 'column', display: 'flex', width: '100%' }}>
+                                        <KanbanInputName
+                                            {...field}
+                                            placeholder="Project name"
+                                            value={field.value}
+                                            onChange={(e) => {
+                                                const newValue = e.target.value;
+                                                field.onChange(newValue);
+                                            }}
+                                            onBlur={field.onBlur}
+                                            inputProps={{ id: `input-task-${projectData?.name}` }}
+                                            sx={{ borderColor: error ? 'error.main' : 'grey.500', width: '100%', height: 55 }}
+                                            error={error}
+                                        />
+                                        {error && <Typography color="error" sx={{ fontSize: 'small' }}>{error.message}</Typography>}
+                                    </Box>
+                                )}
 
-                                />
-                            </Box>
-
-                            <Box sx={{ width: !isMobile ? '40%' : '100%', color: 'text.secondary', mt: !isMobile ? 0 : 2, ml: !isMobile ? 2 : 0 }}>
-                                <Field.Autocomplete
-                                    name="userManager"
-                                    placeholder="Responsable"
-                                    control={control}
-                                    label="Responsable"
-                                    value={watch("userManager") || null}
-                                    options={filteredUsersManager || []}
-                                    getOptionLabel={(option) => (
-                                        option.name
-                                    ) || ''}
-                                    isOptionEqualToValue={(option, value) => option.id === value.id}
-                                    onChange={(event, newValue) => {
-                                        setValue("userManager", newValue);
-                                        if (newValue !== null) {
-                                            const oldAssignees = watch("usersAssignees") || [];
-                                            const filteredAssignees = oldAssignees.filter(user => user.id !== newValue.id);
-                                            setValue("usersAssignees", filteredAssignees);
-                                        }
-                                    }}
-                                    renderOption={(props, user) => (
-                                        <li {...props} key={user.id}>
-                                            <Avatar
-                                                key={user.id}
-                                                alt={user.avatarUrl}
-                                                src={user.avatarUrl}
-                                                sx={{ mr: 1, width: 24, height: 24, flexShrink: 0 }}
-                                            />
-
-                                            {user.name}
-                                        </li>
-                                    )}
-                                    renderTags={(selected, getTagProps) =>
-                                        selected.map((user, index) => (
-                                            <Chip
-                                                {...getTagProps({ index })}
-                                                key={user.id}
-                                                size="small"
-                                                variant="soft"
-                                                label={user.name}
-                                                avatar={<Avatar alt={user.name} src={user.avatarUrl} />}
-                                            />
-                                        ))
-                                    }
-                                />
-                            </Box>
+                            />
                         </Box>
 
-                        <Divider sx={{ borderStyle: 'dashed' }} />
+                        <Box sx={{ width: !isMobile ? '40%' : '100%', color: 'text.secondary', mt: !isMobile ? 0 : 2, ml: !isMobile ? 2 : 0 }}>
+                            <Field.Autocomplete
+                                name="userManager"
+                                placeholder="Responsable"
+                                control={control}
+                                label="Responsable"
+                                value={watch("userManager") || null}
+                                options={filteredUsersManager || []}
+                                getOptionLabel={(option) => (
+                                    option.name
+                                ) || ''}
+                                isOptionEqualToValue={(option, value) => option.id === value.id}
+                                onChange={(event, newValue) => {
+                                    setValue("userManager", newValue);
+                                    if (newValue !== null) {
+                                        const oldAssignees = watch("usersAssignees") || [];
+                                        const filteredAssignees = oldAssignees.filter(user => user.id !== newValue.id);
+                                        setValue("usersAssignees", filteredAssignees);
+                                    }
+                                }}
+                                renderOption={(props, user) => (
+                                    <li {...props} key={user.id}>
+                                        <Avatar
+                                            key={user.id}
+                                            alt={user.avatarUrl}
+                                            src={user.avatarUrl}
+                                            sx={{ mr: 1, width: 24, height: 24, flexShrink: 0 }}
+                                        />
 
-                        {renderMainInfo}
+                                        {user.name}
+                                    </li>
+                                )}
+                                renderTags={(selected, getTagProps) =>
+                                    selected.map((user, index) => (
+                                        <Chip
+                                            {...getTagProps({ index })}
+                                            key={user.id}
+                                            size="small"
+                                            variant="soft"
+                                            label={user.name}
+                                            avatar={<Avatar alt={user.name} src={user.avatarUrl} />}
+                                        />
+                                    ))
+                                }
+                            />
+                        </Box>
+                    </Box>
+
+                    <Divider sx={{ borderStyle: 'dashed' }} />
+
+                    {renderMainInfo}
 
 
-                    </Stack>
+                </Stack>
+                {open && (
                     <DialogActions>
                         <LoadingButton type="submit" variant="contained" loading={isSubmitting}>
                             Update
                         </LoadingButton>
-                        {/* <Button onClick={onClose}>
-                            Delete
-                        </Button> */}
                         <Button variant="outlined" onClick={onClose}>
                             Cancel
                         </Button>
                     </DialogActions>
-                </Form>
-            </Dialog>
+                )}
+            </Form>
+        </Dialog>
     )
 
     return (
         <>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                {/* Tabs alineados a la izquierda */}
                 <Box sx={{ flexGrow: 1, borderRadius: 1 }}>{renderProject}</Box>
 
-                {/* Contenedor para los botones */}
-                <Box sx={{ display: 'flex', gap: 0.5, ml: 1 }}>
+                {/* <Box sx={{ display: 'flex', gap: 0.5, ml: 1 }}>
                     <Box
                         sx={{
                             width: '100%',
@@ -790,7 +787,7 @@ export function ProjectEditModalView({
                             <Iconify icon="material-symbols:cancel" />
                         </IconButton>
                     </Box>
-                </Box>
+                </Box> */}
             </Box>
             {/* </Drawer > */}
 

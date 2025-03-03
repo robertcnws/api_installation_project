@@ -26,6 +26,7 @@ import { useTable, rowInPage, getComparator } from 'src/components/table';
 
 import { LoadingContext } from 'src/auth/context/loading-context';
 import { useDataContext } from 'src/auth/context/data/data-context';
+import { isInstaller } from 'src/utils/check-permissions';
 
 import { ProjectTable } from '../project-table';
 import { ProjectFilters } from '../project-filters';
@@ -34,6 +35,7 @@ import { ProjectFiltersResult } from '../project-filters-result';
 import { ProjectNewFolderDialog } from '../project-new-folder-dialog';
 import { ProjectCalendarView } from '../calendar/view';
 import { KanbanProjectView } from '../kanban-project/view';
+
 
 
 // ----------------------------------------------------------------------
@@ -51,12 +53,20 @@ export function ProjectView() {
     loadedProjectPermissions,
     loadedStages,
     loadedStagesTask,
+    listPermissions,
     refetchSalesOrders,
   } = useDataContext();
 
-  const table = useTable({ defaultRowsPerPage: 10, defaultDense: true, defaultOrder: 'desc', defaultOrderBy: 'startDate' });
+  const table = useTable({ defaultRowsPerPage: 10, defaultDense: true, defaultOrder: 'asc', defaultOrderBy: 'startDate' });
 
   const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
+
+  const finalStages = useMemo(() => {
+    if (loadedStages) {
+      return loadedStages.filter((stage) => stage.name.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) === -1);
+    }
+    return [];
+  }, [loadedStages]);
 
   const router = useRouter();
 
@@ -66,7 +76,9 @@ export function ProjectView() {
 
   const upload = useBoolean();
 
-  const [view, setView] = useState(localStorage.getItem('projectView') || 'list');
+  const [view, setView] = useState(
+    isInstaller(userLogged?.data?.user_role?.name) ? 'grid' : localStorage.getItem('projectView') || 'list'
+  );
 
   const [tableData, setTableData] = useState([]);
 
@@ -268,24 +280,27 @@ export function ProjectView() {
         options={{ types: PROJECT_TYPE_OPTIONS }}
       />
 
-      <ToggleButtonGroup size="small" value={view} exclusive onChange={handleChangeView}>
-        <ToggleButton value="list">
-          <Iconify icon="solar:list-bold" />
-        </ToggleButton>
+      {!isInstaller(userLogged?.data?.user_role?.name) && (
 
-        <ToggleButton value="grid">
-          <Iconify icon="mingcute:dot-grid-fill" />
-        </ToggleButton>
+        <ToggleButtonGroup size="small" value={view} exclusive onChange={handleChangeView}>
+          <ToggleButton value="list">
+            <Iconify icon="solar:list-bold" />
+          </ToggleButton>
 
-        <ToggleButton value="calendar">
-          <Iconify icon="ion:calendar-outline" />
-        </ToggleButton>
+          <ToggleButton value="grid">
+            <Iconify icon="mingcute:dot-grid-fill" />
+          </ToggleButton>
 
-        <ToggleButton value="kanban">
-          <Iconify icon="tabler:layout-kanban" />
-        </ToggleButton>
+          <ToggleButton value="calendar">
+            <Iconify icon="ion:calendar-outline" />
+          </ToggleButton>
 
-      </ToggleButtonGroup>
+          <ToggleButton value="kanban">
+            <Iconify icon="tabler:layout-kanban" />
+          </ToggleButton>
+
+        </ToggleButtonGroup>
+      )}
     </Stack>
   );
 
@@ -333,8 +348,9 @@ export function ProjectView() {
                 onOpenConfirm={confirm.onTrue}
                 loadedUsers={loadedUsers}
                 loadedProjectPermissions={loadedProjectPermissions}
-                loadedStages={loadedStages}
+                loadedStages={finalStages}
                 loadedStagesTask={loadedStagesTask}
+                listPermissions={listPermissions}
                 setTableData={setTableData}
                 refetchProjects={refetchProjects}
                 loadedProjects={loadedProjects}
@@ -349,13 +365,14 @@ export function ProjectView() {
                 onOpenConfirm={confirm.onTrue}
                 loadedUsers={loadedUsers}
                 loadedProjectPermissions={loadedProjectPermissions}
-                loadedStages={loadedStages}
+                loadedStages={finalStages}
                 loadedStagesTask={loadedStagesTask}
+                listPermissions={listPermissions}
                 setTableData={setTableData}
                 refetchProjects={refetchProjects}
               />
             ) : view === 'calendar' ? (
-              <ProjectCalendarView projects={dataFiltered} isOnlyWeek={false}/>
+              <ProjectCalendarView projects={dataFiltered} isOnlyWeek={false} />
             ) : (
               <KanbanProjectView projects={dataFiltered} refetchProjects={refetchProjects} />
             )}

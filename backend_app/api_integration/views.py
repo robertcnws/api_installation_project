@@ -111,3 +111,24 @@ def list_users_permissions(request):
     })
     
     
+#############################################
+# MANAGE USER PERMISSIONS
+#############################################
+    
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def manage_user_permissions(request):
+    url = settings.API_USER_DATA_URL + '/auth/users/manage-user-permissions/'
+    headers = config_headers()
+    data = request.data
+    session = requests.Session()
+    try:
+        response = session.post(url, headers=headers, json=data)
+        response.raise_for_status()
+        resp = response.json()
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Error managing user permissions: {e}")
+        return JsonResponse({'error': 'Failed to managing user permissions'}, status=500)
+    return JsonResponse(resp)
+    
+    

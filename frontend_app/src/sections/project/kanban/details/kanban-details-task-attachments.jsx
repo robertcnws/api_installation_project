@@ -12,6 +12,7 @@ import { ConfirmDialog } from 'src/components/custom-dialog';
 import { UploadBox, MultiFilePreview } from 'src/components/upload';
 
 import { LoadingContext } from 'src/auth/context/loading-context';
+import { listRolesAndSubroles, verifyPermissions } from 'src/utils/check-permissions';
 
 export function KanbanDetailsTaskAttachments({
     project,
@@ -22,6 +23,7 @@ export function KanbanDetailsTaskAttachments({
     id,
     name,
     type,
+    listPermissions,
 }) {
     const { isMobile } = useContext(LoadingContext);
     const [initialFiles, setInitialFiles] = useState([]);
@@ -113,7 +115,7 @@ export function KanbanDetailsTaskAttachments({
 
         }, [fileToRemove, initialFiles, newFiles, setNewFiles, id, userLogged, refetchProject, task, confirm]);
 
-    
+
 
     const handleDownloadFile = (file) => {
         if (!file || !file.fileUrl) return;
@@ -134,70 +136,86 @@ export function KanbanDetailsTaskAttachments({
             <Box sx={{ maxHeight: 550, minHeight: !isMobile ? 400 : 0, overflow: 'auto' }}>
                 {project?.currentStage && (
                     <Box
-                            key={project?.currentStage?.id}
-                            sx={{ mb: 3, display: 'flex', gap: 3 }}
-                        >
-                            <Grid container spacing={2}>
-                                <Grid item xs={12} sm={12}>
-                                    <MultiFilePreview
-                                        key={project?.currentStage?.id}
-                                        thumbnail
-                                        files={displayFiles || []}
-                                        onRemove={handleClickRemoveFile}
-                                        onDownload={handleDownloadFile}
-                                        slotProps={{
-                                            thumbnail: {
-                                                sx: {
-                                                    width: 75,
-                                                    height: 75,
-                                                    cursor: 'pointer',
-                                                    position: 'relative',
-                                                    transition: 'background-color 0.3s ease',
-                                                    '&:hover': {
-                                                        bgcolor: 'rgba(0, 0, 0, 0.1)',
-                                                        opacity: 0.5,
-                                                    },
-                                                    '&::after': {
-                                                        content: '""',
-                                                        position: 'absolute',
-                                                        bottom: 4,
-                                                        right: 16,
-                                                        width: 40,
-                                                        height: 40,
-                                                        backgroundImage: 'url(/assets/icons/apps/ic-download-1.svg)',
-                                                        backgroundSize: 'contain',
-                                                        backgroundRepeat: 'no-repeat',
-                                                        display: 'none',
-                                                    },
-                                                    '&:hover::after': {
-                                                        display: 'block',
-                                                    },
-                                                },
-                                            }
-                                        }}
-                                        lastNode={<UploadBox sx={{ ml: displayFiles.length === 0 ? 2 : 0, width: 75, height: 75 }} onDrop={(files) => {
-                                            if (files && files.length) {
-                                                const uniqueFiles = files.filter((file) =>
-                                                    !displayFiles.some((existingFile) => existingFile.name === file.name)
-                                                );
-                                                if (uniqueFiles.length > 0) {
-                                                    const filesToAdd = uniqueFiles.map((file) => ({
-                                                        ...file,
-                                                        fileUrl: URL.createObjectURL(file),
-                                                        name: file.name,
-                                                        isNew: true,
-                                                    }));
-                                                    setNewFiles((prev) => [...prev, ...filesToAdd]);
+                        key={project?.currentStage?.id}
+                        sx={{ mb: 3, display: 'flex', gap: 3 }}
+                    >
+                        <Grid container spacing={2}>
+                            <Grid item xs={12} sm={12}>
+                                <MultiFilePreview
+                                    key={project?.currentStage?.id}
+                                    thumbnail
+                                    files={displayFiles || []}
+                                    onRemove={handleClickRemoveFile}
+                                    onDownload={handleDownloadFile}
+                                    listPermissions={listPermissions}
+                                    isProject={false}
+                                    // slotProps={{
+                                    //     thumbnail: (verifyPermissions(
+                                    //         listPermissions,
+                                    //         CONFIG.permissions.system,
+                                    //         CONFIG.permissions.moduleTasks,
+                                    //         CONFIG.permissions.operationDownloadFile
+                                    //     ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) ? {
+                                    //         sx: {
+                                    //             width: 75,
+                                    //             height: 75,
+                                    //             cursor: 'pointer',
+                                    //             position: 'relative',
+                                    //             transition: 'background-color 0.3s ease',
+                                    //             '&:hover': {
+                                    //                 bgcolor: 'rgba(0, 0, 0, 0.1)',
+                                    //                 opacity: 0.5,
+                                    //             },
+                                    //             '&::after': {
+                                    //                 content: '""',
+                                    //                 position: 'absolute',
+                                    //                 bottom: 4,
+                                    //                 right: 16,
+                                    //                 width: 40,
+                                    //                 height: 40,
+                                    //                 backgroundImage: 'url(/assets/icons/apps/ic-download-1.svg)',
+                                    //                 backgroundSize: 'contain',
+                                    //                 backgroundRepeat: 'no-repeat',
+                                    //                 display: 'none',
+                                    //             },
+                                    //             '&:hover::after': {
+                                    //                 display: 'block',
+                                    //             },
+                                    //         },
+                                    //     } : null,
+                                    // }}
+                                    lastNode={
+                                        (verifyPermissions(
+                                            listPermissions,
+                                            CONFIG.permissions.system,
+                                            CONFIG.permissions.moduleTasks,
+                                            CONFIG.permissions.operationUploadFile
+                                        ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) ? (
+                                            <UploadBox sx={{ ml: displayFiles.length === 0 ? 2 : 0, width: 75, height: 75 }} onDrop={(files) => {
+                                                if (files && files.length) {
+                                                    const uniqueFiles = files.filter((file) =>
+                                                        !displayFiles.some((existingFile) => existingFile.name === file.name)
+                                                    );
+                                                    if (uniqueFiles.length > 0) {
+                                                        const filesToAdd = uniqueFiles.map((file) => ({
+                                                            ...file,
+                                                            fileUrl: URL.createObjectURL(file),
+                                                            name: file.name,
+                                                            isNew: true,
+                                                        }));
+                                                        setNewFiles((prev) => [...prev, ...filesToAdd]);
+                                                    }
+                                                    else {
+                                                        toast.error('File already exists');
+                                                    }
                                                 }
-                                                else {
-                                                    toast.error('File already exists');
-                                                }
-                                            }
-                                        }} />}
-                                    />
-                                </Grid>
+                                            }} />
+                                        ) : null
+                                    }
+                                />
                             </Grid>
-                        </Box>
+                        </Grid>
+                    </Box>
                 )}
             </Box>
 

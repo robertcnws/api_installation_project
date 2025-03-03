@@ -10,7 +10,7 @@ import Stack from '@mui/material/Stack';
 import { LoadingButton } from '@mui/lab';
 import Button from '@mui/material/Button';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { Grid, Dialog, DialogTitle, DialogActions } from '@mui/material';
+import { Grid, Dialog, DialogTitle, DialogActions, TextField } from '@mui/material';
 
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
@@ -48,6 +48,13 @@ export function ProjectEditModalDatesView({
 
     const item = useMemo(() => loadedProjects?.find((project) => project.id === projectId), [loadedProjects, projectId]);
 
+    const diffDays = useMemo(
+        () => item?.endDate ? dayjs(item?.endDate).diff(dayjs(item?.startDate), 'day') : 0, [item?.endDate, item?.startDate]
+    );
+
+    const [daysToInstall, setDaysToInstall] = useState(diffDays);
+    const [formChanged, setFormChanged] = useState(false);
+
     const { isMobile } = useContext(LoadingContext);
 
     const router = useRouter();
@@ -57,8 +64,10 @@ export function ProjectEditModalDatesView({
     const tabs = useTabs('overview');
 
     const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
-    
+
     const [selectedDate, setSelectedDate] = useState(null);
+
+    const [endDate, setEndDate] = useState(null);
 
     const popover = usePopover();
 
@@ -67,6 +76,19 @@ export function ProjectEditModalDatesView({
     const { data: itemById, refetch: refetchProject } = useProjectByIdQuery(item?.id, {
         skip: !item?.id,
     });
+
+    const handleDaysChange = (e) => {
+        const days = parseInt(e.target.value, 10) || '';
+        setDaysToInstall(days);
+        const newEndDate = dayjs(itemById?.startDate).add(days, 'day');
+        setEndDate(newEndDate);
+        setFormChanged(!Number.isNaN(days) && days > 0);
+    };
+
+    const handleDateChange = (date) => {
+        setSelectedDate(date);
+        setFormChanged(true);
+    };
 
     const handleReturnList = useCallback(() => {
         router.push(paths.dashboard.project.list);
@@ -123,6 +145,7 @@ export function ProjectEditModalDatesView({
         setValue,
         watch,
         control,
+        getValues,
         formState: { isSubmitting },
     } = methods;
 
@@ -137,8 +160,11 @@ export function ProjectEditModalDatesView({
                 startDate: itemById.startDate || null,
                 endDate: itemById.endDate || null,
             });
+            setSelectedDate(isStartDate ? dayjs(itemById?.startDate) : dayjs(itemById?.endDate));
+            setDaysToInstall(diffDays);
+            setFormChanged(false);
         }
-    }, [itemById, userLogged?.data, reset]);
+    }, [itemById, userLogged?.data, reset, diffDays, isStartDate]);
 
 
     const onSubmit = handleSubmit(async (data) => {
@@ -147,6 +173,9 @@ export function ProjectEditModalDatesView({
 
         const field = isStartDate ? 'startDate' : 'endDate';
         formData.append(field, new Date(selectedDate).toISOString());
+        if (isStartDate) {
+            formData.append('endDate', new Date(endDate).toISOString());
+        }
 
         const promise = axios.post(`${CONFIG.apiUrl}/projects/update/project/${item.id}/`, formData, {
             headers: {
@@ -191,15 +220,11 @@ export function ProjectEditModalDatesView({
                                         label={
                                             isStartDate ? 'Install Date' : 'Closing Date'
                                         }
-                                        value={
-                                            isStartDate ? dayjs(itemById?.startDate) : dayjs(itemById?.endDate)
-                                        }
-                                        onChange={(date) => {
-                                            setSelectedDate(date);
-                                        }}
+                                        value={selectedDate}
+                                        onChange={handleDateChange}
                                         minDate={
-                                            isStartDate ? dayjs(itemById?.salesOrder?.date) : 
-                                            itemById?.startDate ? dayjs(itemById?.startDate) : dayjs(itemById?.salesOrder?.date)
+                                            isStartDate ? dayjs(itemById?.salesOrder?.date) :
+                                                itemById?.startDate ? dayjs(itemById?.startDate) : dayjs(itemById?.salesOrder?.date)
                                         }
                                         maxDate={
                                             isStartDate ? dayjs(itemById?.endDate) : null
@@ -209,6 +234,19 @@ export function ProjectEditModalDatesView({
                                     />
                                 </Box>
                             </Stack>
+                            {isStartDate && (
+                                <Stack direction="row" sx={{ typography: 'caption', textTransform: 'capitalize' }}>
+                                    <Box sx={{ width: '100%', color: 'text.secondary', mt: 1 }}>
+                                        <TextField
+                                            type="number"
+                                            label="Days to Install"
+                                            sx={{ width: '100%', mt: 1 }}
+                                            value={daysToInstall}
+                                            onChange={handleDaysChange}
+                                        />
+                                    </Box>
+                                </Stack>
+                            )}
                         </Grid>
                     </Grid>
                     <Stack direction="row" sx={{ typography: 'caption', textTransform: 'capitalize' }}>
@@ -223,36 +261,41 @@ export function ProjectEditModalDatesView({
 
     const renderProject = (
         <Dialog fullWidth maxWidth="xs" open={open} onClose={onClose}>
-                <DialogTitle>{isEdit ? 'Update' : 'Add'} {isStartDate ? 'Install': 'Closing'} date to Project {itemById?.name} </DialogTitle>
+            <DialogTitle>{isEdit ? 'Update' : 'Add'} {isStartDate ? 'Install' : 'Closing'} date to Project {itemById?.name} </DialogTitle>
 
-                <Form methods={methods} onSubmit={onSubmit}>
+            <Form methods={methods} onSubmit={onSubmit}>
 
-                    <Stack
-                        spacing={2.5}
-                        justifyContent="center"
-                        sx={{ p: 2.5 }}
+                <Stack
+                    spacing={2.5}
+                    justifyContent="center"
+                    sx={{ p: 2.5 }}
+                >
+
+                    {renderMainInfo}
+
+
+                </Stack>
+                <DialogActions>
+                    <LoadingButton
+                        type="submit"
+                        variant="contained"
+                        loading={isSubmitting}
+                        disabled={!formChanged}
                     >
-
-                        {renderMainInfo}
-
-
-                    </Stack>
-                    <DialogActions>
-                        <LoadingButton type="submit" variant="contained" loading={isSubmitting} disabled={!selectedDate}>
-                            {isEdit ? 'Update' : 'Add'}
-                        </LoadingButton>
-                        <Button variant="outlined" onClick={onClose}>
-                            Cancel
-                        </Button>
-                    </DialogActions>
-                </Form>
-            </Dialog>
+                        {isEdit ? 'Update' : 'Add'}
+                    </LoadingButton>
+                    <Button variant="outlined" onClick={onClose}>
+                        Cancel
+                    </Button>
+                </DialogActions>
+            </Form>
+        </Dialog>
     )
 
     return (
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                {/* Tabs alineados a la izquierda */}
-                <Box sx={{ flexGrow: 1, borderRadius: 1 }}>{renderProject}</Box>
-            </Box>
+            {/* Tabs alineados a la izquierda */}
+            <Box sx={{ flexGrow: 1, borderRadius: 1 }}>{renderProject}</Box>
+        </Box>
     );
 }

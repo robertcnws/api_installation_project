@@ -20,6 +20,8 @@ import { ConfirmDialog } from 'src/components/custom-dialog';
 
 import { useDataContext } from 'src/auth/context/data/data-context';
 
+import { isInstaller, listRolesAndSubroles } from 'src/utils/check-permissions';
+
 import { ProjectEditModalView } from './project-edit-modal-view';
 import { ProjectDetailsToolbar } from '../project-details-toolbar';
 import { ProjectDetailsContent } from '../project-details-content';
@@ -27,6 +29,7 @@ import { ProjectDetailsTaskView } from './project-details-task-view';
 import { ProjectEditModalTaskView } from './project-edit-modal-task-view';
 import { ProjectDetailsCommentView } from './project-details-comment-view';
 import { ProjectDetailsAttachmentView } from './project-details-attachment-view';
+
 
 
 
@@ -45,12 +48,15 @@ export function ProjectDetailsView({ projectId }) {
 
     const {
         loadedProjects,
+        listPermissions,
     } = useDataContext();
 
     const DETAILS_TABS = [
         { label: 'Overview', value: 'overview' },
         { label: 'Tasks', value: 'tasks' },
-        { label: 'Attachments', value: 'attachments' },
+        ...!isInstaller(userLogged?.data?.user_role?.name) ? [
+            { label: 'Attachments', value: 'attachments' },
+        ] : [],
         { label: 'Comments', value: 'comments' },
     ];
 
@@ -176,11 +182,21 @@ export function ProjectDetailsView({ projectId }) {
                     value={tab.value}
                     label={tab.label}
                     icon={
-                        tab.value === 'tasks' || tab.value === 'attachments' || tab.value === 'comments' ? (
-                            <Label variant="filled" color="primary">
-                                {tab.value === 'tasks' ? totalTasks :
-                                    tab.value === 'attachments' ? totalAttachments : totalComments}
-                            </Label>
+                        (tab.value === 'tasks' || tab.value === 'attachments' || tab.value === 'comments') ? (
+                            !isInstaller(userLogged?.data?.user_role?.name) ? (
+                                <Label variant="filled" color="primary">
+                                    {tab.value === 'tasks' ? totalTasks :
+                                        tab.value === 'attachments' ? totalAttachments : totalComments}
+                                </Label>
+                            ) : (
+                                tab.value === 'comments' ? (
+                                    <Label variant="filled" color="primary">
+                                        {totalComments}
+                                    </Label>
+                                ) : (
+                                    ''
+                                )
+                            )
                         ) : (
                             ''
                         )
@@ -208,16 +224,43 @@ export function ProjectDetailsView({ projectId }) {
                     setOpenEdit={tabs.value === 'overview' ? setOpenEdit : tabs.value === 'tasks' ? setOpenEditTask : null}
                     type={tabs.value === 'overview' ? 'project' : tabs.value === 'tasks' ? 'tasks' : null}
                     onDelete={() => onDelete(itemById?.id)}
+                    listPermissions={listPermissions}
                 />
                 {renderTabs}
 
-                {tabs.value === 'overview' && <ProjectDetailsContent project={itemById} refetchProject={refetchProject} setOpenEdit={setOpenEdit} />}
+                {tabs.value === 'overview' &&
+                    <ProjectDetailsContent
+                        project={itemById}
+                        refetchProject={refetchProject}
+                        setOpenEdit={setOpenEdit}
+                        listPermissions={listPermissions}
+                    />
+                }
 
-                {(tabs.value === 'tasks' && itemById.userManager?.username) && <ProjectDetailsTaskView project={itemById} refetchProject={refetchProject} tasks={tasks ?? []} hasPermission={itemById?.hasPermission} />}
+                {(tabs.value === 'tasks' && itemById.userManager?.username) &&
+                    <ProjectDetailsTaskView
+                        project={itemById}
+                        refetchProject={refetchProject}
+                        tasks={tasks ?? []}
+                        hasPermission={itemById?.hasPermission}
+                        listPermissions={listPermissions}
+                    />
+                }
 
-                {(tabs.value === 'attachments' && itemById.userManager?.username) && <ProjectDetailsAttachmentView projectId={itemById?.id} />}
+                {(tabs.value === 'attachments' && itemById.userManager?.username) &&
+                    <ProjectDetailsAttachmentView
+                        projectId={itemById?.id}
+                        listPermissions={listPermissions}
+                    />
+                }
 
-                {(tabs.value === 'comments' && itemById.userManager?.username) && <ProjectDetailsCommentView project={itemById} refetchProject={refetchProject} />}
+                {(tabs.value === 'comments' && itemById.userManager?.username) &&
+                    <ProjectDetailsCommentView
+                        project={itemById}
+                        refetchProject={refetchProject}
+                        listPermissions={listPermissions}
+                    />
+                }
 
             </DashboardContent>
             <ProjectEditModalView open={openEdit} onClose={() => setOpenEdit(false)} projectId={itemById?.id} />

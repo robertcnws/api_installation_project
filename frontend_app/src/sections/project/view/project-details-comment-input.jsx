@@ -1,13 +1,15 @@
 import axios from 'axios';
 import { useMemo, useState, useEffect, useContext, useCallback } from 'react';
 
+import EmojiPicker from 'emoji-picker-react';
+
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import Avatar from '@mui/material/Avatar';
 import InputBase from '@mui/material/InputBase';
 import IconButton from '@mui/material/IconButton';
-import { TextField, Autocomplete } from '@mui/material';
+import { TextField, Autocomplete, Box, ListItem } from '@mui/material';
 
 import { CONFIG } from 'src/config-global';
 
@@ -16,6 +18,9 @@ import { Iconify } from 'src/components/iconify';
 import { useMockedUser } from 'src/auth/hooks';
 import { LoadingContext } from 'src/auth/context/loading-context';
 import { useDataContext } from 'src/auth/context/data/data-context';
+import { isInstaller } from 'src/utils/check-permissions';
+import { CustomPopover, usePopover } from 'src/components/custom-popover';
+import { availableTasks } from 'src/utils/project-tasks-utils';
 
 // ----------------------------------------------------------------------
 
@@ -34,6 +39,15 @@ export function ProjectDetailsCommentInput({ project, refetchProject, commentDat
 
   const [comment, setComment] = useState(!commentData ? '' : commentData.comment);
 
+  const [showPicker, setShowPicker] = useState(false);
+
+  const popover = usePopover();
+
+  const handleEmojiSelect = (emojiData, event) => {
+    setComment(prev => prev + emojiData.emoji);
+    setShowPicker(false);
+  };
+
   useEffect(() => {
     if (refetchProject) {
       refetchProject?.();
@@ -42,31 +56,24 @@ export function ProjectDetailsCommentInput({ project, refetchProject, commentDat
 
   useEffect(() => {
     if (project) {
-      const tasks = project?.projectDefaultTasks?.map((task) => ({
-        ...task,
-        number: `T-${String(task.project_default_task.order).padStart(3, "0")}`,
-      }));
-      const sortedTasks = tasks?.sort(
-        (a, b) => a.project_default_task.order - b.project_default_task.order
-      );
-      let foundNotStarted = false;
-      const filtered = sortedTasks?.filter((task) => {
-        if (task.status !== "not started") return true;
-        if (!foundNotStarted) {
-          foundNotStarted = true;
-          return true;
-        }
-        return false;
-      });
-      if (project?.hasPermission) {
-        const permissionTasks = tasks?.filter(
-          (task) => task.project_default_task?.project_stage?.name === CONFIG.stages.permission && task.status === CONFIG.taskStatus.notStarted
+      const filtered = availableTasks(project, project?.projectDefaultTasks, CONFIG);
+
+      if (isInstaller(userLogged?.data?.user_role?.name)) {
+        const selectedTasks = filtered?.filter(
+          (task) => task.project_default_task?.project_stage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
         );
-        filtered.push(...permissionTasks);
+        const finalTasks = selectedTasks.filter(
+          (task) => task.project_default_task.name.toLowerCase().includes(CONFIG.permissions.operationUploadFile.toLowerCase())
+        );
+        const withUsersTasks = finalTasks.filter(
+          (task) => task.users_assignees.length > 0
+        );
+        setLoadedTasks(withUsersTasks);
+      } else {
+        setLoadedTasks(filtered);
       }
-      setLoadedTasks(filtered);
     }
-  }, [project]);
+  }, [project, userLogged]);
 
   const handleTaskChange = (_, value) => {
     setSelectedTask(value);
@@ -143,7 +150,7 @@ export function ProjectDetailsCommentInput({ project, refetchProject, commentDat
             }
 
             return (
-              <li
+              <ListItem
                 {...props}
                 key={`${stage.project_default_task.id}-${index}-${stage.status}`}
                 style={{
@@ -158,7 +165,7 @@ export function ProjectDetailsCommentInput({ project, refetchProject, commentDat
                   {stage.project_default_task.project_stage.name} {stage.number} -- {stage.project_default_task.name} <br />
                   <strong>({stage.status})</strong>
                 </span>
-              </li>
+              </ListItem>
             );
           }}
           renderInput={(params) => (
@@ -180,6 +187,20 @@ export function ProjectDetailsCommentInput({ project, refetchProject, commentDat
             <IconButton>
               <Iconify icon="eva:attach-2-fill" />
             </IconButton>
+
+            <IconButton onClick={popover.onOpen}>
+              <Iconify icon="mdi:emoticon-happy-outline" />
+            </IconButton>
+            <CustomPopover
+              open={popover.open}
+              anchorEl={popover.anchorEl}
+              onClose={popover.onClose}
+              slotProps={{ arrow: { placement: 'right-top' } }}
+            >
+              <Box sx={{ p: 1 }}>
+                <EmojiPicker onEmojiClick={handleEmojiSelect} />
+              </Box>
+            </CustomPopover>
 
             {!isMobile && (
               <Autocomplete
@@ -210,7 +231,7 @@ export function ProjectDetailsCommentInput({ project, refetchProject, commentDat
                   }
 
                   return (
-                    <li
+                    <ListItem
                       {...props}
                       key={`${stage.project_default_task.id}-${index}-${stage.status}`}
                       style={{
@@ -225,7 +246,7 @@ export function ProjectDetailsCommentInput({ project, refetchProject, commentDat
                         {stage.project_default_task.project_stage.name} {stage.number} -- {stage.project_default_task.name} <br />
                         <strong>({stage.status})</strong>
                       </span>
-                    </li>
+                    </ListItem>
                   );
                 }}
                 renderInput={(params) => (

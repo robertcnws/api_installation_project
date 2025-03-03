@@ -13,7 +13,15 @@ import { KanbanDetails } from '../details/kanban-details';
 
 // ----------------------------------------------------------------------
 
-export function KanbanTaskItem({ project, refetchProject, task, disabled, columnId, sx }) {
+export function KanbanTaskItem({ 
+  project, 
+  refetchProject, 
+  task, 
+  disabled, 
+  columnId, 
+  listPermissions,
+  sx 
+}) {
   const openDetails = useBoolean();
 
   const { setNodeRef, listeners, isDragging, isSorting, transform, transition } = useSortable({
@@ -69,6 +77,7 @@ export function KanbanTaskItem({ project, refetchProject, task, disabled, column
         onCloseDetails={openDetails.onFalse}
         onUpdateTask={handleUpdateTask}
         onDeleteTask={handleDeleteTask}
+        listPermissions={listPermissions}
       />
     </>
   );

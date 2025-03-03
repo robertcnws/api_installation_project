@@ -11,6 +11,7 @@ import { CONFIG } from 'src/config-global';
 import { Iconify } from 'src/components/iconify';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 import { UploadBox, MultiFilePreview } from 'src/components/upload';
+import { listRolesAndSubroles, verifyPermissions } from 'src/utils/check-permissions';
 
 
 export function ProjectEditTaskAttachments({
@@ -24,6 +25,7 @@ export function ProjectEditTaskAttachments({
   name,
   type,
   isMobile,
+  listPermissions,
 }) {
   const [initialFiles, setInitialFiles] = useState([]);
   const displayFiles = useMemo(() => [...initialFiles, ...newFiles], [initialFiles, newFiles]);
@@ -203,85 +205,101 @@ export function ProjectEditTaskAttachments({
       <Box sx={{ maxHeight: 550, minHeight: !isMobile ? 400 : 0, overflow: 'auto' }}>
         {project?.currentStage && (
           <Box
-              key={project?.currentStage?.id}
-              sx={{ mb: 3, display: 'flex', gap: 3 }}
-            >
-              <Grid container spacing={2}>
-                <Grid item xs={4} sm={4}>
-                  <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                    <Box sx={{ mb: 1, width: '100%' }}>
-                      <Button
-                        color="primary"
-                        variant="outlined"
-                        disabled={!isAddFilesEnabled}
-                        onClick={handleAddFiles}
-                      >
-                        <Iconify icon="material-symbols:attach-file-add" />
-                        Add File(s)
-                      </Button>
-                    </Box>
+            key={project?.currentStage?.id}
+            sx={{ mb: 3, display: 'flex', gap: 3 }}
+          >
+            <Grid container spacing={2}>
+              <Grid item xs={4} sm={4}>
+                <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                  <Box sx={{ mb: 1, width: '100%' }}>
+                    {(verifyPermissions(
+                      listPermissions,
+                      CONFIG.permissions.system,
+                      CONFIG.permissions.moduleTasks,
+                      CONFIG.permissions.operationUploadFile
+                    ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) && (
+                        <Button
+                          color="primary"
+                          variant="outlined"
+                          disabled={!isAddFilesEnabled}
+                          onClick={handleAddFiles}
+                        >
+                          <Iconify icon="material-symbols:attach-file-add" />
+                          Add File(s)
+                        </Button>
+                      )}
                   </Box>
-                </Grid>
-                <Grid item xs={8} sm={8}>
-                  <MultiFilePreview
-                    key={project?.currentStage?.id}
-                    thumbnail
-                    files={displayFiles || []}
-                    onRemove={handleClickRemoveFile}
-                    onDownload={handleDownloadFile}
-                    slotProps={{
-                      thumbnail: {
-                        sx: {
-                          width: 75,
-                          height: 75,
-                          cursor: 'pointer',
-                          position: 'relative',
-                          transition: 'background-color 0.3s ease',
-                          '&:hover': {
-                            bgcolor: 'rgba(0, 0, 0, 0.1)',
-                            opacity: 0.5,
-                          },
-                          '&::after': {
-                            content: '""',
-                            position: 'absolute',
-                            bottom: 4,
-                            right: 12,
-                            width: 40,
-                            height: 40,
-                            backgroundImage: 'url(/assets/icons/apps/ic-download-1.svg)',
-                            backgroundSize: 'contain',
-                            backgroundRepeat: 'no-repeat',
-                            display: 'none',
-                          },
-                          '&:hover::after': {
-                            display: 'block',
-                          },
-                        },
-                      }
-                    }}
-                    lastNode={<UploadBox sx={{ ml: displayFiles.length === 0 ? 2 : 0, width: 75, height: 75 }} onDrop={(files) => {
-                      if (files && files.length) {
-                        const uniqueFiles = files.filter((file) =>
-                          !displayFiles.some((existingFile) => existingFile.name === file.name)
-                        );
-                        if (uniqueFiles.length > 0) {
-                          const filesToAdd = uniqueFiles.map((file) => ({
-                            ...file,
-                            fileUrl: URL.createObjectURL(file),
-                            name: file.name,
-                            isNew: true,
-                          }));
-                          setNewFiles((prev) => [...prev, ...filesToAdd]);
-                        }
-                        else {
-                          toast.error('File already exists');
-                        }
-                      }
-                    }} />}
-                  />
-                </Grid>
+                </Box>
               </Grid>
-            </Box>
+              <Grid item xs={8} sm={8}>
+                <MultiFilePreview
+                  key={project?.currentStage?.id}
+                  thumbnail
+                  files={displayFiles || []}
+                  onRemove={handleClickRemoveFile}
+                  onDownload={handleDownloadFile}
+                  // slotProps={{
+                  //   thumbnail: {
+                  //     sx: {
+                  //       width: 75,
+                  //       height: 75,
+                  //       cursor: 'pointer',
+                  //       position: 'relative',
+                  //       transition: 'background-color 0.3s ease',
+                  //       '&:hover': {
+                  //         bgcolor: 'rgba(0, 0, 0, 0.1)',
+                  //         opacity: 0.5,
+                  //       },
+                  //       '&::after': {
+                  //         content: '""',
+                  //         position: 'absolute',
+                  //         bottom: 4,
+                  //         right: 12,
+                  //         width: 40,
+                  //         height: 40,
+                  //         backgroundImage: 'url(/assets/icons/apps/ic-download-1.svg)',
+                  //         backgroundSize: 'contain',
+                  //         backgroundRepeat: 'no-repeat',
+                  //         display: 'none',
+                  //       },
+                  //       '&:hover::after': {
+                  //         display: 'block',
+                  //       },
+                  //     },
+                  //   }
+                  // }}
+                  lastNode={
+                    (verifyPermissions(
+                      listPermissions,
+                      CONFIG.permissions.system,
+                      CONFIG.permissions.moduleTasks,
+                      CONFIG.permissions.operationUploadFile
+                    ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) ? (
+                      <UploadBox sx={{ ml: displayFiles.length === 0 ? 2 : 0, width: 75, height: 75 }} onDrop={(files) => {
+                        if (files && files.length) {
+                          const uniqueFiles = files.filter((file) =>
+                            !displayFiles.some((existingFile) => existingFile.name === file.name)
+                          );
+                          if (uniqueFiles.length > 0) {
+                            const filesToAdd = uniqueFiles.map((file) => ({
+                              ...file,
+                              fileUrl: URL.createObjectURL(file),
+                              name: file.name,
+                              isNew: true,
+                            }));
+                            setNewFiles((prev) => [...prev, ...filesToAdd]);
+                          }
+                          else {
+                            toast.error('File already exists');
+                          }
+                        }
+                      }} />
+                    ) : <Box sx={{ ml: displayFiles.length === 0 ? 2 : 0, width: 75, height: 75 }} />
+                  }
+                />
+              </Grid>
+            </Grid>
+          </Box>
         )}
       </Box>
 

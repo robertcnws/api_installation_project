@@ -22,6 +22,8 @@ import { toast } from 'src/components/snackbar';
 import { Form, Field, schemaHelper } from 'src/components/hook-form';
 
 import { useDataContext } from 'src/auth/context/data/data-context';
+import { useQuery } from '@apollo/client';
+import { createDefaultPermissions } from 'src/utils/check-permissions';
 
 // ----------------------------------------------------------------------
 
@@ -108,6 +110,9 @@ export function UserNewEditForm({ currentUser }) {
 
   const onSubmit = handleSubmit(async (data) => {
 
+    const roleName = loadedUserRoles?.find((role) => role.id === data.role)?.name;
+    const username = data.username;
+
     try {
       const randomNumber = Math.floor(Math.random() * 25) + 1;
       await axios.post(`${CONFIG.apiUrl}/users/create/user/`, {
@@ -115,6 +120,16 @@ export function UserNewEditForm({ currentUser }) {
         userReporter: userLogged?.data,
         avatarUrl: _mock.image.avatar(randomNumber),
       });
+      await refetchUsers?.();
+      const dataAWS = createDefaultPermissions(roleName);
+      await axios.post(`${CONFIG.apiUrl}/integration/manage_user_permissions/`, {
+        username,
+        data: dataAWS,
+      }, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      }).then((res) => res.data)
       reset();
       toast.success(currentUser ? 'Update success!' : 'Create success!');
       router.push(paths.dashboard.user.list);

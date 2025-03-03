@@ -25,11 +25,17 @@ import { Iconify } from 'src/components/iconify';
 import { Scrollbar } from 'src/components/scrollbar';
 import { CustomTabs } from 'src/components/custom-tabs';
 
+import { isInstaller, listRolesAndSubroles, verifyPermissions } from 'src/utils/check-permissions';
+
+import { availableTasks } from 'src/utils/project-tasks-utils';
+
 import { KanbanDetailsToolbar } from './kanban-details-toolbar';
 import { KanbanDetailsCommentInput } from './kanban-details-comment-input';
 import { KanbanContactsDialog } from '../components/kanban-contacts-dialog';
 import { ProjectTaskDetailsPriority } from '../../project-task-details-priority';
 import { KanbanDetailsTaskAttachments } from './kanban-details-task-attachments';
+
+
 
 // ----------------------------------------------------------------------
 
@@ -51,7 +57,16 @@ const StyledLabel = styled('span')(({ theme }) => ({
 
 // ----------------------------------------------------------------------
 
-export function KanbanDetails({ project, refetchProject, task, openDetails, onUpdateTask, onDeleteTask, onCloseDetails }) {
+export function KanbanDetails({
+  project,
+  refetchProject,
+  task,
+  openDetails,
+  onUpdateTask,
+  onDeleteTask,
+  onCloseDetails,
+  listPermissions,
+}) {
 
   const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
 
@@ -68,7 +83,7 @@ export function KanbanDetails({ project, refetchProject, task, openDetails, onUp
   const [newFiles, setNewFiles] = useState([]);
 
   const comments = useMemo(
-    () => project.projectComments?.filter((comment) => comment.project_default_task.project_default_task.id === task.id) || [],
+    () => project.projectComments?.filter((comment) => comment?.project_default_task?.project_default_task?.id === task.id) || [],
     [project, task]);
 
   const availableUsers = useMemo(() => project.usersAssignees.filter((user) => !task.users_assignees.some((t) => t.id === user.id)), [project, task]);
@@ -84,30 +99,11 @@ export function KanbanDetails({ project, refetchProject, task, openDetails, onUp
 
   const [loadedTasks, setLoadedTasks] = useState([]);
 
+  const [taskStatus, setTaskStatus] = useState(task.status);
+
   useEffect(() => {
     if (project) {
-      const tasks = project?.projectDefaultTasks?.map((t) => ({
-        ...t,
-        number: `T-${String(t.project_default_task.order).padStart(3, "0")}`,
-      }));
-      const sortedTasks = tasks?.sort(
-        (a, b) => a.project_default_task.order - b.project_default_task.order
-      );
-      let foundNotStarted = false;
-      const filtered = sortedTasks?.filter((t) => {
-        if (t.status !== "not started") return true;
-        if (!foundNotStarted) {
-          foundNotStarted = true;
-          return true;
-        }
-        return false;
-      });
-      if (project.hasPermission) {
-        const permissionTasks = sortedTasks?.filter(
-          (t) => t.project_default_task?.project_stage?.name === CONFIG.stages.permission && t.status === CONFIG.taskStatus.notStarted
-        );
-        filtered.push(...permissionTasks);
-      }
+      const filtered = availableTasks(project, project?.projectDefaultTasks, CONFIG);
       setLoadedTasks(filtered);
     }
   }, [project]);
@@ -139,7 +135,7 @@ export function KanbanDetails({ project, refetchProject, task, openDetails, onUp
 
         const taskId = task.project_default_task.id;
 
-        const {id} = project;
+        const { id } = project;
 
         const response = await axios.post(`${CONFIG.apiUrl}/projects/upload/project/${id}/task/${taskId}/file/`, formData, {
           headers: {
@@ -195,6 +191,7 @@ export function KanbanDetails({ project, refetchProject, task, openDetails, onUp
         refetchProject?.();
         const lTasks = loadedTasks.map((t) => (t.project_default_task.id === updatedTask.project_default_task.id ? updatedTask : t));
         setLoadedTasks(lTasks)
+        setTaskStatus(updatedTask.status);
       } catch (error) {
         console.error(error);
       }
@@ -206,7 +203,7 @@ export function KanbanDetails({ project, refetchProject, task, openDetails, onUp
       taskName={task.name}
       onLike={like.onToggle}
       onDelete={onDeleteTask}
-      taskStatus={task.status}
+      taskStatus={taskStatus}
       onCloseDetails={onCloseDetails}
     />
   );
@@ -240,6 +237,7 @@ export function KanbanDetails({ project, refetchProject, task, openDetails, onUp
             fontSize: 20,
             // borderColor: 'transparent',
             transition: (theme) => theme.transitions.create(['padding-left', 'border-color']),
+            width: '100%',
           }}
           value={taskName}
           disabled
@@ -267,13 +265,19 @@ export function KanbanDetails({ project, refetchProject, task, openDetails, onUp
                 size="medium"
                 startIcon={<Iconify icon="octicon:tracked-by-closed-completed-16" />}
                 sx={{ ml: 2.5, height: 50 }}
-                disabled={!task || task?.users_assignees?.length === 0 || !priority}
+                disabled={
+                  !task ||
+                  task?.users_assignees?.length === 0 ||
+                  !priority ||
+                  task.status === 'finished' ||
+                  (isInstaller(userLogged?.data?.user_role?.name) && task?.project_task_attachments?.length === 0)
+                }
                 onClick={() => handleManageTask('finish')}
               >
                 Finish Task
               </Button>
             )}
-            {task && task.status === 'finished' && (
+            {(task && task.status === 'finished' && listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.superadmin)) && (
               <Button
                 variant="soft"
                 color="warning"
@@ -288,116 +292,166 @@ export function KanbanDetails({ project, refetchProject, task, openDetails, onUp
             )}
           </>
         ) : (
-          <Label color="error" sx={{ ml: 2.5, height: 50 }}>
-            Task not available
-          </Label>
+          <Box sx={{ display: 'flex', alignItems: 'right', justifyContent: 'flex-end', width: '100%' }}>
+            <Label color="error" sx={{ ml: 2.5, height: 50 }}>
+              Task Unavailable
+            </Label>
+          </Box>
         )}
 
       </Box>
 
       {/* Reporter */}
-      <Box sx={{ display: 'flex', alignItems: 'center' }}>
-        <StyledLabel>Responsable</StyledLabel>
-        <Avatar
-          alt={project?.userManager ? project?.userManager?.name : ''}
-          src={project?.userManager ? project?.userManager?.avatarUrl : ''}
-        />
-        <Typography variant="subtitle2" sx={{ ml: 1 }}>
-          {project?.userManager ? project?.userManager?.name : ''}
-        </Typography>
-      </Box>
+      {!isInstaller(userLogged?.data?.user_role?.name) && (
+        <>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <StyledLabel>Responsable</StyledLabel>
+            <Avatar
+              alt={project?.userManager ? project?.userManager?.name : ''}
+              src={project?.userManager ? project?.userManager?.avatarUrl : ''}
+            />
+            <Typography variant="subtitle2" sx={{ ml: 1 }}>
+              {project?.userManager ? project?.userManager?.name : ''}
+            </Typography>
+          </Box>
+          <Box sx={{ display: 'flex' }}>
+            <StyledLabel sx={{
+              height: 40,
+              lineHeight: '40px',
+              color: task?.users_assignees?.length === 0 ? 'error.main' : 'default',
+            }}>
+              Assignee(s)
+            </StyledLabel>
 
-      {/* Assignee */}
-      <Box sx={{ display: 'flex' }}>
-        <StyledLabel sx={{
-          height: 40,
-          lineHeight: '40px',
-          color: task?.users_assignees?.length === 0 ? 'error.main' : 'default',
-        }}>
-          Assignee(s)
-        </StyledLabel>
+            <Box sx={{ gap: 1, display: 'flex', flexWrap: 'wrap' }}>
+              {(task?.users_assignees?.length === 0 && !verifyPermissions(
+                listPermissions,
+                CONFIG.permissions.system,
+                CONFIG.permissions.moduleTasks,
+                CONFIG.permissions.operationEditUsersAssignees
+              ) && !listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) && (
+                  <Typography variant="subtitle2" sx={{
+                    ml: 0,
+                    mt: 1,
+                    color: task?.users_assignees?.length === 0 ? 'error.main' : 'default',
+                  }}>
+                    No assignees
+                  </Typography>
+                )}
+              {task?.users_assignees?.map((user) => (
+                <Tooltip title={user.name} key={user.id}>
+                  <Avatar key={user.id} alt={user.name} src={user.avatarUrl} />
+                </Tooltip>
+              ))}
 
-        <Box sx={{ gap: 1, display: 'flex', flexWrap: 'wrap' }}>
-          {task?.users_assignees?.map((user) => (
-            <Tooltip title={user.name} key={user.id}>
-              <Avatar key={user.id} alt={user.name} src={user.avatarUrl} />
-            </Tooltip>
-          ))}
+              {(verifyPermissions(
+                listPermissions,
+                CONFIG.permissions.system,
+                CONFIG.permissions.moduleTasks,
+                CONFIG.permissions.operationEditUsersAssignees
+              ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) && (
+                  <>
+                    {task?.status !== CONFIG.taskStatus.finished && (
+                      <Tooltip title="Add assignee">
+                        <IconButton
+                          onClick={() => {
+                            contacts.onTrue();
+                            setIsRemove(false);
+                          }}
+                          sx={{
+                            bgcolor: (theme) => varAlpha(theme.vars.palette.grey['500Channel'], 0.08),
+                            border: (theme) => `dashed 1px ${theme.vars.palette.divider}`,
+                            color: task?.users_assignees?.length === 0 ? 'error.main' : 'default',
+                          }}
+                        >
+                          <Iconify icon="mingcute:add-line" />
+                        </IconButton>
+                      </Tooltip>
+                    )}
 
-          <Tooltip title="Add assignee">
-            <IconButton
-              onClick={() => {
-                contacts.onTrue()
-                setIsRemove(false)
-              }}
-              sx={{
-                bgcolor: (theme) => varAlpha(theme.vars.palette.grey['500Channel'], 0.08),
-                border: (theme) => `dashed 1px ${theme.vars.palette.divider}`,
-                color: task?.users_assignees?.length === 0 ? 'error.main' : 'default',
-              }}
-            >
-              <Iconify icon="mingcute:add-line" />
-            </IconButton>
-          </Tooltip>
+                    {(task?.users_assignees?.length > 0 && task?.status !== CONFIG.taskStatus.finished) && (
+                      <Tooltip title="Remove assignee">
+                        <IconButton
+                          onClick={() => {
+                            contacts.onTrue();
+                            setIsRemove(true);
+                          }}
+                          sx={{
+                            bgcolor: (theme) => varAlpha(theme.vars.palette.grey['500Channel'], 0.08),
+                            border: (theme) => `dashed 1px ${theme.vars.palette.divider}`,
+                          }}
+                        >
+                          <Iconify icon="stash:minus-solid" />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                  </>
+                )}
 
-          {task?.users_assignees?.length > 0 && (
-            <Tooltip title="Remove assignee">
-              <IconButton
-                onClick={() => {
-                  contacts.onTrue()
-                  setIsRemove(true)
-                }}
-                sx={{
-                  bgcolor: (theme) => varAlpha(theme.vars.palette.grey['500Channel'], 0.08),
-                  border: (theme) => `dashed 1px ${theme.vars.palette.divider}`,
-                }}
-              >
-                <Iconify icon="stash:minus-solid" />
-              </IconButton>
-            </Tooltip>
-          )}
 
-          <KanbanContactsDialog
-            // assignee={project?.usersAssignees}
-            project={project}
-            task={task}
-            contacts={availableUsers}
-            open={contacts.value}
-            onClose={contacts.onFalse}
-            refetchProject={refetchProject}
-            isRemove={isRemove}
-          />
-        </Box>
-      </Box>
-
-      {/* Priority */}
-      <Box sx={{ display: 'flex', alignItems: 'center' }}>
-        <StyledLabel>Priority</StyledLabel>
-        <ProjectTaskDetailsPriority
-          project={project}
-          task={task}
-          priority={priority}
-          setPriority={setPriority}
-        />
-      </Box>
+              <KanbanContactsDialog
+                // assignee={project?.usersAssignees}
+                project={project}
+                task={task}
+                contacts={availableUsers}
+                open={contacts.value}
+                onClose={contacts.onFalse}
+                refetchProject={refetchProject}
+                isRemove={isRemove}
+              />
+            </Box>
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <StyledLabel>Priority</StyledLabel>
+            <ProjectTaskDetailsPriority
+              project={project}
+              task={task}
+              priority={priority}
+              setPriority={setPriority}
+              listPermissions={listPermissions}
+            />
+          </Box>
+        </>
+      )}
 
       {/* Attachments */}
       <Box sx={{ display: 'flex' }}>
         <Box sx={{ display: 'flex', flexDirection: 'column' }}>
           <StyledLabel>Attachments</StyledLabel>
-          <Tooltip title="Add Files" sx={{ width: 40 }}>
-            <span>
-              <Button
-                color="primary"
-                variant="outlined"
-                disabled={newFiles.length === 0}
-                onClick={handleAddFiles}
-              >
-                <Iconify icon="material-symbols:attach-file-add" />
-              </Button>
-            </span>
-          </Tooltip>
+          {(verifyPermissions(
+            listPermissions,
+            CONFIG.permissions.system,
+            CONFIG.permissions.moduleTasks,
+            CONFIG.permissions.operationUploadFile
+          ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) && (
+              <Tooltip title="Add Files" sx={{ width: 40 }}>
+                <span>
+                  <Button
+                    color="primary"
+                    variant="outlined"
+                    disabled={newFiles.length === 0}
+                    onClick={handleAddFiles}
+                  >
+                    <Iconify icon="material-symbols:attach-file-add" />
+                  </Button>
+                </span>
+              </Tooltip>
+            )}
         </Box>
+        {(task?.project_task_attachments?.length === 0 && !verifyPermissions(
+          listPermissions,
+          CONFIG.permissions.system,
+          CONFIG.permissions.moduleTasks,
+          CONFIG.permissions.operationUploadFile
+        ) && !listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) && (
+            <Typography variant="subtitle2" sx={{
+              ml: 0,
+              mt: 0,
+              color: task?.users_assignees?.length === 0 ? 'error.main' : 'default',
+            }}>
+              No attachments
+            </Typography>
+          )}
         <KanbanDetailsTaskAttachments
           task={task}
           project={project}
@@ -407,6 +461,7 @@ export function KanbanDetails({ project, refetchProject, task, openDetails, onUp
           id={project?.id}
           name={project?.name}
           type='tasks'
+          listPermissions={listPermissions}
         />
       </Box>
     </Box>
@@ -422,7 +477,7 @@ export function KanbanDetails({ project, refetchProject, task, openDetails, onUp
       onClose={onCloseDetails}
       anchor="right"
       slotProps={{ backdrop: { invisible: true } }}
-      PaperProps={{ sx: { width: { xs: 1, sm: 480 } } }}
+      PaperProps={{ sx: { width: { xs: 1, sm: 520 } } }}
     >
       {renderToolbar}
 

@@ -1,6 +1,8 @@
 import axios from 'axios';
 import { useCallback } from 'react';
 
+import { listRolesAndSubroles, verifyPermissions } from 'src/utils/check-permissions';
+
 import Stack from '@mui/material/Stack';
 import ButtonBase from '@mui/material/ButtonBase';
 
@@ -12,7 +14,14 @@ import { Iconify } from 'src/components/iconify';
 
 // ----------------------------------------------------------------------
 
-export function ProjectTaskDetailsPriority({ project, task, priority, setPriority, setSelectedTask }) {
+export function ProjectTaskDetailsPriority({ 
+  project, 
+  task, 
+  priority, 
+  setPriority, 
+  setSelectedTask,
+  listPermissions, 
+}) {
 
   const userLogged = JSON.parse(sessionStorage.getItem('userLogged'));
 
@@ -32,7 +41,7 @@ export function ProjectTaskDetailsPriority({ project, task, priority, setPriorit
         setPriority(newPriority);
         setSelectedTask?.((prev) => ({
           ...prev,
-            priority: newPriority,
+          priority: newPriority,
         }));
       } catch (error) {
         console.error(error);
@@ -49,6 +58,14 @@ export function ProjectTaskDetailsPriority({ project, task, priority, setPriorit
           key={option}
           onClick={() => onChangePriority(option)}
           value={option}
+          disabled={
+            !verifyPermissions(
+              listPermissions,
+              CONFIG.permissions.system,
+              CONFIG.permissions.moduleTasks,
+              CONFIG.permissions.operationEditPriority
+            ) && !listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)
+          }
           sx={{
             py: 0.5,
             pl: 0.75,

@@ -5,9 +5,9 @@ export const verifyPermissions = (permissions, system, module, operation) => {
     return false;
   }
   return permissions?.some((permission) =>
-    permission?.module_system?.system?.name.includes(system) &&
-    permission?.module_system?.name.includes(module) &&
-    permission?.name.includes(operation)
+    permission?.module_system?.system?.name.toLowerCase().includes(system.toLowerCase()) &&
+    permission?.module_system?.name.toLowerCase().includes(module.toLowerCase()) &&
+    permission?.name.toLowerCase().includes(operation.toLowerCase())
   );
 }
 
@@ -20,13 +20,152 @@ export const verifyRole = (roles, role) => {
 
 
 export const listRolesAndSubroles = (role) =>
-  role?.indexOf(CONFIG.roles.superadmin) !== -1 ?
-    [CONFIG.roles.superadmin, CONFIG.roles.manager, CONFIG.roles.installer, CONFIG.roles.seller, CONFIG.roles.client] :
-    role?.indexOf(CONFIG.roles.manager) !== -1 ?
-      [CONFIG.roles.manager, CONFIG.roles.installer, CONFIG.roles.seller, CONFIG.roles.client] :
-      role?.indexOf(CONFIG.roles.installer) !== -1 ?
-        [CONFIG.roles.installer] :
-        role?.indexOf(CONFIG.roles.seller) !== -1 ?
-          [CONFIG.roles.seller] :
-          role?.indexOf(CONFIG.roles.client) !== -1 ?
-            [CONFIG.roles.client] : [];
+  role?.toLowerCase().indexOf(CONFIG.roles.superadmin.toLowerCase()) !== -1 ?
+    [CONFIG.roles.superadmin, CONFIG.roles.administrator, CONFIG.roles.projectManager, CONFIG.roles.installer, CONFIG.roles.officeStaff] :
+    role?.toLowerCase().indexOf(CONFIG.roles.administrator.toLowerCase()) !== -1 ?
+      [CONFIG.roles.administrator, CONFIG.roles.projectManager, CONFIG.roles.installer, CONFIG.roles.officeStaff] :
+      role?.toLowerCase().indexOf(CONFIG.roles.projectManager.toLowerCase()) !== -1 ?
+        [CONFIG.roles.projectManager, CONFIG.roles.installer, CONFIG.roles.officeStaff] :
+        role?.toLowerCase().indexOf(CONFIG.roles.installer.toLowerCase()) !== -1 ?
+          [CONFIG.roles.installer] :
+          role?.toLowerCase().indexOf(CONFIG.roles.officeStaff.toLowerCase()) !== -1 ?
+            [CONFIG.roles.officeStaff] : [];
+
+export const isSuperAdmin = (role) => role?.toLowerCase().indexOf(CONFIG.roles.superadmin.toLowerCase()) !== -1;
+export const isAdministrator = (role) => role?.toLowerCase().indexOf(CONFIG.roles.administrator.toLowerCase()) !== -1;
+export const isProjectManager = (role) => role?.toLowerCase().indexOf(CONFIG.roles.projectManager.toLowerCase()) !== -1;
+export const isInstaller = (role) => role?.toLowerCase().indexOf(CONFIG.roles.installer.toLowerCase()) !== -1;
+export const isOfficeStaff = (role) => role?.toLowerCase().indexOf(CONFIG.roles.officeStaff.toLowerCase()) !== -1;
+
+
+export const createDefaultPermissions = (role) => {
+  const data = {};
+  const system = CONFIG.permissions.system;
+  const modules = [];
+  modules.push({
+    name: CONFIG.permissions.moduleProjects,
+    permissions: [
+      { name: CONFIG.permissions.operationList },
+      { name: CONFIG.permissions.operationDetails },
+    ]
+  });
+  modules.push({
+    name: CONFIG.permissions.moduleDashboards,
+    permissions: [
+      { name: CONFIG.permissions.operationList },
+    ]
+  });
+  if (isSuperAdmin(role) || isAdministrator(role) || isProjectManager(role)) {
+    modules.push({
+      name: CONFIG.permissions.moduleUsers,
+      permissions: [
+        { name: CONFIG.permissions.operationList },
+        { name: CONFIG.permissions.operationDetails },
+        { name: CONFIG.permissions.operationCreate },
+        { name: CONFIG.permissions.operationUpdate },
+        { name: CONFIG.permissions.operationDelete },
+      ]
+    });
+  }
+  if (isSuperAdmin(role) || isAdministrator(role)) {
+    modules.push({
+      name: CONFIG.permissions.moduleSalesOrders,
+      permissions: [
+        { name: CONFIG.permissions.operationList },
+      ]
+    });
+    modules.push({
+      name: CONFIG.permissions.moduleProjects,
+      permissions: [
+        { name: CONFIG.permissions.operationCreate },
+        { name: CONFIG.permissions.operationUpdate },
+        { name: CONFIG.permissions.operationDelete },
+        { name: CONFIG.permissions.operationDetails },
+        { name: CONFIG.permissions.operationEditCalendar },
+        { name: CONFIG.permissions.operationEditAddress },
+        { name: CONFIG.permissions.operationEditResponsable },
+        { name: CONFIG.permissions.operationEditInstallDate },
+        { name: CONFIG.permissions.operationEditClosingDate },
+        { name: CONFIG.permissions.operationEditUsersAssignees },
+        { name: CONFIG.permissions.operationEditHasPermission },
+        { name: CONFIG.permissions.operationUploadFile },
+        { name: CONFIG.permissions.operationDownloadFile },
+        { name: CONFIG.permissions.operationRemoveFile },
+      ]
+    });
+    modules.push({
+      name: CONFIG.permissions.moduleTasks,
+      permissions: [
+        { name: CONFIG.permissions.operationUploadFile },
+        { name: CONFIG.permissions.operationDownloadFile },
+        { name: CONFIG.permissions.operationRemoveFile },
+        { name: CONFIG.permissions.operationEditPriority },
+      ]
+    });
+  }
+  if (isSuperAdmin(role)) {
+    modules.push({
+      name: CONFIG.permissions.moduleTasks,
+      permissions: [
+        { name: CONFIG.permissions.operationList },
+        { name: CONFIG.permissions.operationCreate },
+        { name: CONFIG.permissions.operationUpdate },
+        { name: CONFIG.permissions.operationDelete },
+        { name: CONFIG.permissions.operationDetails },
+      ]
+    });
+    modules.push({
+      name: CONFIG.permissions.moduleTaskStages,
+      permissions: [
+        { name: CONFIG.permissions.operationList },
+        { name: CONFIG.permissions.operationCreate },
+        { name: CONFIG.permissions.operationUpdate },
+        { name: CONFIG.permissions.operationDelete },
+        { name: CONFIG.permissions.operationDetails },
+      ]
+    });
+    modules.push({
+      name: CONFIG.permissions.moduleRoles,
+      permissions: [
+        { name: CONFIG.permissions.operationList },
+        { name: CONFIG.permissions.operationCreate },
+        { name: CONFIG.permissions.operationUpdate },
+        { name: CONFIG.permissions.operationDelete },
+        { name: CONFIG.permissions.operationDetails },
+      ]
+    });
+    modules.push({
+      name: CONFIG.permissions.moduleInstallationStages,
+      permissions: [
+        { name: CONFIG.permissions.operationList },
+        { name: CONFIG.permissions.operationCreate },
+        { name: CONFIG.permissions.operationUpdate },
+        { name: CONFIG.permissions.operationDelete },
+        { name: CONFIG.permissions.operationDetails },
+      ]
+    });
+  }
+  if (isInstaller(role)) {
+    modules.push({
+      name: CONFIG.permissions.moduleTasks,
+      permissions: [
+        { name: CONFIG.permissions.operationUploadFile },
+        { name: CONFIG.permissions.operationDownloadFile },
+        { name: CONFIG.permissions.operationRemoveFile },
+        { name: CONFIG.permissions.operationDetails },
+      ]
+    });
+    modules.push({
+      name: CONFIG.permissions.moduleProjects,
+      permissions: [
+        { name: CONFIG.permissions.operationUploadFile },
+        { name: CONFIG.permissions.operationDownloadFile },
+        { name: CONFIG.permissions.operationRemoveFile },
+      ]
+    });
+  }
+
+  data.system = system;
+  data.modules = modules;
+  return data;
+}

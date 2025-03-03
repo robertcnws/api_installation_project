@@ -23,24 +23,24 @@ const Jwt = {
 
 export function Router() {
 
-  const { loadedPermissions } = useDataContext();
+  const { listPermissions } = useDataContext();
 
-  const [listPermissions, setListPermissions] = useState(null);
+  // console.log('listPermissions', listPermissions);
 
   const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
 
-  useEffect(() => {
-    if (loadedPermissions && userLogged) {
-      const results = loadedPermissions?.results;
+  // useEffect(() => {
+  //   if (loadedPermissions && userLogged) {
+  //     const results = loadedPermissions?.results;
 
-      const permissions = results?.filter((item) => item.username === userLogged?.data.username);
+  //     const permissions = results?.filter((item) => item.username === userLogged?.data.username);
 
-      if (permissions.length > 0) {
-        setListPermissions(permissions[0].permissions);
-      }
+  //     if (permissions.length > 0) {
+  //       setListPermissions(permissions[0].permissions);
+  //     }
 
-    }
-  }, [loadedPermissions, userLogged]);
+  //   }
+  // }, [loadedPermissions, userLogged]);
 
   return useRoutes([
     {

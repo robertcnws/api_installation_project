@@ -1,6 +1,6 @@
 import Calendar from '@fullcalendar/react'; // => request placed at the top
 
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import listPlugin from '@fullcalendar/list';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
@@ -25,6 +25,9 @@ import { CALENDAR_COLOR_OPTIONS } from 'src/_mock/_calendar';
 import { updateEvent, useGetProjectEvents } from 'src/actions/calendar';
 
 import { Iconify } from 'src/components/iconify';
+import { CONFIG } from 'src/config-global';
+import { useDataContext } from 'src/auth/context/data/data-context';
+import { listRolesAndSubroles, verifyPermissions } from 'src/utils/check-permissions';
 
 import { StyledCalendar } from '../styles';
 import { useEvent } from '../hooks/use-event';
@@ -34,6 +37,9 @@ import { ProjectCalendarToolbar } from '../project-calendar-toolbar';
 import { ProjectCalendarFilters } from '../project-calendar-filters';
 import { ProjectCalendarFiltersResult } from '../project-calendar-filters-result';
 
+
+
+
 // ----------------------------------------------------------------------
 
 export function ProjectCalendarView({ projects, isOnlyWeek }) {
@@ -41,6 +47,12 @@ export function ProjectCalendarView({ projects, isOnlyWeek }) {
   const theme = useTheme();
 
   const openFilters = useBoolean();
+
+  const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
+
+  const {
+    listPermissions,
+  } = useDataContext();
 
   const { events, eventsLoading } = useGetProjectEvents(projects?.filter((project) => project.startDate));
 
@@ -120,7 +132,7 @@ export function ProjectCalendarView({ projects, isOnlyWeek }) {
 
         {canReset && renderResults}
 
-        <Card sx={{ ...flexProps, height: '60vh', minWidth: '105%', ml: '-2.5%' }}>
+        <Card sx={{ ...flexProps, height: '100%', minWidth: '105%', ml: '-5.3%' }}>
           <StyledCalendar sx={{ ...flexProps, '.fc.fc-media-screen': { flex: '0 0 auto' }, minHeight: '100%' }}>
             <ProjectCalendarToolbar
               isOnlyWeek={isOnlyWeek}
@@ -151,7 +163,15 @@ export function ProjectCalendarView({ projects, isOnlyWeek }) {
               events={dataFiltered}
               headerToolbar={false}
               select={onSelectRange}
-              eventClick={onClickEvent}
+              eventClick={
+                verifyPermissions(
+                  listPermissions,
+                  CONFIG.permissions.system,
+                  CONFIG.permissions.moduleProjects,
+                  CONFIG.permissions.operationEditCalendar
+                ) || 
+                listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.projectManager) ? onClickEvent : null
+              }
               aspectRatio={3}
               eventDrop={(arg) => {
                 onDropEvent(arg, updateEvent);

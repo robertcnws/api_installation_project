@@ -12,6 +12,6 @@ export const defaultSettings = {
   primaryColor: 'default',
   // primaryColor: 'red',
   navColor: 'integrate',
-  compactLayout: true,
+  compactLayout: false,
   fontFamily: defaultFont,
 };

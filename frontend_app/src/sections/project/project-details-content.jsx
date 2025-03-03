@@ -20,19 +20,25 @@ import { Iconify } from 'src/components/iconify';
 
 import { LoadingContext } from 'src/auth/context/loading-context';
 import { useDataContext } from 'src/auth/context/data/data-context';
+import { isInstaller, listRolesAndSubroles, verifyPermissions } from 'src/utils/check-permissions';
 
 import { ProjectDetailsChartTask } from './view/project-details-chart-task';
 import { ProjectEditModalDatesView } from './view/project-edit-modal-dates-view';
 import { ProjectDetailsStageStepper } from './view/project-details-stage-stepper';
-import { ProjectDetailsChartProject } from './view/project-details-chart-project';
 import { ProjectEditModalAddressView } from './view/project-edit-modal-address-view';
 import { ProjectEditModalUserManagerView } from './view/project-edit-modal-user-manager-view';
 import { ProjectDetailsChartSemicircleProject } from './view/project-details-chart-semicircle-project';
 
 
+
 // ----------------------------------------------------------------------
 
-export function ProjectDetailsContent({ project, refetchProject, setOpenEdit }) {
+export function ProjectDetailsContent({
+  project,
+  refetchProject,
+  setOpenEdit,
+  listPermissions,
+}) {
 
   const theme = useTheme();
 
@@ -40,7 +46,10 @@ export function ProjectDetailsContent({ project, refetchProject, setOpenEdit }) 
 
   const { isMobile } = useContext(LoadingContext);
 
-  const { loadedStages } = useDataContext();
+  const {
+    loadedStages,
+    loadedUsers,
+  } = useDataContext();
 
   const [totalTasks, setTotalTasks] = useState(0);
   const [totalInProgressTasks, setTotalInProgressTasks] = useState(0);
@@ -114,7 +123,7 @@ export function ProjectDetailsContent({ project, refetchProject, setOpenEdit }) 
       console.error(error);
     }
   }, [refetchProject, userLogged, project]);
-  
+
 
   const handleSwitch = (event) => {
     const newVal = event.target.checked;
@@ -123,7 +132,7 @@ export function ProjectDetailsContent({ project, refetchProject, setOpenEdit }) 
   }
 
   const renderMainContent = (
-    <Card sx={{ p: 3, gap: 3, display: 'flex', flexDirection: 'column', width: '100%' }}>
+    <Card sx={{ p: 3, gap: 1, display: 'flex', flexDirection: 'column', width: '100%' }}>
       <Table size="small">
         <TableBody>
           <TableRow>
@@ -149,22 +158,32 @@ export function ProjectDetailsContent({ project, refetchProject, setOpenEdit }) 
               </Box>
             </TableCell>
             <TableCell sx={{ textAlign: 'right', maxWidth: '30px' }}>
-              {project?.userManager?.name && (
+              {(project?.userManager?.name && (verifyPermissions(
+                listPermissions,
+                CONFIG.permissions.system,
+                CONFIG.permissions.moduleProjects,
+                CONFIG.permissions.operationEditResponsable
+              ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
 
-                <IconButton variant="text" color="primary" size="small" sx={{ ml: 0, maxWidth: 10 }}
-                  onClick={() => setOpenDialogs({ ...openDialogs, userManager: true })}
-                >
-                  <Iconify icon="la:user-edit" color="primary" width={22} />
-                </IconButton>
+                  <IconButton variant="text" color="primary" size="small" sx={{ ml: 0, maxWidth: 10 }}
+                    onClick={() => setOpenDialogs({ ...openDialogs, userManager: true })}
+                  >
+                    <Iconify icon="la:user-edit" color="primary" width={22} />
+                  </IconButton>
 
-              )}
-              {!project?.userManager?.name && (
-                <IconButton variant="text" color="warning" size="small" sx={{ ml: 0, maxWidth: 10 }}
-                  onClick={() => setOpenDialogs({ ...openDialogs, userManager: true })}
-                >
-                  <Iconify icon="tdesign:user-add-filled" color="warning" width={20} />
-                </IconButton>
-              )}
+                )}
+              {(!project?.userManager?.name && (verifyPermissions(
+                listPermissions,
+                CONFIG.permissions.system,
+                CONFIG.permissions.moduleProjects,
+                CONFIG.permissions.operationEditResponsable
+              ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
+                  <IconButton variant="text" color="warning" size="small" sx={{ ml: 0, maxWidth: 10 }}
+                    onClick={() => setOpenDialogs({ ...openDialogs, userManager: true })}
+                  >
+                    <Iconify icon="tdesign:user-add-filled" color="warning" width={20} />
+                  </IconButton>
+                )}
             </TableCell>
           </TableRow>
 
@@ -185,26 +204,36 @@ export function ProjectDetailsContent({ project, refetchProject, setOpenEdit }) 
               </Box>
             </TableCell>
             <TableCell sx={{ textAlign: 'right', maxWidth: '30px' }}>
-              {project?.startDate && (
-                <IconButton variant="text" color="primary" size="small" sx={{ ml: 0, maxWidth: 10 }}
-                  onClick={() => {
-                    setIsStartDate(true)
-                    setOpenDialogs({ ...openDialogs, date: true })
-                  }}
-                >
-                  <Iconify icon="fluent:calendar-edit-32-regular" color="primary" width={22} />
-                </IconButton>
-              )}
-              {!project?.startDate && (
-                <IconButton variant="text" color="warning" size="small" sx={{ ml: 0, maxWidth: 10 }}
-                  onClick={() => {
-                    setIsStartDate(true)
-                    setOpenDialogs({ ...openDialogs, date: true })
-                  }}
-                >
-                  <Iconify icon="zondicons:date-add" color="warning" width={20} />
-                </IconButton>
-              )}
+              {(project?.startDate && (verifyPermissions(
+                listPermissions,
+                CONFIG.permissions.system,
+                CONFIG.permissions.moduleProjects,
+                CONFIG.permissions.operationEditInstallDate
+              ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
+                  <IconButton variant="text" color="primary" size="small" sx={{ ml: 0, maxWidth: 10 }}
+                    onClick={() => {
+                      setIsStartDate(true)
+                      setOpenDialogs({ ...openDialogs, date: true })
+                    }}
+                  >
+                    <Iconify icon="fluent:calendar-edit-32-regular" color="primary" width={22} />
+                  </IconButton>
+                )}
+              {(!project?.startDate && (verifyPermissions(
+                listPermissions,
+                CONFIG.permissions.system,
+                CONFIG.permissions.moduleProjects,
+                CONFIG.permissions.operationEditInstallDate
+              ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
+                  <IconButton variant="text" color="warning" size="small" sx={{ ml: 0, maxWidth: 10 }}
+                    onClick={() => {
+                      setIsStartDate(true)
+                      setOpenDialogs({ ...openDialogs, date: true })
+                    }}
+                  >
+                    <Iconify icon="zondicons:date-add" color="warning" width={20} />
+                  </IconButton>
+                )}
             </TableCell>
           </TableRow>
 
@@ -225,26 +254,36 @@ export function ProjectDetailsContent({ project, refetchProject, setOpenEdit }) 
               </Box>
             </TableCell>
             <TableCell sx={{ textAlign: 'right', maxWidth: '30px' }}>
-              {project?.endDate && (
-                <IconButton variant="text" color="primary" size="small" sx={{ ml: 0, maxWidth: 10 }}
-                  onClick={() => {
-                    setIsStartDate(false)
-                    setOpenDialogs({ ...openDialogs, date: true })
-                  }}
-                >
-                  <Iconify icon="fluent:calendar-edit-32-regular" color="primary" width={22} />
-                </IconButton>
-              )}
-              {!project?.endDate && (
-                <IconButton variant="text" color="warning" size="small" sx={{ ml: 0, maxWidth: 10 }}
-                  onClick={() => {
-                    setIsStartDate(false)
-                    setOpenDialogs({ ...openDialogs, date: true })
-                  }}
-                >
-                  <Iconify icon="zondicons:date-add" color="warning" width={20} />
-                </IconButton>
-              )}
+              {(project?.endDate && (verifyPermissions(
+                listPermissions,
+                CONFIG.permissions.system,
+                CONFIG.permissions.moduleProjects,
+                CONFIG.permissions.operationEditClosingDate
+              ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
+                  <IconButton variant="text" color="primary" size="small" sx={{ ml: 0, maxWidth: 10 }}
+                    onClick={() => {
+                      setIsStartDate(false)
+                      setOpenDialogs({ ...openDialogs, date: true })
+                    }}
+                  >
+                    <Iconify icon="fluent:calendar-edit-32-regular" color="primary" width={22} />
+                  </IconButton>
+                )}
+              {(!project?.endDate && (verifyPermissions(
+                listPermissions,
+                CONFIG.permissions.system,
+                CONFIG.permissions.moduleProjects,
+                CONFIG.permissions.operationEditClosingDate
+              ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
+                  <IconButton variant="text" color="warning" size="small" sx={{ ml: 0, maxWidth: 10 }}
+                    onClick={() => {
+                      setIsStartDate(false)
+                      setOpenDialogs({ ...openDialogs, date: true })
+                    }}
+                  >
+                    <Iconify icon="zondicons:date-add" color="warning" width={20} />
+                  </IconButton>
+                )}
             </TableCell>
           </TableRow>
 
@@ -259,28 +298,22 @@ export function ProjectDetailsContent({ project, refetchProject, setOpenEdit }) 
                 width={30}
               />
             </TableCell>
-            <TableCell sx={{ textAlign: 'right', maxWidth: '30px' }}>
-              <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, maxWidth: '30px', ml: -3 }}>
-                {/* <Controller
-                  name="hasPermission"
-                  control={control}
-                  render={({ field }) => (
+            {(verifyPermissions(
+              listPermissions,
+              CONFIG.permissions.system,
+              CONFIG.permissions.moduleProjects,
+              CONFIG.permissions.operationEditHasPermission
+            ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) && (
+                <TableCell sx={{ textAlign: 'right', maxWidth: '30px' }}>
+                  <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, maxWidth: '30px', ml: -3 }}>
                     <Switch
-                      checked={project?.hasPermission}
-                      onChange={(event) => {
-                        setSelectedPermission(event.target.checked);
-                        handleChangePermission();
-                      }}
-                      sx={{ maxWidth: 56 }} />
-                  )}
-                /> */}
-                <Switch
-                  checked={!!(project && selectedPermission)}
-                  onChange={handleSwitch}
-                  sx={{ maxWidth: 56 }}
-                />
-              </Box>
-            </TableCell>
+                      checked={!!(project && selectedPermission)}
+                      onChange={handleSwitch}
+                      sx={{ maxWidth: 56 }}
+                    />
+                  </Box>
+                </TableCell>
+              )}
           </TableRow>
         </TableBody>
 
@@ -289,8 +322,8 @@ export function ProjectDetailsContent({ project, refetchProject, setOpenEdit }) 
   );
 
   const renderDescription = (
-    <Card sx={{ p: 3, gap: 3, display: 'flex', flexDirection: 'column', width: '100%' }}>
-      <TextField label="Description" multiline rows={3} value={project?.description} variant="outlined" fullWidth disabled />
+    <Card sx={{ p: 3, gap: 1, display: 'flex', flexDirection: 'column', width: '100%' }}>
+      <TextField multiline rows={3} value={project?.description} variant="outlined" fullWidth disabled />
       <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, mt: 0, mb: -1, textAlign: 'right' }}>
         <Label variant="filled" sx={{ bgcolor: 'whitesmoke', color: 'text.primary' }}>
           Created At:
@@ -316,9 +349,9 @@ export function ProjectDetailsContent({ project, refetchProject, setOpenEdit }) 
     title: '',
     subheader: 'Total tasks',
     series: [
-      { label: 'Not Started', value: totalNotStartedTasks },
-      { label: 'In Progress', value: totalInProgressTasks },
-      { label: 'Completed', value: totalCompletedTasks },
+      { label: 'Not Started', value: totalNotStartedTasks || 0 },
+      { label: 'In Progress', value: totalInProgressTasks || 0 },
+      { label: 'Completed', value: totalCompletedTasks || 0 },
     ],
     data: [
       {
@@ -337,34 +370,18 @@ export function ProjectDetailsContent({ project, refetchProject, setOpenEdit }) 
     return total > 0 ? (sumPercentage / total).toFixed(2) : 0;
   }, [project?.projectDefaultTasks, totalNotStartedTasks, totalInProgressTasks, totalCompletedTasks]);
 
-  const chartProject = useMemo(() => ({
-    title: '',
-    subheader: 'Project Status',
-    series: [
-      { label: '% Advance', value: percentage },
-      { label: '% Not started', value: 100 - percentage },
-    ],
-  }), [percentage]);
-
   const chartSemicircleProject = useMemo(() => ({
     title: '',
     subheader: 'Project Status',
-    series: [percentage],
+    series: [(percentage || 0)],
     colors: percentage === 0 ? [theme.palette.error.main, theme.palette.error.light] :
-      percentage > 0 && percentage < 50 ? [theme.palette.warning.main, theme.palette.warning.light] :
-        percentage >= 50 && percentage < 100 ? [theme.palette.info.main, theme.palette.info.light] :
-          [theme.palette.success.main, theme.palette.success.light],
+      percentage > 0 && percentage < 100 ? [theme.palette.warning.main, theme.palette.warning.light] :
+        [theme.palette.success.main, theme.palette.success.light],
   }), [percentage, theme]);
 
   const renderTaskChart = (
     // <Card sx={{ p: 1, gap: 1, display: 'flex', flexDirection: 'column' }}>
     <ProjectDetailsChartTask chart={chart} />
-    // </Card>
-  )
-
-  const renderProjectChart = (
-    // <Card sx={{ p: 1, gap: 1, display: 'flex', flexDirection: 'column' }}>
-    <ProjectDetailsChartProject chart={chartProject} />
     // </Card>
   )
 
@@ -386,7 +403,7 @@ export function ProjectDetailsContent({ project, refetchProject, setOpenEdit }) 
   );
 
   const renderOverview = (
-    <Card sx={{ p: 3, gap: 2, display: 'flex', flexDirection: 'column', maxHeight: !isMobile ? 655 : 'auto', minHeight: !isMobile ? 655 : 'auto', overflow: 'auto' }}>
+    <Card sx={{ p: 3, gap: 1, display: 'flex', flexDirection: 'column', maxHeight: !isMobile ? 655 : 'auto', minHeight: !isMobile ? 655 : 'auto', overflow: 'auto' }}>
       {[
         {
           label: 'Client',
@@ -467,35 +484,166 @@ export function ProjectDetailsContent({ project, refetchProject, setOpenEdit }) 
                 typography: 'subtitle2',
               }}
             />
-            {item.label === 'Address' && (
-              <IconButton variant="text" color="primary" size="small" sx={{ ml: 1 }}
-                onClick={() => setOpenDialogs({ ...openDialogs, address: true })}
-              >
-                <Iconify icon="fluent:slide-text-edit-20-regular" color="primary" width={22} />
-              </IconButton>
-            )}
+            {(item.label === 'Address' && (verifyPermissions(
+              listPermissions,
+              CONFIG.permissions.system,
+              CONFIG.permissions.moduleProjects,
+              CONFIG.permissions.operationEditAddress
+            ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
+                <IconButton variant="text" color="primary" size="small" sx={{ ml: 1 }}
+                  onClick={() => setOpenDialogs({ ...openDialogs, address: true })}
+                >
+                  <Iconify icon="fluent:slide-text-edit-20-regular" color="primary" width={22} />
+                </IconButton>
+              )}
           </Box>
         </Stack>
       ))}
     </Card >
   );
 
-  // const renderCompany = (
-  //   <Paper variant="outlined" sx={{ p: 3, mt: 3, gap: 2, borderRadius: 2, display: 'flex' }}>
-  //     <Avatar
-  //       alt={job?.company.name}
-  //       src={job?.company.logo}
-  //       variant="rounded"
-  //       sx={{ width: 64, height: 64 }}
-  //     />
+  const renderOverviewInstaller = (
+    <Box sx={{ display: 'flex', flexDirection: !isMobile ? 'row' : 'column', gap: 2 }}>
+      <Card sx={{
+        p: 3,
+        gap: 2,
+        display: 'flex',
+        flexDirection: 'column',
+        maxHeight: !isMobile ? 655 : 'auto',
+        // minHeight: !isMobile ? 655 : 'auto',
+        overflow: 'auto',
+        minWidth: '50%'
+      }}>
+        {[
+          {
+            label: 'Responsable',
+            value: (
+              <>
+                <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, justifyContent: 'flex-start' }}>
+                  <Typography variant="body2" color="text.primary">
+                    <b>{project?.userManager?.name}</b>
+                  </Typography>
+                  <Label variant="outlined" color="error" sx={{ gap: 1, p: 1 }}>
+                    <Iconify icon="icon-park:phone" />
+                    {loadedUsers?.find((user) => user.id === project?.userManager?.id)?.phoneNumber}
+                  </Label>
+                </Box>
+              </>
+            ),
+            icon: <Iconify icon="hugeicons:manager" />,
+          },
+          {
+            label: 'Client',
+            value: project?.salesOrder?.customer_name,
+            icon: <Iconify icon="ix:customer-filled" />,
+          },
+          {
+            label: 'Address',
+            value: project?.address,
+            icon: <Iconify icon="hugeicons:address-book" />,
+          },
+          {
+            label: 'Phone Number',
+            value: project?.salesOrder?.customer.phone,
+            icon: <Iconify icon="icon-park:phone" />,
+          },
+          {
+            label: 'Email',
+            value: project?.salesOrder?.customer?.email,
+            icon: <Iconify icon="mage:email-fill" />,
+          },
+          {
+            label: 'Date',
+            value: fDate(project?.salesOrder?.date),
+            icon: <Iconify icon="solar:calendar-date-bold" />,
+          },
+        ].map((item) => (
+          <Stack key={item.label} spacing={1.5} direction="row">
+            {item?.icon}
+            <Box sx={{ width: '100%', display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+              <ListItemText
+                primary={item.label}
+                secondary={item.value}
+                primaryTypographyProps={{ typography: 'body2', color: 'text.secondary', mb: 0.5 }}
+                secondaryTypographyProps={{
+                  component: 'span',
+                  color: 'text.primary',
+                  typography: 'subtitle2',
+                }}
+              />
+              {(item.label === 'Address' && (verifyPermissions(
+                listPermissions,
+                CONFIG.permissions.system,
+                CONFIG.permissions.moduleProjects,
+                CONFIG.permissions.operationEditAddress
+              ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
+                  <IconButton variant="text" color="primary" size="small" sx={{ ml: 1 }}
+                    onClick={() => setOpenDialogs({ ...openDialogs, address: true })}
+                  >
+                    <Iconify icon="fluent:slide-text-edit-20-regular" color="primary" width={22} />
+                  </IconButton>
+                )}
+            </Box>
+          </Stack>
+        ))}
 
-  //     <Stack spacing={1}>
-  //       <Typography variant="subtitle1">{job?.company.name}</Typography>
-  //       <Typography variant="body2">{job?.company.fullAddress}</Typography>
-  //       <Typography variant="body2">{job?.company.phoneNumber}</Typography>
-  //     </Stack>
-  //   </Paper>
-  // );
+      </Card >
+      <Card sx={{
+        p: 1,
+        gap: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        maxHeight: !isMobile ? 655 : 'auto',
+        // minHeight: !isMobile ? 655 : 'auto',
+        overflow: 'auto',
+        minWidth: '50%'
+      }}>
+        {[
+          {
+            label: `${project?.salesOrder?.line_items?.filter((product) => product.item_type !== 'sales_and_purchases').length} Product(s), 
+            Total Qty: ${project?.salesOrder?.line_items?.filter((product) => product.item_type !== 'sales_and_purchases').reduce((total, product) => total + product.quantity, 0)}`,
+            value: (
+              <>
+                {project?.salesOrder?.line_items?.filter((product) => product.item_type !== 'sales_and_purchases').map((product) => (
+                  <ListItem key={product.line_item_id}>
+                    <ListItemText
+                      primary={product.name}
+                      secondary={`Qty: ${product.quantity}`}
+                      primaryTypographyProps={{
+                        variant: 'caption',
+                        color: 'text.secondary',
+                      }}
+                      secondaryTypographyProps={{
+                        variant: 'caption',
+                        color: 'text.primary',
+                      }}
+                    />
+                  </ListItem>
+                ))}
+              </>
+            ),
+            icon: <Iconify icon="fluent-mdl2:product-list" />,
+          },
+        ].map((item) => (
+          <Stack key={item.label} spacing={1.5} direction="row">
+            {item?.icon}
+            <Box sx={{ width: '100%', display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+              <ListItemText
+                primary={item.label}
+                secondary={item.value}
+                primaryTypographyProps={{ typography: 'body2', color: 'text.secondary', mb: 0.5 }}
+                secondaryTypographyProps={{
+                  component: 'span',
+                  color: 'text.primary',
+                  typography: 'subtitle2',
+                }}
+              />
+            </Box>
+          </Stack>
+        ))}
+      </Card>
+    </Box>
+  );
 
   if (project === null) {
     return (
@@ -510,35 +658,42 @@ export function ProjectDetailsContent({ project, refetchProject, setOpenEdit }) 
   return (
     <>
       <Grid container spacing={3}>
-        <Grid xs={12} md={8}>
+        {!isInstaller(userLogged?.data?.user_role?.name) && (
+          <>
+            <Grid xs={12} md={8}>
+              <Grid xs={12} md={12}>
+                <Box sx={{ mb: 1, width: '100%', mt: -4 }}>
+                  {renderStages}
+                </Box>
+              </Grid>
+              <Grid xs={12} md={12}>
+                <Box sx={{ display: 'flex', flexDirection: !isMobile ? 'row' : 'column', gap: 1, mb: 1, mt: -3 }}>
+                  {renderMainContent}
+                  {renderDescription}
+                </Box>
+              </Grid>
+              <Grid xs={12} md={12}>
+                <Box sx={{ display: 'flex', flexDirection: !isMobile ? 'row' : 'column', gap: 1, mb: 1, mt: -3, width: '100%' }}>
+                  {renderTaskChart}
+                  {renderProjectSemicircleChart}
+                </Box>
+              </Grid>
+
+            </Grid>
+            <Grid xs={12} md={4}>
+              <Box sx={{ mb: 1, width: '100%', mt: -2.5, ml: -3 }}>
+                {renderOverview}
+              </Box>
+            </Grid>
+          </>
+        )}
+        {isInstaller(userLogged?.data?.user_role?.name) && (
           <Grid xs={12} md={12}>
-            <Box sx={{ mb: 3, width: '100%' }}>
-              {renderStages}
-            </Box>
+            {renderOverviewInstaller}
           </Grid>
-          <Grid xs={12} md={12}>
-            <Box sx={{ display: 'flex', flexDirection: !isMobile ? 'row' : 'column', gap: 3, mb: 3 }}>
-              {renderMainContent}
-              {renderDescription}
-            </Box>
-          </Grid>
-          <Grid xs={12} md={12}>
-            <Box sx={{ display: 'flex', flexDirection: !isMobile ? 'row' : 'column', gap: 3, mb: 3, width: '100%' }}>
-              {renderTaskChart}
-              {/* {renderProjectChart} */}
-              {renderProjectSemicircleChart}
-            </Box>
-          </Grid>
+        )}
 
-        </Grid>
-
-        <Grid xs={12} md={4}>
-          {renderOverview}
-
-          {/* {renderCompany} */}
-        </Grid>
-
-      </Grid>
+      </Grid >
       <ProjectEditModalUserManagerView
         isEdit={project?.userManager?.name}
         projectId={project.id}

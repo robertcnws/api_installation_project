@@ -61,7 +61,7 @@ export function KanbanDetailsCommentInput({ comments, task, project, refetchProj
     [comment, project, task, userLogged, refetchProject, loadedUsers]);
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0, maxHeight: 760, overflowY: 'auto' }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0, maxHeight: 760, overflowY: 'auto', overflowX: 'hidden' }}>
         {comments.length > 0 && (
           <Box sx={{ ml: 3, width: '100%', display: 'flex', flexDirection: 'column', gap: 1, maxHeight: 580, overflowY: 'auto' }}>
             <ProjectDetailsCommentList comments={comments} project={project} refetchProject={refetchProject} />

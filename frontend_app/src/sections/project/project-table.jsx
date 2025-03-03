@@ -1,4 +1,4 @@
-import { useContext } from 'react';
+import { useContext, useMemo } from 'react';
 
 import Box from '@mui/material/Box';
 import Table from '@mui/material/Table';
@@ -18,7 +18,11 @@ import { TableCustomPaginationZohoStyleRow } from 'src/components/table/table-pa
 
 import { LoadingContext } from 'src/auth/context/loading-context';
 
+import { CONFIG } from 'src/config-global';
+import { listRolesAndSubroles, verifyPermissions } from 'src/utils/check-permissions';
+
 import { ProjectTableRow } from './project-table-row';
+
 
 
 
@@ -41,6 +45,7 @@ export function ProjectTable({
   loadedProjectPermissions,
   loadedStages,
   loadedStagesTask,
+  listPermissions,
   setTableData,
   refetchProjects,
   loadedProjects,
@@ -65,6 +70,8 @@ export function ProjectTable({
 
   const { isMobile } = useContext(LoadingContext);
 
+  const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
+
   const TABLE_HEAD = [
     { id: 'startDate', label: 'Installation Date' },
     // { id: 'endDate', label: 'Closing Date' },
@@ -79,7 +86,7 @@ export function ProjectTable({
     }))),
     { id: '', width: 88 },
   ];
-  
+
   const TABLE_HEAD_MOBILE = [
     { id: 'info', label: 'INFO' },
     { id: '' },
@@ -147,11 +154,18 @@ export function ProjectTable({
               rowCount={dataFiltered.length}
               numSelected={selected.length}
               onSort={onSort}
-              onSelectAllRows={(checked) =>
-                onSelectAllRows(
-                  checked,
-                  dataFiltered.map((row) => row.id)
-                )
+              onSelectAllRows={
+                verifyPermissions(
+                  listPermissions,
+                  CONFIG.permissions.system,
+                  CONFIG.permissions.moduleProjects,
+                  CONFIG.permissions.operationDelete
+                ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.superadmin) ?
+                  (checked) =>
+                    onSelectAllRows(
+                      checked,
+                      dataFiltered.map((row) => row.id)
+                    ) : null
               }
               sx={{
                 [`& .${tableCellClasses.head}`]: {
@@ -183,6 +197,7 @@ export function ProjectTable({
                     loadedProjectPermissions={loadedProjectPermissions}
                     loadedStages={loadedStages}
                     loadedStagesTask={loadedStagesTask}
+                    listPermissions={listPermissions}
                     setTableData={setTableData}
                     refetchProjects={refetchProjects}
                     loadedProjects={loadedProjects}

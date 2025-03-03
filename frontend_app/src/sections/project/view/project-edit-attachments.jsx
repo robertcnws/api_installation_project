@@ -11,6 +11,7 @@ import { CONFIG } from 'src/config-global';
 import { Iconify } from 'src/components/iconify';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 import { UploadBox, MultiFilePreview } from 'src/components/upload';
+import { listRolesAndSubroles, verifyPermissions } from 'src/utils/check-permissions';
 
 
 export function ProjectEditAttachments({
@@ -21,6 +22,7 @@ export function ProjectEditAttachments({
   type,
   loadedStages,
   isMobile,
+  listPermissions,
 }) {
   const [initialFiles, setInitialFiles] = useState([]);
   const [newFiles, setNewFiles] = useState([]);
@@ -45,7 +47,7 @@ export function ProjectEditAttachments({
   const [fileToRemove, setFileToRemove] = useState(null);
   const confirm = useBoolean();
   const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
-  
+
   useEffect(() => {
     const attachments = project.projectAttachments || [];
     if (!attachments.length) {
@@ -90,7 +92,7 @@ export function ProjectEditAttachments({
     };
     loadFiles();
   }, [project]);
-  
+
   const handleClickRemoveFile = (file) => {
     setFileToRemove(file);
     confirm.onTrue();
@@ -166,10 +168,10 @@ export function ProjectEditAttachments({
 
   const handleDownloadFile = (file) => {
     if (!file || !file.fileUrl) return;
-    
+
     const link = document.createElement('a');
     link.href = file.fileUrl;
-    link.download = file.name; 
+    link.download = file.name;
 
     document.body.appendChild(link);
     link.click();
@@ -181,94 +183,111 @@ export function ProjectEditAttachments({
   return (
     <>
       <Box sx={{ maxHeight: 550, minHeight: !isMobile ? 500 : 0, overflow: 'auto' }}>
-        {project?.currentStage && (
-          <>
-            <Box
-              key={project?.currentStage?.id}
-              sx={{ mb: 3, display: 'flex', gap: 3 }}
-            >
-              <Grid container spacing={2}>
-                <Grid item xs={4} sm={2}>
-                  <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                    <Box sx={{ mb: 1, typography: 'overline' }}>
-                      <b>{project?.currentStage?.name}</b>
+        {(project?.currentStage &&
+          project?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) === -1) && (
+            <>
+              <Box
+                key={project?.currentStage?.id}
+                sx={{ mb: 3, display: 'flex', gap: 3 }}
+              >
+                <Grid container spacing={2}>
+                  <Grid item xs={4} sm={2}>
+                    <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                      <Box sx={{ mb: 1, typography: 'overline' }}>
+                        <b>{project?.currentStage?.name}</b>
+                      </Box>
+                      {(verifyPermissions(
+                        listPermissions,
+                        CONFIG.permissions.system,
+                        CONFIG.permissions.moduleProjects,
+                        CONFIG.permissions.operationUploadFile
+                      ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) && (
+                          <Box sx={{ mb: 1 }}>
+                            <Button
+                              color="primary"
+                              variant="outlined"
+                              disabled={!isAddFilesEnabled}
+                              onClick={handleAddFiles}
+                            >
+                              <Iconify icon="material-symbols:attach-file-add" />
+                              Add File(s)
+                            </Button>
+                          </Box>
+                        )}
                     </Box>
-                    <Box sx={{ mb: 1 }}>
-                      <Button
-                        color="primary"
-                        variant="outlined"
-                        disabled={!isAddFilesEnabled}
-                        onClick={handleAddFiles}
-                      >
-                        <Iconify icon="material-symbols:attach-file-add" />
-                        Add File(s)
-                      </Button>
-                    </Box>
-                  </Box>
-                </Grid>
-                <Grid item xs={8} sm={10}>
-                  <MultiFilePreview
-                    key={project?.currentStage?.id}
-                    thumbnail
-                    files={mappedDisplayFiles.find((mappedFile) => mappedFile.stageId === project?.currentStage?.id)?.files || []}
-                    onRemove={handleClickRemoveFile}
-                    onDownload={handleDownloadFile}
-                    slotProps={{
-                      thumbnail: {
-                        sx: {
-                          width: 64,
-                          height: 64,
-                          cursor: 'pointer',
-                          position: 'relative',
-                          transition: 'background-color 0.3s ease',
-                          '&:hover': {
-                            bgcolor: 'rgba(0, 0, 0, 0.1)',
-                            opacity: 0.5,
-                          },
-                          '&::after': {
-                            content: '""',
-                            position: 'absolute',
-                            bottom: 4,
-                            right: 12,
-                            width: 40,
-                            height: 40,
-                            backgroundImage: 'url(/assets/icons/apps/ic-download-1.svg)',
-                            backgroundSize: 'contain',
-                            backgroundRepeat: 'no-repeat',
-                            display: 'none',
-                          },
-                          '&:hover::after': {
-                            display: 'block',
-                          },
-                        },
+                  </Grid>
+                  <Grid item xs={8} sm={10}>
+                    <MultiFilePreview
+                      key={project?.currentStage?.id}
+                      thumbnail
+                      files={mappedDisplayFiles.find((mappedFile) => mappedFile.stageId === project?.currentStage?.id)?.files || []}
+                      onRemove={handleClickRemoveFile}
+                      onDownload={handleDownloadFile}
+                      // slotProps={{
+                      //   thumbnail: {
+                      //     sx: {
+                      //       width: 64,
+                      //       height: 64,
+                      //       cursor: 'pointer',
+                      //       position: 'relative',
+                      //       transition: 'background-color 0.3s ease',
+                      //       '&:hover': {
+                      //         bgcolor: 'rgba(0, 0, 0, 0.1)',
+                      //         opacity: 0.5,
+                      //       },
+                      //       '&::after': {
+                      //         content: '""',
+                      //         position: 'absolute',
+                      //         bottom: 4,
+                      //         right: 12,
+                      //         width: 40,
+                      //         height: 40,
+                      //         backgroundImage: 'url(/assets/icons/apps/ic-download-1.svg)',
+                      //         backgroundSize: 'contain',
+                      //         backgroundRepeat: 'no-repeat',
+                      //         display: 'none',
+                      //       },
+                      //       '&:hover::after': {
+                      //         display: 'block',
+                      //       },
+                      //     },
+                      //   }
+                      // }}
+                      lastNode={
+                        (verifyPermissions(
+                          listPermissions,
+                          CONFIG.permissions.system,
+                          CONFIG.permissions.moduleProjects,
+                          CONFIG.permissions.operationUploadFile
+                        ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) ? (
+                          <UploadBox onDrop={(files) => {
+                            if (files && files.length) {
+                              const uniqueFiles = files.filter((file) =>
+                                !displayFiles.some((existingFile) => existingFile.name === file.name)
+                              );
+                              if (uniqueFiles.length > 0) {
+                                const filesToAdd = uniqueFiles.map((file) => ({
+                                  ...file,
+                                  fileUrl: URL.createObjectURL(file),
+                                  name: file.name,
+                                  isNew: true,
+                                }));
+                                setNewFiles((prev) => [...prev, ...filesToAdd]);
+                              }
+                              else {
+                                toast.error('File already exists');
+                              }
+                            }
+                          }} />
+                        ) : null
                       }
-                    }}
-                    lastNode={<UploadBox onDrop={(files) => {
-                      if (files && files.length) {
-                        const uniqueFiles = files.filter((file) =>
-                          !displayFiles.some((existingFile) => existingFile.name === file.name)
-                        );
-                        if (uniqueFiles.length > 0) {
-                          const filesToAdd = uniqueFiles.map((file) => ({
-                            ...file,
-                            fileUrl: URL.createObjectURL(file),
-                            name: file.name,
-                            isNew: true,
-                          }));
-                          setNewFiles((prev) => [...prev, ...filesToAdd]);
-                        }
-                        else {
-                          toast.error('File already exists');
-                        }
-                      }
-                    }} />}
-                  />
+                    />
+                  </Grid>
                 </Grid>
-              </Grid>
-            </Box>
-            <Divider sx={{ my: 1, borderStyle: 'dashed' }} />
-          </>
-        )}
+              </Box>
+              <Divider sx={{ my: 1, borderStyle: 'dashed' }} />
+            </>
+          )}
         {(project && loadedStages && loadedStages.length > 0) && (
           <Box
             gap={2}
@@ -278,38 +297,6 @@ export function ProjectEditAttachments({
               sm: 'repeat(2, 1fr)',
             }}
           >
-            {/* {loadedStages
-              .filter((stage) => stage.id !== project?.currentStage?.id)
-              .map((stage) => (
-                <Paper
-                  key={stage.id}
-                  variant="outlined"
-                  sx={{
-                    gap: 1,
-                    p: 2.5,
-                    width: '100%',
-                    display: 'flex',
-                    borderRadius: 2,
-                    cursor: 'pointer',
-                    position: 'relative',
-                    bgcolor: 'background.neutral',
-                    flexDirection: 'column',
-                    alignItems: 'flex-start',
-                  }}
-                >
-                  <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                    <Box sx={{ mb: 1, typography: 'overline' }}>{stage.name}</Box>
-                    <MultiFilePreview
-                      key={stage.id}
-                      thumbnail
-                      files={displayFiles}
-                      onRemove={handleClickRemoveFile}
-                      slotProps={{ thumbnail: { sx: { width: 75, height: 75 } } }}
-                      lastNode={null}
-                    />
-                  </Box>
-                </Paper>
-              ))} */}
             {mappedDisplayFiles
               .filter((mappedFile) => mappedFile.stageId !== project?.currentStage?.id)
               .map((mappedFile) => (
@@ -338,36 +325,36 @@ export function ProjectEditAttachments({
                       files={mappedFile.files}
                       onRemove={handleClickRemoveFile}
                       onDownload={handleDownloadFile}
-                      slotProps={{
-                        thumbnail: {
-                          sx: {
-                            width: 75,
-                            height: 75,
-                            cursor: 'pointer',
-                            position: 'relative',
-                            transition: 'background-color 0.3s ease',
-                            '&:hover': {
-                              bgcolor: 'rgba(0, 0, 0, 0.1)',
-                              opacity: 0.5,
-                            },
-                            '&::after': {
-                              content: '""',
-                              position: 'absolute',
-                              bottom: 4,
-                              right: 17,
-                              width: 40,
-                              height: 40,
-                              backgroundImage: 'url(/assets/icons/apps/ic-download-1.svg)',
-                              backgroundSize: 'contain',
-                              backgroundRepeat: 'no-repeat',
-                              display: 'none',
-                            },
-                            '&:hover::after': {
-                              display: 'block',
-                            },
-                          },
-                        }
-                      }}
+                      // slotProps={{
+                      //   thumbnail: {
+                      //     sx: {
+                      //       width: 75,
+                      //       height: 75,
+                      //       cursor: 'pointer',
+                      //       position: 'relative',
+                      //       transition: 'background-color 0.3s ease',
+                      //       '&:hover': {
+                      //         bgcolor: 'rgba(0, 0, 0, 0.1)',
+                      //         opacity: 0.5,
+                      //       },
+                      //       '&::after': {
+                      //         content: '""',
+                      //         position: 'absolute',
+                      //         bottom: 4,
+                      //         right: 17,
+                      //         width: 40,
+                      //         height: 40,
+                      //         backgroundImage: 'url(/assets/icons/apps/ic-download-1.svg)',
+                      //         backgroundSize: 'contain',
+                      //         backgroundRepeat: 'no-repeat',
+                      //         display: 'none',
+                      //       },
+                      //       '&:hover::after': {
+                      //         display: 'block',
+                      //       },
+                      //     },
+                      //   }
+                      // }}
                       lastNode={null}
                     />
                   </Box>

@@ -73,7 +73,12 @@ export const dashboardRoutes = (listPermissions, user) => [
       },
       {
         path: 'analytics',
-        element: <OverviewAnalyticsPage />
+        element: verifyPermissions(
+          listPermissions,
+          CONFIG.permissions.system,
+          CONFIG.permissions.moduleDashboards,
+          CONFIG.permissions.operationList
+        ) || listRolesAndSubroles(user?.user_role?.name).includes(CONFIG.roles.projectManager) ? <OverviewAnalyticsPage /> : <Page403 />
       },
       {
         path: 'sales-order',
@@ -84,7 +89,7 @@ export const dashboardRoutes = (listPermissions, user) => [
               CONFIG.permissions.system,
               CONFIG.permissions.moduleSalesOrders,
               CONFIG.permissions.operationList
-            ) || listRolesAndSubroles(user?.user_role?.name).includes(CONFIG.roles.superadmin) ? <SalesOrderListPage /> : <Page403 />,
+            ) || listRolesAndSubroles(user?.user_role?.name).includes(CONFIG.roles.administrator) ? <SalesOrderListPage /> : <Page403 />,
             index: true
           },
           {
@@ -94,11 +99,16 @@ export const dashboardRoutes = (listPermissions, user) => [
               CONFIG.permissions.system,
               CONFIG.permissions.moduleSalesOrders,
               CONFIG.permissions.operationList
-            ) || listRolesAndSubroles(user?.user_role?.name).includes(CONFIG.roles.superadmin) ? <SalesOrderListPage /> : <Page403 />
+            ) || listRolesAndSubroles(user?.user_role?.name).includes(CONFIG.roles.administrator) ? <SalesOrderListPage /> : <Page403 />
           },
           {
             path: ':id',
-            element: <SalesOrderDetailsPage />
+            element: verifyPermissions(
+              listPermissions,
+              CONFIG.permissions.system,
+              CONFIG.permissions.moduleSalesOrders,
+              CONFIG.permissions.operationDetails
+            ) || listRolesAndSubroles(user?.user_role?.name).includes(CONFIG.roles.administrator) ? <SalesOrderDetailsPage /> : <Page403 />
           },
         ],
       },
@@ -111,7 +121,7 @@ export const dashboardRoutes = (listPermissions, user) => [
               CONFIG.permissions.system,
               CONFIG.permissions.moduleProjects,
               CONFIG.permissions.operationList
-            ) || listRolesAndSubroles(user?.user_role?.name).includes(CONFIG.roles.superadmin) ? <ProjectPage /> : <Page403 />,
+            ) || listRolesAndSubroles(user?.user_role?.name).includes(CONFIG.roles.projectManager) ? <ProjectPage /> : <Page403 />,
             index: true
           },
           {
@@ -121,7 +131,7 @@ export const dashboardRoutes = (listPermissions, user) => [
               CONFIG.permissions.system,
               CONFIG.permissions.moduleProjects,
               CONFIG.permissions.operationList
-            ) || listRolesAndSubroles(user?.user_role?.name).includes(CONFIG.roles.superadmin) ? <ProjectPage /> : <Page403 />
+            ) || listRolesAndSubroles(user?.user_role?.name).includes(CONFIG.roles.projectManager) ? <ProjectPage /> : <Page403 />
           },
           {
             path: ':id/kanban',
@@ -133,7 +143,12 @@ export const dashboardRoutes = (listPermissions, user) => [
           },
           {
             path: ':id/details',
-            element: <ProjectDetailsPage />,
+            element: verifyPermissions(
+              listPermissions,
+              CONFIG.permissions.system,
+              CONFIG.permissions.moduleProjects,
+              CONFIG.permissions.operationDetails
+            ) || listRolesAndSubroles(user?.user_role?.name).includes(CONFIG.roles.projectManager) ? <ProjectDetailsPage /> : <Page403 />,
           }
 
         ],
@@ -289,7 +304,7 @@ export const dashboardRoutes = (listPermissions, user) => [
             ],
           },
         ] : [],
-      ...(user && listRolesAndSubroles(user?.user_role?.name).includes(CONFIG.roles.manager)) ?
+      ...(user && listRolesAndSubroles(user?.user_role?.name).includes(CONFIG.roles.projectManager)) ?
         [
           {
             path: 'user',
@@ -298,7 +313,7 @@ export const dashboardRoutes = (listPermissions, user) => [
                 element: listRolesAndSubroles(
                   user?.user_role?.name
                 ).includes(
-                  CONFIG.roles.manager
+                  CONFIG.roles.projectManager
                 ) ? <UserProfilePage /> : <Page403 />,
                 index: true
               },
@@ -307,7 +322,7 @@ export const dashboardRoutes = (listPermissions, user) => [
                 element: listRolesAndSubroles(
                   user?.user_role?.name
                 ).includes(
-                  CONFIG.roles.manager
+                  CONFIG.roles.projectManager
                 ) ? <UserProfilePage /> : <Page403 />,
               },
               {
@@ -315,7 +330,7 @@ export const dashboardRoutes = (listPermissions, user) => [
                 element: listRolesAndSubroles(
                   user?.user_role?.name
                 ).includes(
-                  CONFIG.roles.manager
+                  CONFIG.roles.projectManager
                 ) ? <UserCardsPage /> : <Page403 />,
               },
               {
@@ -323,7 +338,7 @@ export const dashboardRoutes = (listPermissions, user) => [
                 element: listRolesAndSubroles(
                   user?.user_role?.name
                 ).includes(
-                  CONFIG.roles.manager
+                  CONFIG.roles.projectManager
                 ) ? <UserListPage /> : <Page403 />,
               },
               {
@@ -331,7 +346,7 @@ export const dashboardRoutes = (listPermissions, user) => [
                 element: listRolesAndSubroles(
                   user?.user_role?.name
                 ).includes(
-                  CONFIG.roles.manager
+                  CONFIG.roles.projectManager
                 ) ? <UserCreatePage /> : <Page403 />,
               },
               {
@@ -339,7 +354,7 @@ export const dashboardRoutes = (listPermissions, user) => [
                 element: listRolesAndSubroles(
                   user?.user_role?.name
                 ).includes(
-                  CONFIG.roles.manager
+                  CONFIG.roles.projectManager
                 ) ? <UserEditPage /> : <Page403 />,
               },
             ],

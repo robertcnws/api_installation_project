@@ -1799,32 +1799,36 @@ def change_status_project_default_task(request, projectId, id):
         
         current_stage = get_current_stage_from_tasks(sorted_tasks)
         
-        current_stage = ProjectStage.objects(name=current_stage['name']).first()
+        if not current_stage:
+            current_stage = ProjectStage.objects(name='Finished').first()
         
-        if current_stage.name == 'Permission' and not project.has_permission:
-            order = current_stage.order + 1
-            current_stage = ProjectStage.objects(order=order).first()
+        current_stage = ProjectStage.objects(name=current_stage['name']).first() 
         
-        if project.current_stage['name'] != current_stage.name:
-            history = project.project_history if project.project_history else []
-            current_stage = transform_data_to_mongo(current_stage)
-            history.append({
-                'initial_stage': project.current_stage,
-                'final_stage': current_stage,
-                'created_time': timezone.now()
-            })
-            project.current_stage = current_stage
-            project.project_history = history
+        if current_stage:
+            if current_stage.name == 'Permission' and not project.has_permission:
+                order = current_stage.order + 1
+                current_stage = ProjectStage.objects(order=order).first()
             
-            tracking = ProjectTracking(
-                user_reporter=user_reporter,
-                action=f'change stage project ({project.id} - {project.name})',
-                created_time=timezone.now(),
-                managed_data={
-                    'data': transform_data_to_mongo(project, include_fields=['id', 'name', 'number', 'current_stage', 'project_history'])
-                },
-            )
-            tracking.save()
+            if project.current_stage['name'] != current_stage.name:
+                history = project.project_history if project.project_history else []
+                current_stage = transform_data_to_mongo(current_stage)
+                history.append({
+                    'initial_stage': project.current_stage,
+                    'final_stage': current_stage,
+                    'created_time': timezone.now()
+                })
+                project.current_stage = current_stage 
+                project.project_history = history
+                
+                tracking = ProjectTracking(
+                    user_reporter=user_reporter,
+                    action=f'change stage project ({project.id} - {project.name})',
+                    created_time=timezone.now(),
+                    managed_data={
+                        'data': transform_data_to_mongo(project, include_fields=['id', 'name', 'number', 'current_stage', 'project_history'])
+                    },
+                )
+                tracking.save()
         
         project.project_default_tasks = sorted_tasks
         project.save()

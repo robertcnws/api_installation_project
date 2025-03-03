@@ -452,6 +452,7 @@ def edit_user(request, id):
 @permission_classes([AllowAny])
 def change_password(request, id):
     data = request.data
+    same_user = data.get('isSameUser')
     current_password = data.get('password')
     new_password = data.get('newPassword')
     confirm_password = data.get('confirmPassword')
@@ -461,7 +462,7 @@ def change_password(request, id):
     except LoginUser.DoesNotExist:
         return Response({'error': 'User not found'}, status=404)
     
-    if not user.check_password(current_password):
+    if same_user == 'same' and not user.check_password(current_password):
         return Response({'error': 'Current password is incorrect'}, status=400)
     
     if new_password != confirm_password:

@@ -33,6 +33,7 @@ import { EmptyContent } from 'src/components/empty-content';
 
 import { LoadingContext } from 'src/auth/context/loading-context';
 import { useDataContext } from 'src/auth/context/data/data-context';
+import { isInstaller } from 'src/utils/check-permissions';
 
 import { kanbanClasses } from '../classes';
 import { coordinateGetter } from '../utils';
@@ -40,10 +41,6 @@ import { KanbanColumn } from '../column/kanban-column';
 import { KanbanTaskItem } from '../item/kanban-task-item';
 import { KanbanColumnSkeleton } from '../components/kanban-skeleton';
 import { KanbanDragOverlay } from '../components/kanban-drag-overlay';
-
-
-
-
 
 // ----------------------------------------------------------------------
 
@@ -56,21 +53,27 @@ export function KanbanView({
   refetchProject,
   tasks,
   hasPermission,
+  listPermissions,
 }) {
 
   const { loadedStages } = useDataContext();
+
+  const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
 
   const [stages, setStages] = useState(null);
 
   useEffect(() => {
     if (loadedStages) {
-      if (hasPermission) {
-        setStages(loadedStages);
+      const actionStages = loadedStages.filter((stage) => stage.name.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) === -1);
+      if (isInstaller(userLogged?.data?.user_role?.name)) {
+        setStages(actionStages.filter((stage) => stage.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1));
+      } else if (hasPermission) {
+        setStages(actionStages);
       } else {
-        setStages(loadedStages.filter((stage) => stage.name !== CONFIG.stages.permission));
+        setStages(actionStages.filter((stage) => stage.name !== CONFIG.stages.permission));
       }
     }
-  }, [loadedStages, hasPermission]);
+  }, [loadedStages, hasPermission, userLogged]);
 
   const { isMobile } = useContext(LoadingContext)
 
@@ -78,7 +81,7 @@ export function KanbanView({
     '--item-gap': '10px',
     '--item-radius': '12px',
     '--column-gap': '12px',
-    '--column-width': !isMobile ? (hasPermission ? '285px' : '360px') : '100%',
+    '--column-width': isInstaller(userLogged?.data?.user_role?.name) ? '100%' : !isMobile ? (hasPermission ? '19.2%' : '24.3%') : '100%',
     '--column-radius': '16px',
     '--column-padding': '10px 8px 8px 8px',
   };
@@ -87,9 +90,22 @@ export function KanbanView({
 
   useEffect(() => {
     if (tasks) {
-      setDefaultTasks(tasks);
+      if (isInstaller(userLogged?.data?.user_role?.name)) {
+        const selectedTasks = tasks.filter(
+          (task) => task.project_default_task.project_stage.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
+        );
+        const finalTasks = selectedTasks.filter(
+          (task) => task.project_default_task.name.toLowerCase().includes('upload')
+        );
+        const withUsersTasks = finalTasks.filter(
+          (task) => task.users_assignees.length > 0
+        );
+        setDefaultTasks(withUsersTasks);
+      } else {
+        setDefaultTasks(tasks);
+      }
     }
-  }, [tasks]);
+  }, [tasks, userLogged]);
 
   const newBoard = useMemo(
     () => adaptToKanbanData(defaultTasks, stages),
@@ -327,7 +343,7 @@ export function KanbanView({
     </Stack>
   );
 
-  const renderEmpty = <EmptyContent filled sx={{ py: 10, maxHeight: { md: 480 } }} />;
+  const renderEmpty = <EmptyContent filled sx={{ ml: !isMobile ? -5 : 0, py: 10, maxHeight: { md: 480 } }} />;
 
   const renderList = (
     // <Typography variant="h4">HOlaaaaa</Typography>
@@ -348,6 +364,7 @@ export function KanbanView({
         maxHeight: 560,
         ml: !isMobile ? -5 : 0,
         mt: !isMobile ? -1 : 0,
+        mr: !isMobile ? -5 : 0,
       }}>
         <Stack
           sx={{
@@ -387,6 +404,7 @@ export function KanbanView({
                         key={task.id}
                         columnId={column.id}
                         disabled={isSortingContainer}
+                        listPermissions={listPermissions}
                       />
                     ))}
                   </SortableContext>
@@ -437,9 +455,8 @@ export function KanbanView({
               </Box>
               {/* <Box component="span">{fCurrency(100)}</Box> */}
               <Box component="span" sx={{
-                color: percentage === 0 ? 'error.main' :
-                  percentage > 0 && percentage < 50 ? 'warning.main' :
-                    percentage >= 50 && percentage < 100 ? 'info.main' : 'success.main'
+                color: percentage === 0 ? 'grey.500' :
+                  percentage > 0 && percentage < 100 ? 'warning.main' : 'success.main'
               }}>
                 ({percentage.toFixed(2)} %)
               </Box>
@@ -450,8 +467,7 @@ export function KanbanView({
               value={percentage}
               color={
                 (percentage === 0 && 'error') ||
-                (percentage > 0 && percentage < 50 && 'warning') ||
-                (percentage >= 50 && percentage < 100 && 'info') ||
+                (percentage > 0 && percentage < 100 && 'warning') ||
                 (percentage === 100 && 'success') ||
                 'primary'
               }
@@ -475,12 +491,12 @@ export function KanbanView({
               inputProps={{ id: 'column-fixed-switch' }}
             />
           }
-          sx={{ ml: !isMobile ? -5 : 0, mt: !isMobile ? -5 : 0 }}
+          sx={{ ml: !isMobile ? -5 : 0, mt: !isMobile ? -5 : 0, mr: !isMobile ? -5 : 0, }}
         />
       </Stack>
 
-      {/* {boardLoading ? renderLoading : <>{boardEmpty ? renderEmpty : renderList}</>} */}
-      {renderList}
+      {defaultTasks && defaultTasks.length === 0 ? renderEmpty : boardLoading ? renderLoading : renderList}
+
     </DashboardContent>
   );
 }

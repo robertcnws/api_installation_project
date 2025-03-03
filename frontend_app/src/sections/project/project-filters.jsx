@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext, useCallback } from 'react';
+import { useState, useEffect, useContext, useCallback, useMemo } from 'react';
 
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
@@ -19,6 +19,7 @@ import { usePopover, CustomPopover } from 'src/components/custom-popover';
 import { CustomDateRangePicker } from 'src/components/custom-date-range-picker';
 
 import { LoadingContext } from 'src/auth/context/loading-context';
+import { isInstaller } from 'src/utils/check-permissions';
 
 // ----------------------------------------------------------------------
 
@@ -31,6 +32,8 @@ export function ProjectFilters({
   onOpenDateRange,
   onCloseDateRange,
 }) {
+
+  const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
 
   const { isMobile } = useContext(LoadingContext)
   const popover = usePopover();
@@ -199,10 +202,12 @@ export function ProjectFilters({
   const renderCustomFilters = (
     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', minWidth: 100, p: 0 }}>
       <Box
-        onClick={(e) => {
-          popoverCustom.onOpen(e);
-          setIsCustomOpen((prev) => !prev);
-        }}
+        onClick={!isInstaller(userLogged?.data?.user_role?.name) ?
+          (e) => {
+            popoverCustom.onOpen(e);
+            setIsCustomOpen((prev) => !prev);
+          } : null
+        }
         sx={{
           display: 'flex',
           alignItems: 'center',
@@ -214,16 +219,14 @@ export function ProjectFilters({
         <Typography variant="h6" sx={{ color: 'text.secondary', fontWeight: 'fontWeightBold' }}>
           {customFilterName}
         </Typography>
-        <Button
-          // onClick={(e) => {
-          //   popoverCustom.onOpen(e);
-          //   setIsCustomOpen((prev) => !prev);
-          // }}
-          sx={{ ml: 1, color: 'default.lighter' }}
-          variant="text"
-        >
-          <Iconify icon={isCustomOpen ? 'mingcute:up-fill' : 'mingcute:down-fill'} sx={{ mr: 1 }} />
-        </Button>
+        {!isInstaller(userLogged?.data?.user_role?.name) && (
+          <Button
+            sx={{ ml: 1, color: 'default.lighter' }}
+            variant="text"
+          >
+            <Iconify icon={isCustomOpen ? 'mingcute:up-fill' : 'mingcute:down-fill'} sx={{ mr: 1 }} />
+          </Button>
+        )}
       </Box>
       <CustomPopover
         open={popoverCustom.open}
@@ -496,8 +499,9 @@ export function ProjectFilters({
       {/* {renderFilterName} */}
 
       <Stack spacing={1} direction="row" alignItems="center" justifyContent="flex-end" flexGrow={1}>
-        {renderFilterDate()}
-
+        {!isInstaller(userLogged?.data?.user_role?.name) && (
+          renderFilterDate()
+        )}
         {renderFilterType}
       </Stack>
     </Stack>

@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { LoadingContext } from 'src/auth/context/loading-context';
 import { fDate } from 'src/utils/format-time';
 import Box from '@mui/material/Box';
@@ -20,6 +20,7 @@ import { useBoolean } from 'src/hooks/use-boolean';
 import { useRouter } from 'src/routes/hooks';
 import { paths } from 'src/routes/paths';
 import { Label } from 'src/components/label';
+import { isInstaller } from 'src/utils/check-permissions';
 
 // ----------------------------------------------------------------------
 
@@ -39,6 +40,8 @@ export function ProjectsToDoToday({
 }) {
 
     const { isMobile } = useContext(LoadingContext);
+
+    const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
 
     const router = useRouter();
 
@@ -71,12 +74,34 @@ export function ProjectsToDoToday({
             <ListItemText
                 primary={
                     <>
-                        <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 1 }}>
-                            <Typography variant="subtitle2" sx={{ color: item.hasPermission ? 'secondary.main' : 'text.primary' }}>
+                        <Box component="span"
+                            sx={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: 1,
+                                cursor: 'pointer'
+                            }}
+                            onClick={() => {
+                                localStorage.setItem('projectId', item?.id);
+                                localStorage.setItem('backFromProjectDetails', 'analytics');
+                                router.push(paths.dashboard.project.details(item?.id));
+                            }}>
+                            <Typography
+                                variant="subtitle2"
+                                sx={{ color: 'text.primary' }}
+                            >
                                 {item.name}
                             </Typography>
                             {item.hasPermission && (
-                                <Label color='secondary' sx={{ textTransform: 'capitalize', fontSize: 'x-small' }}>
+                                <Label
+                                    color='warning'
+                                    variant="outlined"
+                                    sx={{
+                                        textTransform: 'capitalize',
+                                        fontSize: '9px',
+                                        p: 0.5
+                                    }}
+                                >
                                     Need Permission
                                 </Label>
                             )}
@@ -91,9 +116,9 @@ export function ProjectsToDoToday({
                             </Typography>
                         </Box>
                         <br />
-                        {item.projectDefaultTasks.length > 0 && (
+                        {(item.projectDefaultTasks.length > 0 && !isInstaller(userLogged?.data?.user_role?.name)) && (
                             <>
-                                <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', typography: 'body2', color: 'error.main', gap: 2 }}>
+                                <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', typography: 'body2', gap: 2 }}>
 
                                     {calculateTotalStatus({ item, status: CONFIG.taskStatus.notStarted }) > 0 && (
                                         <Box
@@ -103,7 +128,7 @@ export function ProjectsToDoToday({
                                                 display: 'inline-flex',
                                                 alignItems: 'center',
                                                 typography: 'body2',
-                                                color: 'warning.main',
+                                                color: 'backgound.neutral',
                                                 gap: 0,
                                                 cursor: 'pointer'
                                             }}
@@ -112,7 +137,7 @@ export function ProjectsToDoToday({
                                             }}
                                         >
                                             <Iconify icon="mdi:restart-off" width={16} height={16} />
-                                            <span>
+                                            <span style={{ fontSize: 'x-small' }}>
                                                 <b>{
                                                     calculateTotalStatus({ item, status: CONFIG.taskStatus.notStarted })
                                                 }</b> Not Started
@@ -127,7 +152,7 @@ export function ProjectsToDoToday({
                                                 display: 'inline-flex',
                                                 alignItems: 'center',
                                                 typography: 'body2',
-                                                color: 'info.main',
+                                                color: 'warning.main',
                                                 gap: 0,
                                                 cursor: 'pointer'
                                             }}
@@ -136,7 +161,7 @@ export function ProjectsToDoToday({
                                             }}
                                         >
                                             <Iconify icon="carbon:executable-program" width={16} height={16} />
-                                            <span>
+                                            <span style={{ fontSize: 'x-small' }}>
                                                 <b>{
                                                     calculateTotalStatus({ item, status: CONFIG.taskStatus.inProgress })
                                                 }</b> In Progress
@@ -160,7 +185,7 @@ export function ProjectsToDoToday({
                                             }}
                                         >
                                             <Iconify icon="rivet-icons:inbox-complete" width={16} height={16} />
-                                            <span>
+                                            <span style={{ fontSize: 'x-small' }}>
                                                 <b>{
                                                     calculateTotalStatus({ item, status: CONFIG.taskStatus.finished })
                                                 }</b> Finished
@@ -270,8 +295,7 @@ export function ProjectsToDoToday({
                                         <Typography sx={{
                                             display: 'flex', alignItems: 'center', gap: 1,
                                             color: h.percentage === 100 ? 'success.main' :
-                                                h.percentage < 100 && h.percentage >= 50 ? 'info.main' :
-                                                    h.percentage < 50 && h.percentage > 0 ? 'warning.main' : 'error.main'
+                                                h.percentage < 100 && h.percentage > 0 ? 'warning.main' : 'grey.500'
                                         }}>
                                             <Iconify icon={
                                                 h.status?.toLowerCase().includes(CONFIG.taskStatus.notStarted) ?

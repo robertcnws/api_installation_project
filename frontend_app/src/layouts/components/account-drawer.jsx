@@ -198,7 +198,12 @@ export function AccountDrawer({ data = [], sx, ...other }) {
           <SignOutButton onClose={handleCloseDrawer} />
         </Box>
       </Drawer>
-      <UserQuickChangePasswordForm currentUser={userLogged?.data} open={quickChangePassword.value} onClose={quickChangePassword.onFalse} />
+      <UserQuickChangePasswordForm
+        currentUser={userLogged?.data}
+        open={quickChangePassword.value}
+        onClose={quickChangePassword.onFalse}
+        isSameUser={!!userLogged}
+      />
     </>
   );
 }

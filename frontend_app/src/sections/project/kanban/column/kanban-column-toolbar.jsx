@@ -85,9 +85,8 @@ export function KanbanColumnToolBar({
         />
 
         <Label
-          color={percentage === 0 ? 'error' : 
-            percentage > 0 && percentage < 50 ? 'warning' : 
-            percentage >= 50 && percentage < 100 ? 'info' : 'success'
+          color={percentage === 0 ? 'default' : 
+            percentage > 0 && percentage < 100 ? 'warning' : 'success'
           }
           variant="soft"
           sx={{ typography: 'caption' }}>

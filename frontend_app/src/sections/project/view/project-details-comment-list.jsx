@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useCallback, useEffect, useContext } from 'react';
 
 import Stack from '@mui/material/Stack';
 import Avatar from '@mui/material/Avatar';
@@ -20,9 +20,12 @@ import { ConfirmDialog } from 'src/components/custom-dialog';
 import { Lightbox, useLightBox } from 'src/components/lightbox';
 import { usePopover, CustomPopover } from 'src/components/custom-popover';
 
+import { LoadingContext } from 'src/auth/context/loading-context';
+
 import { useDataContext } from 'src/auth/context/data/data-context';
 
 import { ProjectDetailsCommentInput } from './project-details-comment-input';
+
 
 
 
@@ -30,11 +33,20 @@ import { ProjectDetailsCommentInput } from './project-details-comment-input';
 
 export function ProjectDetailsCommentList({ comments, project, refetchProject }) {
 
+  const { isMobile } = useContext(LoadingContext);
+
   const { loadedUsers } = useDataContext();
 
   const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
 
-  const sortedComments = [...comments].sort((a, b) => fIsAfter(b.last_modified_time, a.last_modified_time) ? 1 : -1);
+  const [sortedComments, setSortedComments] = useState([]);
+
+  useEffect(() => {
+    if (comments && refetchProject) {
+      refetchProject?.();
+      setSortedComments([...comments].sort((a, b) => fIsAfter(b.last_modified_time, a.last_modified_time) ? 1 : -1));
+    }
+  }, [comments, refetchProject]);
 
   const popover = usePopover();
 
@@ -77,15 +89,26 @@ export function ProjectDetailsCommentList({ comments, project, refetchProject })
 
   return (
     <>
-      <Stack component="ul" spacing={3} sx={{ mb: 5, ml: 2, mr: 5, borderRadius: 1, p: 2, bgcolor: 'background.neutral' }}>
+      <Stack component="ul" spacing={3} sx={{ mb: 1, ml: 2, mr: 5, borderRadius: 1, p: 2, bgcolor: 'background.neutral' }}>
         {sortedComments.map((comment) => (
           <Stack component="li" key={comment.id} direction="row" spacing={2}>
-            <Avatar src={comment.user_reporter.avatarUrl} />
+            <Avatar src={comment.user_reporter.avatar_url} />
 
             <Stack spacing={comment.messageType === 'image' ? 1 : 0.5} flexGrow={1}>
-              <Stack direction="row" alignItems="center" justifyContent="space-between">
-                <Typography variant="subtitle2" sx={{ fontSize: 'x-small' }}> {comment.user_reporter.first_name} {comment.user_reporter.last_name}</Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <Stack
+                direction={!isMobile ? "row" : "column"}
+                alignItems={!isMobile ? "center" : "left"}
+                justifyContent={!isMobile ? "space-between" : "flex-start"}
+              >
+                <Typography variant="subtitle2" sx={{ fontSize: 'x-small' }}>
+                  {comment.user_reporter.first_name} {comment.user_reporter.last_name}
+                </Typography>
+                <Box sx={{ 
+                  display: 'flex', 
+                  flexDirection: 'row',
+                  alignItems: 'center', 
+                  gap: !isMobile ? 1 : 15,
+                  }}>
                   <Typography variant="caption" sx={{ color: 'text.disabled', fontSize: 'x-small' }}>
                     {fToNow(comment.last_modified_time)}
                   </Typography>
@@ -97,7 +120,7 @@ export function ProjectDetailsCommentList({ comments, project, refetchProject })
                       <Iconify icon="eva:more-vertical-fill" />
                     </Button>
                   ) : (
-                    <Box />
+                    <Box sx={{ width: 72 }} />
                   )}
                 </Box>
                 <CustomPopover
@@ -152,7 +175,7 @@ export function ProjectDetailsCommentList({ comments, project, refetchProject })
                     <>
                       <br />
                       <Label>
-                        in Task: <b>{comment.project_default_task.project_default_task.name}</b>
+                        <b>{comment.project_default_task.project_default_task.name}</b>
                       </Label>
                     </>
                   )}
@@ -177,8 +200,8 @@ export function ProjectDetailsCommentList({ comments, project, refetchProject })
         maxWidth="md"
         content={
           <Typography variant="body2">
-              Are you sure want to delete selected comment &quot;<b>{selectedComment?.comment}</b>&quot;?
-            </Typography>
+            Are you sure want to delete selected comment &quot;<b>{selectedComment?.comment}</b>&quot;?
+          </Typography>
         }
         action={
           <Button variant="contained" color="error" onClick={onDeleteComment}>

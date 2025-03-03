@@ -26,6 +26,7 @@ export function ProjectGridView({
   loadedProjectPermissions,
   loadedStages,
   loadedStagesTask,
+  listPermissions,
   setTableData,
   refetchProjects,
 }) {
@@ -91,6 +92,7 @@ export function ProjectGridView({
                   loadedProjectPermissions={loadedProjectPermissions}
                   loadedStages={loadedStages}
                   loadedStagesTask={loadedStagesTask}
+                  listPermissions={listPermissions}
                   setTableData={setTableData}
                   refetchProjects={refetchProjects}
                   sx={{ maxWidth: 'auto' }}

@@ -1,6 +1,8 @@
 import axios from 'axios';
 import { useMemo, useCallback } from 'react';
 
+import { listRolesAndSubroles, verifyPermissions } from 'src/utils/check-permissions';
+
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
@@ -24,6 +26,7 @@ import { ProjectShareDialog } from './project-share-dialog';
 
 
 
+
 // ----------------------------------------------------------------------
 
 export function ProjectDetailsToolbar({
@@ -34,6 +37,7 @@ export function ProjectDetailsToolbar({
   setOpenEdit,
   type,
   onDelete,
+  listPermissions,
   sx,
   ...other
 }) {
@@ -55,24 +59,24 @@ export function ProjectDetailsToolbar({
 
   const handleAddResetUsersAssignees = useCallback(
     async (users) => {
-        let updatedUsers = users;
-        if (project?.usersAssignees.length > 0) {
-            updatedUsers = [
-                ...project.usersAssignees,
-                ...users.filter((user) => !project?.usersAssignees.some((u) => u.id === user.id)),
-            ];
-        }
-        try {
-            const promise = axios.post(`${CONFIG.apiUrl}/projects/add/project/${project?.id}/users/`, {
-                usersAssignees: updatedUsers,
-                userReporter: userLogged?.data,
-            });
-        } catch (error) {
-            console.error(error);
-        }
+      let updatedUsers = users;
+      if (project?.usersAssignees.length > 0) {
+        updatedUsers = [
+          ...project.usersAssignees,
+          ...users.filter((user) => !project?.usersAssignees.some((u) => u.id === user.id)),
+        ];
+      }
+      try {
+        const promise = axios.post(`${CONFIG.apiUrl}/projects/add/project/${project?.id}/users/`, {
+          usersAssignees: updatedUsers,
+          userReporter: userLogged?.data,
+        });
+      } catch (error) {
+        console.error(error);
+      }
     },
     [project, userLogged]
-);
+  );
 
   return (
     <>
@@ -91,21 +95,42 @@ export function ProjectDetailsToolbar({
 
         {(type === 'project' || type === 'tasks') && (
           <>
-            <Tooltip title='Add users to installation' arrow>
-              <IconButton onClick={share.onTrue} color={project?.usersAssignees?.length > 0 ? 'default' : 'error'}>
-                <Iconify icon="tdesign:usergroup-add-filled" />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title={`Edit ${type === 'project' ? 'installation' : type}`} arrow>
-              <IconButton onClick={() => setOpenEdit(true)}>
-                <Iconify icon="solar:pen-bold" />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Delete installation">
-              <IconButton onClick={confirmDelete.onTrue} color="error">
-                <Iconify icon="solar:trash-bin-trash-bold" />
-              </IconButton>
-            </Tooltip>
+            {(verifyPermissions(
+              listPermissions,
+              CONFIG.permissions.system,
+              CONFIG.permissions.moduleProjects,
+              CONFIG.permissions.operationEditUsersAssignees
+            ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) && (
+                <Tooltip title='Add users to installation' arrow>
+                  <IconButton onClick={share.onTrue} color={project?.usersAssignees?.length > 0 ? 'default' : 'error'}>
+                    <Iconify icon="tdesign:usergroup-add-filled" />
+                  </IconButton>
+                </Tooltip>
+              )}
+            {(verifyPermissions(
+              listPermissions,
+              CONFIG.permissions.system,
+              CONFIG.permissions.moduleProjects,
+              CONFIG.permissions.operationUpdate
+            ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) && (
+                <Tooltip title={`Edit ${type === 'project' ? 'installation' : type}`} arrow>
+                  <IconButton onClick={() => setOpenEdit(true)}>
+                    <Iconify icon="solar:pen-bold" />
+                  </IconButton>
+                </Tooltip>
+              )}
+            {(verifyPermissions(
+              listPermissions,
+              CONFIG.permissions.system,
+              CONFIG.permissions.moduleProjects,
+              CONFIG.permissions.operationDelete
+            ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) && (
+                <Tooltip title="Delete installation">
+                  <IconButton onClick={confirmDelete.onTrue} color="error">
+                    <Iconify icon="solar:trash-bin-trash-bold" />
+                  </IconButton>
+                </Tooltip>
+              )}
           </>
         )}
         <Tooltip title='Close installation' arrow>

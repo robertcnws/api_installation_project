@@ -10,6 +10,8 @@ import { varAlpha, bgGradient } from 'src/theme/styles';
 import { Iconify } from 'src/components/iconify';
 import { SvgColor } from 'src/components/svg-color';
 import { Chart, useChart } from 'src/components/chart';
+import { useEffect, useState } from 'react';
+import { fDateTime } from 'src/utils/format-time';
 
 // ----------------------------------------------------------------------
 
@@ -18,7 +20,6 @@ export function AnalyticsWidgetSummary({
   title,
   total,
   quantity,
-  chart,
   percent,
   color = 'primary',
   errors = 0,
@@ -26,26 +27,6 @@ export function AnalyticsWidgetSummary({
   ...other
 }) {
   const theme = useTheme();
-
-  const chartColors = [theme.palette[color].dark];
-
-  const chartOptions = useChart({
-    chart: { sparkline: { enabled: true } },
-    colors: chartColors,
-    xaxis: { categories: chart.categories },
-    grid: {
-      padding: {
-        top: 6,
-        left: 6,
-        right: 6,
-        bottom: 6,
-      },
-    },
-    tooltip: {
-      y: { formatter: (value) => fNumber(value), title: { formatter: () => '' } },
-    },
-    ...chart.options,
-  });
 
   const renderTrending = (
     <Box
@@ -98,14 +79,6 @@ export function AnalyticsWidgetSummary({
           {/* <Box sx={{ typography: 'h4' }}>{fShortenNumber(total)}</Box> */}
           <Box sx={{ fontSize: '14px' }}>Qty: <b>{quantity || 0}</b></Box>
         </Box>
-
-        <Chart
-          type="line"
-          series={[{ data: chart.series }]}
-          options={chartOptions}
-          width={84}
-          height={56}
-        />
       </Box>
 
       <SvgColor

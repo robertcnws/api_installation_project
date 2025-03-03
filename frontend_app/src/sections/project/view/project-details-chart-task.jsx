@@ -20,12 +20,11 @@ export function ProjectDetailsChartTask({
   const seriesData = Array.isArray(chart?.series) ? chart?.series : [];
   const chartSeries = seriesData?.map((item) => item.value);
   const chartColors = chart?.colors ?? [
-    hexAlpha(theme.palette.warning.dark, 0.8),
-    hexAlpha(theme.palette.info.main, 0.8),
+    'grey.900',
+    hexAlpha(theme.palette.warning.main, 0.8),
     hexAlpha(theme.palette.success.main, 0.8),
     hexAlpha(theme.palette.success.dark, 0.8),
     hexAlpha(theme.palette.info.dark, 0.8),
-    hexAlpha(theme.palette.warning.main, 0.8),
     hexAlpha(theme.palette.error.main, 0.8),
   ];
 
