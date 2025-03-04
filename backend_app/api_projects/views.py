@@ -1602,6 +1602,11 @@ def edit_default_task(request, id):
         description = data.get('description')
         order = data.get('order', 0)
         stage = data.get('projectStage', {})
+        has_attachments_str = data.get('hasAttachments', 'false') if data.get('hasAttachments') else None
+        if not isinstance(has_attachments_str, bool):
+            has_attachments = True if has_attachments_str.lower() == 'true' else False
+        else:
+            has_attachments = has_attachments_str
         project_stage_status = data.get('projectStageStatus', 'not started')
         project_stage = ProjectStage.objects(id=stage['id']).first()
         
@@ -1615,6 +1620,8 @@ def edit_default_task(request, id):
         default_task.description = description
         default_task.project_stage = transform_data_to_mongo(project_stage)
         default_task.project_stage_status = project_stage_status
+        default_task.has_attachments = has_attachments
+        default_task.last_modified_time = timezone.now()
         default_task.save()
         
         tasks = ProjectDefaultTask.objects.all()
@@ -1904,6 +1911,61 @@ def change_priority_project_default_task(request, projectId, id):
             create_notification(module, info_id, info, type, user_reporter['username'])
             
         return Response({'message': 'Status in default task updated successfully'})
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+    
+    
+#############################################
+# CHANGE INSTALLER PROJECT
+#############################################
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def change_installer_project(request, id):
+    data = request.data
+    user_reporter = json.loads(data.get('userReporter', None))
+    try:
+        project = Project.objects(id=id).first()
+        if not project:
+            return Response({'error': 'Project not found'}, status=404)
+        
+        installer = json.loads(data.get('installer', None))
+        
+        all_tasks = project.project_default_tasks if project.project_default_tasks else []
+        
+        for task in all_tasks:
+            if isinstance(task.get('project_default_task', {}).get('project_stage', {}), dict):
+                if task.get('project_default_task', {}).get('project_stage', {}).get('name', '') == settings.INSTALLATION_STAGE:
+                    name = task.get('project_default_task', {}).get('name', '').lower()
+                    if 'start' in name or 'finish' in name or 'complete' in name:
+                        if installer:
+                            task['users_assignees'] = [installer]
+                            task['user_reporter'] = user_reporter
+                            task['last_modified_time'] = timezone.now()
+                           
+        sorted_tasks = sorted(all_tasks, key=lambda x: x['project_default_task']['order'], reverse=True)
+        
+        project.project_default_tasks = sorted_tasks
+        project.save()
+        
+        tracking = ProjectTracking(
+            user_reporter=user_reporter,
+            action=f'change installer project ({project.id} - {project.name})',
+            created_time=timezone.now(),
+            managed_data={
+                'data': transform_data_to_mongo(project, include_fields=['id', 'name', 'number', 'current_stage', 'project_default_tasks'])
+            },
+        )
+        tracking.save()
+        
+        if user_reporter:
+            module='projects'
+            info=f'has changed installer in project {project.name}'
+            info_id=project.id
+            type='change_installer_project'
+            create_notification(module, info_id, info, type, user_reporter['username'])
+            
+        return Response({'message': 'Installer updated successfully'})
     except Exception as e:
         return Response({'error': str(e)}, status=500)
     

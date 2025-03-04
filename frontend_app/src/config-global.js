@@ -39,6 +39,7 @@ export const CONFIG = {
     operationEditCalendar: import.meta.env.VITE_PERMISSION_OPERATION_EDIT_CALENDAR_NAME ?? '',
     operationEditAddress: import.meta.env.VITE_PERMISSION_OPERATION_EDIT_ADDRESS_NAME ?? '',
     operationEditResponsable: import.meta.env.VITE_PERMISSION_OPERATION_EDIT_RESPONSABLE_NAME ?? '',
+    operationEditInstaller: import.meta.env.VITE_PERMISSION_OPERATION_EDIT_INSTALLER_NAME ?? '',
     operationEditInstallDate: import.meta.env.VITE_PERMISSION_OPERATION_EDIT_INSTALL_DATE_NAME ?? '',
     operationEditClosingDate: import.meta.env.VITE_PERMISSION_OPERATION_EDIT_CLOSING_DATE_NAME ?? '',
     operationEditUsersAssignees: import.meta.env.VITE_PERMISSION_OPERATION_EDIT_USERS_ASSIGNEES_NAME ?? '',

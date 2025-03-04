@@ -188,6 +188,7 @@ def project_default_task_saved(sender, document, **kwargs):
                 "createdTime": document.created_time,
                 "lastModifiedTime": document.last_modified_time,
                 "isActive": document.is_active,
+                "hasAttachments": document.has_attachments,
             }
 
         }
@@ -212,6 +213,7 @@ def project_default_task_deleted(sender, document, **kwargs):
                 "createdTime": document.created_time,
                 "lastModifiedTime": document.last_modified_time,
                 "isActive": document.is_active,
+                "hasAttachments": document.has_attachments,
             }
         }
     }
@@ -236,6 +238,7 @@ def project_by_id_saved(sender, document, **kwargs):
                 "number": document.number,
                 "description": document.description,
                 "salesOrder": document.sales_order,
+                "createdTime": document.created_time,
                 "lastModifiedTime": document.last_modified_time,
                 "stageHistory": document.stage_history,
                 "userReporter": document.user_reporter,
@@ -272,6 +275,7 @@ def project_by_id_deleted(sender, document, **kwargs):
                 "number": document.number,
                 "description": document.description,
                 "salesOrder": document.sales_order,
+                "createdTime": document.created_time,
                 "lastModifiedTime": document.last_modified_time,
                 "stageHistory": document.stage_history,
                 "userReporter": document.user_reporter,

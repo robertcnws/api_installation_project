@@ -95,7 +95,8 @@ export function KanbanView({
           (task) => task.project_default_task.project_stage.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
         );
         const finalTasks = selectedTasks.filter(
-          (task) => task.project_default_task.name.toLowerCase().includes('upload')
+          (task) => task.project_default_task.name.toLowerCase().includes('start') ||
+            task.project_default_task.name.toLowerCase().includes('finish')
         );
         const withUsersTasks = finalTasks.filter(
           (task) => task.users_assignees.length > 0

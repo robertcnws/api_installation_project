@@ -66,6 +66,18 @@ export function TaskDefaultTableRow({ row, selected, onEditRow, onSelectRow, onD
               </Label>
             </TableCell>
 
+            <TableCell onClick={() => onEditRow()}>
+              <Label
+                variant="soft"
+                color={
+                  (row.hasAttachments && 'success') || 'error'
+                }
+                sx={{ cursor: 'pointer', textTransform: 'capitalize' }}
+              >
+                {row.hasAttachments ? 'Yes' : 'No'}
+              </Label>
+            </TableCell>
+
             
 
           </>
@@ -107,6 +119,15 @@ export function TaskDefaultTableRow({ row, selected, onEditRow, onSelectRow, onD
                 sx={{ cursor: 'pointer', textTransform: 'capitalize' }}
               >
                 {row.projectStageStatus}
+              </Label><br/>
+              Has Attachments?: <Label
+                variant="soft"
+                color={
+                  (row.hasAttachments && 'success') || 'error'
+                }
+                sx={{ cursor: 'pointer', textTransform: 'capitalize' }}
+              >
+                {row.hasAttachments ? 'Yes' : 'No'}
               </Label>
             
           </TableCell>

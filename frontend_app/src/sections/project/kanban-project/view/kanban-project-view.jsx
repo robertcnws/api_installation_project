@@ -72,7 +72,7 @@ export function KanbanProjectView({
     '--item-gap': '10px',
     '--item-radius': '12px',
     '--column-gap': '12px',
-    '--column-width': !isMobile ? '19.2%' : '100%',
+    '--column-width': !isMobile ? '16%' : '100%',
     '--column-radius': '16px',
     '--column-padding': '10px 8px 8px 8px',
   };
@@ -342,6 +342,7 @@ export function KanbanProjectView({
         maxHeight: 630,
         ml: !isMobile ? -5 : 0,
         mt: !isMobile ? -1 : 0,
+        mr: !isMobile ? -5 : 0,
       }}>
         <Stack
           sx={{
@@ -466,7 +467,7 @@ export function KanbanProjectView({
               inputProps={{ id: 'column-fixed-switch' }}
             />
           }
-          sx={{ ml: !isMobile ? -4 : 0, mt: !isMobile ? -4 : 0 }}
+          sx={{ ml: !isMobile ? -4 : 0, mt: !isMobile ? -4 : 0, mr: !isMobile ? -6 : 0, }}
         />
       </Stack>
 

@@ -10,7 +10,7 @@ import Stack from '@mui/material/Stack';
 import { LoadingButton } from '@mui/lab';
 import Button from '@mui/material/Button';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { Grid, Dialog, DialogTitle, DialogActions, TextField } from '@mui/material';
+import { Grid, Dialog, DialogTitle, DialogActions, TextField, IconButton } from '@mui/material';
 
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
@@ -27,6 +27,9 @@ import { usePopover } from 'src/components/custom-popover';
 
 import { LoadingContext } from 'src/auth/context/loading-context';
 import { useDataContext } from 'src/auth/context/data/data-context';
+import { Iconify } from 'src/components/iconify';
+import { height } from '@mui/system';
+import { fDate } from 'src/utils/format-time';
 
 
 // ----------------------------------------------------------------------
@@ -49,10 +52,10 @@ export function ProjectEditModalDatesView({
     const item = useMemo(() => loadedProjects?.find((project) => project.id === projectId), [loadedProjects, projectId]);
 
     const diffDays = useMemo(
-        () => item?.endDate ? dayjs(item?.endDate).diff(dayjs(item?.startDate), 'day') : 0, [item?.endDate, item?.startDate]
+        () => item?.endDate ? dayjs(item?.endDate).diff(dayjs(item?.startDate), 'day') : 1, [item?.endDate, item?.startDate]
     );
 
-    const [daysToInstall, setDaysToInstall] = useState(diffDays);
+    const [daysToInstall, setDaysToInstall] = useState(diffDays === 0 ? 1 : diffDays);
     const [formChanged, setFormChanged] = useState(false);
 
     const { isMobile } = useContext(LoadingContext);
@@ -78,7 +81,7 @@ export function ProjectEditModalDatesView({
     });
 
     const handleDaysChange = (e) => {
-        const days = parseInt(e.target.value, 10) || '';
+        const days = parseInt(e.target.value, 10) || 1;
         setDaysToInstall(days);
         const newEndDate = dayjs(itemById?.startDate).add(days, 'day');
         setEndDate(newEndDate);
@@ -128,7 +131,7 @@ export function ProjectEditModalDatesView({
             number: itemById?.number || '',
             userReporter: userLogged?.data,
             startDate: itemById?.startDate || null,
-            endDate: itemById?.endDate || null,
+            endDate: itemById?.endDate ? dayjs(itemById?.endDate).toISOString() : null,
         }),
         [itemById, userLogged]
     );
@@ -172,10 +175,17 @@ export function ProjectEditModalDatesView({
         formData.append('userReporter', JSON.stringify(userLogged?.data));
 
         const field = isStartDate ? 'startDate' : 'endDate';
-        formData.append(field, new Date(selectedDate).toISOString());
+        formData.append(field, fDate(selectedDate));
         if (isStartDate) {
-            formData.append('endDate', new Date(endDate).toISOString());
+            if (isEdit) {
+                formData.append('endDate', fDate(endDate));
+            }
+            else {
+                const newEndDate = dayjs(selectedDate).add(daysToInstall, 'day');
+                formData.append('endDate', fDate(newEndDate));
+            }
         }
+
 
         const promise = axios.post(`${CONFIG.apiUrl}/projects/update/project/${item.id}/`, formData, {
             headers: {
@@ -236,14 +246,45 @@ export function ProjectEditModalDatesView({
                             </Stack>
                             {isStartDate && (
                                 <Stack direction="row" sx={{ typography: 'caption', textTransform: 'capitalize' }}>
-                                    <Box sx={{ width: '100%', color: 'text.secondary', mt: 1 }}>
+                                    <Box sx={{
+                                        display: 'flex',
+                                        justifyContent: 'flex-start',
+                                        flexDirection: 'row',
+                                        width: '100%',
+                                        color: 'text.secondary',
+                                        mt: 1,
+                                        gap: 0.5
+                                    }}>
+                                        <IconButton
+                                            sx={{ width: 50, height: 50, mt: 1 }}
+                                            onClick={() => {
+                                                const newEndDate = endDate ? dayjs(endDate).add(-1, 'day') : dayjs(selectedDate).add(-1, 'day');
+                                                setEndDate(newEndDate);
+                                                setDaysToInstall(daysToInstall - 1);
+                                                setFormChanged(true);
+                                            }}
+                                            disabled={daysToInstall <= 1}
+                                        >
+                                            <Iconify icon="mdi:minus-box-outline" sx={{ width: 30, height: 30 }} />
+                                        </IconButton>
+
                                         <TextField
                                             type="number"
-                                            label="Days to Install"
-                                            sx={{ width: '100%', mt: 1 }}
+                                            min={1}
+                                            label="Duration days"
+                                            sx={{ width: '30%', mt: 1 }}
                                             value={daysToInstall}
                                             onChange={handleDaysChange}
                                         />
+
+                                        <IconButton sx={{ width: 50, height: 50, mt: 1 }} onClick={() => {
+                                            const newEndDate = endDate ? dayjs(endDate).add(1, 'day') : dayjs(selectedDate).add(1, 'day');
+                                            setEndDate(newEndDate);
+                                            setDaysToInstall(daysToInstall  + 1);
+                                            setFormChanged(true);
+                                        }}>
+                                            <Iconify icon="mdi:plus-box-outline" sx={{ width: 30, height: 30 }} />
+                                        </IconButton>
                                     </Box>
                                 </Stack>
                             )}

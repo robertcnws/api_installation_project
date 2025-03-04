@@ -15,6 +15,7 @@ const GET_ALL_DEFAULT_TASKS = gql`
       order
       projectStage
       projectStageStatus
+      hasAttachments
     }
   }
 `;

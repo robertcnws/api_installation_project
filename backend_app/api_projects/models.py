@@ -209,6 +209,7 @@ class ProjectDefaultTask(Document):
     created_time = DateTimeField(default=timezone.now, null=True)
     last_modified_time = DateTimeField(default=timezone.now, null=True)
     is_active = BooleanField(default=True)
+    has_attachments = BooleanField(default=False)
     meta = {
         'collection': 'project_default_task',
         'indexes': [

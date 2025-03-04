@@ -245,55 +245,79 @@ export function KanbanDetails({
         {(loadedTasks?.length > 0 &&
           loadedTasks?.some((t) => t.project_default_task.id === task.project_default_task.id)) ? (
           <>
-            {task && task.status === CONFIG.taskStatus.notStarted && (
-              <Button
-                variant="soft"
-                color="info"
-                size="medium"
-                startIcon={<Iconify icon="vaadin:start-cog" />}
-                sx={{ ml: 2.5, height: 50 }}
-                disabled={!task || task.status !== CONFIG.taskStatus.notStarted || task?.users_assignees?.length === 0 || !priority}
-                onClick={() => handleManageTask('start')}
-              >
-                Start Task
-              </Button>
-            )}
-            {task && task.status !== CONFIG.taskStatus.notStarted && task.status !== 'finished' && (
-              <Button
-                variant="soft"
-                color="success"
-                size="medium"
-                startIcon={<Iconify icon="octicon:tracked-by-closed-completed-16" />}
-                sx={{ ml: 2.5, height: 50 }}
-                disabled={
-                  !task ||
-                  task?.users_assignees?.length === 0 ||
-                  !priority ||
-                  task.status === 'finished' ||
-                  (isInstaller(userLogged?.data?.user_role?.name) && task?.project_task_attachments?.length === 0)
-                }
-                onClick={() => handleManageTask('finish')}
-              >
-                Finish Task
-              </Button>
-            )}
-            {(task && task.status === 'finished' && listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.superadmin)) && (
-              <Button
-                variant="soft"
-                color="warning"
-                size="medium"
-                startIcon={<Iconify icon="eos-icons:snapshot-rollback" />}
-                sx={{ ml: 2.5, height: 50 }}
-                disabled={!task || task?.users_assignees?.length === 0 || !priority}
-                onClick={() => handleManageTask('rollback')}
-              >
-                Rollback Task
-              </Button>
+            {task ? (
+              <>
+                {(
+                  listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator) ||
+                  task?.users_assignees?.some((u) => u.id === userLogged?.data?.id) ||
+                  project?.userManager?.id === userLogged?.data?.id
+                ) ? (
+                  <>
+                    {task && task.status === CONFIG.taskStatus.notStarted && (
+                      <Button
+                        variant="soft"
+                        color="info"
+                        size="medium"
+                        startIcon={<Iconify icon="vaadin:start-cog" />}
+                        sx={{ ml: 2.5, height: 50 }}
+                        disabled={!task || task.status !== CONFIG.taskStatus.notStarted || task?.users_assignees?.length === 0 || !priority}
+                        onClick={() => handleManageTask('start')}
+                      >
+                        Start Task
+                      </Button>
+                    )}
+                    {task && task.status !== CONFIG.taskStatus.notStarted && task.status !== 'finished' && (
+                      <Button
+                        variant="soft"
+                        color="success"
+                        size="medium"
+                        startIcon={<Iconify icon="octicon:tracked-by-closed-completed-16" />}
+                        sx={{ ml: 2.5, height: 50 }}
+                        disabled={
+                          !task ||
+                          task?.users_assignees?.length === 0 ||
+                          !priority ||
+                          task.status === 'finished' ||
+                          (isInstaller(userLogged?.data?.user_role?.name) && task?.project_task_attachments?.length === 0)
+                        }
+                        onClick={() => handleManageTask('finish')}
+                      >
+                        Finish Task
+                      </Button>
+                    )}
+                    {(task && task.status === 'finished' && listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.superadmin)) && (
+                      <Button
+                        variant="soft"
+                        color="warning"
+                        size="medium"
+                        startIcon={<Iconify icon="eos-icons:snapshot-rollback" />}
+                        sx={{ ml: 2.5, height: 50 }}
+                        disabled={!task || task?.users_assignees?.length === 0 || !priority}
+                        onClick={() => handleManageTask('rollback')}
+                      >
+                        Rollback Task
+                      </Button>
+                    )}
+                  </>
+                ) : (
+                  <Box sx={{ display: 'flex', alignItems: 'right', justifyContent: 'flex-end', width: '100%' }}>
+                    <Label color="error" sx={{ ml: 2.5, height: 50 }}>
+                      Task Unavailable
+                    </Label>
+                  </Box>
+                )}
+              </>
+            ) : (
+              <Box sx={{ display: 'flex', alignItems: 'right', justifyContent: 'flex-end', width: '100%' }}>
+                <Label color="error" sx={{ ml: 2.5, height: 50 }} variant="outlined">
+                  Not assigned to you
+                </Label>
+              </Box>
             )}
           </>
         ) : (
           <Box sx={{ display: 'flex', alignItems: 'right', justifyContent: 'flex-end', width: '100%' }}>
-            <Label color="error" sx={{ ml: 2.5, height: 50 }}>
+            <Label color="error" sx={{ ml: 2.5, height: 50 }} >
               Task Unavailable
             </Label>
           </Box>
@@ -415,55 +439,57 @@ export function KanbanDetails({
       )}
 
       {/* Attachments */}
-      <Box sx={{ display: 'flex' }}>
-        <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-          <StyledLabel>Attachments</StyledLabel>
-          {(verifyPermissions(
+      {task?.project_default_task?.has_attachments && (
+        <Box sx={{ display: 'flex' }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+            <StyledLabel>Attachments</StyledLabel>
+            {(verifyPermissions(
+              listPermissions,
+              CONFIG.permissions.system,
+              CONFIG.permissions.moduleTasks,
+              CONFIG.permissions.operationUploadFile
+            ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) && (
+                <Tooltip title="Add Files" sx={{ width: 40 }}>
+                  <span>
+                    <Button
+                      color="primary"
+                      variant="outlined"
+                      disabled={newFiles.length === 0}
+                      onClick={handleAddFiles}
+                    >
+                      <Iconify icon="material-symbols:attach-file-add" />
+                    </Button>
+                  </span>
+                </Tooltip>
+              )}
+          </Box>
+          {(task?.project_task_attachments?.length === 0 && !verifyPermissions(
             listPermissions,
             CONFIG.permissions.system,
             CONFIG.permissions.moduleTasks,
             CONFIG.permissions.operationUploadFile
-          ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) && (
-              <Tooltip title="Add Files" sx={{ width: 40 }}>
-                <span>
-                  <Button
-                    color="primary"
-                    variant="outlined"
-                    disabled={newFiles.length === 0}
-                    onClick={handleAddFiles}
-                  >
-                    <Iconify icon="material-symbols:attach-file-add" />
-                  </Button>
-                </span>
-              </Tooltip>
+          ) && !listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) && (
+              <Typography variant="subtitle2" sx={{
+                ml: 0,
+                mt: 0,
+                color: task?.users_assignees?.length === 0 ? 'error.main' : 'default',
+              }}>
+                No attachments
+              </Typography>
             )}
+          <KanbanDetailsTaskAttachments
+            task={task}
+            project={project}
+            refetchProject={refetchProject}
+            newFiles={newFiles}
+            setNewFiles={setNewFiles}
+            id={project?.id}
+            name={project?.name}
+            type='tasks'
+            listPermissions={listPermissions}
+          />
         </Box>
-        {(task?.project_task_attachments?.length === 0 && !verifyPermissions(
-          listPermissions,
-          CONFIG.permissions.system,
-          CONFIG.permissions.moduleTasks,
-          CONFIG.permissions.operationUploadFile
-        ) && !listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) && (
-            <Typography variant="subtitle2" sx={{
-              ml: 0,
-              mt: 0,
-              color: task?.users_assignees?.length === 0 ? 'error.main' : 'default',
-            }}>
-              No attachments
-            </Typography>
-          )}
-        <KanbanDetailsTaskAttachments
-          task={task}
-          project={project}
-          refetchProject={refetchProject}
-          newFiles={newFiles}
-          setNewFiles={setNewFiles}
-          id={project?.id}
-          name={project?.name}
-          type='tasks'
-          listPermissions={listPermissions}
-        />
-      </Box>
+      )}
     </Box>
   );
 

@@ -254,6 +254,14 @@ AWS_S3_FOLDER_PROJECTS = env('AWS_S3_FOLDER_PROJECTS', default='projects/')
 AWS_S3_FOLDER_TASKS = env('AWS_S3_FOLDER_TASKS', default='tasks/')
 AWS_S3_FOLDER_COMMENTS = env('AWS_S3_FOLDER_COMMENTS', default='comments/')
 
+# INSTALLATION STAGES
+PREPARATION_STAGE = env('PREPARATION_STAGE', default='Preparation')
+INSTALLATION_STAGE = env('INSTALLATION_STAGE', default='Installation')
+COORDINATION_STAGE = env('COORDINATION_STAGE', default='Coordination')
+PERMISSION_STAGE = env('PERMISSION_STAGE', default='Permission')
+CLOSING_STAGE = env('CLOSING_STAGE', default='Closing')
+FINISHED_STAGE = env('FINISHED_STAGE', default='Finished')
+
 
 # MONGOENGINE
 

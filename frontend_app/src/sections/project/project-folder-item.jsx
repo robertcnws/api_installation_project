@@ -21,6 +21,8 @@ import { fDate } from 'src/utils/format-time';
 
 import { CONFIG } from 'src/config-global';
 
+import dayjs from 'dayjs';
+
 import { toast } from 'src/components/snackbar';
 import { Iconify } from 'src/components/iconify';
 import { ConfirmDialog } from 'src/components/custom-dialog';
@@ -30,6 +32,7 @@ import { isInstaller, listRolesAndSubroles, verifyPermissions } from 'src/utils/
 import { ProjectShareDialog } from './project-share-dialog';
 import { ProjectFileDetails } from './project-file-details';
 import { ProjectNewFolderDialog } from './project-new-folder-dialog';
+
 
 
 
@@ -140,7 +143,7 @@ export function ProjectFolderItem({
       primary={folder.name}
       secondary={
         <>
-          {folder.projectAttachments.length} attachments
+          {folder?.endDate ? dayjs(folder?.startDate).to(folder?.endDate, true) : 'No Closing Date'}
           <Box
             component="span"
             sx={{
@@ -151,7 +154,7 @@ export function ProjectFolderItem({
               bgcolor: 'currentColor',
             }}
           />
-          (On Date: <b>{fDate(folder.startDate)}</b>)
+          (Starting: <b>{folder.startDate ? fDate(folder.startDate) : 'No Install Date'}</b>)
         </>
       }
       primaryTypographyProps={{ noWrap: true, typography: 'subtitle1' }}

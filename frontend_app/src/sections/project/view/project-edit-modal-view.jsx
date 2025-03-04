@@ -747,47 +747,6 @@ export function ProjectEditModalView({
         <>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
                 <Box sx={{ flexGrow: 1, borderRadius: 1 }}>{renderProject}</Box>
-
-                {/* <Box sx={{ display: 'flex', gap: 0.5, ml: 1 }}>
-                    <Box
-                        sx={{
-                            width: '100%',
-                            height: 50,
-                            color: 'text.secondary',
-                            border: '1px solid whitesmoke',
-                            borderRadius: 1,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            p: 0.3
-                        }}
-                    >
-                        <IconButton
-                            color={popover.open ? 'inherit' : 'default'}
-                            onClick={popover.onOpen}
-                        >
-                            <Iconify icon="eva:more-vertical-fill" />
-                        </IconButton>
-                    </Box>
-
-                    <Box
-                        sx={{
-                            width: !isMobile ? '50%' : '100%',
-                            height: 50,
-                            color: 'text.secondary',
-                            border: '1px solid whitesmoke',
-                            borderRadius: 1,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            p: 0.3
-                        }}
-                    >
-                        <IconButton color="default" onClick={handleReturnList}>
-                            <Iconify icon="material-symbols:cancel" />
-                        </IconButton>
-                    </Box>
-                </Box> */}
             </Box>
             {/* </Drawer > */}
 

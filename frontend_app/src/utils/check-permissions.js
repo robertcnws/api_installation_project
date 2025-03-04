@@ -84,6 +84,7 @@ export const createDefaultPermissions = (role) => {
         { name: CONFIG.permissions.operationEditCalendar },
         { name: CONFIG.permissions.operationEditAddress },
         { name: CONFIG.permissions.operationEditResponsable },
+        { name: CONFIG.permissions.operationEditInstaller },
         { name: CONFIG.permissions.operationEditInstallDate },
         { name: CONFIG.permissions.operationEditClosingDate },
         { name: CONFIG.permissions.operationEditUsersAssignees },

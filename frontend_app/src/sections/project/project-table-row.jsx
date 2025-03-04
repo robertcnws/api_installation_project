@@ -20,7 +20,9 @@ import { useCopyToClipboard } from 'src/hooks/use-copy-to-clipboard';
 
 import { listRolesAndSubroles, verifyPermissions } from 'src/utils/check-permissions';
 
-import { fDate } from 'src/utils/format-time';
+import dayjs from 'dayjs';
+
+import { fDate, fIsAfter } from 'src/utils/format-time';
 
 import { CONFIG } from 'src/config-global';
 import { varAlpha } from 'src/theme/styles';
@@ -38,6 +40,7 @@ import { LoadingContext } from 'src/auth/context/loading-context';
 
 import { ProjectShareDialog } from './project-share-dialog';
 import { ProjectFileDetails } from './project-file-details';
+
 
 
 
@@ -175,12 +178,12 @@ export function ProjectTableRow({
               {/* {fDate(row?.salesOrder.date)} */}
               {fDate(row?.startDate)}
             </TableCell>
-            {/* <TableCell
+            <TableCell
               onClick={onViewRow}
               sx={{ whiteSpace: 'nowrap', cursor: 'pointer', }}
             >
-              {fDate(row?.endDate)}
-            </TableCell> */}
+              {row?.endDate ? dayjs(row?.startDate).to(row?.endDate, true) : 'No Closing Date'}
+            </TableCell>
 
             <TableCell
               // onClick={handleClick} 
@@ -329,6 +332,7 @@ export function ProjectTableRow({
             Name: <Label color='default'>{row?.name}</Label><br />
             Installation Date: <Label color='default'>{fDate(row?.startDate)}</Label><br />
             {/* Closing Date: <Label color='default'>{fDate(row?.endDate)}</Label><br /> */}
+            Duration: <Label color='default'>{row?.endDate ? dayjs(row?.startDate).to(row?.endDate, true) : 'No Closing Date'}</Label><br />
             <List dense sx={{ width: 1, bgcolor: 'background.paper' }}>
               {loadedStages.map((stage) => {
                 const stageOrder = stage.order;

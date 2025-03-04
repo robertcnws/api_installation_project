@@ -74,7 +74,7 @@ export function ProjectTable({
 
   const TABLE_HEAD = [
     { id: 'startDate', label: 'Installation Date' },
-    // { id: 'endDate', label: 'Closing Date' },
+    { id: 'duration', label: 'Duration' },
     { id: 'number', label: 'Number' },
     { id: 'name', label: 'Name' },
     { id: 'currentStage', label: 'Stage' },

@@ -94,6 +94,7 @@ export function TaskDefaultListView() {
     { id: 'order', label: 'Order' },
     { id: 'projectStage', label: 'Installation Stage' },
     { id: 'projectStageStatus', label: 'Linked Status' },
+    { id: 'hasAttachments', label: 'Has Attachments?' },
     { id: '' },
   ];
 
