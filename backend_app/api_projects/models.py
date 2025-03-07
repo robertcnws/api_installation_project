@@ -106,10 +106,35 @@ class ProjectAttachment(Document):
     def __str__(self):
         return self.name
     
+class ProjectMaterial(Document):
+    name = StringField(max_length=255, required=True)
+    description = StringField(null=True)
+    quantity = IntField(default=0)
+    cost = FloatField(default=0.0)
+    store = StringField(null=True)
+    notes = StringField(null=True)
+    created_time = DateTimeField(default=timezone.now, null=True)
+    last_modified_time = DateTimeField(default=timezone.now, null=True)
+    user_reporter = DynamicField(null=True)
+    project = DynamicField(null=True)
+    is_active = BooleanField(default=True)
+    
+    meta = {
+        'collection': 'project_material',
+        'indexes': [
+            'name', 'created_time', 'last_modified_time', 'is_active', 'user_reporter', 'project'
+        ],
+        'verbose_name': 'Project Material',
+        'verbose_name_plural': 'Project Materials'
+    }
+
+    def __str__(self):
+        return self.name
+    
 class Project(Document):
     name = StringField(max_length=255, required=True)
     number = StringField(max_length=255, required=True)
-    description = StringField(max_length=255, null=True)
+    description = StringField(null=True)
     sales_order = DynamicField(null=True)
     created_time = DateTimeField(default=timezone.now, null=True)
     last_modified_time = DateTimeField(default=timezone.now, null=True)
@@ -128,6 +153,15 @@ class Project(Document):
     user_manager = DynamicField(null=True)
     project_comments = ListField(DynamicField(), default=list, null=True)
     project_default_tasks = ListField(DynamicField(), default=list, null=True)
+    all_products_marked = BooleanField(default=False)
+    all_windows_marked = BooleanField(default=False)
+    all_screw_marked = BooleanField(default=False)
+    all_trash_marked = BooleanField(default=False)
+    feedback = StringField(null=True)
+    work_scope = StringField(null=True)
+    project_materials = ListField(DynamicField(), default=list, null=True)
+    project_guide_products = ListField(DynamicField(), default=list, null=True)
+    project_materials_other_notes = StringField(null=True)
     meta = {
         'collection': 'project',
         'indexes': [

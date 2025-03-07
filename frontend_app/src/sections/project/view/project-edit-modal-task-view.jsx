@@ -9,15 +9,17 @@ import {
     Button,
     Select,
     MenuItem,
+    ListItem,
     TextField,
     Typography,
     IconButton,
     DialogTitle,
     DialogActions,
-    ListItem,
 } from '@mui/material';
 
 import { useBoolean } from 'src/hooks/use-boolean';
+
+import { availableTasks } from 'src/utils/project-tasks-utils';
 
 import { CONFIG } from 'src/config-global';
 import { useProjectByIdQuery } from 'src/_mock/__projects';
@@ -27,8 +29,6 @@ import { toast } from 'src/components/snackbar';
 import { Iconify } from 'src/components/iconify';
 
 import { useDataContext } from 'src/auth/context/data/data-context';
-
-import { availableTasks } from 'src/utils/project-tasks-utils';
 
 import { ProjectTaskShareDialog } from '../project-task-share-dialog';
 import { ProjectTaskDetailsPriority } from '../project-task-details-priority';
@@ -341,7 +341,7 @@ export function ProjectEditModalTaskView({ projectId, open, onClose }) {
                             {(selectedTask && selectedTask?.status === 'not started') && (
                                 <Button
                                     variant="soft"
-                                    color="info"
+                                    color="default"
                                     size="medium"
                                     startIcon={<Iconify icon="vaadin:start-cog" />}
                                     sx={{ ml: 2.5, height: 50 }}

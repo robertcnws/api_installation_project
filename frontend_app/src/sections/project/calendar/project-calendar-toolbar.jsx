@@ -1,3 +1,5 @@
+
+import { Box } from '@mui/material';
 import Stack from '@mui/material/Stack';
 import Badge from '@mui/material/Badge';
 import Button from '@mui/material/Button';
@@ -9,8 +11,6 @@ import LinearProgress from '@mui/material/LinearProgress';
 
 import { Iconify } from 'src/components/iconify';
 import { usePopover, CustomPopover } from 'src/components/custom-popover';
-import { useEffect } from 'react';
-import { Box } from '@mui/material';
 
 // ----------------------------------------------------------------------
 

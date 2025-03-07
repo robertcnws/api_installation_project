@@ -1,14 +1,15 @@
-import { useState, useEffect, useContext, useCallback, useMemo } from 'react';
+import { useMemo, useState, useEffect, useContext, useCallback } from 'react';
 
 import Card from '@mui/material/Card';
 import Grid from '@mui/material/Unstable_Grid2';
-import { Box, Select, MenuItem, TextField, Autocomplete, ListItem } from '@mui/material';
+import { Box, Select, MenuItem, ListItem, TextField, Autocomplete } from '@mui/material';
+
+import { availableTasks } from 'src/utils/project-tasks-utils';
 
 import { CONFIG } from 'src/config-global';
 import { useProjectByIdQuery } from 'src/_mock/__projects';
 
 import { Iconify } from 'src/components/iconify';
-import { availableTasks } from 'src/utils/project-tasks-utils';
 
 import { LoadingContext } from 'src/auth/context/loading-context';
 import { useDataContext } from 'src/auth/context/data/data-context';

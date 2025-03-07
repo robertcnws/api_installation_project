@@ -1,5 +1,5 @@
+import { lazy, useMemo, Suspense } from 'react';
 import { Navigate, useRoutes } from 'react-router-dom';
-import { lazy, useMemo, Suspense, useState, useEffect } from 'react';
 
 import { AuthSplitLayout } from 'src/layouts/auth-split';
 

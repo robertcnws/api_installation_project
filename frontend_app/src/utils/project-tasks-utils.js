@@ -41,3 +41,32 @@ export const totalPercentageProject = (project, CONFIG) => {
     const percentage = total / filteredTasks.length || 0;
     return percentage;
 }
+
+export const totalPercentageProjectStage = (project, stage, CONFIG) => {
+    const projectTasks = project?.projectDefaultTasks;
+    const filteredTasks = project?.hasPermission ? projectTasks : projectTasks?.filter(
+        (t) => t.project_default_task?.project_stage?.name !== CONFIG.stages.permission
+    );
+    const stageTasks = filteredTasks?.filter(
+        (t) => t.project_default_task?.project_stage?.name === stage
+    );
+    const total = stageTasks?.reduce((acc, t) => acc + t.percentage, 0);
+    const percentage = total / stageTasks.length || 0;
+    return percentage;
+}
+
+export const getProjectInstaller = (project, CONFIG) => {
+    const users = project?.projectDefaultTasks?.filter(
+        (task) => task.project_default_task.project_stage.name === CONFIG.stages.installation &&
+            task.project_default_task.name.toLowerCase().includes('start')
+    )[0]?.users_assignees
+
+    const installer = users?.filter(
+        (user) => {
+            const objRole = user?.userRole || user?.user_role;
+            return objRole.name.toLowerCase().includes(CONFIG.roles.installer.toLowerCase())
+        }
+    )[0];
+    
+    return installer;
+};

@@ -1,9 +1,7 @@
 import Box from '@mui/material/Box';
-import Link from '@mui/material/Link';
 import Alert from '@mui/material/Alert';
 
 import { paths } from 'src/routes/paths';
-import { RouterLink } from 'src/routes/components';
 
 import { CONFIG } from 'src/config-global';
 
@@ -14,7 +12,6 @@ import { Main, Content } from './main';
 import { CustomFooter } from '../main/footer';
 import { HeaderSection } from '../core/header-section';
 import { LayoutSection } from '../core/layout-section';
-import { SettingsButton } from '../components/settings-button';
 
 // ----------------------------------------------------------------------
 

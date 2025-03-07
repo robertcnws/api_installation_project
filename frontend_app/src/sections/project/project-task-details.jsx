@@ -44,7 +44,7 @@ export function ProjectTaskDetails({
     expanded,
 }) {
     const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
-    
+
     const confirm = useBoolean();
 
     const [taskData, setTaskData] = useState({
@@ -97,6 +97,16 @@ export function ProjectTaskDetails({
                     email: zod.string(),
                     isStaff: zod.boolean(),
                     isActive: zod.boolean(),
+                    user_role: zod.object({
+                        id: zod.string(),
+                        name: zod.string(),
+                        description: zod.string(),
+                    }).optional(),
+                    userRole: zod.object({
+                        id: zod.string(),
+                        name: zod.string(),
+                        description: zod.string(),
+                    }).optional(),
                 })
             )
             .nonempty({ message: 'Must have at least 1 user!' }),
@@ -151,7 +161,7 @@ export function ProjectTaskDetails({
             if (taskData.currentTaskUsersAssignees.length > 0) {
                 users = [...taskData.currentTaskUsersAssignees, ...users];
             }
-            
+
             setTaskData((prev) => ({
                 ...prev,
                 currentTaskUsersAssignees: users,
@@ -265,21 +275,21 @@ export function ProjectTaskDetails({
 
     const renderAddTaskUsers = (
         <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ p: 0.5 }}>
-                <IconButton
-                    size="small"
-                    color="primary"
-                    onClick={shareTask.onTrue}
-                    sx={{
-                        width: 24,
-                        height: 24,
-                        bgcolor: 'primary.main',
-                        color: 'primary.contrastText',
-                        '&:hover': { bgcolor: 'primary.dark' },
-                    }}
-                >
-                    <Iconify icon="mingcute:add-line" />
-                </IconButton>
-            </Stack>
+            <IconButton
+                size="small"
+                color="primary"
+                onClick={shareTask.onTrue}
+                sx={{
+                    width: 24,
+                    height: 24,
+                    bgcolor: 'primary.main',
+                    color: 'primary.contrastText',
+                    '&:hover': { bgcolor: 'primary.dark' },
+                }}
+            >
+                <Iconify icon="mingcute:add-line" />
+            </IconButton>
+        </Stack>
     );
 
     const renderTaskAttachments = (

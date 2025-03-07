@@ -58,6 +58,8 @@ class ProjectType(MongoengineObjectType):
     user_manager = GenericScalar()
     project_default_tasks = GenericScalar()
     project_comments = GenericScalar()
+    project_materials = GenericScalar()
+    project_guide_products = GenericScalar()
     
     def resolve_sales_order(self, info):
         sales_order = self.sales_order or {}
@@ -113,6 +115,16 @@ class ProjectType(MongoengineObjectType):
         project_comments = self.project_comments or []
         project_comments = serialize_datetime(project_comments)
         return dynamic_field_to_json(project_comments)
+    
+    def resolve_project_materials(self, info):
+        project_materials = self.project_materials or []
+        project_materials = serialize_datetime(project_materials)
+        return dynamic_field_to_json(project_materials)
+    
+    def resolve_project_guide_products(self, info):
+        project_guide_products = self.project_guide_products or []
+        project_guide_products = serialize_datetime(project_guide_products)
+        return dynamic_field_to_json(project_guide_products)
     
 
 class ProjectUserType(MongoengineObjectType):

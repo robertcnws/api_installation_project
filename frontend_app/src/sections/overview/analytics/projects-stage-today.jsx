@@ -1,23 +1,22 @@
 import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
 import Card from '@mui/material/Card';
-import { useTheme } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
+import { Table, TableBody, CardHeader, TableContainer } from '@mui/material';
 import LinearProgress, { linearProgressClasses } from '@mui/material/LinearProgress';
+
+import { paths } from 'src/routes/paths';
+import { useRouter } from 'src/routes/hooks';
 
 import { fDateTime } from 'src/utils/format-time';
 import { fPercent } from 'src/utils/format-number';
 
 import { varAlpha } from 'src/theme/styles';
 
+import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
 import { TableNoData } from 'src/components/table';
-import { CardHeader, Table, TableBody, TableContainer } from '@mui/material';
-import { CONFIG } from 'src/config-global';
 import { Scrollbar } from 'src/components/scrollbar';
-import { Label } from 'src/components/label';
-import { useRouter } from 'src/routes/hooks';
-import { paths } from 'src/routes/paths';
 
 // ----------------------------------------------------------------------
 

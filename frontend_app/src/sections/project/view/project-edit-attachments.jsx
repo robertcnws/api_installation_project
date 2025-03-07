@@ -6,12 +6,13 @@ import { Box, Grid, Paper, Button, Divider } from '@mui/material';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
+import { verifyPermissions, listRolesAndSubroles } from 'src/utils/check-permissions';
+
 import { CONFIG } from 'src/config-global';
 
 import { Iconify } from 'src/components/iconify';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 import { UploadBox, MultiFilePreview } from 'src/components/upload';
-import { listRolesAndSubroles, verifyPermissions } from 'src/utils/check-permissions';
 
 
 export function ProjectEditAttachments({

@@ -1,4 +1,5 @@
-import { useState, useCallback, useMemo } from 'react';
+import dayjs from 'dayjs';
+import { useMemo, useState, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
@@ -18,16 +19,14 @@ import { useBoolean } from 'src/hooks/use-boolean';
 import { useCopyToClipboard } from 'src/hooks/use-copy-to-clipboard';
 
 import { fDate } from 'src/utils/format-time';
+import { isInstaller, verifyPermissions, listRolesAndSubroles } from 'src/utils/check-permissions';
 
 import { CONFIG } from 'src/config-global';
-
-import dayjs from 'dayjs';
 
 import { toast } from 'src/components/snackbar';
 import { Iconify } from 'src/components/iconify';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 import { usePopover, CustomPopover } from 'src/components/custom-popover';
-import { isInstaller, listRolesAndSubroles, verifyPermissions } from 'src/utils/check-permissions';
 
 import { ProjectShareDialog } from './project-share-dialog';
 import { ProjectFileDetails } from './project-file-details';
@@ -143,7 +142,7 @@ export function ProjectFolderItem({
       primary={folder.name}
       secondary={
         <>
-          {folder?.endDate ? dayjs(folder?.startDate).to(folder?.endDate, true) : 'No Closing Date'}
+          {folder?.endDate ? `Duration: ${dayjs(folder?.startDate).to(folder?.endDate, true)}` : 'No Closing Date'}
           <Box
             component="span"
             sx={{

@@ -39,8 +39,7 @@ export function BankingContacts({
   const modalListItemsSerialsTitle = 'List Items Serials';
 
   return (
-    <>
-      <Card {...other}>
+    <Card {...other}>
         <CardHeader
           title={title}
           subheader={subheader}
@@ -89,7 +88,6 @@ export function BankingContacts({
           )}
         </Scrollbar>
       </Card>
-    </>
   );
 }
 

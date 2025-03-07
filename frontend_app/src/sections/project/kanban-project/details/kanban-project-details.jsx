@@ -1,7 +1,4 @@
-import dayjs from 'dayjs';
-import axios from 'axios';
-import { toast } from 'sonner';
-import { useMemo, useState, useEffect, useCallback } from 'react';
+import { useMemo, useState } from 'react';
 
 import Box from '@mui/material/Box';
 import Tab from '@mui/material/Tab';
@@ -17,18 +14,14 @@ import IconButton from '@mui/material/IconButton';
 import { useTabs } from 'src/hooks/use-tabs';
 import { useBoolean } from 'src/hooks/use-boolean';
 
-import { CONFIG } from 'src/config-global';
 import { varAlpha } from 'src/theme/styles';
 
-import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
 import { Scrollbar } from 'src/components/scrollbar';
 import { CustomTabs } from 'src/components/custom-tabs';
 
 import { KanbanProjectDetailsToolbar } from './kanban-project-details-toolbar';
-import { KanbanProjectDetailsCommentInput } from './kanban-project-details-comment-input';
 import { KanbanProjectContactsDialog } from '../components/kanban-project-contacts-dialog';
-import { ProjectTaskDetailsPriority } from '../../project-task-details-priority';
 import { KanbanProjectDetailsTaskAttachments } from './kanban-project-details-task-attachments';
 
 // ----------------------------------------------------------------------

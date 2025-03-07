@@ -171,6 +171,9 @@ def create_project(request):
     
     user_manager = data.get('userManager', None)
     
+    if user_manager:
+        users_assignees.append(user_manager)
+    
     has_permission_str = data.get('hasPermission', 'false') if data.get('hasPermission') else None
     if has_permission_str:
         has_permission = True if has_permission_str.lower() == 'true' else False
@@ -218,7 +221,7 @@ def create_project(request):
             'percentage': 0,
             'created_time': timezone.now(),
             'last_modified_time': timezone.now(),
-            'users_assignees': [],
+            'users_assignees': [user_manager] if user_manager else [],
             'user_reporter': user_reporter,
             'priority': 'medium',
             'project_task_attachments': [],
@@ -244,6 +247,14 @@ def create_project(request):
             user_manager=user_manager,
             has_permission=has_permission,
             project_default_tasks=list_default_tasks_info,
+            all_products_marked=False,
+            all_windows_marked=False,
+            all_screw_marked=False,
+            all_trash_marked=False,
+            feedback='',
+            work_scope='',
+            project_materials=[],
+            project_materials_other_notes='',
         )
         
         project.save()
@@ -354,6 +365,14 @@ def create_projects(request):
                 user_manager=user_manager,
                 has_permission=has_permission,
                 project_default_tasks=list_default_tasks_info,
+                all_products_marked=False,
+                all_windows_marked=False,
+                all_screw_marked=False,
+                all_trash_marked=False,
+                feedback='',
+                work_scope='',
+                project_materials=[],
+                project_materials_other_notes='',
             )
             
             project.save()
@@ -421,6 +440,14 @@ def update_project(request, id):
     user_reporter = json.loads(data.get('userReporter', None)) if data.get('userReporter') else project.user_reporter
     
     users_assignees = json.loads(data.get('usersAssignees', [])) if data.get('usersAssignees') else project.users_assignees
+    
+    if user_manager:
+        if user_manager.get('id') not in [user.get('id') for user in users_assignees]:
+            users_assignees.append(user_manager)
+        
+        for task in project_default_tasks:
+            if user_manager.get('id') not in [user.get('id') for user in task['users_assignees']]:
+                task['users_assignees'].append(user_manager)
     
     current_stage = json.loads(data.get('currentStage', {})) if data.get('currentStage') else project.current_stage
     
@@ -583,6 +610,134 @@ def change_project_address(request, id):
         info_id=project.id
         type='change_project_address'
         create_notification(module, info_id, info, type, user_reporter['username'])
+        
+    return Response({
+        'message': 'Project updated successfully',
+        'data': json.loads(project.to_json())
+    }, status=201)
+    
+    
+#############################################
+# CHANGE PROJECT RELEASE FORM
+#############################################
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def change_project_release_form(request, id): 
+    
+    project = Project.objects(id=id).first()
+    if not project:
+        return Response({'error': 'Project not found'}, status=404)
+            
+    data = request.data
+    
+    user_reporter = json.loads(data.get('userReporter', None)) if data.get('userReporter') else project.user_reporter
+    
+    all_products_marked_str = data.get('allProductsMarked', 'false') if data.get('allProductsMarked') else None
+    if all_products_marked_str:
+        all_products_marked = True if all_products_marked_str.lower() == 'true' else False
+        
+    all_windows_marked_str = data.get('allWindowsMarked', 'false') if data.get('allWindowsMarked') else None
+    if all_windows_marked_str:
+        all_windows_marked = True if all_windows_marked_str.lower() == 'true' else False
+        
+    all_screw_marked_str = data.get('allScrewMarked', 'false') if data.get('allScrewMarked') else None
+    if all_screw_marked_str:
+        all_screw_marked = True if all_screw_marked_str.lower() == 'true' else False
+        
+    all_trash_marked_str = data.get('allTrashMarked', 'false') if data.get('allTrashMarked') else None
+    if all_trash_marked_str:
+        all_trash_marked = True if all_trash_marked_str.lower() == 'true' else False
+    
+    project.all_products_marked = all_products_marked if all_products_marked_str else project.all_products_marked
+    project.all_windows_marked = all_windows_marked if all_windows_marked_str else project.all_windows_marked
+    project.all_screw_marked = all_screw_marked if all_screw_marked_str else project.all_screw_marked
+    project.all_trash_marked = all_trash_marked if all_trash_marked_str else project.all_trash_marked
+    project.feedback = data.get('feedback', project.feedback) if data.get('feedback') else project.feedback
+    project.last_modified_time = timezone.now()
+    project.user_reporter = user_reporter if user_reporter else project.user_reporter
+        
+    project.save()
+    
+    tracking = ProjectTracking(
+        user_reporter=user_reporter,
+        action=f'change project release form ({project.id} - {project.name})',
+        created_time=timezone.now(),
+        managed_data={
+            'data': transform_data_to_mongo(
+                project, include_fields=['id', 'name', 'all_products_marked', 'all_windows_marked', 'all_screw_marked', 'all_trash_marked', 'feedback']
+            )
+        },
+    )
+    tracking.save()
+    
+    if user_reporter:
+        module='projects'
+        info=f'has changed release form in project {project.name}'
+        info_id=project.id
+        type='change_project_release_form'
+        create_notification(module, info_id, info, type, user_reporter.get('username'))
+        
+    return Response({
+        'message': 'Project updated successfully',
+        'data': json.loads(project.to_json())
+    }, status=201)
+    
+    
+
+#############################################
+# CHANGE PROJECT INSTALLATION GUIDE FORM
+#############################################
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def change_project_installation_guide_form(request, id): 
+    
+    project = Project.objects(id=id).first()
+    if not project:
+        return Response({'error': 'Project not found'}, status=404)
+            
+    data = request.data
+    
+    user_reporter = json.loads(data.get('userReporter', None)) if data.get('userReporter') else project.user_reporter
+    
+    work_scope = data.get('workScope', project.work_scope) if data.get('workScope') else project.work_scope
+    
+    other_notes = data.get('projectMaterialsOtherNotes', project.project_materials_other_notes) \
+                    if data.get('projectMaterialsOtherNotes') else project.project_materials_other_notes
+    
+    project_materials = json.loads(data.get('projectMaterials', [])) if data.get('projectMaterials') else project.project_materials
+    
+    project_guide_products = json.loads(data.get('projectGuideProducts', [])) if data.get('projectGuideProducts') else project.project_guide_products
+    
+    
+    project.work_scope = work_scope
+    project.project_materials_other_notes = other_notes
+    project.project_materials = project_materials
+    project.project_guide_products = project_guide_products
+    project.last_modified_time = timezone.now()
+    project.user_reporter = user_reporter if user_reporter else project.user_reporter
+        
+    project.save()
+    
+    tracking = ProjectTracking(
+        user_reporter=user_reporter,
+        action=f'change project installation guide form ({project.id} - {project.name})',
+        created_time=timezone.now(),
+        managed_data={
+            'data': transform_data_to_mongo(
+                project, include_fields=['id', 'name', 'work_scope', 'project_materials_other_notes', 'project_materials', 'project_guide_products']
+            )
+        },
+    )
+    tracking.save()
+    
+    if user_reporter:
+        module='projects'
+        info=f'has changed installation guide form in project {project.name}'
+        info_id=project.id
+        type='change_project_installation_guide_form'
+        create_notification(module, info_id, info, type, user_reporter.get('username'))
         
     return Response({
         'message': 'Project updated successfully',
@@ -1930,6 +2085,10 @@ def change_installer_project(request, id):
             return Response({'error': 'Project not found'}, status=404)
         
         installer = json.loads(data.get('installer', None))
+        
+        if installer:
+            if installer.get('id') not in [user['id'] for user in project.users_assignees]:
+                project.users_assignees.append(installer)
         
         all_tasks = project.project_default_tasks if project.project_default_tasks else []
         

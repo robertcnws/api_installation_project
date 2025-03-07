@@ -1,26 +1,26 @@
-import { useMemo, useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import { useRouter } from 'src/routes/hooks';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
 import { Typography } from '@mui/material';
 
 import { paths } from 'src/routes/paths';
+import { useRouter } from 'src/routes/hooks';
 
 import { useTabs } from 'src/hooks/use-tabs';
 
+import { isInstaller, listRolesAndSubroles } from 'src/utils/check-permissions';
+
 import { CONFIG } from 'src/config-global';
-import { toast } from 'src/components/snackbar';
 import { DashboardContent } from 'src/layouts/dashboard';
 import { useProjectByIdQuery } from 'src/_mock/__projects';
 
 import { Label } from 'src/components/label';
+import { toast } from 'src/components/snackbar';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 
 import { useDataContext } from 'src/auth/context/data/data-context';
-
-import { isInstaller, listRolesAndSubroles } from 'src/utils/check-permissions';
 
 import { ProjectEditModalView } from './project-edit-modal-view';
 import { ProjectDetailsToolbar } from '../project-details-toolbar';
@@ -29,6 +29,8 @@ import { ProjectDetailsTaskView } from './project-details-task-view';
 import { ProjectEditModalTaskView } from './project-edit-modal-task-view';
 import { ProjectDetailsCommentView } from './project-details-comment-view';
 import { ProjectDetailsAttachmentView } from './project-details-attachment-view';
+import { ProjectDetailsReleaseFormView } from './project-details-release-form-view';
+import { ProjectDetailsInstallationGuideFormView } from './project-details-installation-guide-form-view';
 
 
 
@@ -56,6 +58,10 @@ export function ProjectDetailsView({ projectId }) {
         { label: 'Tasks', value: 'tasks' },
         ...!isInstaller(userLogged?.data?.user_role?.name) ? [
             { label: 'Attachments', value: 'attachments' },
+        ] : [],
+        ...listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.installer) ? [
+            { label: 'Release Form', value: 'releaseForm' },
+            { label: 'Installation Guide', value: 'installationGuide' },
         ] : [],
         { label: 'Comments', value: 'comments' },
     ];
@@ -202,7 +208,11 @@ export function ProjectDetailsView({ projectId }) {
                         )
                     }
                     onClick={() => {
-                        if ((tab.value === 'tasks' || tab.value === 'attachments' || tab.value === 'comments') && !itemById.userManager?.username) {
+                        if ((tab.value === 'tasks' ||
+                            tab.value === 'attachments' ||
+                            tab.value === 'comments' ||
+                            tab.value === 'releaseForm' ||
+                            tab.value === 'installationGuide') && !itemById.userManager?.username) {
                             setOpenValidationDialog(true);
                         }
                     }}
@@ -237,7 +247,7 @@ export function ProjectDetailsView({ projectId }) {
                     />
                 }
 
-                {(tabs.value === 'tasks' && itemById.userManager?.username) &&
+                {(tabs.value === 'tasks' && itemById?.userManager?.username) &&
                     <ProjectDetailsTaskView
                         project={itemById}
                         refetchProject={refetchProject}
@@ -247,14 +257,30 @@ export function ProjectDetailsView({ projectId }) {
                     />
                 }
 
-                {(tabs.value === 'attachments' && itemById.userManager?.username) &&
+                {(tabs.value === 'attachments' && itemById?.userManager?.username) &&
                     <ProjectDetailsAttachmentView
                         projectId={itemById?.id}
                         listPermissions={listPermissions}
                     />
                 }
 
-                {(tabs.value === 'comments' && itemById.userManager?.username) &&
+                {(tabs.value === 'releaseForm' && itemById?.userManager?.username) &&
+                    <ProjectDetailsReleaseFormView
+                        project={itemById}
+                        refetchProject={refetchProject}
+                        listPermissions={listPermissions}
+                    />
+                }
+
+                {(tabs.value === 'installationGuide' && itemById?.userManager?.username) &&
+                    <ProjectDetailsInstallationGuideFormView
+                    project={itemById}
+                    refetchProject={refetchProject}
+                    listPermissions={listPermissions}
+                />
+                }
+
+                {(tabs.value === 'comments' && itemById?.userManager?.username) &&
                     <ProjectDetailsCommentView
                         project={itemById}
                         refetchProject={refetchProject}
@@ -263,7 +289,7 @@ export function ProjectDetailsView({ projectId }) {
                 }
 
             </DashboardContent>
-            <ProjectEditModalView open={openEdit} onClose={() => setOpenEdit(false)} projectId={itemById?.id} />
+            <ProjectEditModalView open={openEdit} onClose={() => setOpenEdit(false)} project={itemById} />
             <ProjectEditModalTaskView open={openEditTask} onClose={() => setOpenEditTask(false)} projectId={itemById?.id} />
 
             <ConfirmDialog

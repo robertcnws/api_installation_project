@@ -21,8 +21,10 @@ import {
 
 import Stack from '@mui/material/Stack';
 import Switch from '@mui/material/Switch';
-import { Box, LinearProgress } from '@mui/material';
+import { Box, Alert, LinearProgress } from '@mui/material';
 import FormControlLabel from '@mui/material/FormControlLabel';
+
+import { isInstaller } from 'src/utils/check-permissions';
 
 import { CONFIG } from 'src/config-global';
 import { moveColumn } from 'src/actions/kanban';
@@ -33,7 +35,6 @@ import { EmptyContent } from 'src/components/empty-content';
 
 import { LoadingContext } from 'src/auth/context/loading-context';
 import { useDataContext } from 'src/auth/context/data/data-context';
-import { isInstaller } from 'src/utils/check-permissions';
 
 import { kanbanClasses } from '../classes';
 import { coordinateGetter } from '../utils';
@@ -62,9 +63,21 @@ export function KanbanView({
 
   const [stages, setStages] = useState(null);
 
+  const [hasInstallDate, setHasInstallDate] = useState(false);
+
+  useEffect(() => {
+    if (project) {
+      setHasInstallDate(project.startDate !== null);
+    }
+  }, [project]);
+
   useEffect(() => {
     if (loadedStages) {
-      const actionStages = loadedStages.filter((stage) => stage.name.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) === -1);
+      const actionStages = hasInstallDate ?
+        loadedStages.filter((stage) => stage.name.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) === -1) :
+        loadedStages.filter((stage) => stage.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
+          stage.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
+          stage.name.toLowerCase().indexOf(CONFIG.stages.permission.toLowerCase()) !== -1);
       if (isInstaller(userLogged?.data?.user_role?.name)) {
         setStages(actionStages.filter((stage) => stage.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1));
       } else if (hasPermission) {
@@ -73,7 +86,7 @@ export function KanbanView({
         setStages(actionStages.filter((stage) => stage.name !== CONFIG.stages.permission));
       }
     }
-  }, [loadedStages, hasPermission, userLogged]);
+  }, [loadedStages, hasPermission, userLogged, hasInstallDate]);
 
   const { isMobile } = useContext(LoadingContext)
 
@@ -362,7 +375,7 @@ export function KanbanView({
         flex: '1 1 auto',
         overflowX: 'auto',
         overflowY: 'auto',
-        maxHeight: 560,
+        maxHeight: 640,
         ml: !isMobile ? -5 : 0,
         mt: !isMobile ? -1 : 0,
         mr: !isMobile ? -5 : 0,
@@ -411,6 +424,11 @@ export function KanbanView({
                   </SortableContext>
                 </KanbanColumn>
               ))}
+              {!hasInstallDate && (
+                <Alert severity="error" sx={{ width: '100%', mt: 1 }}>
+                  You must define the installation date of the project to see other tasks.
+                </Alert>
+              )}
 
               {/* <KanbanColumnAdd id={PLACEHOLDER_ID} /> */}
             </SortableContext>

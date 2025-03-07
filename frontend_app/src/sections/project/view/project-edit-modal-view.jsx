@@ -1,5 +1,4 @@
 import axios from 'axios';
-import dayjs from 'dayjs';
 import { z as zod } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, Controller } from 'react-hook-form';
@@ -13,7 +12,7 @@ import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
-import { Grid, Avatar, Dialog, Tooltip, MenuItem, MenuList, DialogTitle, DialogActions } from '@mui/material';
+import { Grid, Avatar, Dialog, MenuItem, MenuList, DialogTitle, DialogActions } from '@mui/material';
 
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
@@ -24,8 +23,6 @@ import { useBoolean } from 'src/hooks/use-boolean';
 import { stripHtmlUsingDOM } from 'src/utils/helper';
 
 import { CONFIG } from 'src/config-global';
-import { varAlpha } from 'src/theme/styles';
-import { useProjectByIdQuery } from 'src/_mock/__projects';
 
 import { Label } from 'src/components/label';
 import { toast } from 'src/components/snackbar';
@@ -33,7 +30,6 @@ import { Iconify } from 'src/components/iconify';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 import { Form, Field, schemaHelper } from 'src/components/hook-form';
 import { usePopover, CustomPopover } from 'src/components/custom-popover';
-import { useDateRangePicker, CustomDateRangePicker } from 'src/components/custom-date-range-picker';
 
 import { ProjectShareDialog } from 'src/sections/project/project-share-dialog';
 import { KanbanInputName } from 'src/sections/project/kanban/components/kanban-input-name';
@@ -47,23 +43,17 @@ import { useDataContext } from 'src/auth/context/data/data-context';
 // ----------------------------------------------------------------------
 
 export function ProjectEditModalView({
-    projectId,
+    project,
     open,
     onClose,
 }) {
 
     const {
-        loadedProjects,
         loadedUsers,
         loadedProjectPermissions,
-        loadedStages,
-        loadedStagesTask,
-        setTableData,
         refetchProjects,
         refetchSalesOrders,
     } = useDataContext();
-
-    const item = useMemo(() => loadedProjects?.find((project) => project.id === projectId), [loadedProjects, projectId]);
 
     const cleanLoadedUsers = useMemo(() => loadedUsers.map(({ __typename, ...rest }) => rest), [loadedUsers]);
 
@@ -77,10 +67,10 @@ export function ProjectEditModalView({
 
     const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
 
-    const rangePicker = useDateRangePicker(
-        item?.startDate ? dayjs(item?.startDate) : dayjs(new Date()),
-        item?.endDate ? dayjs(item?.endDate) : dayjs(new Date())
-    );
+    // const rangePicker = useDateRangePicker(
+    //     project?.startDate ? dayjs(project?.startDate) : dayjs(new Date()),
+    //     project?.endDate ? dayjs(project?.endDate) : dayjs(new Date())
+    // );
 
     const popover = usePopover();
 
@@ -88,67 +78,45 @@ export function ProjectEditModalView({
 
     const share = useBoolean();
 
-    const { data: itemById } = useProjectByIdQuery(item?.id, {
-        skip: !item?.id,
-    });
-
     const [projectData, setProjectData] = useState({})
 
-    // useEffect(() => {
-    //   if (refetchItemById) {
-    //     refetchItemById();
-    //   }
-    //   setProjectData(itemById || {});
-    // }, [refetchItemById, itemById]);
-
     useEffect(() => {
-        if (itemById) {
+        if (project) {
             setProjectData((prev) => ({
                 ...prev,
-                id: itemById?.id || '',
-                name: itemById?.name || '',
-                number: itemById?.number || '',
-                description: itemById?.description || '',
-                startDate: itemById?.startDate || null,
-                endDate: itemById?.endDate || null,
-                address: itemById?.address || '',
-                usersAssignees: itemById?.usersAssignees || [],
+                id: project?.id || '',
+                name: project?.name || '',
+                number: project?.number || '',
+                description: project?.description || '',
+                // startDate: project?.startDate || null,
+                // endDate: project?.endDate || null,
+                address: project?.address || '',
+                usersAssignees: project?.usersAssignees || [],
                 userManager:
-                    itemById?.userManager && Object.keys(itemById.userManager).length > 0
-                        ? cleanLoadedUsers.find(u => u.id === itemById?.userManager?.id)
+                    project?.userManager && Object.keys(project.userManager).length > 0
+                        ? cleanLoadedUsers.find(u => u.id === project?.userManager?.id)
                         : null,
-                projectAttachments: itemById?.projectAttachments || [],
-                projectTasks: itemById?.projectTasks || [],
-                projectDefaultTasks: itemById?.projectDefaultTasks || [],
-                projectComments: itemById?.projectComments || [],
-                hasPermission: itemById?.hasPermission || false,
-                currentStage: itemById?.currentStage || null,
+                projectAttachments: project?.projectAttachments || [],
+                projectTasks: project?.projectTasks || [],
+                projectDefaultTasks: project?.projectDefaultTasks || [],
+                projectComments: project?.projectComments || [],
+                hasPermission: project?.hasPermission || false,
+                currentStage: project?.currentStage || null,
                 currentTask: null,
             }));
         }
-    }, [itemById, setProjectData, cleanLoadedUsers]);
+    }, [project, setProjectData, cleanLoadedUsers]);
 
     const handleReturnList = useCallback(() => {
         router.push(paths.dashboard.project.list);
     }, [router]);
 
 
-    const handleChangeProjectName = useCallback((event) => {
-        const name = event.target.value;
-        if (name.length > 0) {
-            setProjectData({ ...projectData, name });
-        }
-        else {
-            setProjectData({ ...projectData, name: item.name });
-        }
-    }, [projectData, item]);
-
-
 
     const handleRemoveUserAssignee = useCallback(
         async (userId) => {
             try {
-                const promise = axios.delete(`${CONFIG.apiUrl}/projects/delete/project/${item.id}/user/${userId}/`, {
+                const promise = axios.delete(`${CONFIG.apiUrl}/projects/delete/project/${project.id}/user/${userId}/`, {
                     data: {
                         userReporter: userLogged?.data,
                     },
@@ -162,7 +130,7 @@ export function ProjectEditModalView({
             } catch (error) {
                 console.error(error);
             }
-        }, [projectData, item, refetchProjects, userLogged]
+        }, [projectData, project, refetchProjects, userLogged]
     );
 
     const handleDeleteItem = useCallback(
@@ -174,7 +142,6 @@ export function ProjectEditModalView({
                 }
             });
 
-            const response = await promise;
 
             toast.success('Delete success!');
 
@@ -202,6 +169,16 @@ export function ProjectEditModalView({
             isStaff: zod.boolean(),
             isActive: zod.boolean(),
             project_permissions: zod.array(zod.any()).optional(),
+            user_role: zod.object({
+                id: zod.string(),
+                name: zod.string(),
+                description: zod.string(),
+            }).optional(),
+            userRole: zod.object({
+                id: zod.string(),
+                name: zod.string(),
+                description: zod.string(),
+            }).optional(),
         }).refine(
             (data) => data.id !== '', { message: 'User Manager is required!' }
         ),
@@ -218,6 +195,16 @@ export function ProjectEditModalView({
                     isStaff: zod.boolean(),
                     isActive: zod.boolean(),
                     project_permissions: zod.array(zod.any()).optional(),
+                    user_role: zod.object({
+                        id: zod.string(),
+                        name: zod.string(),
+                        description: zod.string(),
+                    }).optional(),
+                    userRole: zod.object({
+                        id: zod.string(),
+                        name: zod.string(),
+                        description: zod.string(),
+                    }).optional(),
                 })
             )
             .nonempty({ message: 'Must have at least 1 user!' }),
@@ -234,26 +221,26 @@ export function ProjectEditModalView({
 
     const defaultValues = useMemo(
         () => ({
-            id: itemById?.id || '',
-            name: itemById?.name || '',
-            number: itemById?.number || '',
-            description: itemById?.description || '',
-            usersAssignees: itemById?.usersAssignees || [],
+            id: project?.id || '',
+            name: project?.name || '',
+            number: project?.number || '',
+            description: project?.description || '',
+            usersAssignees: project?.usersAssignees || [],
             userManager:
-                itemById?.userManager && Object.keys(itemById.userManager).length > 0
-                    ? cleanLoadedUsers.find(u => u.id === itemById?.userManager?.id)
+                project?.userManager && Object.keys(project.userManager).length > 0
+                    ? cleanLoadedUsers.find(u => u.id === project?.userManager?.id)
                     : null,
             userReporter: userLogged?.data,
-            startDate: itemById?.startDate || null,
-            endDate: itemById?.endDate || null,
-            projectAttachments: itemById?.projectAttachments || [],
-            hasPermission: itemById?.hasPermission || false,
-            projectDefaultTasks: itemById?.projectDefaultTasks || [],
-            projectComments: itemById?.projectComments || [],
-            address: itemById?.address || '',
-            currentStage: itemById?.currentStage || null,
+            // startDate: project?.startDate || null,
+            // endDate: project?.endDate || null,
+            projectAttachments: project?.projectAttachments || [],
+            hasPermission: project?.hasPermission || false,
+            projectDefaultTasks: project?.projectDefaultTasks || [],
+            projectComments: project?.projectComments || [],
+            address: project?.address || '',
+            currentStage: project?.currentStage || null,
         }),
-        [itemById, userLogged, cleanLoadedUsers]
+        [project, userLogged, cleanLoadedUsers]
     );
 
     const methods = useForm({
@@ -273,29 +260,29 @@ export function ProjectEditModalView({
 
 
     useEffect(() => {
-        if (itemById) {
+        if (project) {
             const validUserManager = cleanLoadedUsers.find(
-                (user) => user.id === itemById?.userManager?.id
+                (user) => user.id === project?.userManager?.id
             ) || null;
             reset({
-                id: itemById.id || '',
-                name: itemById.name || '',
-                number: itemById.number || '',
-                description: itemById.description || '',
-                usersAssignees: itemById.usersAssignees || [],
+                id: project.id || '',
+                name: project.name || '',
+                number: project.number || '',
+                description: project.description || '',
+                usersAssignees: project.usersAssignees || [],
                 userManager: validUserManager,
                 userReporter: userLogged?.data,
-                startDate: itemById.startDate || null,
-                endDate: itemById.endDate || null,
-                projectAttachments: itemById.projectAttachments || [],
-                hasPermission: itemById.hasPermission || false,
-                projectDefaultTasks: itemById.projectDefaultTasks || [],
-                projectComments: itemById.projectComments || [],
-                address: itemById.address || '',
-                currentStage: itemById.currentStage || null,
+                // startDate: project.startDate || null,
+                // endDate: project.endDate || null,
+                projectAttachments: project.projectAttachments || [],
+                hasPermission: project.hasPermission || false,
+                projectDefaultTasks: project.projectDefaultTasks || [],
+                projectComments: project.projectComments || [],
+                address: project.address || '',
+                currentStage: project.currentStage || null,
             });
         }
-    }, [itemById, userLogged?.data, reset, cleanLoadedUsers]);
+    }, [project, userLogged?.data, reset, cleanLoadedUsers]);
 
     const userManager = watch("userManager");
 
@@ -308,34 +295,6 @@ export function ProjectEditModalView({
         return cleanLoadedUsers.filter(user => !assigneesArray.some(u => u.id === user.id));
     }, [cleanLoadedUsers, usersAssignees]);
 
-    const handleTabChange = (event, newValue) => {
-        tabs.onChange(event, newValue);
-        setProjectData((prev) => ({
-            ...prev,
-            currentTask: null,
-        }));
-    };
-
-    const handleRemoveTask = useCallback(
-        async (taskId) => {
-            try {
-                const promise = axios.delete(`${CONFIG.apiUrl}/projects/delete/project/${item.id}/task/${taskId}/`, {
-                    data: {
-                        userReporter: userLogged?.data,
-                    },
-                });
-                const response = await promise;
-                if (response.data) {
-                    const newTasks = projectData.projectTasks.filter((task) => task.id !== taskId);
-                    setProjectData({ ...projectData, projectTasks: newTasks });
-                    refetchProjects?.();
-                }
-            } catch (error) {
-                console.error(error);
-            }
-        }, [projectData, item, refetchProjects, userLogged]
-    );
-
 
     const handleAddResetUsersAssignees = useCallback(
         async (users) => {
@@ -347,7 +306,7 @@ export function ProjectEditModalView({
                 ];
             }
             try {
-                const promise = axios.post(`${CONFIG.apiUrl}/projects/add/project/${item.id}/users/`, {
+                const promise = axios.post(`${CONFIG.apiUrl}/projects/add/project/${project.id}/users/`, {
                     usersAssignees: updatedUsers,
                     userReporter: userLogged?.data,
                 });
@@ -360,7 +319,7 @@ export function ProjectEditModalView({
                 console.error(error);
             }
         },
-        [setValue, projectData, item, userLogged]
+        [setValue, projectData, project, userLogged]
     );
 
 
@@ -373,8 +332,8 @@ export function ProjectEditModalView({
         formData.append('userManager', JSON.stringify(data.userManager));
         formData.append('hasPermission', data.hasPermission);
 
-        formData.append('startDate', new Date(rangePicker.startDate).toISOString());
-        formData.append('endDate', new Date(rangePicker.endDate).toISOString());
+        // formData.append('startDate', new Date(rangePicker.startDate).toISOString());
+        // formData.append('endDate', new Date(rangePicker.endDate).toISOString());
 
         formData.append('currentStage', JSON.stringify(data.currentStage));
         formData.append('address', data.address);
@@ -390,7 +349,7 @@ export function ProjectEditModalView({
             });
         }
 
-        const promise = axios.post(`${CONFIG.apiUrl}/projects/update/project/${item.id}/`, formData, {
+        const promise = axios.post(`${CONFIG.apiUrl}/projects/update/project/${project.id}/`, formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
             },
@@ -415,8 +374,8 @@ export function ProjectEditModalView({
                 description: data.description,
                 usersAssignees: data.usersAssignees,
                 userManager: data.userManager,
-                startDate: data.startDate,
-                endDate: data.endDate,
+                // startDate: data.startDate,
+                // endDate: data.endDate,
                 currentStage: data.currentStage,
                 address: data.address,
                 projectAttachments: data.projectAttachments,
@@ -474,7 +433,7 @@ export function ProjectEditModalView({
                     <Grid container spacing={2}>
                         <Grid item xs={12} sm={12}>
                             <Stack direction="row" sx={{ typography: 'caption', textTransform: 'capitalize' }}>
-                                <Box component="span" sx={{ width: 80, color: 'text.secondary', mr: 2 }}>
+                                {/* <Box component="span" sx={{ width: 80, color: 'text.secondary', mr: 2 }}>
                                     Estimated Dates
                                 </Box>
                                 <Box sx={{ width: '100%', color: 'text.secondary', mt: -0.8 }}>
@@ -531,15 +490,16 @@ export function ProjectEditModalView({
                                     onClose={rangePicker.onClose}
                                     selected={rangePicker.selected}
                                     error={rangePicker.error}
-                                />
-                                <Box sx={{ width: !isMobile ? '10%' : '100%', color: 'text.secondary', mt: !isMobile ? 0 : 2, ml: !isMobile ? 5 : 1 }}>
+                                /> */}
+                                {/* <Box sx={{ width: !isMobile ? '10%' : '100%', color: 'text.secondary', mt: !isMobile ? 0 : 2, ml: !isMobile ? 5 : 1 }}> */}
+                                <Box sx={{ width: !isMobile ? '15%' : '25%', color: 'text.secondary', mt: !isMobile ? 0 : 2, ml: !isMobile ? 0 : 7 }}>
                                     <Stack spacing={0} sx={{ typography: 'caption', textTransform: 'capitalize', mt: 0, mr: 0 }}>
                                         <Typography variant="subtitle2" />
                                         <Controller
                                             name="hasPermission"
                                             control={control}
                                             defaultValue={false}
-                                            render={({ field: { onChange, value, ref } }) => (
+                                            render={({ field: { onChange } }) => (
                                                 <Field.Switch
                                                     name="hasPermission"
                                                     labelPlacement="start"
@@ -599,7 +559,7 @@ export function ProjectEditModalView({
                                                     {field.value.map((person, index) => (
                                                         <ProjectUserAssigneesList
                                                             key={`${index}-${person?.id}`}
-                                                            project={itemById}
+                                                            project={project}
                                                             person={person}
                                                             setProjectData={setProjectData}
                                                             setValue={setValue}
@@ -752,7 +712,7 @@ export function ProjectEditModalView({
 
             <ProjectShareDialog
                 open={share.value}
-                shared={item?.shared}
+                shared={project?.shared}
                 loadedUsers={filteredUsers}
                 loadedProjectPermissions={loadedProjectPermissions}
                 projectData={projectData}
@@ -768,11 +728,11 @@ export function ProjectEditModalView({
                 title="Delete Project"
                 content={
                     <>
-                        Are you sure want to delete project <strong> {item?.name} </strong>?
+                        Are you sure want to delete project <strong> {project?.name} </strong>?
                     </>
                 }
                 action={
-                    <Button variant="contained" color="error" onClick={() => handleDeleteItem(itemById?.id)}>
+                    <Button variant="contained" color="error" onClick={() => handleDeleteItem(project?.id)}>
                         Delete
                     </Button>
                 }

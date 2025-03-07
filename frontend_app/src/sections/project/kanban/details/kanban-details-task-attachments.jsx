@@ -6,13 +6,14 @@ import { Box, Grid, Button } from '@mui/material';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
+import { verifyPermissions, listRolesAndSubroles } from 'src/utils/check-permissions';
+
 import { CONFIG } from 'src/config-global';
 
 import { ConfirmDialog } from 'src/components/custom-dialog';
 import { UploadBox, MultiFilePreview } from 'src/components/upload';
 
 import { LoadingContext } from 'src/auth/context/loading-context';
-import { listRolesAndSubroles, verifyPermissions } from 'src/utils/check-permissions';
 
 export function KanbanDetailsTaskAttachments({
     project,

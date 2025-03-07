@@ -41,6 +41,16 @@ export const SalesOrderCreateProjectDialogSchema = zod.object({
       email: zod.string(),
       isStaff: zod.boolean(),
       isActive: zod.boolean(),
+      user_role: zod.object({
+        id: zod.string(),
+        name: zod.string(),
+        description: zod.string(),
+      }).optional(),
+      userRole: zod.object({
+        id: zod.string(),
+        name: zod.string(),
+        description: zod.string(),
+      }).optional(),
     })
   ).nonempty({ message: 'Must have at least 1 user!' }),
   userManager: zod.object({
@@ -53,6 +63,16 @@ export const SalesOrderCreateProjectDialogSchema = zod.object({
     email: zod.string(),
     isStaff: zod.boolean(),
     isActive: zod.boolean(),
+    user_role: zod.object({
+      id: zod.string(),
+      name: zod.string(),
+      description: zod.string(),
+    }).optional(),
+    userRole: zod.object({
+      id: zod.string(),
+      name: zod.string(),
+      description: zod.string(),
+    }).optional(),
   }).refine((data) => data.id && data.name, {
     message: "Project Manager is required!",
     path: ["userManager"],

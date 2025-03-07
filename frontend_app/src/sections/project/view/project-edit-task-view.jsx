@@ -9,13 +9,14 @@ import { Box, Chip, Stack, Button, IconButton, Typography } from '@mui/material'
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
+import { availableTasks } from 'src/utils/project-tasks-utils';
+
 import { CONFIG } from 'src/config-global';
 
 import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
 import { Form, Field, schemaHelper } from 'src/components/hook-form';
 import { useDateRangePicker } from 'src/components/custom-date-range-picker';
-import { availableTasks } from 'src/utils/project-tasks-utils';
 
 import { ProjectTaskShareDialog } from 'src/sections/project/project-task-share-dialog';
 import { ProjectDetailsAttachments } from 'src/sections/project/project-details-attachments';
@@ -56,7 +57,7 @@ export function ProjectEditTaskView({
                 );
             }
             setAllTasks(tasks);
-        }   
+        }
     }, [projectData]);
 
 
@@ -120,6 +121,16 @@ export function ProjectEditTaskView({
                     email: zod.string(),
                     isStaff: zod.boolean(),
                     isActive: zod.boolean(),
+                    user_role: zod.object({
+                        id: zod.string(),
+                        name: zod.string(),
+                        description: zod.string(),
+                    }).optional(),
+                    userRole: zod.object({
+                        id: zod.string(),
+                        name: zod.string(),
+                        description: zod.string(),
+                    }).optional(),
                 })
             )
             .nonempty({ message: 'Must have at least 1 user!' }),
@@ -250,21 +261,21 @@ export function ProjectEditTaskView({
 
     const renderAddTaskUsers = (
         <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ p: 0.5 }}>
-                <IconButton
-                    size="small"
-                    color="primary"
-                    onClick={shareTask.onTrue}
-                    sx={{
-                        width: 24,
-                        height: 24,
-                        bgcolor: 'primary.main',
-                        color: 'primary.contrastText',
-                        '&:hover': { bgcolor: 'primary.dark' },
-                    }}
-                >
-                    <Iconify icon="mingcute:add-line" />
-                </IconButton>
-            </Stack>
+            <IconButton
+                size="small"
+                color="primary"
+                onClick={shareTask.onTrue}
+                sx={{
+                    width: 24,
+                    height: 24,
+                    bgcolor: 'primary.main',
+                    color: 'primary.contrastText',
+                    '&:hover': { bgcolor: 'primary.dark' },
+                }}
+            >
+                <Iconify icon="mingcute:add-line" />
+            </IconButton>
+        </Stack>
     );
 
     const renderTaskAttachments = (
@@ -371,12 +382,12 @@ export function ProjectEditTaskView({
                         }}
                         direction="row"
                     >
-                        <ProjectEditTaskViewTaskList 
-                        projectData={projectData} 
-                        loadedTasks={loadedTasks} 
-                        setLoadedTasks={setLoadedTasks}
-                        allTasks={allTasks}
-                        setAllTasks={setAllTasks}
+                        <ProjectEditTaskViewTaskList
+                            projectData={projectData}
+                            loadedTasks={loadedTasks}
+                            setLoadedTasks={setLoadedTasks}
+                            allTasks={allTasks}
+                            setAllTasks={setAllTasks}
                         />
                     </Stack>
                     <Stack

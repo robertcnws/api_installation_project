@@ -124,6 +124,15 @@ def project_saved(sender, document, **kwargs):
                 "isActive": document.is_active,
                 "hasPermission": document.has_permission,
                 "userManager": document.user_manager,
+                "allProductsMarked": document.all_products_marked,
+                "allWindowsMarked": document.all_windows_marked,
+                "allScrewMarked": document.all_screw_marked,
+                "allTrashMarked": document.all_trash_marked,
+                "feedback": document.feedback,
+                "workScope": document.work_scope,
+                "projectMaterials": document.project_materials,
+                "projectGuideProducts": document.project_guide_products,
+                "projectMaterialsOtherNotes": document.project_materials_other_notes,
             }
 
         }
@@ -159,6 +168,15 @@ def project_deleted(sender, document, **kwargs):
                 "isActive": document.is_active,
                 "hasPermission": document.has_permission,
                 "userManager": document.user_manager,
+                "allProductsMarked": document.all_products_marked,
+                "allWindowsMarked": document.all_windows_marked,
+                "allScrewMarked": document.all_screw_marked,
+                "allTrashMarked": document.all_trash_marked,
+                "feedback": document.feedback,
+                "workScope": document.work_scope,
+                "projectMaterials": document.project_materials,
+                "projectGuideProducts": document.project_guide_products,
+                "projectMaterialsOtherNotes": document.project_materials_other_notes,
             }
         }
     }
@@ -255,6 +273,15 @@ def project_by_id_saved(sender, document, **kwargs):
                 "isActive": document.is_active,
                 "hasPermission": document.has_permission,
                 "userManager": document.user_manager,
+                "allProductsMarked": document.all_products_marked,
+                "allWindowsMarked": document.all_windows_marked,
+                "allScrewMarked": document.all_screw_marked,
+                "allTrashMarked": document.all_trash_marked,
+                "feedback": document.feedback,
+                "workScope": document.work_scope,
+                "projectMaterials": document.project_materials,
+                "projectGuideProducts": document.project_guide_products,
+                "projectMaterialsOtherNotes": document.project_materials_other_notes,
             }
 
         }
@@ -292,6 +319,15 @@ def project_by_id_deleted(sender, document, **kwargs):
                 "isActive": document.is_active,
                 "hasPermission": document.has_permission,
                 "userManager": document.user_manager,
+                "allProductsMarked": document.all_products_marked,
+                "allWindowsMarked": document.all_windows_marked,
+                "allScrewMarked": document.all_screw_marked,
+                "allTrashMarked": document.all_trash_marked,
+                "feedback": document.feedback,
+                "workScope": document.work_scope,
+                "projectMaterials": document.project_materials,
+                "projectGuideProducts": document.project_guide_products,
+                "projectMaterialsOtherNotes": document.project_materials_other_notes,
             }
         }
     }

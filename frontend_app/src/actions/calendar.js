@@ -1,8 +1,9 @@
-import { useCallback, useMemo, useRef } from 'react';
 import useSWR, { mutate } from 'swr';
-import { ALL_COLORS } from 'src/_mock/__colors';
+import { useRef, useMemo, useCallback } from 'react';
 
 import axios, { fetcher, endpoints } from 'src/utils/axios';
+
+import { ALL_COLORS } from 'src/_mock/__colors';
 
 // ----------------------------------------------------------------------
 

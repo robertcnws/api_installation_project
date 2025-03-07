@@ -15,6 +15,8 @@ import LoadingButton from '@mui/lab/LoadingButton';
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
 
+import { createDefaultPermissions } from 'src/utils/check-permissions';
+
 import { _mock } from 'src/_mock/_mock';
 import { CONFIG } from 'src/config-global';
 
@@ -22,8 +24,6 @@ import { toast } from 'src/components/snackbar';
 import { Form, Field, schemaHelper } from 'src/components/hook-form';
 
 import { useDataContext } from 'src/auth/context/data/data-context';
-import { useQuery } from '@apollo/client';
-import { createDefaultPermissions } from 'src/utils/check-permissions';
 
 // ----------------------------------------------------------------------
 
@@ -111,7 +111,7 @@ export function UserNewEditForm({ currentUser }) {
   const onSubmit = handleSubmit(async (data) => {
 
     const roleName = loadedUserRoles?.find((role) => role.id === data.role)?.name;
-    const username = data.username;
+    const {username} = data;
 
     try {
       const randomNumber = Math.floor(Math.random() * 25) + 1;

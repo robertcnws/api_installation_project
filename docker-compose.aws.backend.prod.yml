@@ -1,27 +1,18 @@
 services:
-  api_installation:
+  aws_backend_app:
     build:
       context: ./backend_app
-      dockerfile: Dockerfile
-    container_name: api_installation
+      dockerfile: Dockerfile.aws.backend.prod
+    container_name: aws_backend_app
     restart: unless-stopped
     volumes:
       - ./backend_app:/app
       - ./backend_app/gunicorn.conf.py:/etc/nginx/gunicorn.conf.py
       - ./backend_app/static:/app/staticfiles
     ports:
-      - "8001:8000"
-    depends_on:
-      - mongodb_installation
-      - redis_installation
-    env_file:
-      - ./backend_app/.env
+      - "8001:8001"
     networks:
       - net_installation
-
-volumes:
-  mongodb_data:
-  redis_data:
 
 networks:
   net_installation:

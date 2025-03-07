@@ -3,6 +3,10 @@ import axios from 'axios';
 import { useQuery } from '@tanstack/react-query';
 import React, { useMemo, useState, useEffect, useContext, createContext } from 'react';
 
+import { fIsAfter } from 'src/utils/format-time';
+import { totalPercentageProjectStage } from 'src/utils/project-tasks-utils';
+import { isInstaller, isSuperAdmin, isOfficeStaff, isAdministrator, isProjectManager, listRolesAndSubroles } from 'src/utils/check-permissions';
+
 import { _mock } from 'src/_mock/_mock';
 import { CONFIG } from 'src/config-global';
 import { useUsersQuery } from 'src/_mock/__users';
@@ -13,9 +17,6 @@ import { useStagesTaskQuery } from 'src/_mock/__stages_task';
 import { useDefaultTasksQuery } from 'src/_mock/__default_tasks';
 import { useProjectPermissionsQuery } from 'src/_mock/__project_permissions';
 import { useNotificationsQuery } from 'src/_mock/__projects_notifications_users';
-import { fIsAfter } from 'src/utils/format-time';
-import { isAdministrator, isInstaller, isProjectManager, isOfficeStaff, isSuperAdmin, listRolesAndSubroles } from 'src/utils/check-permissions';
-
 
 const DataContext = createContext();
 export const useDataContext = () => useContext(DataContext);
@@ -108,7 +109,13 @@ export const DataProvider = ({ children }) => {
     );
     if (userLogged?.data.user_role.name.toLowerCase().indexOf(CONFIG.roles.installer.toLowerCase()) !== -1) {
       finalProjects = sortedProjects.filter((project) =>
-        project.currentStage.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
+        (
+          project.currentStage.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1 ||
+          (
+            project.currentStage.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 &&
+            totalPercentageProjectStage(project, CONFIG.stages.coordination, CONFIG) >= 50
+          )
+        )
       );
     }
   }

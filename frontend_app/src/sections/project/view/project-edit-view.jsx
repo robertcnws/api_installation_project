@@ -212,6 +212,16 @@ export function ProjectEditView({
             isStaff: zod.boolean(),
             isActive: zod.boolean(),
             project_permissions: zod.array(zod.any()).optional(),
+            user_role: zod.object({
+                id: zod.string(),
+                name: zod.string(),
+                description: zod.string(),
+            }).optional(),
+            userRole: zod.object({
+                id: zod.string(),
+                name: zod.string(),
+                description: zod.string(),
+            }).optional(),
         }).refine(
             (data) => data.id !== '', { message: 'User Manager is required!' }
         ),
@@ -228,6 +238,16 @@ export function ProjectEditView({
                     isStaff: zod.boolean(),
                     isActive: zod.boolean(),
                     project_permissions: zod.array(zod.any()).optional(),
+                    user_role: zod.object({
+                        id: zod.string(),
+                        name: zod.string(),
+                        description: zod.string(),
+                    }).optional(),
+                    userRole: zod.object({
+                        id: zod.string(),
+                        name: zod.string(),
+                        description: zod.string(),
+                    }).optional(),
                 })
             )
             .nonempty({ message: 'Must have at least 1 user!' }),
@@ -464,21 +484,21 @@ export function ProjectEditView({
 
     const renderAddUsers = (
         <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ p: 0.5 }}>
-                <IconButton
-                    size="small"
-                    color="primary"
-                    onClick={share.onTrue}
-                    sx={{
-                        width: 24,
-                        height: 24,
-                        bgcolor: 'primary.main',
-                        color: 'primary.contrastText',
-                        '&:hover': { bgcolor: 'primary.dark' },
-                    }}
-                >
-                    <Iconify icon="mingcute:add-line" />
-                </IconButton>
-            </Stack>
+            <IconButton
+                size="small"
+                color="primary"
+                onClick={share.onTrue}
+                sx={{
+                    width: 24,
+                    height: 24,
+                    bgcolor: 'primary.main',
+                    color: 'primary.contrastText',
+                    '&:hover': { bgcolor: 'primary.dark' },
+                }}
+            >
+                <Iconify icon="mingcute:add-line" />
+            </IconButton>
+        </Stack>
     );
 
     const renderMainInfo = (
@@ -611,38 +631,38 @@ export function ProjectEditView({
                                     control={control}
                                     render={({ field, fieldState: { error } }) => (
                                         <Box sx={{ width: expanded ? '40%' : '100%', color: !error ? 'text.secondary' : 'error.main', mt: -0.8 }}>
-                                                {field.value.length > 0 ? (
-                                                    <Box
-                                                        component="ul"
-                                                        sx={{
-                                                            pl: 2,
-                                                            pr: 1,
-                                                            maxHeight: !isMobile ? 250 : '100%',
-                                                            overflowY: !isMobile ? 'auto' : 'hidden',
-                                                            color: !error ? 'default' : 'error.main',
-                                                        }}
-                                                    >
-                                                        {field.value.map((person, index) => (
-                                                            <ProjectUserAssigneesList
-                                                                key={`${index}-${person?.id}`}
-                                                                project={item}
-                                                                person={person}
-                                                                loadedProjectPermissions={loadedProjectPermissions}
-                                                                handleRemoveUserAssignee={handleRemoveUserAssignee}
-                                                            />
-                                                        ))}
-                                                    </Box>
-                                                ) : (
-                                                    <Box component="label" sx={{ pl: 2, pr: 1 }}>
-                                                        <Label color={error ? "error" : "warning"} sx={{ marginTop: 5, marginLeft: 1 }}>Add users to project</Label>
-                                                    </Box>
-                                                )}
-                                                {error && (
-                                                    <Typography variant="caption" color="error">
-                                                        {error.message}
-                                                    </Typography>
-                                                )}
-                                            </Box>
+                                            {field.value.length > 0 ? (
+                                                <Box
+                                                    component="ul"
+                                                    sx={{
+                                                        pl: 2,
+                                                        pr: 1,
+                                                        maxHeight: !isMobile ? 250 : '100%',
+                                                        overflowY: !isMobile ? 'auto' : 'hidden',
+                                                        color: !error ? 'default' : 'error.main',
+                                                    }}
+                                                >
+                                                    {field.value.map((person, index) => (
+                                                        <ProjectUserAssigneesList
+                                                            key={`${index}-${person?.id}`}
+                                                            project={item}
+                                                            person={person}
+                                                            loadedProjectPermissions={loadedProjectPermissions}
+                                                            handleRemoveUserAssignee={handleRemoveUserAssignee}
+                                                        />
+                                                    ))}
+                                                </Box>
+                                            ) : (
+                                                <Box component="label" sx={{ pl: 2, pr: 1 }}>
+                                                    <Label color={error ? "error" : "warning"} sx={{ marginTop: 5, marginLeft: 1 }}>Add users to project</Label>
+                                                </Box>
+                                            )}
+                                            {error && (
+                                                <Typography variant="caption" color="error">
+                                                    {error.message}
+                                                </Typography>
+                                            )}
+                                        </Box>
                                     )}
                                 />
                             </Stack>
@@ -707,21 +727,21 @@ export function ProjectEditView({
                             control={control}
                             render={({ field, fieldState: { error } }) => (
                                 <Box sx={{ flexDirection: 'column', display: 'flex', width: '100%' }}>
-                                        <KanbanInputName
-                                            {...field}
-                                            placeholder="Project name"
-                                            value={field.value}
-                                            onChange={(e) => {
-                                                const newValue = e.target.value;
-                                                field.onChange(newValue);
-                                            }}
-                                            onBlur={field.onBlur}
-                                            inputProps={{ id: `input-task-${projectData?.name}` }}
-                                            sx={{ borderColor: error ? 'error.main' : 'grey.500', width: '100%', height: 55 }}
-                                            error={error}
-                                        />
-                                        {error && <Typography color="error" sx={{ fontSize: 'small' }}>{error.message}</Typography>}
-                                    </Box>
+                                    <KanbanInputName
+                                        {...field}
+                                        placeholder="Project name"
+                                        value={field.value}
+                                        onChange={(e) => {
+                                            const newValue = e.target.value;
+                                            field.onChange(newValue);
+                                        }}
+                                        onBlur={field.onBlur}
+                                        inputProps={{ id: `input-task-${projectData?.name}` }}
+                                        sx={{ borderColor: error ? 'error.main' : 'grey.500', width: '100%', height: 55 }}
+                                        error={error}
+                                    />
+                                    {error && <Typography color="error" sx={{ fontSize: 'small' }}>{error.message}</Typography>}
+                                </Box>
                             )}
 
                         />
@@ -806,15 +826,15 @@ export function ProjectEditView({
                             <Controller
                                 name="hasPermission"
                                 control={control}
-                                defaultValue={false} 
+                                defaultValue={false}
                                 render={({ field: { onChange, value, ref } }) => (
                                     <Field.Switch
                                         name="hasPermission"
                                         labelPlacement="start"
                                         label={
                                             <Typography variant="subtitle2" sx={{ mb: 0.5, color: 'warning.main' }}>
-                                                    Need Permission?
-                                                </Typography>
+                                                Need Permission?
+                                            </Typography>
                                         }
                                         sx={{ mx: 0, width: 1, justifyContent: 'space-between' }}
                                         onChange={(e) => onChange(e.target.checked)}

@@ -15,6 +15,13 @@ logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
 
 
+# HEALTH CHECK VIEW
+
+@csrf_exempt
+def health_check(request):
+    return JsonResponse({'status': 'ok'})
+
+
 @csrf_exempt
 def login(request):
     if request.method == 'POST':

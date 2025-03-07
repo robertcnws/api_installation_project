@@ -1,26 +1,32 @@
-import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { LoadingContext } from 'src/auth/context/loading-context';
-import { fDate } from 'src/utils/format-time';
+import React, { useMemo, useState, useContext, useCallback } from 'react';
+
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Tooltip from '@mui/material/Tooltip';
 import IconButton from '@mui/material/IconButton';
 import CardHeader from '@mui/material/CardHeader';
 import ListItemText from '@mui/material/ListItemText';
-import { CustomPopover, usePopover } from 'src/components/custom-popover';
+import { Table, MenuItem, MenuList, TableBody, Typography, TableContainer } from '@mui/material';
 
-import { Iconify } from 'src/components/iconify';
-import { Scrollbar } from 'src/components/scrollbar';
-import { MenuItem, MenuList, Table, TableBody, TableContainer, Typography } from '@mui/material';
-import { TableNoData } from 'src/components/table';
-import { CONFIG } from 'src/config-global';
-import { ConfirmDialog } from 'src/components/custom-dialog';
-import { fNumber, fPercent } from 'src/utils/format-number';
-import { useBoolean } from 'src/hooks/use-boolean';
-import { useRouter } from 'src/routes/hooks';
 import { paths } from 'src/routes/paths';
-import { Label } from 'src/components/label';
+import { useRouter } from 'src/routes/hooks';
+
+import { useBoolean } from 'src/hooks/use-boolean';
+
+import { fPercent } from 'src/utils/format-number';
 import { isInstaller } from 'src/utils/check-permissions';
+import { getProjectInstaller, totalPercentageProject } from 'src/utils/project-tasks-utils';
+
+import { CONFIG } from 'src/config-global';
+
+import { Label } from 'src/components/label';
+import { Iconify } from 'src/components/iconify';
+import { TableNoData } from 'src/components/table';
+import { Scrollbar } from 'src/components/scrollbar';
+import { ConfirmDialog } from 'src/components/custom-dialog';
+import { usePopover, CustomPopover } from 'src/components/custom-popover';
+
+import { LoadingContext } from 'src/auth/context/loading-context';
 
 // ----------------------------------------------------------------------
 
@@ -67,148 +73,8 @@ export function ProjectsToDoToday({
             setCurrentItem(item);
             setCurrentTasksFiltered(tasksFiltered.sort((a, b) => a.project_default_task.order - b.project_default_task.order));
             openDialog.onTrue();
-        }, [openDialog]);
-
-    const Item = ({ item, sx }) =>
-        <Box sx={{ gap: 2, display: 'flex', alignItems: 'center', ...sx }} key={item.id} {...other}>
-            <ListItemText
-                primary={
-                    <>
-                        <Box component="span"
-                            sx={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: 1,
-                                cursor: 'pointer'
-                            }}
-                            onClick={() => {
-                                localStorage.setItem('projectId', item?.id);
-                                localStorage.setItem('backFromProjectDetails', 'analytics');
-                                router.push(paths.dashboard.project.details(item?.id));
-                            }}>
-                            <Typography
-                                variant="subtitle2"
-                                sx={{ color: 'text.primary' }}
-                            >
-                                {item.name}
-                            </Typography>
-                            {item.hasPermission && (
-                                <Label
-                                    color='warning'
-                                    variant="outlined"
-                                    sx={{
-                                        textTransform: 'capitalize',
-                                        fontSize: '9px',
-                                        p: 0.5
-                                    }}
-                                >
-                                    Need Permission
-                                </Label>
-                            )}
-                        </Box>
-                    </>
-                }
-                secondary={
-                    <>
-                        <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', typography: 'body2', color: 'text.secondary', gap: 2 }}>
-                            <Typography component="span" variant="caption" sx={{ color: 'text.secondary' }}>
-                                Responsable: {item.userManager?.name}
-                            </Typography>
-                        </Box>
-                        <br />
-                        {(item.projectDefaultTasks.length > 0 && !isInstaller(userLogged?.data?.user_role?.name)) && (
-                            <>
-                                <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', typography: 'body2', gap: 2 }}>
-
-                                    {calculateTotalStatus({ item, status: CONFIG.taskStatus.notStarted }) > 0 && (
-                                        <Box
-                                            component="span"
-                                            key={`${item.id}-not-started`}
-                                            sx={{
-                                                display: 'inline-flex',
-                                                alignItems: 'center',
-                                                typography: 'body2',
-                                                color: 'backgound.neutral',
-                                                gap: 0,
-                                                cursor: 'pointer'
-                                            }}
-                                            onClick={() => {
-                                                renderDialog({ item, status: CONFIG.taskStatus.notStarted });
-                                            }}
-                                        >
-                                            <Iconify icon="mdi:restart-off" width={16} height={16} />
-                                            <span style={{ fontSize: 'x-small' }}>
-                                                <b>{
-                                                    calculateTotalStatus({ item, status: CONFIG.taskStatus.notStarted })
-                                                }</b> Not Started
-                                            </span>
-                                        </Box>
-                                    )}
-                                    {calculateTotalStatus({ item, status: CONFIG.taskStatus.inProgress }) > 0 && (
-                                        <Box
-                                            component="span"
-                                            key={`${item.id}-in-progress`}
-                                            sx={{
-                                                display: 'inline-flex',
-                                                alignItems: 'center',
-                                                typography: 'body2',
-                                                color: 'warning.main',
-                                                gap: 0,
-                                                cursor: 'pointer'
-                                            }}
-                                            onClick={() => {
-                                                renderDialog({ item, status: CONFIG.taskStatus.inProgress });
-                                            }}
-                                        >
-                                            <Iconify icon="carbon:executable-program" width={16} height={16} />
-                                            <span style={{ fontSize: 'x-small' }}>
-                                                <b>{
-                                                    calculateTotalStatus({ item, status: CONFIG.taskStatus.inProgress })
-                                                }</b> In Progress
-                                            </span>
-                                        </Box>
-                                    )}
-                                    {calculateTotalStatus({ item, status: CONFIG.taskStatus.finished }) > 0 && (
-                                        <Box
-                                            component="span"
-                                            key={`${item.id}-finished`}
-                                            sx={{
-                                                display: 'inline-flex',
-                                                alignItems: 'center',
-                                                typography: 'body2',
-                                                color: 'success.main',
-                                                gap: 0,
-                                                cursor: 'pointer'
-                                            }}
-                                            onClick={() => {
-                                                renderDialog({ item, status: CONFIG.taskStatus.finished });
-                                            }}
-                                        >
-                                            <Iconify icon="rivet-icons:inbox-complete" width={16} height={16} />
-                                            <span style={{ fontSize: 'x-small' }}>
-                                                <b>{
-                                                    calculateTotalStatus({ item, status: CONFIG.taskStatus.finished })
-                                                }</b> Finished
-                                            </span>
-                                        </Box>
-                                    )}
-                                </Box>
-                            </>
-                        )}
-                    </>
-                }
-            />
-
-            <Tooltip title="See details">
-                <IconButton onClick={() => {
-                    localStorage.setItem('projectId', item?.id);
-                    localStorage.setItem('backFromProjectDetails', 'analytics');
-                    router.push(paths.dashboard.project.details(item?.id));
-                }}>
-                    <Iconify icon="solar:transfer-horizontal-bold-duotone" />
-                </IconButton>
-            </Tooltip>
-        </Box>
+        }, [openDialog]
+    );
 
     return (
         <>
@@ -232,8 +98,10 @@ export function ProjectsToDoToday({
                                 <Item
                                     key={`${item.id}-${index}`}
                                     item={item}
-                                    openDialog={openDialog}
                                     sx={{ px: 2, py: 0, bgcolor: index % 2 === 0 ? 'background.default' : 'background.paper' }}
+                                    router={router}
+                                    userLogged={userLogged}
+                                    openDialog={openDialog}
                                 />
                             ))}
                         </Box>
@@ -344,9 +212,176 @@ export function ProjectsToDoToday({
     );
 }
 
+// ----------------------------------------------------------------------
 
+const Item = ({ item, sx, router, userLogged, ...other }) =>
+    <Box sx={{ gap: 2, display: 'flex', alignItems: 'center', ...sx }} key={item.id} {...other}>
+        <ListItemText
+            primary={
+                <Box component="span"
+                    sx={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 1,
+                        cursor: 'pointer'
+                    }}
+                    onClick={() => {
+                        localStorage.setItem('projectId', item?.id);
+                        localStorage.setItem('backFromProjectDetails', 'analytics');
+                        router.push(paths.dashboard.project.details(item?.id));
+                    }}>
+                    <Typography
+                        variant="subtitle2"
+                        sx={{ color: 'text.primary' }}
+                    >
+                        {item.name}
+                    </Typography>
+                    {item.hasPermission && (
+                        <Label
+                            color='warning'
+                            variant="outlined"
+                            sx={{
+                                textTransform: 'capitalize',
+                                fontSize: '9px',
+                                p: 0.5
+                            }}
+                        >
+                            Need Permission
+                        </Label>
+                    )}
+                </Box>
+            }
+            secondary={
+                <>
+                    <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', typography: 'body2', color: 'text.secondary', gap: 2 }}>
+                        <Typography component="span" variant="caption" sx={{ color: 'text.secondary' }}>
+                            Installer: {getProjectInstaller(item, CONFIG) ? getProjectInstaller(item, CONFIG).name : 'Not Installer assigned'}
+                        </Typography>
+                    </Box>
+                    <br />
+                    {(item.projectDefaultTasks.length > 0 && !isInstaller(userLogged?.data?.user_role?.name)) && (
+                        <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', typography: 'body2', gap: 2 }}>
 
+                            <Box
+                                component="span"
+                                key={`${item.id}-percentage`}
+                                sx={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    typography: 'body2',
+                                    color: 'backgound.neutral',
+                                    gap: 0,
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                <Label color={
+                                    totalPercentageProject(item, CONFIG) === 100 ? 'success' :
+                                        totalPercentageProject(item, CONFIG) < 100 && totalPercentageProject(item, CONFIG) > 0 ? 'warning' :
+                                            'default'
+                                }>
+                                    <Iconify icon={
+                                        totalPercentageProject(item, CONFIG) === 100 ? 'gis:flag-finish-b-o' :
+                                            totalPercentageProject(item, CONFIG) < 100 && totalPercentageProject(item, CONFIG) > 0 ? 'grommet-icons:in-progress' :
+                                                'tabler:clock-stop'
+                                    } width={16} height={16} />
+                                    <span style={{ fontSize: 'x-small' }}>
+                                        {
+                                            totalPercentageProject(item, CONFIG) === 100 ? 'Finished' :
+                                                totalPercentageProject(item, CONFIG) < 100 && totalPercentageProject(item, CONFIG) > 0 ? 'In Progress' :
+                                                    'Not Started'
+                                        }
+                                    </span>
+                                </Label>
+                            </Box>
 
+                            {/* {calculateTotalStatus({ item, status: CONFIG.taskStatus.notStarted }) > 0 && (
+                                    <Box
+                                        component="span"
+                                        key={`${item.id}-not-started`}
+                                        sx={{
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            typography: 'body2',
+                                            color: 'backgound.neutral',
+                                            gap: 0,
+                                            cursor: 'pointer'
+                                        }}
+                                        onClick={() => {
+                                            renderDialog({ item, status: CONFIG.taskStatus.notStarted });
+                                        }}
+                                    >
+                                        <Iconify icon="mdi:restart-off" width={16} height={16} />
+                                        <span style={{ fontSize: 'x-small' }}>
+                                            <b>{
+                                                calculateTotalStatus({ item, status: CONFIG.taskStatus.notStarted })
+                                            }</b> Not Started
+                                        </span>
+                                    </Box>
+                                )}
+                                {calculateTotalStatus({ item, status: CONFIG.taskStatus.inProgress }) > 0 && (
+                                    <Box
+                                        component="span"
+                                        key={`${item.id}-in-progress`}
+                                        sx={{
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            typography: 'body2',
+                                            color: 'warning.main',
+                                            gap: 0,
+                                            cursor: 'pointer'
+                                        }}
+                                        onClick={() => {
+                                            renderDialog({ item, status: CONFIG.taskStatus.inProgress });
+                                        }}
+                                    >
+                                        <Iconify icon="carbon:executable-program" width={16} height={16} />
+                                        <span style={{ fontSize: 'x-small' }}>
+                                            <b>{
+                                                calculateTotalStatus({ item, status: CONFIG.taskStatus.inProgress })
+                                            }</b> In Progress
+                                        </span>
+                                    </Box>
+                                )}
+                                {calculateTotalStatus({ item, status: CONFIG.taskStatus.finished }) > 0 && (
+                                    <Box
+                                        component="span"
+                                        key={`${item.id}-finished`}
+                                        sx={{
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            typography: 'body2',
+                                            color: 'success.main',
+                                            gap: 0,
+                                            cursor: 'pointer'
+                                        }}
+                                        onClick={() => {
+                                            renderDialog({ item, status: CONFIG.taskStatus.finished });
+                                        }}
+                                    >
+                                        <Iconify icon="rivet-icons:inbox-complete" width={16} height={16} />
+                                        <span style={{ fontSize: 'x-small' }}>
+                                            <b>{
+                                                calculateTotalStatus({ item, status: CONFIG.taskStatus.finished })
+                                            }</b> Finished
+                                        </span>
+                                    </Box>
+                                )} */}
+                        </Box>
+                    )}
+                </>
+            }
+        />
+
+        <Tooltip title="See details">
+            <IconButton onClick={() => {
+                localStorage.setItem('projectId', item?.id);
+                localStorage.setItem('backFromProjectDetails', 'analytics');
+                router.push(paths.dashboard.project.details(item?.id));
+            }}>
+                <Iconify icon="solar:transfer-horizontal-bold-duotone" />
+            </IconButton>
+        </Tooltip>
+    </Box>;
 
 function calculateTotalStatus({ item, status }) {
     const tasks = item.hasPermission ? item.projectDefaultTasks :

@@ -1,32 +1,30 @@
-import React, { useRef, useMemo, useState, useEffect, useContext } from 'react';
-
-import { CONFIG } from 'src/config-global';
-
-import { fDate, fDateTime, fIsBetween } from 'src/utils/format-time';
+import React, { useMemo, useState, useEffect } from 'react';
 
 import Grid from '@mui/material/Unstable_Grid2';
-
 import Typography from '@mui/material/Typography';
 import { Box, Button, LinearProgress } from '@mui/material';
 
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
 
-import { useSetState } from 'src/hooks/use-set-state';
-import { totalPercentageProject } from 'src/utils/project-tasks-utils';
-
-import { DashboardContent } from 'src/layouts/dashboard';
-import { isInstaller } from 'src/utils/check-permissions';
-import { useTable } from 'src/components/table';
 import { useBoolean } from 'src/hooks/use-boolean';
+
+import { isInstaller } from 'src/utils/check-permissions';
+import { fDate, fIsBetween } from 'src/utils/format-time';
+
+import { CONFIG } from 'src/config-global';
+import { DashboardContent } from 'src/layouts/dashboard';
+
 import { Iconify } from 'src/components/iconify';
-import { LoadingContext } from 'src/auth/context/loading-context';
-import { useDataContext } from 'src/auth/context/data/data-context';
+
 import { ProjectCalendarView } from 'src/sections/project/calendar/view';
-import { AnalyticsWidgetSummary } from '../analytics-widget-summary';
+
+import { useDataContext } from 'src/auth/context/data/data-context';
+
 import { WelcomeTypography } from '../welcome-typography';
 import { ProjectsToDoToday } from '../projects-to-do-today';
 import { ProjectsStageToday } from '../projects-stage-today';
+import { AnalyticsWidgetSummary } from '../analytics-widget-summary';
 
 
 
@@ -134,18 +132,16 @@ export function OverviewAnalyticsView() {
             />
           </Box>
         ) : (
-          <>
-            <DashboardContent maxWidth="xl">
+          <DashboardContent maxWidth="xl">
               <WelcomeTypography
                 userLogged={userLogged}
               />
               {!isInstaller(userLogged?.data.user_role.name) ? (
-                <>
-                  <Grid container spacing={1}>
+                <Grid container spacing={1}>
                     <Grid xs={12} sm={6} md={2.4}>
                       <AnalyticsWidgetSummary
                         sx={{ cursor: 'pointer' }}
-                        title={`${CONFIG.stages.preparation} Stage`}
+                        title={`${CONFIG.stages.preparation}`}
                         percent={
                           linearRegresionCalculation(
                             projects?.filter(
@@ -172,7 +168,7 @@ export function OverviewAnalyticsView() {
                     <Grid xs={12} sm={6} md={2.4}>
                       <AnalyticsWidgetSummary
                         sx={{ cursor: 'pointer' }}
-                        title={`${CONFIG.stages.coordination} Stage`}
+                        title={`${CONFIG.stages.coordination}`}
                         percent={
                           linearRegresionCalculation(
                             projects?.filter(
@@ -199,7 +195,7 @@ export function OverviewAnalyticsView() {
                     <Grid xs={12} sm={6} md={2.4}>
                       <AnalyticsWidgetSummary
                         sx={{ cursor: 'pointer' }}
-                        title={`${CONFIG.stages.installation} Stage`}
+                        title={`${CONFIG.stages.installation}`}
                         percent={
                           linearRegresionCalculation(
                             projects?.filter(
@@ -226,7 +222,7 @@ export function OverviewAnalyticsView() {
                     <Grid xs={12} sm={6} md={2.4}>
                       <AnalyticsWidgetSummary
                         sx={{ cursor: 'pointer' }}
-                        title={`${CONFIG.stages.permission} Stage`}
+                        title={`${CONFIG.stages.permission}`}
                         percent={
                           linearRegresionCalculation(
                             projects?.filter(
@@ -253,7 +249,7 @@ export function OverviewAnalyticsView() {
                     <Grid xs={12} sm={6} md={2.4}>
                       <AnalyticsWidgetSummary
                         sx={{ cursor: 'pointer' }}
-                        title={`${CONFIG.stages.closing} Stage`}
+                        title={`${CONFIG.stages.closing}`}
                         percent={
                           linearRegresionCalculation(
                             projects?.filter(
@@ -278,10 +274,8 @@ export function OverviewAnalyticsView() {
                       />
                     </Grid>
                   </Grid>
-                </>
               ) : (
-                <>
-                  <Grid container xs={12} spacing={1} sx={{ mb: 1 }}>
+                <Grid container xs={12} spacing={1} sx={{ mb: 1 }}>
                     <Button sx={{ cursor: 'pointer', border: '1px solid #ddd', fontSize: '11px' }} color='warning' onClick={() => {
                       router.push(paths.dashboard.project.list)
                     }}>
@@ -291,7 +285,6 @@ export function OverviewAnalyticsView() {
                       </Typography>
                     </Button>
                   </Grid>
-                </>
               )}
               <Grid container xs={12} spacing={1}>
 
@@ -379,7 +372,6 @@ export function OverviewAnalyticsView() {
               </Grid>
 
             </DashboardContent >
-          </>
         )}
     </>
   );

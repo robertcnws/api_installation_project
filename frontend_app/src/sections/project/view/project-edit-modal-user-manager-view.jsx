@@ -39,8 +39,7 @@ export function ProjectEditModalUserManagerView({
     const {
         loadedProjects,
         loadedUsers,
-        refetchProjects,
-        refetchSalesOrders,
+        loadedProjectPermissions,
     } = useDataContext();
 
     const item = useMemo(() => loadedProjects?.find((project) => project.id === projectId), [loadedProjects, projectId]);
@@ -96,6 +95,16 @@ export function ProjectEditModalUserManagerView({
             isStaff: zod.boolean(),
             isActive: zod.boolean(),
             project_permissions: zod.array(zod.any()).optional(),
+            user_role: zod.object({
+                id: zod.string(),
+                name: zod.string(),
+                description: zod.string(),
+            }).optional(),
+            userRole: zod.object({
+                id: zod.string(),
+                name: zod.string(),
+                description: zod.string(),
+            }).optional(),
         }).refine(
             (data) => data.id !== '', { message: 'User Manager is required!' }
         ),
@@ -157,7 +166,23 @@ export function ProjectEditModalUserManagerView({
     const onSubmit = handleSubmit(async (data) => {
         const formData = new FormData();
         formData.append('userReporter', JSON.stringify(userLogged?.data));
-        formData.append('userManager', JSON.stringify(data.userManager));
+
+        const projectPermissions = [];
+
+        const permission = loadedProjectPermissions?.find(
+            (perm) => perm.name.toLowerCase().indexOf(CONFIG.projectPermissions.fullAccess.toLowerCase()) !== -1
+        );
+
+        if (permission) {
+            projectPermissions.push(permission);
+        }
+
+        const manager = {
+            ...data.userManager,
+            project_permissions: projectPermissions,
+        };
+
+        formData.append('userManager', JSON.stringify(manager));
 
         const promise = axios.post(`${CONFIG.apiUrl}/projects/update/project/${item.id}/`, formData, {
             headers: {
@@ -191,79 +216,79 @@ export function ProjectEditModalUserManagerView({
 
     const renderProject = (
         <Dialog fullWidth maxWidth="md" open={open} onClose={onClose}>
-                <DialogTitle>{isEdit ? 'Update' : 'Add'} Manager to Project {projectData?.name} </DialogTitle>
+            <DialogTitle>{isEdit ? 'Update' : 'Add'} Manager to Project {projectData?.name} </DialogTitle>
 
-                <Form methods={methods} onSubmit={onSubmit}>
+            <Form methods={methods} onSubmit={onSubmit}>
 
-                    <Stack
-                        spacing={2.5}
-                        justifyContent="center"
-                        sx={{ p: 2.5 }}
-                    >
+                <Stack
+                    spacing={2.5}
+                    justifyContent="center"
+                    sx={{ p: 2.5 }}
+                >
 
-                        <Box sx={{ flexDirection: !isMobile ? 'row' : 'column', display: 'flex' }}>
-                            
-                            <Box sx={{ width: '100%', color: 'text.secondary', mt: !isMobile ? 0 : 2, ml: !isMobile ? 2 : 0 }}>
-                                <Field.Autocomplete
-                                    name="userManager"
-                                    placeholder="Responsable"
-                                    control={control}
-                                    label="Responsable"
-                                    value={watch("userManager") || null}
-                                    options={filteredUsersManager || []}
-                                    getOptionLabel={(option) => (
-                                        option.name
-                                    ) || ''}
-                                    isOptionEqualToValue={(option, value) => option.id === value.id}
-                                    onChange={(event, newValue) => {
-                                        setValue("userManager", newValue);
-                                        if (newValue !== null) {
-                                            const oldAssignees = watch("usersAssignees") || [];
-                                            const filteredAssignees = oldAssignees.filter(user => user.id !== newValue.id);
-                                            setValue("usersAssignees", filteredAssignees);
-                                        }
-                                    }}
-                                    renderOption={(props, user) => (
-                                        <li {...props} key={user.id}>
-                                            <Avatar
-                                                key={user.id}
-                                                alt={user.avatarUrl}
-                                                src={user.avatarUrl}
-                                                sx={{ mr: 1, width: 24, height: 24, flexShrink: 0 }}
-                                            />
+                    <Box sx={{ flexDirection: !isMobile ? 'row' : 'column', display: 'flex' }}>
 
-                                            {user.name}
-                                        </li>
-                                    )}
-                                    renderTags={(selected, getTagProps) =>
-                                        selected.map((user, index) => (
-                                            <Chip
-                                                {...getTagProps({ index })}
-                                                key={user.id}
-                                                size="small"
-                                                variant="soft"
-                                                label={user.name}
-                                                avatar={<Avatar alt={user.name} src={user.avatarUrl} />}
-                                            />
-                                        ))
+                        <Box sx={{ width: '100%', color: 'text.secondary', mt: !isMobile ? 0 : 2, ml: !isMobile ? 2 : 0 }}>
+                            <Field.Autocomplete
+                                name="userManager"
+                                placeholder="Responsable"
+                                control={control}
+                                label="Responsable"
+                                value={watch("userManager") || null}
+                                options={filteredUsersManager || []}
+                                getOptionLabel={(option) => (
+                                    option.name
+                                ) || ''}
+                                isOptionEqualToValue={(option, value) => option.id === value.id}
+                                onChange={(event, newValue) => {
+                                    setValue("userManager", newValue);
+                                    if (newValue !== null) {
+                                        const oldAssignees = watch("usersAssignees") || [];
+                                        const filteredAssignees = oldAssignees.filter(user => user.id !== newValue.id);
+                                        setValue("usersAssignees", filteredAssignees);
                                     }
-                                />
-                            </Box>
+                                }}
+                                renderOption={(props, user) => (
+                                    <li {...props} key={user.id}>
+                                        <Avatar
+                                            key={user.id}
+                                            alt={user.avatarUrl}
+                                            src={user.avatarUrl}
+                                            sx={{ mr: 1, width: 24, height: 24, flexShrink: 0 }}
+                                        />
+
+                                        {user.name}
+                                    </li>
+                                )}
+                                renderTags={(selected, getTagProps) =>
+                                    selected.map((user, index) => (
+                                        <Chip
+                                            {...getTagProps({ index })}
+                                            key={user.id}
+                                            size="small"
+                                            variant="soft"
+                                            label={user.name}
+                                            avatar={<Avatar alt={user.name} src={user.avatarUrl} />}
+                                        />
+                                    ))
+                                }
+                            />
                         </Box>
-                    </Stack>
-                    <DialogActions>
-                        <LoadingButton type="submit" variant="contained" loading={isSubmitting}>
-                            {isEdit ? 'Update' : 'Add'}
-                        </LoadingButton>
-                        {/* <Button onClick={onClose}>
+                    </Box>
+                </Stack>
+                <DialogActions>
+                    <LoadingButton type="submit" variant="contained" loading={isSubmitting}>
+                        {isEdit ? 'Update' : 'Add'}
+                    </LoadingButton>
+                    {/* <Button onClick={onClose}>
                             Delete
                         </Button> */}
-                        <Button variant="outlined" onClick={onClose}>
-                            Cancel
-                        </Button>
-                    </DialogActions>
-                </Form>
-            </Dialog>
+                    <Button variant="outlined" onClick={onClose}>
+                        Cancel
+                    </Button>
+                </DialogActions>
+            </Form>
+        </Dialog>
     )
 
     return (

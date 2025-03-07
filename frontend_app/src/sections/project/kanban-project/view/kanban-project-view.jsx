@@ -21,12 +21,11 @@ import {
 
 import Stack from '@mui/material/Stack';
 import Switch from '@mui/material/Switch';
-import { Box, LinearProgress } from '@mui/material';
 import FormControlLabel from '@mui/material/FormControlLabel';
 
 import { CONFIG } from 'src/config-global';
+import { hideScrollY } from 'src/theme/styles';
 import { moveColumn } from 'src/actions/kanban';
-import { varAlpha, hideScrollY } from 'src/theme/styles';
 import { DashboardContent } from 'src/layouts/dashboard';
 
 import { EmptyContent } from 'src/components/empty-content';
@@ -339,7 +338,7 @@ export function KanbanProjectView({
         flex: '1 1 auto',
         overflowX: 'auto',
         overflowY: 'auto',
-        maxHeight: 630,
+        maxHeight: 640,
         ml: !isMobile ? -5 : 0,
         mt: !isMobile ? -1 : 0,
         mr: !isMobile ? -5 : 0,

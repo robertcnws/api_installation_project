@@ -15,6 +15,8 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 
+import { createDefaultPermissions } from 'src/utils/check-permissions';
+
 import { CONFIG } from 'src/config-global';
 import { USER_STATUS_OPTIONS } from 'src/_mock';
 
@@ -23,7 +25,6 @@ import { toast } from 'src/components/snackbar';
 import { Form, Field, schemaHelper } from 'src/components/hook-form';
 
 import { useDataContext } from 'src/auth/context/data/data-context';
-import { createDefaultPermissions } from 'src/utils/check-permissions';
 
 // ----------------------------------------------------------------------
 
@@ -117,7 +118,7 @@ export function UserQuickEditForm({ currentUser, open, onClose }) {
       refetchUsers?.();
 
       const roleName = loadedUserRoles?.find((role) => role.id === data.role)?.name;
-      const username = data.username;
+      const {username} = data;
 
       const dataAWS = createDefaultPermissions(roleName);
       await axios.post(`${CONFIG.apiUrl}/integration/manage_user_permissions/`, {

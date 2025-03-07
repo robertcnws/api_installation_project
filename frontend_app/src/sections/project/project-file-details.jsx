@@ -210,6 +210,16 @@ export function ProjectFileDetails({
           isStaff: zod.boolean(),
           isActive: zod.boolean(),
           project_permissions: zod.array(zod.any()).optional(),
+          user_role: zod.object({
+            id: zod.string(),
+            name: zod.string(),
+            description: zod.string(),
+          }).optional(),
+          userRole: zod.object({
+            id: zod.string(),
+            name: zod.string(),
+            description: zod.string(),
+          }).optional(),
         })
       )
       .nonempty({ message: 'Must have at least 1 user!' }),
@@ -411,40 +421,40 @@ export function ProjectFileDetails({
 
   const renderAddUsers = (
     <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ p: 0.5 }}>
-        <IconButton
-          size="small"
-          color="primary"
-          onClick={share.onTrue}
-          sx={{
-            width: 24,
-            height: 24,
-            bgcolor: 'primary.main',
-            color: 'primary.contrastText',
-            '&:hover': { bgcolor: 'primary.dark' },
-          }}
-        >
-          <Iconify icon="mingcute:add-line" />
-        </IconButton>
-      </Stack>
+      <IconButton
+        size="small"
+        color="primary"
+        onClick={share.onTrue}
+        sx={{
+          width: 24,
+          height: 24,
+          bgcolor: 'primary.main',
+          color: 'primary.contrastText',
+          '&:hover': { bgcolor: 'primary.dark' },
+        }}
+      >
+        <Iconify icon="mingcute:add-line" />
+      </IconButton>
+    </Stack>
   );
 
   const renderAddTasks = (
     <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ p: 0.5 }}>
-        <IconButton
-          size="small"
-          color="primary"
-          onClick={(e) => { tabs.onChange(e, 'tasks'); }}
-          sx={{
-            width: 24,
-            height: 24,
-            bgcolor: 'primary.main',
-            color: 'primary.contrastText',
-            '&:hover': { bgcolor: 'primary.dark' },
-          }}
-        >
-          <Iconify icon="mingcute:add-line" />
-        </IconButton>
-      </Stack>
+      <IconButton
+        size="small"
+        color="primary"
+        onClick={(e) => { tabs.onChange(e, 'tasks'); }}
+        sx={{
+          width: 24,
+          height: 24,
+          bgcolor: 'primary.main',
+          color: 'primary.contrastText',
+          '&:hover': { bgcolor: 'primary.dark' },
+        }}
+      >
+        <Iconify icon="mingcute:add-line" />
+      </IconButton>
+    </Stack>
   );
 
   const renderMainInfo = (
@@ -646,29 +656,29 @@ export function ProjectFileDetails({
 
       {toggleTaskInfo.value && (
         <Box sx={{ width: expanded ? '40%' : '85%', color: 'text.secondary', mt: -0.8, ml: 11 }}>
-            {projectData?.projectTasks?.length > 0 ? (
-              <Box component="ul" sx={{ pl: 2, pr: 1 }}>
-                {projectData?.projectTasks?.map((task, index) => (
-                  <ProjectTasksList
-                    key={`${index}-${task?.id}`}
-                    project={item}
-                    task={task}
-                    handleRemoveTask={handleRemoveTask}
-                    tabs={tabs}
-                    renderTaskDetails={renderTaskDetails}
-                    projectData={projectData}
-                    setProjectData={setProjectData}
-                    refetchProjects={refetchProjects}
-                  />
-                ))}
-              </Box>
-            ) : (
-              <Box component="label" sx={{ pl: 2, pr: 1 }}>
-                <Label color="warning">Add tasks to project</Label>
-              </Box>
-            )}
+          {projectData?.projectTasks?.length > 0 ? (
+            <Box component="ul" sx={{ pl: 2, pr: 1 }}>
+              {projectData?.projectTasks?.map((task, index) => (
+                <ProjectTasksList
+                  key={`${index}-${task?.id}`}
+                  project={item}
+                  task={task}
+                  handleRemoveTask={handleRemoveTask}
+                  tabs={tabs}
+                  renderTaskDetails={renderTaskDetails}
+                  projectData={projectData}
+                  setProjectData={setProjectData}
+                  refetchProjects={refetchProjects}
+                />
+              ))}
+            </Box>
+          ) : (
+            <Box component="label" sx={{ pl: 2, pr: 1 }}>
+              <Label color="warning">Add tasks to project</Label>
+            </Box>
+          )}
 
-          </Box>
+        </Box>
       )}
     </Stack>
   );
@@ -691,29 +701,29 @@ export function ProjectFileDetails({
 
       {toggleProjectAttachments.value && (
         <Stack direction="row" sx={{ typography: 'caption', textTransform: 'capitalize' }}>
-            <Box component="span" sx={{ width: 80, color: 'text.secondary', mr: 2 }}>
-              Files
-            </Box>
-            <Controller
-              name="projectAttachments"
-              control={control}
-              render={({ field }) => (
-                <ProjectDetailsAttachments
-                  projectData={projectData}
-                  setProjectData={setProjectData}
-                  attachments={field.value}
-                  onChange={field.onChange}
-                  type="project"
-                  id={item.id}
-                  name={projectData?.name}
-                  data={projectData}
-                  setData={setProjectData}
-                  setTableData={setTableData}
-                  refetchProjects={refetchProjects}
-                />
-              )}
-            />
-          </Stack>
+          <Box component="span" sx={{ width: 80, color: 'text.secondary', mr: 2 }}>
+            Files
+          </Box>
+          <Controller
+            name="projectAttachments"
+            control={control}
+            render={({ field }) => (
+              <ProjectDetailsAttachments
+                projectData={projectData}
+                setProjectData={setProjectData}
+                attachments={field.value}
+                onChange={field.onChange}
+                type="project"
+                id={item.id}
+                name={projectData?.name}
+                data={projectData}
+                setData={setProjectData}
+                setTableData={setTableData}
+                refetchProjects={refetchProjects}
+              />
+            )}
+          />
+        </Stack>
       )}
     </Stack>
   );

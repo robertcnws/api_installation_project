@@ -17,6 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from django.urls.conf import include
+from api_authorization import views
 
 urlpatterns = [
     path('api/admin/', admin.site.urls),
@@ -24,4 +25,5 @@ urlpatterns = [
     path('api/authorization/', include('api_authorization.urls')),
     path('api/projects/', include('api_projects.urls')),
     path('api/users/', include('api_users.urls')),
+    path('api/health-check/', views.health_check, name='health_check'),
 ]

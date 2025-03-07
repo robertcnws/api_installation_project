@@ -27,6 +27,15 @@ const GET_ALL_PROJECTS = gql`
       userManager
       userReporter
       usersAssignees
+      allProductsMarked
+      allWindowsMarked
+      allScrewMarked
+      allTrashMarked
+      feedback
+      workScope
+      projectMaterials
+      projectGuideProducts
+      projectMaterialsOtherNotes
     }
   }
 `;
@@ -56,6 +65,15 @@ const GET_PROJECT_BY_ID = gql`
       userManager
       userReporter
       usersAssignees
+      allProductsMarked
+      allWindowsMarked
+      allScrewMarked
+      allTrashMarked
+      feedback
+      workScope
+      projectMaterials
+      projectGuideProducts
+      projectMaterialsOtherNotes
     }
   }
 `;

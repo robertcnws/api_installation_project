@@ -1,7 +1,6 @@
 import axios from 'axios';
-import { useMemo, useState, useEffect, useContext, useCallback } from 'react';
-
 import EmojiPicker from 'emoji-picker-react';
+import { useMemo, useState, useEffect, useContext, useCallback } from 'react';
 
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
@@ -9,18 +8,19 @@ import Button from '@mui/material/Button';
 import Avatar from '@mui/material/Avatar';
 import InputBase from '@mui/material/InputBase';
 import IconButton from '@mui/material/IconButton';
-import { TextField, Autocomplete, Box, ListItem } from '@mui/material';
+import { Box, ListItem, TextField, Autocomplete } from '@mui/material';
+
+import { isInstaller } from 'src/utils/check-permissions';
+import { availableTasks } from 'src/utils/project-tasks-utils';
 
 import { CONFIG } from 'src/config-global';
 
 import { Iconify } from 'src/components/iconify';
+import { usePopover, CustomPopover } from 'src/components/custom-popover';
 
 import { useMockedUser } from 'src/auth/hooks';
 import { LoadingContext } from 'src/auth/context/loading-context';
 import { useDataContext } from 'src/auth/context/data/data-context';
-import { isInstaller } from 'src/utils/check-permissions';
-import { CustomPopover, usePopover } from 'src/components/custom-popover';
-import { availableTasks } from 'src/utils/project-tasks-utils';
 
 // ----------------------------------------------------------------------
 

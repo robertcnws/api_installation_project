@@ -52,33 +52,33 @@ export const fetcherBackend = async (args) => {
 // ----------------------------------------------------------------------
 
 export const endpoints = {
-  chat: '/api/chat',
-  kanban: '/api/kanban',
-  calendar: '/api/calendar',
+  chat: '/chat',
+  kanban: '/kanban',
+  calendar: '/calendar',
   auth: {
-    me: '/api/auth/me',
-    signIn: '/api/auth/sign-in',
-    signUp: '/api/auth/sign-up',
+    me: '/auth/me',
+    signIn: '/auth/sign-in',
+    signUp: '/auth/sign-up',
     login: '/authorization/login/',
     token: '/authorization/token/',
   },
   mail: {
-    list: '/api/mail/list',
-    details: '/api/mail/details',
+    list: '/mail/list',
+    details: '/mail/details',
     labels: '/api/mail/labels',
   },
   post: {
-    list: '/api/post/list',
-    details: '/api/post/details',
-    latest: '/api/post/latest',
-    search: '/api/post/search',
+    list: '/post/list',
+    details: '/post/details',
+    latest: '/post/latest',
+    search: '/post/search',
   },
   product: {
-    list: '/api/product/list',
-    details: '/api/product/details',
-    search: '/api/product/search',
+    list: '/product/list',
+    details: '/product/details',
+    search: '/product/search',
   },
   item: {
-    list: '/api/product/list',
+    list: '/product/list',
   },
 };

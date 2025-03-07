@@ -12,6 +12,7 @@ import { useRouter } from 'src/routes/hooks';
 import { useBoolean } from 'src/hooks/use-boolean';
 import { useSetState } from 'src/hooks/use-set-state';
 
+import { isInstaller } from 'src/utils/check-permissions';
 import { fIsAfter, fIsBetween } from 'src/utils/format-time';
 
 import { CONFIG } from 'src/config-global';
@@ -26,15 +27,14 @@ import { useTable, rowInPage, getComparator } from 'src/components/table';
 
 import { LoadingContext } from 'src/auth/context/loading-context';
 import { useDataContext } from 'src/auth/context/data/data-context';
-import { isInstaller } from 'src/utils/check-permissions';
 
 import { ProjectTable } from '../project-table';
 import { ProjectFilters } from '../project-filters';
 import { ProjectGridView } from '../project-grid-view';
-import { ProjectFiltersResult } from '../project-filters-result';
-import { ProjectNewFolderDialog } from '../project-new-folder-dialog';
 import { ProjectCalendarView } from '../calendar/view';
 import { KanbanProjectView } from '../kanban-project/view';
+import { ProjectFiltersResult } from '../project-filters-result';
+import { ProjectNewFolderDialog } from '../project-new-folder-dialog';
 
 
 

@@ -1,12 +1,12 @@
 import axios from 'axios';
 import { z as zod } from 'zod';
-import React, { useMemo, useState, useEffect } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, Controller } from 'react-hook-form';
+import React, { useMemo, useState, useEffect } from 'react';
 
 import Box from '@mui/material/Box';
-import { Chip, Switch } from '@mui/material';
 import Stack from '@mui/material/Stack';
+import { Chip, Switch } from '@mui/material';
 import LoadingButton from '@mui/lab/LoadingButton';
 
 import { paths } from 'src/routes/paths';
@@ -17,7 +17,7 @@ import { stripHtmlUsingDOM } from 'src/utils/helper';
 import { CONFIG } from 'src/config-global';
 
 import { toast } from 'src/components/snackbar';
-import { Form, Field, schemaHelper, RHFSwitch } from 'src/components/hook-form';
+import { Form, Field, schemaHelper } from 'src/components/hook-form';
 
 import { useDataContext } from 'src/auth/context/data/data-context';
 

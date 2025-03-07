@@ -2,7 +2,7 @@ import axios from 'axios';
 import { z as zod } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMemo, useState, useEffect, useContext, useCallback } from 'react';
+import { useMemo, useState, useEffect, useContext } from 'react';
 
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
@@ -11,16 +11,11 @@ import { LoadingButton } from '@mui/lab';
 import Button from '@mui/material/Button';
 import { Avatar, Dialog, DialogTitle, DialogActions } from '@mui/material';
 
-import { paths } from 'src/routes/paths';
-import { useRouter } from 'src/routes/hooks';
-
-import { useTabs } from 'src/hooks/use-tabs';
+import { getProjectInstaller } from 'src/utils/project-tasks-utils';
 
 import { CONFIG } from 'src/config-global';
-import { useProjectByIdQuery } from 'src/_mock/__projects';
 
 import { toast } from 'src/components/snackbar';
-import { usePopover } from 'src/components/custom-popover';
 import { Form, Field, schemaHelper } from 'src/components/hook-form';
 
 import { LoadingContext } from 'src/auth/context/loading-context';
@@ -31,77 +26,25 @@ import { useDataContext } from 'src/auth/context/data/data-context';
 
 export function ProjectEditModalInstallationTeamView({
     isEdit,
-    projectId,
+    project,
     open,
     onClose,
 }) {
 
     const {
-        loadedProjects,
         loadedUsers,
-        refetchProjects,
-        refetchSalesOrders,
+        loadedProjectPermissions,
     } = useDataContext();
-
-    const item = useMemo(() => loadedProjects?.find((project) => project.id === projectId), [loadedProjects, projectId]);
 
     const cleanLoadedUsers = useMemo(() => loadedUsers.map(({ __typename, ...rest }) => rest), [loadedUsers]);
 
     const { isMobile } = useContext(LoadingContext);
 
-    const router = useRouter();
-
-    const tabs = useTabs('overview');
-
     const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
-
-    const popover = usePopover();
-
-    const { data: itemById } = useProjectByIdQuery(item?.id, {
-        skip: !item?.id,
-    });
-
-    const [projectData, setProjectData] = useState({})
-
-    useEffect(() => {
-        if (itemById) {
-            setProjectData((prev) => ({
-                ...prev,
-                id: itemById?.id || '',
-                name: itemById?.name || '',
-                number: itemById?.number || '',
-                userManager:
-                    itemById?.userManager && Object.keys(itemById.userManager).length > 0
-                        ? cleanLoadedUsers.find(u => u.id === itemById?.userManager?.id)
-                        : null,
-                installer: itemById?.projectDefaultTasks?.filter(
-                    (task) => task.project_default_task.project_stage.name === CONFIG.stages.installation && 
-                    task.project_default_task.name.toLowerCase().includes('start')
-                )[0]?.users_assignees[0] || null,
-            }));
-        }
-    }, [itemById, setProjectData, cleanLoadedUsers]);
-
-    const handleReturnList = useCallback(() => {
-        router.push(paths.dashboard.project.list);
-    }, [router]);
 
     const ProjectDialogSchema = zod.object({
         name: zod.string().min(1, { message: 'Name is required!' }),
         description: schemaHelper.editor().optional().nullable(),
-        userManager: zod.object({
-            id: zod.string(),
-            name: zod.string(),
-            firstName: zod.string(),
-            lastName: zod.string(),
-            avatarUrl: zod.string(),
-            username: zod.string(),
-            email: zod.string(),
-            isStaff: zod.boolean(),
-            isActive: zod.boolean(),
-            project_permissions: zod.array(zod.any()).optional(),
-
-        }),
         installer: zod.object({
             id: zod.string(),
             name: zod.string(),
@@ -113,6 +56,16 @@ export function ProjectEditModalInstallationTeamView({
             isStaff: zod.boolean(),
             isActive: zod.boolean(),
             project_permissions: zod.array(zod.any()).optional(),
+            user_role: zod.object({
+                id: zod.string(),
+                name: zod.string(),
+                description: zod.string(),
+            }).optional(),
+            userRole: zod.object({
+                id: zod.string(),
+                name: zod.string(),
+                description: zod.string(),
+            }).optional(),
 
         }).refine(
             (data) => data.id !== '', { message: 'Installer is required!' }
@@ -121,19 +74,12 @@ export function ProjectEditModalInstallationTeamView({
 
     const defaultValues = useMemo(
         () => ({
-            id: itemById?.id || '',
-            name: itemById?.name || '',
-            number: itemById?.number || '',
-            userManager:
-                itemById?.userManager && Object.keys(itemById.userManager).length > 0
-                    ? cleanLoadedUsers.find(u => u.id === itemById?.userManager?.id)
-                    : null,
-            installer: itemById?.projectDefaultTasks?.filter(
-                (task) => task.project_default_task.project_stage.name === CONFIG.stages.installation && 
-                task.project_default_task.name.toLowerCase().includes('start')
-            )[0]?.users_assignees[0] || null,
+            id: project?.id || '',
+            name: project?.name || '',
+            number: project?.number || '',
+            installer: getProjectInstaller(project, CONFIG) || null,
         }),
-        [itemById, cleanLoadedUsers]
+        [project]
     );
 
     const methods = useForm({
@@ -153,32 +99,49 @@ export function ProjectEditModalInstallationTeamView({
 
 
     useEffect(() => {
-        if (itemById) {
+        if (project) {
             reset({
-                id: itemById.id || '',
-                name: itemById.name || '',
-                number: itemById.number || '',
-                userManager: itemById.userManager || null,
-                installer: itemById?.projectDefaultTasks?.filter(
-                    (task) => task.project_default_task.project_stage.name === CONFIG.stages.installation && 
-                    task.project_default_task.name.toLowerCase().includes('start')
-                )[0]?.users_assignees[0] || null,
+                id: project.id || '',
+                name: project.name || '',
+                number: project.number || '',
+                installer: getProjectInstaller(project, CONFIG) || null,
             });
         }
-    }, [itemById, userLogged?.data, reset, cleanLoadedUsers]);
+    }, [project, userLogged?.data, reset]);
 
-    const filteredUsers = useMemo(
-        () => cleanLoadedUsers.filter(user => user.id !== projectData?.userManager?.id),
-        [cleanLoadedUsers, projectData?.userManager]
-    );
+    const [filteredUsers, setFilteredUsers] = useState([]);
 
+    useEffect(() => {
+        if (project) {
+            setFilteredUsers(cleanLoadedUsers.filter(
+                user => user.id !== project?.userManager?.id &&
+                    user.userRole.name.toLowerCase().indexOf(CONFIG.roles.installer.toLowerCase()) !== -1
+            ));
+        }
+    }, [cleanLoadedUsers, project]);
 
     const onSubmit = handleSubmit(async (data) => {
         const formData = new FormData();
         formData.append('userReporter', JSON.stringify(userLogged?.data));
-        formData.append('installer', JSON.stringify(data.installer));
 
-        const promise = axios.post(`${CONFIG.apiUrl}/projects/update/project/${item.id}/change-installer/`, formData, {
+        const projectPermissions = [];
+
+        const permission = loadedProjectPermissions?.find(
+            (perm) => perm.name.toLowerCase().indexOf(CONFIG.projectPermissions.fullAccess.toLowerCase()) !== -1
+        );
+
+        if (permission) {
+            projectPermissions.push(permission);
+        }
+
+        const installer = {
+            ...data.installer,
+            project_permissions: projectPermissions,
+        }
+
+        formData.append('installer', JSON.stringify(installer));
+
+        const promise = axios.post(`${CONFIG.apiUrl}/projects/update/project/${project?.id}/change-installer/`, formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
             },
@@ -210,7 +173,7 @@ export function ProjectEditModalInstallationTeamView({
 
     const renderProject = (
         <Dialog fullWidth maxWidth="md" open={open} onClose={onClose}>
-            <DialogTitle>{isEdit ? 'Update' : 'Add'} Installation Team to Project {projectData?.name} </DialogTitle>
+            <DialogTitle>{isEdit ? 'Update' : 'Add'} Installation Team to Project {project?.name} </DialogTitle>
 
             <Form methods={methods} onSubmit={onSubmit}>
 

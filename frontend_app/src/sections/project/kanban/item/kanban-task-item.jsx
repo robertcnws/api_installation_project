@@ -1,8 +1,10 @@
+import axios from 'axios';
 import { useSortable } from '@dnd-kit/sortable';
-import { useState, useEffect, useCallback } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
+import { CONFIG } from 'src/config-global';
 import { deleteTask, updateTask } from 'src/actions/kanban';
 
 import { toast } from 'src/components/snackbar';
@@ -10,6 +12,8 @@ import { imageClasses } from 'src/components/image';
 
 import ItemBase from './item-base';
 import { KanbanDetails } from '../details/kanban-details';
+
+
 
 // ----------------------------------------------------------------------
 
@@ -27,6 +31,8 @@ export function KanbanTaskItem({
   const { setNodeRef, listeners, isDragging, isSorting, transform, transition } = useSortable({
     id: task?.id,
   });
+
+  const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
 
   const mounted = useMountStatus();
 
@@ -52,12 +58,42 @@ export function KanbanTaskItem({
     [columnId]
   );
 
+  const handleManageTask = useCallback(
+    async (taskType) => {
+      const updatedTask = { ...task };
+      if (!updatedTask) {
+        return;
+      }
+      updatedTask.status = taskType === 'start' || taskType === 'rollback' ? 'in progress' : 'finished';
+      updatedTask.percentage = taskType === 'start' || taskType === 'rollback' ? 50 : 100;
+
+      const taskId = updatedTask?.project_default_task._id;
+      const projectId = project?.id;
+
+      try {
+        const promise = axios.post(`${CONFIG.apiUrl}/projects/update/project/${projectId}/task/${taskId}/change-status/`, {
+          userReporter: userLogged?.data,
+          status: updatedTask.status,
+          percentage: updatedTask.percentage,
+        });
+        const response = await promise;
+        if (!response.data) {
+          return;
+        }
+        refetchProject?.();
+      } catch (error) {
+        console.error(error);
+      }
+    }, [userLogged, refetchProject, project, task]);
+
   return (
     <>
       <ItemBase
         ref={disabled ? undefined : setNodeRef}
+        project={project}
         task={task}
         onClick={openDetails.onTrue}
+        handleManageTask={handleManageTask}
         stateProps={{
           transform,
           listeners,

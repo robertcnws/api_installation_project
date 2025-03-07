@@ -40,6 +40,16 @@ export function ProjectTaskShareDialog({
           email: zod.string(),
           isStaff: zod.boolean(),
           isActive: zod.boolean(),
+          user_role: zod.object({
+            id: zod.string(),
+            name: zod.string(),
+            description: zod.string(),
+          }).optional(),
+          userRole: zod.object({
+            id: zod.string(),
+            name: zod.string(),
+            description: zod.string(),
+          }).optional(),
         })
       )
       .nonempty({ message: 'Must have at least 1 user!' }),

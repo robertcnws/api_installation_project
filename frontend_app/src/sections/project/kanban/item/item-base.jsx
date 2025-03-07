@@ -1,19 +1,27 @@
-import { memo, useEffect, forwardRef } from 'react';
+import { memo, useMemo, useEffect, forwardRef } from 'react';
 
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Avatar from '@mui/material/Avatar';
+import { IconButton } from '@mui/material';
 import ListItem from '@mui/material/ListItem';
 import { styled } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import AvatarGroup, { avatarGroupClasses } from '@mui/material/AvatarGroup';
 
+import { availableTasks } from 'src/utils/project-tasks-utils';
+import { isInstaller, listRolesAndSubroles } from 'src/utils/check-permissions';
+
+import { CONFIG } from 'src/config-global';
 import { varAlpha, stylesMode } from 'src/theme/styles';
 
+import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
-import { imageClasses } from 'src/components/image';
 
 import { kanbanClasses } from '../classes';
+
+
+
 
 // ----------------------------------------------------------------------
 
@@ -59,7 +67,22 @@ export const StyledItem = styled(Stack)(({ theme }) => ({
 
 // ----------------------------------------------------------------------
 
-const ItemBase = forwardRef(({ task, stateProps, sx, ...other }, ref) => {
+const ItemBase = forwardRef(({
+  project,
+  task,
+  stateProps,
+  onClick,
+  handleManageTask,
+  sx,
+  ...other
+}, ref) => {
+
+  const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
+
+  const possibleTasks = useMemo(() => availableTasks(project, project?.projectDefaultTasks, CONFIG), [project]);
+
+  const isAvailableTask = useMemo(() => possibleTasks?.some((t) => t.project_default_task.id === task.project_default_task.id), [possibleTasks, task]);
+
   useEffect(() => {
     if (!stateProps?.dragOverlay) {
       return;
@@ -102,33 +125,69 @@ const ItemBase = forwardRef(({ task, stateProps, sx, ...other }, ref) => {
         ...(task.priority === 'medium' && { color: 'warning.main' }),
         ...(task.priority === 'high' && { color: 'error.main' }),
       }}
+      onClick={onClick}
     />
   );
 
-  const renderImg = !!task?.attachments?.length && (
-    <Box
-      sx={{
-        p: (theme) => theme.spacing(1, 1, 0, 1),
-      }}
-    >
-      <Box
-        component="img"
-        className={imageClasses.root}
-        alt={task?.attachments?.[0]}
-        src={task?.attachments?.[0]}
-        sx={{
-          width: 320,
-          height: 'auto',
-          borderRadius: 1.5,
-          aspectRatio: '4/3',
-          objectFit: 'cover',
-        }}
-      />
-    </Box>
+  const renderButtonTask = (
+    <Stack direction="row" alignItems="center" sx={{ mr: 4, mt: 1 }}>
+      {(task && isAvailableTask) && (
+        <>
+          {(
+            listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator) ||
+            task?.users_assignees?.some((u) => u.id === userLogged?.data?.id) ||
+            project?.userManager?.id === userLogged?.data?.id
+          ) && (
+              <>
+                {task && task.status === CONFIG.taskStatus.notStarted && (
+                  <IconButton
+                    variant="soft"
+                    color="default"
+                    sx={{ width: 20, height: 20, fontSize: 10, mt: -0.6, mr: 1 }}
+                    disabled={!task || task.status !== CONFIG.taskStatus.notStarted || task?.users_assignees?.length === 0}
+                    onClick={() => handleManageTask('start')}
+                  >
+                    <Iconify icon="vaadin:start-cog" sx={{ width: 15, height: 15 }} /> Start
+                  </IconButton>
+                )}
+                {task && task.status !== CONFIG.taskStatus.notStarted && task.status !== 'finished' && (
+                  <IconButton
+                    variant="soft"
+                    color="success"
+                    size="small"
+                    sx={{ width: 20, height: 20, fontSize: 10, mt: -0.6, mr: 1 }}
+                    disabled={
+                      !task ||
+                      task?.users_assignees?.length === 0 ||
+                      task.status === 'finished' ||
+                      (isInstaller(userLogged?.data?.user_role?.name) && task?.project_task_attachments?.length === 0)
+                    }
+                    onClick={() => handleManageTask('finish')}
+                  >
+                    <Iconify icon="octicon:tracked-by-closed-completed-16" sx={{ width: 15, height: 15 }} /> Finish
+                  </IconButton>
+                )}
+                {(task && task.status === 'finished' && listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.superadmin)) && (
+                  <IconButton
+                    variant="soft"
+                    color="warning"
+                    size="small"
+                    sx={{ width: 20, height: 20, fontSize: 10, mt: -0.6, mr: 1 }}
+                    disabled={!task || task?.users_assignees?.length === 0}
+                    onClick={() => handleManageTask('rollback')}
+                  >
+                    <Iconify icon="eos-icons:snapshot-rollback" sx={{ width: 15, height: 15 }} /> Rollback
+                  </IconButton>
+                )}
+              </>
+            )}
+        </>
+      )}
+    </Stack>
   );
 
   const renderInfo = (
-    <Stack direction="row" alignItems="center">
+    <Stack direction="row" alignItems="center" onClick={onClick}>
       <Stack
         flexGrow={1}
         direction="row"
@@ -143,18 +202,9 @@ const ItemBase = forwardRef(({ task, stateProps, sx, ...other }, ref) => {
           {task?.comments?.length}
         </Box> */}
 
-        {task?.project_task_attachments && (
-          <>
-            <Iconify width={16} icon="eva:attach-2-fill" sx={{ mr: 0.25 }} />
-            <Box component="span">
-              {task?.project_task_attachments?.length} Attachment(s)
-            </Box>
-          </>
-        )}
-
-        <Iconify
+        {/* <Iconify
           width={16}
-          icon="fluent:document-multiple-percent-24-filled"
+          icon="la:percent"
           sx={{
             mr: 0.25,
             ml: 1,
@@ -167,7 +217,50 @@ const ItemBase = forwardRef(({ task, stateProps, sx, ...other }, ref) => {
             task?.percentage === 100 ? 'success.main' : 'warning.main'
         }}>
           {task?.percentage.toFixed(2)}
+        </Box> */}
+
+        <Box
+          component="span"
+          key={`${project.id}-${task?.project_default_task.id}-percentage`}
+          sx={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            typography: 'body2',
+            color: 'backgound.neutral',
+            gap: 0,
+            cursor: 'pointer'
+          }}
+        >
+          <Label
+            variant='outlined'
+            color={
+              task?.percentage === 100 ? 'success' :
+                task?.percentage < 100 && task?.percentage > 0 ? 'warning' :
+                  'default'
+            }>
+            {/* <Iconify icon={
+              task?.percentage === 100 ? 'gis:flag-finish-b-o' :
+                task?.percentage < 100 && task?.percentage > 0 ? 'grommet-icons:in-progress' :
+                  'tabler:clock-stop'
+            } width={16} height={16} /> */}
+            <span style={{ fontSize: 'x-small' }}>
+              {
+                task?.percentage === 100 ? 'Finished' :
+                  task?.percentage < 100 && task?.percentage > 0 ? 'In Progress' :
+                    'Not Started'
+              }
+            </span>
+          </Label>
         </Box>
+
+        {(task?.project_default_task.has_attachments) && (
+          <>
+            <Iconify width={16} icon="eva:attach-2-fill" sx={{ mr: 0.25 }} />
+            <Box component="span">
+              {task?.project_task_attachments?.length} Attachment(s)
+            </Box>
+          </>
+        )}
 
       </Stack>
 
@@ -202,17 +295,24 @@ const ItemBase = forwardRef(({ task, stateProps, sx, ...other }, ref) => {
         {...stateProps?.listeners}
         {...other}
       >
-        {renderImg}
 
-        <Box sx={{ px: 2, py: 2.5, position: 'relative' }}>
+        <Box sx={{ px: 2, py: 1, position: 'relative' }}>
+
+          <Box sx={{ position: 'absolute', top: 0, right: 0, zIndex: 999, display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+            {(task && isAvailableTask) && (
+              renderButtonTask
+            )}
+          </Box>
+
           {renderPriority}
 
-          <Typography variant="subtitle2" sx={{ mb: 2 }}>
+          <Typography variant="subtitle2" sx={{ mb: 2, width: '70%' }} onClick={onClick}>
             {task.name}
           </Typography>
 
           {renderInfo}
         </Box>
+
       </StyledItem>
     </StyledItemWrap>
   );

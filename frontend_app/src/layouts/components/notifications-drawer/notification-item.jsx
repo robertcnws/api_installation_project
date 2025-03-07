@@ -18,6 +18,7 @@ import { CONFIG } from 'src/config-global';
 
 import { Label } from 'src/components/label';
 import { FileThumbnail } from 'src/components/file-thumbnail';
+
 import { useDataContext } from 'src/auth/context/data/data-context';
 
 // ----------------------------------------------------------------------

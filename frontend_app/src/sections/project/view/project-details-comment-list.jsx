@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { useMemo, useState, useCallback, useEffect, useContext } from 'react';
+import { useMemo, useState, useEffect, useContext, useCallback } from 'react';
 
 import Stack from '@mui/material/Stack';
 import Avatar from '@mui/material/Avatar';
@@ -21,7 +21,6 @@ import { Lightbox, useLightBox } from 'src/components/lightbox';
 import { usePopover, CustomPopover } from 'src/components/custom-popover';
 
 import { LoadingContext } from 'src/auth/context/loading-context';
-
 import { useDataContext } from 'src/auth/context/data/data-context';
 
 import { ProjectDetailsCommentInput } from './project-details-comment-input';

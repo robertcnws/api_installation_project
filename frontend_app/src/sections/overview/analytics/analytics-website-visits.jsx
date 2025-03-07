@@ -132,8 +132,7 @@ export function AnalyticsWebsiteVisits({
   );
 
   return (
-    <>
-      <Card {...other}>
+    <Card {...other}>
         <CardHeader title={title} subheader={subheader} />
         <Chart
           type="donut"
@@ -143,6 +142,5 @@ export function AnalyticsWebsiteVisits({
           sx={{ py: 2.5, pl: 1, pr: 2.5 }}
         />
       </Card>
-    </>
   );
 }

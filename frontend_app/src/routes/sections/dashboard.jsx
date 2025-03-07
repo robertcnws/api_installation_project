@@ -1,4 +1,4 @@
-import { lazy, Suspense, useMemo } from 'react';
+import { lazy, Suspense } from 'react';
 import { Outlet } from 'react-router-dom';
 
 import { verifyPermissions, listRolesAndSubroles } from 'src/utils/check-permissions';

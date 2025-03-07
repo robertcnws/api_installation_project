@@ -11,6 +11,8 @@ import ListItemText from '@mui/material/ListItemText';
 import { Box, Table, Switch, ListItem, TableRow, TableBody, TableCell, TextField, IconButton } from '@mui/material';
 
 import { fDate, fDateTime } from 'src/utils/format-time';
+import { getProjectInstaller } from 'src/utils/project-tasks-utils';
+import { isInstaller, verifyPermissions, listRolesAndSubroles } from 'src/utils/check-permissions';
 
 import { CONFIG } from 'src/config-global';
 
@@ -20,7 +22,6 @@ import { Iconify } from 'src/components/iconify';
 
 import { LoadingContext } from 'src/auth/context/loading-context';
 import { useDataContext } from 'src/auth/context/data/data-context';
-import { isInstaller, listRolesAndSubroles, verifyPermissions } from 'src/utils/check-permissions';
 
 import { ProjectDetailsChartTask } from './view/project-details-chart-task';
 import { ProjectEditModalDatesView } from './view/project-edit-modal-dates-view';
@@ -29,6 +30,7 @@ import { ProjectEditModalAddressView } from './view/project-edit-modal-address-v
 import { ProjectEditModalUserManagerView } from './view/project-edit-modal-user-manager-view';
 import { ProjectDetailsChartSemicircleProject } from './view/project-details-chart-semicircle-project';
 import { ProjectEditModalInstallationTeamView } from './view/project-edit-modal-installation-team-view';
+
 
 
 
@@ -198,35 +200,20 @@ export function ProjectDetailsContent({
               <TableCell>
                 <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, justifyContent: 'space-between' }}>
                   <Avatar
-                    alt={project?.projectDefaultTasks?.filter(
-                      (task) => task.project_default_task.project_stage.name === CONFIG.stages.installation &&
-                        task.project_default_task.name.toLowerCase().includes('start')
-                    )[0]?.users_assignees[0]?.name}
-                    src={project?.projectDefaultTasks?.filter(
-                      (task) => task.project_default_task.project_stage.name === CONFIG.stages.installation &&
-                        task.project_default_task.name.toLowerCase().includes('start')
-                    )[0]?.users_assignees[0]?.avatarUrl}
+                    alt={getProjectInstaller(project, CONFIG)?.name}
+                    src={getProjectInstaller(project, CONFIG)?.avatarUrl}
                     sx={{ width: 24, height: 24, mr: 1 }}
                   />
                   <Typography variant="body2" color="text.primary">
                     <b>
-                      {project?.projectDefaultTasks?.filter(
-                        (task) => task.project_default_task.project_stage.name === CONFIG.stages.installation &&
-                          task.project_default_task.name.toLowerCase().includes('start')
-                      )[0]?.users_assignees[0]?.name ?
-                        project?.projectDefaultTasks?.filter(
-                          (task) => task.project_default_task.project_stage.name === CONFIG.stages.installation &&
-                            task.project_default_task.name.toLowerCase().includes('start')
-                        )[0]?.users_assignees[0]?.name : ''}
+                      {getProjectInstaller(project, CONFIG)?.name ?
+                        getProjectInstaller(project, CONFIG)?.name : ''}
                     </b>
                   </Typography>
                 </Box>
               </TableCell>
               <TableCell sx={{ textAlign: 'right', maxWidth: '30px' }}>
-                {(project?.projectDefaultTasks?.filter(
-                  (task) => task.project_default_task.project_stage.name === CONFIG.stages.installation &&
-                    task.project_default_task.name.toLowerCase().includes('start')
-                )[0]?.users_assignees[0]?.name && (verifyPermissions(
+                {(getProjectInstaller(project, CONFIG)?.name && (verifyPermissions(
                   listPermissions,
                   CONFIG.permissions.system,
                   CONFIG.permissions.moduleProjects,
@@ -240,10 +227,7 @@ export function ProjectDetailsContent({
                     </IconButton>
 
                   )}
-                {(!project?.projectDefaultTasks?.filter(
-                  (task) => task.project_default_task.project_stage.name === CONFIG.stages.installation &&
-                    task.project_default_task.name.toLowerCase().includes('start')
-                )[0]?.users_assignees[0]?.name && (verifyPermissions(
+                {(!getProjectInstaller(project, CONFIG)?.name && (verifyPermissions(
                   listPermissions,
                   CONFIG.permissions.system,
                   CONFIG.permissions.moduleProjects,
@@ -591,8 +575,7 @@ export function ProjectDetailsContent({
           {
             label: 'Responsable',
             value: (
-              <>
-                <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, justifyContent: 'flex-start' }}>
+              <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, justifyContent: 'flex-start' }}>
                   <Typography variant="body2" color="text.primary">
                     <b>{project?.userManager?.name}</b>
                   </Typography>
@@ -601,7 +584,6 @@ export function ProjectDetailsContent({
                     {loadedUsers?.find((user) => user.id === project?.userManager?.id)?.phoneNumber}
                   </Label>
                 </Box>
-              </>
             ),
             icon: <Iconify icon="hugeicons:manager" />,
           },
@@ -774,18 +756,15 @@ export function ProjectDetailsContent({
         onClose={() => setOpenDialogs({ ...openDialogs, userManager: false })}
       />
       <ProjectEditModalInstallationTeamView
-        isEdit={project?.projectDefaultTasks?.filter(
-          (task) => task.project_default_task.project_stage.name === CONFIG.stages.installation &&
-            task.project_default_task.name.toLowerCase().includes('start')
-        )[0]?.users_assignees[0]?.name}
-        projectId={project.id}
+        isEdit={getProjectInstaller(project, CONFIG)?.name}
+        project={project}
         open={openDialogs.installationTeam}
         onClose={() => setOpenDialogs({ ...openDialogs, installationTeam: false })}
       />
       <ProjectEditModalDatesView
         isEdit={isStartDate ? project?.startDate : project?.endDate}
         isStartDate={isStartDate}
-        projectId={project.id}
+        project={project}
         open={openDialogs.date}
         onClose={() => setOpenDialogs({ ...openDialogs, date: false })}
       />

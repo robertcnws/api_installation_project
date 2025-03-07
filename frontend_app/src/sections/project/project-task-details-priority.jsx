@@ -1,10 +1,10 @@
 import axios from 'axios';
 import { useCallback } from 'react';
 
-import { listRolesAndSubroles, verifyPermissions } from 'src/utils/check-permissions';
-
 import Stack from '@mui/material/Stack';
 import ButtonBase from '@mui/material/ButtonBase';
+
+import { verifyPermissions, listRolesAndSubroles } from 'src/utils/check-permissions';
 
 import { CONFIG } from 'src/config-global';
 import { varAlpha } from 'src/theme/styles';

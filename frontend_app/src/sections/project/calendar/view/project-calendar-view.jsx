@@ -1,6 +1,6 @@
 import Calendar from '@fullcalendar/react'; // => request placed at the top
 
-import { useEffect, useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import listPlugin from '@fullcalendar/list';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
@@ -8,31 +8,27 @@ import timelinePlugin from '@fullcalendar/timeline';
 import interactionPlugin from '@fullcalendar/interaction';
 
 import Card from '@mui/material/Card';
-import Stack from '@mui/material/Stack';
-import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 import { useTheme } from '@mui/material/styles';
-import Typography from '@mui/material/Typography';
 import DialogTitle from '@mui/material/DialogTitle';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 import { useSetState } from 'src/hooks/use-set-state';
 
 import { fDate, fIsAfter, fIsBetween } from 'src/utils/format-time';
+import { verifyPermissions, listRolesAndSubroles } from 'src/utils/check-permissions';
 
+import { CONFIG } from 'src/config-global';
 import { DashboardContent } from 'src/layouts/dashboard';
 import { CALENDAR_COLOR_OPTIONS } from 'src/_mock/_calendar';
 import { updateEvent, useGetProjectEvents } from 'src/actions/calendar';
 
-import { Iconify } from 'src/components/iconify';
-import { CONFIG } from 'src/config-global';
 import { useDataContext } from 'src/auth/context/data/data-context';
-import { listRolesAndSubroles, verifyPermissions } from 'src/utils/check-permissions';
 
 import { StyledCalendar } from '../styles';
 import { useEvent } from '../hooks/use-event';
-import { ProjectCalendarForm } from '../project-calendar-form';
 import { useCalendar } from '../hooks/use-calendar';
+import { ProjectCalendarForm } from '../project-calendar-form';
 import { ProjectCalendarToolbar } from '../project-calendar-toolbar';
 import { ProjectCalendarFilters } from '../project-calendar-filters';
 import { ProjectCalendarFiltersResult } from '../project-calendar-filters-result';

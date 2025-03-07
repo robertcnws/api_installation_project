@@ -1,4 +1,4 @@
-import { useContext, useMemo } from 'react';
+import { useMemo, useContext } from 'react';
 
 import Box from '@mui/material/Box';
 import Table from '@mui/material/Table';
@@ -7,6 +7,10 @@ import TableBody from '@mui/material/TableBody';
 import IconButton from '@mui/material/IconButton';
 import TableContainer from '@mui/material/TableContainer';
 import { tableCellClasses } from '@mui/material/TableCell';
+
+import { verifyPermissions, listRolesAndSubroles } from 'src/utils/check-permissions';
+
+import { CONFIG } from 'src/config-global';
 
 import { Iconify } from 'src/components/iconify';
 import {
@@ -17,9 +21,6 @@ import {
 import { TableCustomPaginationZohoStyleRow } from 'src/components/table/table-pagination-custom-zoho-style-row';
 
 import { LoadingContext } from 'src/auth/context/loading-context';
-
-import { CONFIG } from 'src/config-global';
-import { listRolesAndSubroles, verifyPermissions } from 'src/utils/check-permissions';
 
 import { ProjectTableRow } from './project-table-row';
 

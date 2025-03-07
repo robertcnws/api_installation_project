@@ -3,33 +3,27 @@ import dayjs from 'dayjs';
 import { z as zod } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMemo, useState, useEffect, useContext, useCallback } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import { LoadingButton } from '@mui/lab';
 import Button from '@mui/material/Button';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { Grid, Dialog, DialogTitle, DialogActions, TextField, IconButton } from '@mui/material';
+import { Grid, Dialog, TextField, IconButton, DialogTitle, DialogActions } from '@mui/material';
 
-import { paths } from 'src/routes/paths';
-import { useRouter } from 'src/routes/hooks';
-
-import { useTabs } from 'src/hooks/use-tabs';
 import { useBoolean } from 'src/hooks/use-boolean';
 
+import { fDate, fIsSame } from 'src/utils/format-time';
+import { totalPercentageProjectStage } from 'src/utils/project-tasks-utils';
+
 import { CONFIG } from 'src/config-global';
-import { useProjectByIdQuery } from 'src/_mock/__projects';
 
 import { toast } from 'src/components/snackbar';
 import { Form } from 'src/components/hook-form';
-import { usePopover } from 'src/components/custom-popover';
-
-import { LoadingContext } from 'src/auth/context/loading-context';
-import { useDataContext } from 'src/auth/context/data/data-context';
 import { Iconify } from 'src/components/iconify';
-import { height } from '@mui/system';
-import { fDate } from 'src/utils/format-time';
+import { ConfirmDialog } from 'src/components/custom-dialog';
+
 
 
 // ----------------------------------------------------------------------
@@ -37,34 +31,21 @@ import { fDate } from 'src/utils/format-time';
 export function ProjectEditModalDatesView({
     isEdit,
     isStartDate,
-    projectId,
+    project,
     open,
     onClose,
 }) {
 
-    const {
-        loadedProjects,
-        loadedUsers,
-        refetchProjects,
-        refetchSalesOrders,
-    } = useDataContext();
-
-    const item = useMemo(() => loadedProjects?.find((project) => project.id === projectId), [loadedProjects, projectId]);
-
     const diffDays = useMemo(
-        () => item?.endDate ? dayjs(item?.endDate).diff(dayjs(item?.startDate), 'day') : 1, [item?.endDate, item?.startDate]
+        () => project?.endDate ? dayjs(project?.endDate).diff(dayjs(project?.startDate), 'day') : 1, [project?.endDate, project?.startDate]
     );
 
     const [daysToInstall, setDaysToInstall] = useState(diffDays === 0 ? 1 : diffDays);
     const [formChanged, setFormChanged] = useState(false);
 
-    const { isMobile } = useContext(LoadingContext);
+    const confirmValidInstallDate = useBoolean();
 
-    const router = useRouter();
-
-    const confirm = useBoolean();
-
-    const tabs = useTabs('overview');
+    const [confirmValidInstallMessage, setConfirmValidInstallMessage] = useState(null);
 
     const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
 
@@ -72,52 +53,39 @@ export function ProjectEditModalDatesView({
 
     const [endDate, setEndDate] = useState(null);
 
-    const popover = usePopover();
-
     const toggleMainInfo = useBoolean(true);
-
-    const { data: itemById, refetch: refetchProject } = useProjectByIdQuery(item?.id, {
-        skip: !item?.id,
-    });
 
     const handleDaysChange = (e) => {
         const days = parseInt(e.target.value, 10) || 1;
         setDaysToInstall(days);
-        const newEndDate = dayjs(itemById?.startDate).add(days, 'day');
+        const newEndDate = dayjs(project?.startDate).add(days, 'day');
         setEndDate(newEndDate);
         setFormChanged(!Number.isNaN(days) && days > 0);
     };
 
-    const handleDateChange = (date) => {
-        setSelectedDate(date);
-        setFormChanged(true);
-    };
-
-    const handleReturnList = useCallback(() => {
-        router.push(paths.dashboard.project.list);
-    }, [router]);
-
-    const handleDeleteItem = useCallback(
-        async (id) => {
-
-            const promise = axios.delete(`${CONFIG.apiUrl}/projects/delete/project/${id}/`, {
-                data: {
-                    userReporter: userLogged?.data,
+    const handleDateChange = useCallback(
+        (date) => {
+            const currentStage = project?.currentStage;
+            if (currentStage?.name === CONFIG.stages.preparation ||
+                (currentStage?.name === CONFIG.stages.coordination && totalPercentageProjectStage(project, CONFIG.stages.coordination, CONFIG) < 50)
+            ) {
+                const today = dayjs().format('YYYY-MM-DD');
+                const formatDate = dayjs(date).format('YYYY-MM-DD');
+                const isSame = fIsSame(today, formatDate);
+                if (isSame) {
+                    const message = isStartDate ? 'You have to finish all tasks in the previous stages before setting the install date.' : 
+                    'You have to finish all tasks in the previous stages before setting the closing date.';
+                    setConfirmValidInstallMessage(message);
+                    confirmValidInstallDate.onTrue();
                 }
-            });
-
-            const response = await promise;
-
-            toast.success('Delete success!');
-
-            refetchProjects?.();
-
-            refetchSalesOrders?.();
-
-            router.push(paths.dashboard.project.list);
-
+            }
+            else {
+                setSelectedDate(date);
+                setFormChanged(true);
+                setConfirmValidInstallMessage(null);
+            }
         },
-        [refetchSalesOrders, refetchProjects, userLogged, router]
+        [project, confirmValidInstallDate, isStartDate]
     );
 
     const ProjectDialogSchema = zod.object({
@@ -126,14 +94,14 @@ export function ProjectEditModalDatesView({
 
     const defaultValues = useMemo(
         () => ({
-            id: itemById?.id || '',
-            name: itemById?.name || '',
-            number: itemById?.number || '',
+            id: project?.id || '',
+            name: project?.name || '',
+            number: project?.number || '',
             userReporter: userLogged?.data,
-            startDate: itemById?.startDate || null,
-            endDate: itemById?.endDate ? dayjs(itemById?.endDate).toISOString() : null,
+            startDate: project?.startDate || null,
+            endDate: project?.endDate ? dayjs(project?.endDate).toISOString() : null,
         }),
-        [itemById, userLogged]
+        [project, userLogged]
     );
 
     const methods = useForm({
@@ -145,29 +113,25 @@ export function ProjectEditModalDatesView({
     const {
         reset,
         handleSubmit,
-        setValue,
-        watch,
-        control,
-        getValues,
         formState: { isSubmitting },
     } = methods;
 
 
     useEffect(() => {
-        if (itemById) {
+        if (project) {
             reset({
-                id: itemById.id || '',
-                name: itemById.name || '',
-                number: itemById.number || '',
+                id: project.id || '',
+                name: project.name || '',
+                number: project.number || '',
                 userReporter: userLogged?.data,
-                startDate: itemById.startDate || null,
-                endDate: itemById.endDate || null,
+                startDate: project.startDate || null,
+                endDate: project.endDate || null,
             });
-            setSelectedDate(isStartDate ? dayjs(itemById?.startDate) : dayjs(itemById?.endDate));
+            setSelectedDate(isStartDate ? dayjs(project?.startDate) : dayjs(project?.endDate));
             setDaysToInstall(diffDays);
             setFormChanged(false);
         }
-    }, [itemById, userLogged?.data, reset, diffDays, isStartDate]);
+    }, [project, userLogged?.data, reset, diffDays, isStartDate]);
 
 
     const onSubmit = handleSubmit(async (data) => {
@@ -187,7 +151,7 @@ export function ProjectEditModalDatesView({
         }
 
 
-        const promise = axios.post(`${CONFIG.apiUrl}/projects/update/project/${item.id}/`, formData, {
+        const promise = axios.post(`${CONFIG.apiUrl}/projects/update/project/${project.id}/`, formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
             },
@@ -205,10 +169,6 @@ export function ProjectEditModalDatesView({
             if (!response.data) {
                 return;
             }
-
-            refetchProject?.();
-
-            // reset();
 
             onClose();
 
@@ -233,11 +193,11 @@ export function ProjectEditModalDatesView({
                                         value={selectedDate}
                                         onChange={handleDateChange}
                                         minDate={
-                                            isStartDate ? dayjs(itemById?.salesOrder?.date) :
-                                                itemById?.startDate ? dayjs(itemById?.startDate) : dayjs(itemById?.salesOrder?.date)
+                                            isStartDate ? dayjs(project?.salesOrder?.date) :
+                                            project?.startDate ? dayjs(project?.startDate) : dayjs(project?.salesOrder?.date)
                                         }
                                         maxDate={
-                                            isStartDate ? dayjs(itemById?.endDate) : null
+                                            isStartDate ? dayjs(project?.endDate) : null
                                         }
                                         inputFormat="yyyy-MM-dd"
                                         sx={{ width: '100%' }}
@@ -280,7 +240,7 @@ export function ProjectEditModalDatesView({
                                         <IconButton sx={{ width: 50, height: 50, mt: 1 }} onClick={() => {
                                             const newEndDate = endDate ? dayjs(endDate).add(1, 'day') : dayjs(selectedDate).add(1, 'day');
                                             setEndDate(newEndDate);
-                                            setDaysToInstall(daysToInstall  + 1);
+                                            setDaysToInstall(daysToInstall + 1);
                                             setFormChanged(true);
                                         }}>
                                             <Iconify icon="mdi:plus-box-outline" sx={{ width: 30, height: 30 }} />
@@ -302,7 +262,7 @@ export function ProjectEditModalDatesView({
 
     const renderProject = (
         <Dialog fullWidth maxWidth="xs" open={open} onClose={onClose}>
-            <DialogTitle>{isEdit ? 'Update' : 'Add'} {isStartDate ? 'Install' : 'Closing'} date to Project {itemById?.name} </DialogTitle>
+            <DialogTitle>{isEdit ? 'Update' : 'Add'} {isStartDate ? 'Install' : 'Closing'} date to Project {project?.name} </DialogTitle>
 
             <Form methods={methods} onSubmit={onSubmit}>
 
@@ -321,7 +281,7 @@ export function ProjectEditModalDatesView({
                         type="submit"
                         variant="contained"
                         loading={isSubmitting}
-                        disabled={!formChanged}
+                        disabled={!formChanged || confirmValidInstallMessage !== null}
                     >
                         {isEdit ? 'Update' : 'Add'}
                     </LoadingButton>
@@ -334,9 +294,17 @@ export function ProjectEditModalDatesView({
     )
 
     return (
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-            {/* Tabs alineados a la izquierda */}
-            <Box sx={{ flexGrow: 1, borderRadius: 1 }}>{renderProject}</Box>
-        </Box>
+        <>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                {/* Tabs alineados a la izquierda */}
+                <Box sx={{ flexGrow: 1, borderRadius: 1 }}>{renderProject}</Box>
+            </Box>
+            <ConfirmDialog
+                open={confirmValidInstallDate.value}
+                onClose={confirmValidInstallDate.onFalse}
+                title="Warning"
+                content={confirmValidInstallMessage}
+            />
+        </>
     );
 }

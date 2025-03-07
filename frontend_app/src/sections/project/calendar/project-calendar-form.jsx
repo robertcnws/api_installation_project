@@ -1,7 +1,9 @@
+import axios from 'axios';
+import dayjs from 'dayjs';
 import { z as zod } from 'zod';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useForm } from 'react-hook-form';
+import { useMemo, useCallback } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm, Controller } from 'react-hook-form';
 
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
@@ -11,23 +13,21 @@ import IconButton from '@mui/material/IconButton';
 import LoadingButton from '@mui/lab/LoadingButton';
 import DialogActions from '@mui/material/DialogActions';
 
+import { paths } from 'src/routes/paths';
+import { useRouter } from 'src/routes/hooks';
+
+import { useBoolean } from 'src/hooks/use-boolean';
+
 import { uuidv4 } from 'src/utils/uuidv4';
 import { fIsAfter } from 'src/utils/format-time';
 
-import { createEvent, updateEvent, deleteEvent } from 'src/actions/calendar';
+import { CONFIG } from 'src/config-global';
+import { createEvent } from 'src/actions/calendar';
 
 import { toast } from 'src/components/snackbar';
 import { Iconify } from 'src/components/iconify';
 import { Scrollbar } from 'src/components/scrollbar';
 import { Form, Field } from 'src/components/hook-form';
-import { ColorPicker } from 'src/components/color-utils';
-import { useRouter } from 'src/routes/hooks';
-import { paths } from 'src/routes/paths';
-import axios from 'axios';
-import { CONFIG } from 'src/config-global';
-import dayjs from 'dayjs';
-import { name } from 'dayjs/locale/en';
-import { useBoolean } from 'src/hooks/use-boolean';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 
 // ----------------------------------------------------------------------

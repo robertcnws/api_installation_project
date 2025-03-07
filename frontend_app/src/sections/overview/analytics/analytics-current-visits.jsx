@@ -142,8 +142,7 @@ export function AnalyticsCurrentVisits({
   );
 
   return (
-    <>
-      <Card {...other}>
+    <Card {...other}>
         <CardHeader title={title} subheader={subheader} />
 
         <Chart
@@ -163,7 +162,5 @@ export function AnalyticsCurrentVisits({
           sx={{ p: 3, justifyContent: 'center' }}
         />
       </Card>
-      
-    </>
   );
 }

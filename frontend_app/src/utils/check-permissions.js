@@ -40,7 +40,7 @@ export const isOfficeStaff = (role) => role?.toLowerCase().indexOf(CONFIG.roles.
 
 export const createDefaultPermissions = (role) => {
   const data = {};
-  const system = CONFIG.permissions.system;
+  const {system} = CONFIG.permissions;
   const modules = [];
   modules.push({
     name: CONFIG.permissions.moduleProjects,
