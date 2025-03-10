@@ -1,13 +1,17 @@
 import 'jspdf-autotable';
-import { CONFIG } from 'src/config-global';
 import { jsPDF as JsPDF } from 'jspdf';
+
+import { CONFIG } from 'src/config-global';
+
+import { fCurrency } from './format-number';
 import { fDate, fDateTime } from './format-time';
 import logoBase64 from '../../public/files/color_white_background/icon_with_text/NWS-HOME-REPORT.png';
-import { fCurrency } from './format-number';
 
 
-export const generateInstallationGuideFormReport = ({ project }) => {
+export const generateInstallationGuideFormReport = ({ project, userLogged }) => {
     const doc = new JsPDF();
+
+    console.log('userLogged', userLogged);
 
     const margin = 2;
     const logoWidth = 25;
@@ -23,6 +27,7 @@ export const generateInstallationGuideFormReport = ({ project }) => {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(14);
     doc.text("INSTALLATION ORDER GUIDE", 105, 25, null, null, "center");
+    
 
     // Project Details
     doc.setFontSize(12);
@@ -178,7 +183,7 @@ export const generateInstallationGuideFormReport = ({ project }) => {
     ]
 
     doc.autoTable({
-        startY: fourTableHeight + 0.5,
+        startY: fourTableHeight,
         startX: margin + 5,
         margin: { left: margin + 3 },
         head: [[
@@ -208,7 +213,7 @@ export const generateInstallationGuideFormReport = ({ project }) => {
     doc.setFont("helvetica", "bold");
     doc.text("NEW WINDOW SYSTEM", 170, 10, null, null, "center");
     doc.setFont("helvetica", "normal");
-    
+
     doc.setFontSize(12);
 
     const totalMaterials = project?.projectMaterials?.reduce((acc, product) => acc + product.cost, 0);
@@ -249,7 +254,7 @@ export const generateInstallationGuideFormReport = ({ project }) => {
     const fifthTableHeight = doc.lastAutoTable.finalY;
 
     doc.autoTable({
-        startY: fifthTableHeight + 0.5,
+        startY: fifthTableHeight,
         startX: margin + 5,
         margin: { left: margin + 3 },
         head: [[
@@ -281,7 +286,7 @@ export const generateInstallationGuideFormReport = ({ project }) => {
 
 
     doc.autoTable({
-        startY: sixthTableHeight + 0.5,
+        startY: sixthTableHeight,
         startX: margin + 5,
         margin: { left: margin + 3 },
         body: otherNotesDetails,
@@ -296,16 +301,20 @@ export const generateInstallationGuideFormReport = ({ project }) => {
     const seventhTableHeight = doc.lastAutoTable.finalY;
 
     const preparedByDetails = [
-        [{ content: "PREPARED BY:", styles: { fontStyle: 'bold' } }, project.salesOrder.salesorder_number || ""],
+        [
+            {
+                content: "PREPARED BY:", styles: { fontStyle: 'bold' }
+            },
+            `${userLogged?.data.first_name} ${userLogged?.data.last_name}` || ""],
     ];
 
     doc.autoTable({
-        startY: seventhTableHeight + 0.5,
+        startY: seventhTableHeight,
         startX: margin + 5,
         margin: { left: margin + 3 },
         body: preparedByDetails,
         theme: "grid",
-        styles: { fontSize: 11, cellPadding: 2 },
+        styles: { fontSize: 11, cellPadding: 2, minCellHeight: 25 },
         columnStyles: {
             0: { cellWidth: 35 },
             1: { cellWidth: 50 },
@@ -313,19 +322,18 @@ export const generateInstallationGuideFormReport = ({ project }) => {
     });
 
     const preparedByFinalX = doc.internal.pageSize.width / 2 + 10;
-    const preparedByTableHeight = doc.lastAutoTable.finalY;
 
     const aprovedByDetails = [
-        [{ content: "APROVED BY:", styles: { fontStyle: 'bold' } }, fDate(project.startDate) || ""],
+        [{ content: "APROVED BY:", styles: { fontStyle: 'bold' } }, ""],
     ];
 
 
     doc.autoTable({
-        startY: seventhTableHeight + 0.5,
+        startY: seventhTableHeight,
         margin: { left: preparedByFinalX - 25 },
         body: aprovedByDetails,
         theme: "grid",
-        styles: { fontSize: 11, cellPadding: 2 },
+        styles: { fontSize: 11, cellPadding: 2, minCellHeight: 25 },
         columnStyles: {
             0: { cellWidth: 55 },
             1: { cellWidth: 60 },

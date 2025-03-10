@@ -38,6 +38,19 @@ export function today(format) {
 
 // ----------------------------------------------------------------------
 
+export function fDuration(startDate, endDate) {
+  const elapsed = dayjs(startDate).to(endDate, true)
+  return elapsed
+  .replace('a few seconds', '1 second')
+  .replace('a minute', '1 minute')
+  .replace('an hour', '1 hour')
+  .replace('a month', '1 month')
+  .replace('a day', '1 day')
+  .replace('a year', '1 year')
+}
+
+// ----------------------------------------------------------------------
+
 /** output: Apr 17 2022 12:00 am
  */
 export function fDateTime(date, format, timeZone = dayjs.tz.guess()) {

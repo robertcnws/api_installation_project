@@ -1,7 +1,7 @@
 {
-    "name": "WMS App",
-    "short_name": "WMS App",
-    "description": "Warehouse Management System",
+    "name": "NWS Home App",
+    "short_name": "NWS Home App",
+    "description": "NWS Home System",
     "theme_color": "#ffffff",
     "background_color": "#ffffff",
     "display": "standalone",

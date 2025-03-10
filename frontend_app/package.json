@@ -90,6 +90,8 @@
     "i18next-resources-to-backend": "^1.2.1",
     "jspdf": "^2.5.2",
     "jspdf-autotable": "^3.8.4",
+    "lodash": "^4.17.21",
+    "lodash.isequal": "^4.5.0",
     "lowlight": "^3.1.0",
     "mapbox-gl": "^3.4.0",
     "mui-one-time-password-input": "^2.0.3",

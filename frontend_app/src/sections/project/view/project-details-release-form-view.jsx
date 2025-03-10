@@ -12,7 +12,7 @@ import Grid from '@mui/material/Unstable_Grid2';
 import Typography from '@mui/material/Typography';
 import ListItemText from '@mui/material/ListItemText';
 
-import { stripHtmlUsingDOM } from 'src/utils/helper';
+import { generateReleaseFormReport } from 'src/utils/generate-release-form-pdf';
 
 import { CONFIG } from 'src/config-global';
 
@@ -21,7 +21,6 @@ import { Iconify } from 'src/components/iconify';
 import { Form, Field } from 'src/components/hook-form';
 
 import { LoadingContext } from 'src/auth/context/loading-context';
-import { generateReleaseFormReport } from 'src/utils/generate-release-form-pdf';
 
 // ----------------------------------------------------------------------
 

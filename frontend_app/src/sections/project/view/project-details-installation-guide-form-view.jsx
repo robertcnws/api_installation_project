@@ -1,28 +1,29 @@
 import axios from 'axios';
 import { z as zod } from 'zod';
-import { useForm } from 'react-hook-form';
+import isEqual from 'lodash.isequal';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMemo, useEffect, useContext, useState } from 'react';
+import { useMemo, useState, useEffect, useContext } from 'react';
 
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
 import { LoadingButton } from '@mui/lab';
-import { Box, Button, IconButton, Table, TableBody, TableCell, TableContainer, TableFooter, TableHead, TableRow, TextField } from '@mui/material';
 import Grid from '@mui/material/Unstable_Grid2';
 import Typography from '@mui/material/Typography';
 import ListItemText from '@mui/material/ListItemText';
+import { Box, Table, Button, TableRow, TableBody, TableCell, TableHead, TextField, IconButton, TableFooter, TableContainer } from '@mui/material';
 
+import { fCurrency } from 'src/utils/format-number';
+import { createScopeArray, generateInstallationGuideFormReport } from 'src/utils/generate-installation-guide-pdf';
 
 import { CONFIG } from 'src/config-global';
 
+import { Label } from 'src/components/label';
 import { toast } from 'src/components/snackbar';
 import { Iconify } from 'src/components/iconify';
 import { Form, Field } from 'src/components/hook-form';
 
 import { LoadingContext } from 'src/auth/context/loading-context';
-import { generateInstallationGuideFormReport, createScopeArray } from 'src/utils/generate-installation-guide-pdf';
-import { fCurrency } from 'src/utils/format-number';
-import { Label } from 'src/components/label';
 
 // ----------------------------------------------------------------------
 
@@ -85,10 +86,11 @@ export function ProjectDetailsInstallationGuideFormView({
   ), [productsData]);
 
   const handleAddProduct = () => {
+    const lastIndex = productsData.length > 0 ? productsData[productsData.length - 1].id : 0;
     setProductsData((prev) => [
       ...prev,
       {
-        id: prev.length + 1,
+        id: lastIndex + 1,
         name: 'OTHER: ',
         price: 0,
         quantity: 1,
@@ -117,10 +119,11 @@ export function ProjectDetailsInstallationGuideFormView({
   }, [productsData]);
 
   const handleAddMaterial = () => {
+    const lastIndex = materials.length > 0 ? materials[materials.length - 1].id : 0;
     setMaterials((prev) => [
       ...prev,
       {
-        id: prev.length + 1,
+        id: lastIndex + 1,
         name: 'OTHER: ',
         quantity: 1,
         ticket: '',
@@ -161,11 +164,15 @@ export function ProjectDetailsInstallationGuideFormView({
   const ProjectInstallationGuideSchema = zod.object({
     workScope: zod.string().optional(),
     otherNotes: zod.string().optional(),
+    projectGuideProducts: zod.array(zod.object({}).passthrough()).default([]),
+    projectMaterials: zod.array(zod.object({}).passthrough()).default([]),
   });
 
   const defaultValues = useMemo(() => ({
     workScope: project?.workScope || '',
     otherNotes: project?.projectMaterialsOtherNotes || '',
+    projectGuideProducts: project?.projectGuideProducts || [],
+    projectMaterials: project?.projectMaterials || [],
   }), [project]);
 
   const methods = useForm({
@@ -177,34 +184,51 @@ export function ProjectDetailsInstallationGuideFormView({
   const {
     handleSubmit,
     reset,
+    setValue,
+    isSubmitting,
+    control,
     formState: { isDirty },
-    isSubmitting
   } = methods;
 
   const isFormValid = useMemo(() => {
     const areProductsValid = productsData.every((product) =>
       product.name.trim() !== '' &&
-      product.quantity > 0 &&
-      product.price > 0
+      Number(product.quantity) > 0 &&
+      Number(product.price) > 0
     );
 
     const areMaterialsValid = materials.every((material) =>
       material.name.trim() !== '' &&
-      material.quantity > 0 &&
-      material.cost > 0 &&
+      Number(material.quantity) > 0 &&
+      Number(material.cost) > 0 &&
       material.store.trim() !== '' &&
       material.ticket.trim() !== ''
     );
 
-    return isDirty && areProductsValid && areMaterialsValid;
-  }, [isDirty, productsData, materials]);
+    return areProductsValid && areMaterialsValid;
+  }, [productsData, materials]);
 
   useEffect(() => {
-    reset(defaultValues);
-  }, [project, reset, defaultValues]);
+    if (!isDirty) {
+      reset(defaultValues);
+    }
+  }, [isDirty, reset, defaultValues]);
+
+  useEffect(() => {
+    setValue('projectGuideProducts', productsData);
+  }, [productsData, setValue]);
+
+  useEffect(() => {
+    setValue('projectMaterials', materials);
+  }, [materials, setValue]);
+
+  const currentValues = useWatch({ control });
+
+  const isCustomDirty = useMemo(() => !isEqual(currentValues, defaultValues), [currentValues, defaultValues]);
 
 
   const onSubmit = handleSubmit(async (data) => {
+    console.log("Submit triggered", data);
     try {
       const formData = new FormData();
       formData.append('workScope', data.workScope);
@@ -265,10 +289,12 @@ export function ProjectDetailsInstallationGuideFormView({
                             <TableCell align="right">Total</TableCell>
                             <TableCell>
                               <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-                                <Typography sx={{ mt: 1 }}>Notes</Typography>
-                                <IconButton variant="outlined" color='success' onClick={handleAddProduct} disabled={!canAddProduct} sx={{ border: '1px solid' }}>
-                                  <Iconify icon="bi:plus" />
-                                </IconButton>
+                                <Typography sx={{ mt: productsData.length !== 0 ? 0.3 : 2}}>Notes</Typography>
+                                {productsData.length === 0 && (
+                                  <IconButton variant="outlined" color='success' onClick={handleAddProduct} disabled={!canAddProduct}>
+                                    <Iconify icon="icon-park-twotone:add" sx={{ width: 40, height: 40 }}/>
+                                  </IconButton>
+                                )}
                               </Box>
                             </TableCell>
                           </>
@@ -276,9 +302,11 @@ export function ProjectDetailsInstallationGuideFormView({
                           <TableCell>
                             <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
                               <Typography>Items</Typography>
-                              <IconButton variant="outlined" color='success' onClick={handleAddProduct} disabled={!canAddProduct} sx={{ border: '1px solid' }}>
-                                <Iconify icon="bi:plus" />
-                              </IconButton>
+                              {productsData.length === 0 && (
+                                <IconButton variant="outlined" color='success' onClick={handleAddProduct} disabled={!canAddProduct}>
+                                  <Iconify icon="icon-park-twotone:add" sx={{ width: 40, height: 40 }}/>
+                                </IconButton>
+                              )}
                             </Box>
                           </TableCell>
                         )}
@@ -399,12 +427,12 @@ export function ProjectDetailsInstallationGuideFormView({
                           {(index === productsData.length - 1) ? (
                             <TableCell sx={{ width: 100, verticalAlign: !isMobile ? 'none' : 'bottom' }} align="left">
                               <Box sx={{ display: 'flex', flexDirection: !isMobile ? 'row' : 'column', justifyContent: 'space-between' }}>
-                                <IconButton variant="outlined" color='success' onClick={handleAddProduct} disabled={!canAddProduct} sx={{ border: '1px solid' }}>
-                                  <Iconify icon="bi:plus" />
+                                <IconButton variant="outlined" color='success' onClick={handleAddProduct} disabled={!canAddProduct}>
+                                  <Iconify icon="icon-park-twotone:add" sx={{ width: 40, height: 40 }}/>
                                 </IconButton>
                                 {product.isNew && (
-                                  <IconButton variant="outlined" color='error' onClick={() => handleRemoveProduct(product.id)} sx={{ border: '1px solid' }}>
-                                    <Iconify icon="bi:trash" />
+                                  <IconButton variant="outlined" color='error' onClick={() => handleRemoveProduct(product.id)}>
+                                    <Iconify icon="gg:remove-r" sx={{ width: 35, height: 35 }}/>
                                   </IconButton>
                                 )}
                               </Box>
@@ -419,6 +447,7 @@ export function ProjectDetailsInstallationGuideFormView({
                       <TableRow>
                         <TableCell colSpan={!isMobile ? 3 : 0} align="left" sx={{ fontSize: '15px' }}><b>TOTAL:</b></TableCell>
                         <TableCell sx={{ fontSize: '15px' }} align="right"><b>{fCurrency(totalPrice)}</b></TableCell>
+                        <TableCell colSpan={!isMobile ? 2 : 0} align="left" sx={{ fontSize: '15px' }} />
                       </TableRow>
                     </TableFooter>
                   </Table>
@@ -448,10 +477,12 @@ export function ProjectDetailsInstallationGuideFormView({
                             <TableCell>Store</TableCell>
                             <TableCell>
                               <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-                                <Typography sx={{ mt: 1 }}>Notes</Typography>
-                                <IconButton variant="outlined" color='success' onClick={handleAddMaterial} disabled={!canAddMaterial} sx={{ border: '1px solid' }}>
-                                  <Iconify icon="bi:plus" />
-                                </IconButton>
+                                <Typography sx={{ mt: materials.length !== 0 ? 0.4 : 2}}>Notes</Typography>
+                                {materials.length === 0 && (
+                                  <IconButton variant="outlined" color='success' onClick={handleAddMaterial} disabled={!canAddMaterial}>
+                                    <Iconify icon="icon-park-twotone:add" sx={{ width: 40, height: 40 }}/>
+                                  </IconButton>
+                                )}
                               </Box>
                             </TableCell>
                           </>
@@ -459,9 +490,11 @@ export function ProjectDetailsInstallationGuideFormView({
                           <TableCell>
                             <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
                               <Typography>Materials</Typography>
-                              <IconButton variant="outlined" color='success' onClick={handleAddMaterial} disabled={!canAddMaterial} sx={{ border: '1px solid' }}>
-                                <Iconify icon="bi:plus" />
-                              </IconButton>
+                              {materials.length === 0 && (
+                                <IconButton variant="outlined" color='success' onClick={handleAddMaterial} disabled={!canAddMaterial}>
+                                  <Iconify icon="icon-park-twotone:add" sx={{ width: 40, height: 40, mr: -15 }}/>
+                                </IconButton>
+                              )}
                             </Box>
                           </TableCell>
                         )}
@@ -585,12 +618,12 @@ export function ProjectDetailsInstallationGuideFormView({
                           <TableCell sx={{ width: 100, verticalAlign: !isMobile ? 'none' : 'bottom' }} align="left">
                             <Box sx={{ display: 'flex', flexDirection: !isMobile ? 'row' : 'column', justifyContent: 'space-between' }}>
                               {(index === materials.length - 1) && (
-                                <IconButton variant="outlined" color='success' onClick={handleAddMaterial} disabled={!canAddMaterial} sx={{ border: '1px solid' }}>
-                                  <Iconify icon="bi:plus" />
+                                <IconButton variant="outlined" color='success' onClick={handleAddMaterial} disabled={!canAddMaterial}>
+                                  <Iconify icon="icon-park-twotone:add" sx={{ width: 40, height: 40 }}/>
                                 </IconButton>
                               )}
-                              <IconButton variant="outlined" color='error' onClick={() => handleRemoveMaterial(product.id)} sx={{ border: '1px solid' }}>
-                                <Iconify icon="bi:trash" />
+                              <IconButton variant="outlined" color='error' onClick={() => handleRemoveMaterial(product.id)}>
+                              <Iconify icon="gg:remove-r" sx={{ width: 35, height: 35 }}/>
                               </IconButton>
                             </Box>
                           </TableCell>
@@ -602,6 +635,7 @@ export function ProjectDetailsInstallationGuideFormView({
                       <TableRow>
                         <TableCell colSpan={!isMobile ? 3 : 0} align="left" sx={{ fontSize: '15px' }}><b>TOTAL Cost:</b></TableCell>
                         <TableCell sx={{ fontSize: '15px' }} align="center"><b>{fCurrency(totalCost)}</b></TableCell>
+                        <TableCell colSpan={!isMobile ? 3 : 0} align="left" sx={{ fontSize: '15px' }} />
                       </TableRow>
                     </TableFooter>
                   </Table>
@@ -616,9 +650,9 @@ export function ProjectDetailsInstallationGuideFormView({
         {
           label: 'Other notes',
           value: (
-              <Stack spacing={1} direction="column">
-                <Field.Text multiline rows={2} name="otherNotes" placeholder="Write your other notes here..." />
-              </Stack>
+            <Stack spacing={1} direction="column">
+              <Field.Text multiline rows={2} name="otherNotes" placeholder="Write your other notes here..." />
+            </Stack>
           ),
           icon: <Iconify icon="pixelarticons:notes-plus" />,
         },
@@ -644,13 +678,13 @@ export function ProjectDetailsInstallationGuideFormView({
           type="submit"
           variant="contained"
           loading={isSubmitting}
-          disabled={!isFormValid}
+          disabled={!isFormValid || !isCustomDirty}
         >
           Save
         </LoadingButton>
         <Button
           variant="outlined"
-          onClick={() => generateInstallationGuideFormReport({ project })}
+          onClick={() => generateInstallationGuideFormReport({ project, userLogged })}
         >
           Generate Report
         </Button>

@@ -1,5 +1,6 @@
 import 'jspdf-autotable';
 import { jsPDF as JsPDF } from 'jspdf';
+
 import { fDate, fDateTime } from './format-time';
 import logoBase64 from '../../public/files/color_white_background/icon_with_text/NWS-HOME-REPORT.png';
 
@@ -15,10 +16,10 @@ export const generateReleaseFormReport = ({ project }) => {
     // Title
     doc.setFontSize(16);
     doc.setFont("helvetica", "bold");
-    doc.text("NEW WINDOW SYSTEM", 105, 25, null, null, "center");
+    doc.text("NEW WINDOW SYSTEM", 170, 10, null, null, "center");
     doc.setFont("helvetica", "normal");
     doc.setFontSize(14);
-    doc.text("INSTALLATION FINAL RELEASE FORM", 105, 35, null, null, "center");
+    doc.text("INSTALLATION FINAL RELEASE FORM", 105, 25, null, null, "center");
 
     // Project Details
     doc.setFontSize(12);
@@ -30,7 +31,7 @@ export const generateReleaseFormReport = ({ project }) => {
         ["CONTACT PHONE:", project.salesOrder.customer.phone || ""],
     ];
     doc.autoTable({
-        startY: 45,
+        startY: 30,
         body: details,
         theme: "grid",
         styles: { fontSize: 11, cellPadding: 2 },
@@ -104,7 +105,7 @@ export const generateReleaseFormReport = ({ project }) => {
         "By Signing this you agree there are no installation issues pending, the customer(s) above have inspected the window(s)/door(s) for quality of product, completeness of order, quality of installation performed and agree all the marked items above have been completed in a satisfactory manner.",
         180 
     );
-    doc.text(firstText, 102, doc.lastAutoTable.finalY + 30, { align: "center" });
+    doc.text(firstText, 102, doc.lastAutoTable.finalY + 45, { align: "center" });
     
     doc.setFont("helvetica", "bold");
     const secondText = doc.splitTextToSize(
