@@ -104,6 +104,7 @@ INSTALLED_APPS = [
     'api_authorization',
     # 'api_projects',
     'api_projects.apps.ApiProjectsConfig',
+    'api_projects_async_task_sequence',
 ]
 
 MIDDLEWARE = [
@@ -242,6 +243,12 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'America/New_York'
 CELERY_ENABLE_UTC = False
+CELERY_BEAT_SCHEDULE = {
+    'run-task-sequence-daily-delete-old': {
+        'task': 'api_projects_async_task_sequence.tasks.task_sequence_daily_delete_old',
+        'schedule': crontab(minute=0, hour=8, day_of_week='*'),
+    },
+}
 
 
 # AWS

@@ -39,6 +39,8 @@ export function ProjectDetailsInstallationGuideFormView({
 
   const listItems = useMemo(() => project?.salesOrder?.line_items?.filter((product) => product.item_type !== 'sales_and_purchases'), [project]);
 
+  const [currentProject, setCurrentProject] = useState(null);
+
   const [materials, setMaterials] = useState(
     project?.projectMaterials.length > 0 ?
       project?.projectMaterials :
@@ -81,9 +83,22 @@ export function ProjectDetailsInstallationGuideFormView({
     }
   }, [listItems, project]);
 
+
+  useEffect(() => {
+    if (project && productsData.length > 0 && materials.length > 0) {
+      const current = {
+        ...project,
+        projectGuideProducts: productsData,
+        projectMaterials: materials,
+      }
+      setCurrentProject(current);
+    }
+  }, [project, productsData, materials]);
+
   const totalPrice = useMemo(() => (
     productsData.reduce((acc, product) => acc + (product.price * product.quantity || 0), 0)
   ), [productsData]);
+
 
   const handleAddProduct = () => {
     const lastIndex = productsData.length > 0 ? productsData[productsData.length - 1].id : 0;
@@ -684,7 +699,7 @@ export function ProjectDetailsInstallationGuideFormView({
         </LoadingButton>
         <Button
           variant="outlined"
-          onClick={() => generateInstallationGuideFormReport({ project, userLogged })}
+          onClick={() => generateInstallationGuideFormReport({currentProject, userLogged})}
         >
           Generate Report
         </Button>

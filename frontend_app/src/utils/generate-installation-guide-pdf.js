@@ -8,7 +8,7 @@ import { fDate, fDateTime } from './format-time';
 import logoBase64 from '../../public/files/color_white_background/icon_with_text/NWS-HOME-REPORT.png';
 
 
-export const generateInstallationGuideFormReport = ({ project, userLogged }) => {
+export const generateInstallationGuideFormReport = ({ currentProject, userLogged }) => {
     const doc = new JsPDF();
 
     console.log('userLogged', userLogged);
@@ -27,16 +27,16 @@ export const generateInstallationGuideFormReport = ({ project, userLogged }) => 
     doc.setFont("helvetica", "normal");
     doc.setFontSize(14);
     doc.text("INSTALLATION ORDER GUIDE", 105, 25, null, null, "center");
-    
+
 
     // Project Details
     doc.setFontSize(12);
     const salesOrderDetails = [
-        [{ content: "SO #:", styles: { fontStyle: 'bold' } }, project.salesOrder.salesorder_number || ""],
-        [{ content: "DATE:", styles: { fontStyle: 'bold' } }, fDate(project.salesOrder.date) || ""],
-        [{ content: "CUSTOMER:", styles: { fontStyle: 'bold' } }, project.salesOrder.customer.customer_name || ""],
-        [{ content: "PHONE:", styles: { fontStyle: 'bold' } }, project.salesOrder.customer.phone || ""],
-        [{ content: "EMAIL:", styles: { fontStyle: 'bold' } }, project.salesOrder.customer.email || ""],
+        [{ content: "SO #:", styles: { fontStyle: 'bold' } }, currentProject?.salesOrder.salesorder_number || ""],
+        [{ content: "DATE:", styles: { fontStyle: 'bold' } }, fDate(currentProject?.salesOrder.date) || ""],
+        [{ content: "CUSTOMER:", styles: { fontStyle: 'bold' } }, currentProject?.salesOrder.customer.customer_name || ""],
+        [{ content: "PHONE:", styles: { fontStyle: 'bold' } }, currentProject?.salesOrder.customer.phone || ""],
+        [{ content: "EMAIL:", styles: { fontStyle: 'bold' } }, currentProject?.salesOrder.customer.email || ""],
     ];
 
     doc.autoTable({
@@ -50,8 +50,8 @@ export const generateInstallationGuideFormReport = ({ project, userLogged }) => 
         theme: "grid",
         styles: { fontSize: 11, cellPadding: 2 },
         columnStyles: {
-            0: { cellWidth: 35 },
-            1: { cellWidth: 50 },
+            0: { cellWidth: 28 },
+            1: { cellWidth: 58 },
         },
     });
 
@@ -59,10 +59,10 @@ export const generateInstallationGuideFormReport = ({ project, userLogged }) => 
     const firstTableHeight = doc.lastAutoTable.finalY;
 
     const workOrderDetails = [
-        [{ content: "INSTALLATION DATE:", styles: { fontStyle: 'bold' } }, fDate(project.startDate) || ""],
+        [{ content: "INSTALLATION DATE:", styles: { fontStyle: 'bold' } }, fDate(currentProject?.startDate) || ""],
         [{ content: "PACKED:", styles: { fontStyle: 'bold' } }, ""],
-        [{ content: "HAS PERMIT?:", styles: { fontStyle: 'bold' } }, project.hasPermission ? "YES" : "NO"],
-        [{ content: "INSTALLATION ADDRESS:", styles: { fontStyle: 'bold' } }, project.address ? project.address : ""],
+        [{ content: "HAS PERMIT?:", styles: { fontStyle: 'bold' } }, currentProject?.hasPermission ? "YES" : "NO"],
+        [{ content: "INSTALLATION ADDRESS:", styles: { fontStyle: 'bold' } }, currentProject?.address ? currentProject?.address : ""],
         []
     ];
 
@@ -77,7 +77,7 @@ export const generateInstallationGuideFormReport = ({ project, userLogged }) => 
         theme: "grid",
         styles: { fontSize: 11, cellPadding: 2 },
         columnStyles: {
-            0: { cellWidth: 55 },
+            0: { cellWidth: 54 },
             1: { cellWidth: 60 },
         },
     });
@@ -95,27 +95,27 @@ export const generateInstallationGuideFormReport = ({ project, userLogged }) => 
         ],
         [
             {
-                content: project?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ? "X" : "",
+                content: currentProject?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ? "X" : "",
                 styles: { fontStyle: 'bold', fontSize: 10 }
             },
             {
-                content: project?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ? "X" : "",
+                content: currentProject?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ? "X" : "",
                 styles: { fontStyle: 'bold', fontSize: 10 },
             },
             {
-                content: project?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1 ? "X" : "",
+                content: currentProject?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1 ? "X" : "",
                 styles: { fontStyle: 'bold', fontSize: 10 },
             },
             {
-                content: project?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.permission.toLowerCase()) !== -1 ? "X" : "",
+                content: currentProject?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.permission.toLowerCase()) !== -1 ? "X" : "",
                 styles: { fontStyle: 'bold', fontSize: 10 }
             },
             {
-                content: project?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.closing.toLowerCase()) !== -1 ? "X" : "",
+                content: currentProject?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.closing.toLowerCase()) !== -1 ? "X" : "",
                 styles: { fontStyle: 'bold', fontSize: 10 }
             },
             {
-                content: project?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) !== -1 ? "X" : "",
+                content: currentProject?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) !== -1 ? "X" : "",
                 styles: { fontStyle: 'bold', fontSize: 10 }
             },
         ],
@@ -144,7 +144,7 @@ export const generateInstallationGuideFormReport = ({ project, userLogged }) => 
     const thirdTableHeight = doc.lastAutoTable.finalY;
 
     const workScopeDetails = [
-        [{ content: "WORK SCOPE & DESCRIPTION:", styles: { fontStyle: 'bold' } }, project?.workScope || ""],
+        [{ content: "WORK SCOPE & DESCRIPTION:", styles: { fontStyle: 'bold' } }, currentProject?.workScope || ""],
     ];
 
 
@@ -163,9 +163,9 @@ export const generateInstallationGuideFormReport = ({ project, userLogged }) => 
 
     const fourTableHeight = doc.lastAutoTable.finalY;
 
-    const totalProducts = project?.projectGuideProducts?.reduce((acc, product) => acc + product.price * product.quantity, 0);
+    const totalProducts = currentProject?.projectGuideProducts?.reduce((acc, product) => acc + product.price * product.quantity, 0);
 
-    let productsGuideDetails = project?.projectGuideProducts?.map((product) => [
+    let productsGuideDetails = currentProject?.projectGuideProducts?.map((product) => [
         { content: product.name, styles: { halign: 'left', fontStyle: 'bold' } },
         { content: fCurrency(product.price), styles: { halign: 'left' } },
         { content: product.quantity, styles: { halign: 'center' } },
@@ -216,9 +216,9 @@ export const generateInstallationGuideFormReport = ({ project, userLogged }) => 
 
     doc.setFontSize(12);
 
-    const totalMaterials = project?.projectMaterials?.reduce((acc, product) => acc + product.cost, 0);
+    const totalMaterials = currentProject?.projectMaterials?.reduce((acc, product) => acc + product.cost, 0);
 
-    let materialsDetails = project?.projectMaterials?.map((product) => [
+    let materialsDetails = currentProject?.projectMaterials?.map((product) => [
         { content: product.name, styles: { halign: 'left', fontStyle: 'bold' } },
         { content: product.quantity, styles: { halign: 'center' } },
         { content: product.ticket, styles: { halign: 'left' } },
@@ -281,7 +281,7 @@ export const generateInstallationGuideFormReport = ({ project, userLogged }) => 
     const sixthTableHeight = doc.lastAutoTable.finalY;
 
     const otherNotesDetails = [
-        [{ content: "OTHER NOTES:", styles: { fontStyle: 'bold' } }, project?.projectMaterialsOtherNotes || ""],
+        [{ content: "OTHER NOTES:", styles: { fontStyle: 'bold' } }, currentProject?.projectMaterialsOtherNotes || ""],
     ];
 
 

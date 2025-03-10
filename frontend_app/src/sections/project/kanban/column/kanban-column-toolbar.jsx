@@ -85,12 +85,29 @@ export function KanbanColumnToolBar({
         />
 
         <Label
-          color={percentage === 0 ? 'default' : 
-            percentage > 0 && percentage < 100 ? 'warning' : 'success'
+          color={
+            percentage === 0
+              ? 'default'
+              : percentage > 0 && percentage < 100
+                ? 'warning'
+                : 'success'
           }
           variant="soft"
-          sx={{ typography: 'caption' }}>
-          {percentage.toFixed(2)}%
+          sx={{ typography: 'caption', fontSize: '10px', maxWidth: 100, minWidth: 100 }}
+        >
+          {percentage === 100 ? (
+            <>
+              Finished <strong> ({percentage.toFixed(2)} %)</strong>
+            </>
+          ) : percentage > 0 && percentage < 100 ? (
+            <>
+              In Progress <strong> ({percentage.toFixed(2)} %)</strong>
+            </>
+          ) : (
+            <>
+              Not Started <strong> ({percentage.toFixed(2)} %)</strong>
+            </>
+          )}
         </Label>
 
       </Stack>

@@ -156,7 +156,7 @@ export function ProjectFolderItem({
           (Starting: <b>{folder.startDate ? fDate(folder.startDate) : 'No Install Date'}</b>)
         </>
       }
-      primaryTypographyProps={{ noWrap: true, typography: 'subtitle1' }}
+      primaryTypographyProps={{ noWrap: false, typography: 'subtitle1' }}
       secondaryTypographyProps={{
         mt: 0.5,
         component: 'span',

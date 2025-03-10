@@ -7,6 +7,7 @@ import ListItem from '@mui/material/ListItem';
 import { styled } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import AvatarGroup, { avatarGroupClasses } from '@mui/material/AvatarGroup';
+import { Label } from 'src/components/label';
 
 import { varAlpha, stylesMode } from 'src/theme/styles';
 
@@ -14,6 +15,7 @@ import { Iconify } from 'src/components/iconify';
 import { imageClasses } from 'src/components/image';
 
 import { kanbanClasses } from '../classes';
+
 
 // ----------------------------------------------------------------------
 
@@ -135,8 +137,8 @@ const ItemBase = forwardRef(({ task, stateProps, sx, ...other }, ref) => {
         alignItems="center"
         sx={{ 
           typography: 'caption', 
-          color: task?.percentage === 0 ? 'error.main' :
-            task?.percentage === 100 ? 'success.main' : 'info.main'
+          color: task?.percentage === 0 ? 'default.lighter' :
+            task?.percentage === 100 ? 'success.main' : 'warning.main'
         }}
       >
         {/* <Iconify width={16} icon="solar:chat-round-dots-bold" sx={{ mr: 0.25 }} />
@@ -148,14 +150,19 @@ const ItemBase = forwardRef(({ task, stateProps, sx, ...other }, ref) => {
         {task?.projectAttachments && (
           <>
             <Iconify width={16} icon="eva:attach-2-fill" sx={{ mr: 0.25 }} />
-            <Box component="span">
-              {task?.projectAttachments?.length} Attachment(s)
+            <Box component="span" sx={{ mr: 2 }}>
+              {task?.projectAttachments?.length}
             </Box>
           </>
         )}
-
-        <Iconify width={16} icon="fluent:document-multiple-percent-24-filled" sx={{ mr: 0.25 }} />
-        <Box component="span">{task?.percentage?.toFixed(2) ?? 0}</Box>
+        
+        <Box component="span" sx={{ mr: 0.3 }}>{task?.percentage?.toFixed(2) ?? 0}</Box>
+        <Iconify width={16} icon="lets-icons:percent"  />
+        <Label color={task?.percentage === 0 ? 'default' :
+            task?.percentage === 100 ? 'success' : 'warning'} sx={{ ml: 1 }}>
+          {task?.percentage === 0 ? 'Not Started' :
+            task?.percentage === 100 ? 'Finished' : 'In Progress'}
+        </Label>
 
       </Stack>
 

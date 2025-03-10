@@ -86,8 +86,7 @@ export function KanbanProjectColumn({ children, column, tasks, disabled, sx }) {
         transition,
         transform: CSS.Translate.toString(transform),
         bgcolor: percentage === 0 ? 'default' :
-          percentage > 0 && percentage < 50 ? 'warning.lighter' :
-            percentage >= 50 && percentage < 100 ? 'info.lighter' : 'success.lighter',
+          percentage > 0 && percentage < 100 ? 'warning.lighter' : 'success.lighter',
         ...sx
       }}
       stateProps={{

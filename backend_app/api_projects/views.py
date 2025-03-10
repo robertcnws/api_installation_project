@@ -2574,6 +2574,26 @@ def mark_as_read_notifications(request):
     tracking.save()
     
     return Response({'message': 'Notifications marked as read successfully'}, status=200)
-    
 
 
+#############################################
+# DELETE OLD NOTIFICATIONS
+#############################################
+
+def delete_old_notifications():
+    cutoff = timezone.now() - timezone.timedelta(days=7)
+    notifications = ProjectNotification.objects(created_time__lt=cutoff).all()
+    old_notification_ids = [str(notification.id) for notification in notifications]
+    ProjectNotificationUser.objects(__raw__={'notification.id': {'$in': old_notification_ids}}).delete()
+    notifications.delete()
+    return True
+
+
+#############################################
+# DELETE OLD TRACKINGS
+#############################################
+
+def delete_old_trackings():
+    trackings = ProjectTracking.objects(created_time__lt=timezone.now() - timezone.timedelta(days=30)).all()
+    trackings.delete()
+    return True

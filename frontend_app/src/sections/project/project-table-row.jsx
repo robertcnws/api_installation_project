@@ -204,7 +204,7 @@ export function ProjectTableRow({
             <TableCell
               // onClick={handleClick} 
               onClick={onViewRow}
-              sx={{ whiteSpace: 'nowrap', cursor: 'pointer', }}
+              sx={{ cursor: 'pointer', maxWidth: 200}}
             >
               {row?.name}
             </TableCell>
