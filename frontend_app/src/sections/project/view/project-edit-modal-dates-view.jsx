@@ -36,11 +36,25 @@ export function ProjectEditModalDatesView({
     onClose,
 }) {
 
-    const diffDays = useMemo(
-        () => project?.endDate ? dayjs(project?.endDate).diff(dayjs(project?.startDate), 'day') : 1, [project?.endDate, project?.startDate]
-    );
+    const [diffDays, setDiffDays] = useState(1);
 
-    const [daysToInstall, setDaysToInstall] = useState(diffDays === 0 ? 1 : diffDays);
+    useEffect(() => {
+        if (project?.endDate) {
+            const diff = dayjs(project?.endDate).diff(dayjs(project?.startDate), 'day');
+            setDiffDays(diff);
+        }
+    }, [project?.endDate, project?.startDate]);
+
+    // const diffDays = useMemo(
+    //     () => project?.endDate ? dayjs(project?.endDate).diff(dayjs(project?.startDate), 'day') : 1, [project?.endDate, project?.startDate]
+    // );
+
+    const [daysToInstall, setDaysToInstall] = useState(1);
+
+    useEffect(() => {
+        setDaysToInstall(diffDays);
+    }, [diffDays]);
+
     const [formChanged, setFormChanged] = useState(false);
 
     const confirmValidInstallDate = useBoolean();
@@ -73,8 +87,8 @@ export function ProjectEditModalDatesView({
                 const formatDate = dayjs(date).format('YYYY-MM-DD');
                 const isSame = fIsSame(today, formatDate);
                 if (isSame) {
-                    const message = isStartDate ? 'You have to finish all tasks in the previous stages before setting the install date.' : 
-                    'You have to finish all tasks in the previous stages before setting the closing date.';
+                    const message = isStartDate ? 'You have to finish all tasks in the previous stages before setting the install date.' :
+                        'You have to finish all tasks in the previous stages before setting the closing date.';
                     setConfirmValidInstallMessage(message);
                     confirmValidInstallDate.onTrue();
                 }
@@ -170,6 +184,8 @@ export function ProjectEditModalDatesView({
                 return;
             }
 
+            // refetchProject?.();
+
             onClose();
 
         } catch (error) {
@@ -194,7 +210,7 @@ export function ProjectEditModalDatesView({
                                         onChange={handleDateChange}
                                         minDate={
                                             isStartDate ? dayjs(project?.salesOrder?.date) :
-                                            project?.startDate ? dayjs(project?.startDate) : dayjs(project?.salesOrder?.date)
+                                                project?.startDate ? dayjs(project?.startDate) : dayjs(project?.salesOrder?.date)
                                         }
                                         maxDate={
                                             isStartDate ? dayjs(project?.endDate) : null
@@ -218,10 +234,13 @@ export function ProjectEditModalDatesView({
                                         <IconButton
                                             sx={{ width: 50, height: 50, mt: 1 }}
                                             onClick={() => {
-                                                const newEndDate = endDate ? dayjs(endDate).add(-1, 'day') : dayjs(selectedDate).add(-1, 'day');
-                                                setEndDate(newEndDate);
-                                                setDaysToInstall(daysToInstall - 1);
-                                                setFormChanged(true);
+                                                if (daysToInstall > 1) {
+                                                    const newDays = daysToInstall - 1;
+                                                    setDaysToInstall(newDays);
+                                                    const newEndDate = dayjs(project?.startDate).add(newDays, 'day');
+                                                    setEndDate(newEndDate);
+                                                    setFormChanged(true);
+                                                }
                                             }}
                                             disabled={daysToInstall <= 1}
                                         >
@@ -237,12 +256,16 @@ export function ProjectEditModalDatesView({
                                             onChange={handleDaysChange}
                                         />
 
-                                        <IconButton sx={{ width: 50, height: 50, mt: 1 }} onClick={() => {
-                                            const newEndDate = endDate ? dayjs(endDate).add(1, 'day') : dayjs(selectedDate).add(1, 'day');
-                                            setEndDate(newEndDate);
-                                            setDaysToInstall(daysToInstall + 1);
-                                            setFormChanged(true);
-                                        }}>
+                                        <IconButton
+                                            sx={{ width: 50, height: 50, mt: 1 }}
+                                            onClick={() => {
+                                                const newDays = daysToInstall + 1;
+                                                setDaysToInstall(newDays);
+                                                const newEndDate = dayjs(project?.startDate).add(newDays, 'day');
+                                                setEndDate(newEndDate);
+                                                setFormChanged(true);
+                                            }}
+                                        >
                                             <Iconify icon="mdi:plus-box-outline" sx={{ width: 30, height: 30 }} />
                                         </IconButton>
                                     </Box>

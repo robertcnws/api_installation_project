@@ -13,6 +13,8 @@ import Typography from '@mui/material/Typography';
 import ListItemText from '@mui/material/ListItemText';
 import { Box, Table, Button, TableRow, TableBody, TableCell, TableHead, TextField, IconButton, TableFooter, TableContainer } from '@mui/material';
 
+import { useBoolean } from 'src/hooks/use-boolean';
+
 import { fCurrency } from 'src/utils/format-number';
 import { createScopeArray, generateInstallationGuideFormReport } from 'src/utils/generate-installation-guide-pdf';
 
@@ -25,21 +27,42 @@ import { Form, Field } from 'src/components/hook-form';
 
 import { LoadingContext } from 'src/auth/context/loading-context';
 
+import { ProjectEditModalNotesView } from './project-edit-modal-notes-view';
+import { ProjectDetailsContentOverview } from '../project-details-content-overview';
+
+
 // ----------------------------------------------------------------------
 
 export function ProjectDetailsInstallationGuideFormView({
   project,
   refetchProject,
   listPermissions,
+  openDialogs,
+  setOpenDialogs,
 }) {
 
   const { isMobile } = useContext(LoadingContext);
 
   const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
 
-  const listItems = useMemo(() => project?.salesOrder?.line_items?.filter((product) => product.item_type !== 'sales_and_purchases'), [project]);
+  // const listItems = useMemo(() => project?.salesOrder?.line_items?.filter((product) => product.item_type !== 'sales_and_purchases'), [project]);
+
+  const allItems = useMemo(() => project?.salesOrder?.line_items, [project]);
+
+  const listItems = useMemo(() => allItems?.filter((product) => product.line_item_type === 'goods'), [allItems]);
 
   const [currentProject, setCurrentProject] = useState(null);
+
+  const [currentItem, setCurrentItem] = useState(null);
+
+  const [currentType, setCurrentType] = useState(null);
+
+  const openNotes = useBoolean();
+
+  const handleOpenNotes = (product) => {
+    setCurrentItem(product);
+    openNotes.onTrue();
+  };
 
   const [materials, setMaterials] = useState(
     project?.projectMaterials.length > 0 ?
@@ -167,9 +190,9 @@ export function ProjectDetailsInstallationGuideFormView({
     const lastMaterial = materials[materials.length - 1];
     return lastMaterial.name.trim() !== '' &&
       lastMaterial.quantity > 0 &&
-      lastMaterial.cost > 0 &&
-      lastMaterial.store.trim() !== '' &&
-      lastMaterial.ticket.trim() !== '';
+      lastMaterial.cost > 0;
+    // lastMaterial.store.trim() !== '' &&
+    // lastMaterial.ticket.trim() !== '';
   }, [materials]);
 
   const totalCost = useMemo(() => (
@@ -215,9 +238,9 @@ export function ProjectDetailsInstallationGuideFormView({
     const areMaterialsValid = materials.every((material) =>
       material.name.trim() !== '' &&
       Number(material.quantity) > 0 &&
-      Number(material.cost) > 0 &&
-      material.store.trim() !== '' &&
-      material.ticket.trim() !== ''
+      Number(material.cost) > 0
+      // material.store.trim() !== '' &&
+      // material.ticket.trim() !== ''
     );
 
     return areProductsValid && areMaterialsValid;
@@ -271,7 +294,7 @@ export function ProjectDetailsInstallationGuideFormView({
     }
   });
 
-  const renderOverview = (
+  const renderContent = (
     <Card sx={{ p: 3, gap: 1, display: 'flex', flexDirection: 'column', maxHeight: !isMobile ? 655 : 'auto', minHeight: !isMobile ? 655 : 'auto', overflow: 'auto' }}>
       {[
         {
@@ -279,7 +302,7 @@ export function ProjectDetailsInstallationGuideFormView({
           value: (
             <>
               <Stack spacing={1} direction="column">
-                <Field.Text name="workScope" placeholder="Write your work scope & description here..." />
+                <Field.Text multiline rows={4} name="workScope" placeholder="Write your work scope & description here..." />
               </Stack>
               <br />
               <br />
@@ -302,12 +325,16 @@ export function ProjectDetailsInstallationGuideFormView({
                             <TableCell>Pay per unit</TableCell>
                             <TableCell>Qty</TableCell>
                             <TableCell align="right">Total</TableCell>
-                            <TableCell>
-                              <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-                                <Typography sx={{ mt: productsData.length !== 0 ? 0.3 : 2}}>Notes</Typography>
+                            <TableCell align="right">
+                              <Box sx={{
+                                display: 'flex',
+                                flexDirection: 'row',
+                                justifyContent: productsData.length === 0 ? 'space-between' : 'flex-end'
+                              }}>
+                                <Typography sx={{ mt: productsData.length !== 0 ? 0.3 : 2 }}>Notes</Typography>
                                 {productsData.length === 0 && (
                                   <IconButton variant="outlined" color='success' onClick={handleAddProduct} disabled={!canAddProduct}>
-                                    <Iconify icon="icon-park-twotone:add" sx={{ width: 40, height: 40 }}/>
+                                    <Iconify icon="icon-park-twotone:add" sx={{ width: 30, height: 30 }} />
                                   </IconButton>
                                 )}
                               </Box>
@@ -319,7 +346,7 @@ export function ProjectDetailsInstallationGuideFormView({
                               <Typography>Items</Typography>
                               {productsData.length === 0 && (
                                 <IconButton variant="outlined" color='success' onClick={handleAddProduct} disabled={!canAddProduct}>
-                                  <Iconify icon="icon-park-twotone:add" sx={{ width: 40, height: 40 }}/>
+                                  <Iconify icon="icon-park-twotone:add" sx={{ width: 30, height: 30 }} />
                                 </IconButton>
                               )}
                             </Box>
@@ -330,13 +357,15 @@ export function ProjectDetailsInstallationGuideFormView({
                     </TableHead>
                     <TableBody>
                       {productsData.map((product, index) => (
-                        <TableRow key={product.id}>
+                        <TableRow key={`item-${product.id}`}>
                           {!isMobile ? (
                             <>
                               <TableCell sx={{ width: 300 }}>
                                 {
                                   product.isNew ? (
                                     <TextField
+                                      // multiline
+                                      // rows={2}
                                       value={product.name}
                                       placeholder="Enter name..."
                                       sx={{ width: 300 }}
@@ -345,7 +374,7 @@ export function ProjectDetailsInstallationGuideFormView({
                                   ) : product.name
                                 }
                               </TableCell>
-                              <TableCell sx={{ width: product.isNew ? 100 : 50 }}>
+                              <TableCell sx={{ width: 150 }}>
                                 {
                                   (product.isNew || !product.predefined) ? (
                                     <TextField
@@ -353,13 +382,13 @@ export function ProjectDetailsInstallationGuideFormView({
                                       min="0"
                                       value={product.price || ''}
                                       placeholder="Enter price"
-                                      sx={{ width: 100 }}
+                                      sx={{ width: 150 }}
                                       onChange={(e) => handleProductChange(product.id, 'price', Math.max(0, e.target.value))}
                                     />
                                   ) : product.price
                                 }
                               </TableCell>
-                              <TableCell sx={{ width: 50 }}>
+                              <TableCell sx={{ width: 100 }}>
                                 {
                                   product.isNew ? (
                                     <TextField
@@ -367,7 +396,7 @@ export function ProjectDetailsInstallationGuideFormView({
                                       min="0"
                                       value={product.quantity || ''}
                                       placeholder="Qty"
-                                      sx={{ width: 50 }}
+                                      sx={{ width: 100 }}
                                       onChange={(e) => handleProductChange(product.id, 'quantity', Math.max(0, e.target.value))}
                                     />
                                   ) : product.quantity
@@ -376,13 +405,25 @@ export function ProjectDetailsInstallationGuideFormView({
                               <TableCell align="right" sx={{ width: 100 }}>
                                 {fCurrency(product.price * product.quantity)}
                               </TableCell>
-                              <TableCell sx={{ width: 600 }}>
-                                <TextField
+                              <TableCell align="right">
+                                {/* <TextField
+                                  multiline
+                                  rows={3}
                                   value={product.notes}
                                   placeholder="Enter notes..."
-                                  sx={{ width: 600 }}
+                                  sx={{ width: 250 }}
                                   onChange={(e) => handleProductChange(product.id, 'notes', e.target.value)}
-                                />
+                                /> */}
+                                <Label
+                                  color={product.notes ? "warning" : "default"}
+                                  sx={{ cursor: 'pointer' }}
+                                  onClick={() => {
+                                    handleOpenNotes(product)
+                                    setCurrentType('item')
+                                  }}
+                                >
+                                  {product.notes ? 'Edit Item Note' : 'Add Item Note'}
+                                </Label>
                               </TableCell>
                             </>
                           ) : (
@@ -428,26 +469,36 @@ export function ProjectDetailsInstallationGuideFormView({
                                 <Typography variant="h6">Total: </Typography>
                                 <Label color="success">{fCurrency(product.price * product.quantity)}</Label><br />
                                 <Typography variant="h6">Notes: </Typography>
-                                <TextField
+                                {/* <TextField
                                   multiline
                                   rows={3}
                                   value={product.notes}
                                   placeholder="Enter notes..."
                                   sx={{ width: 200 }}
                                   onChange={(e) => handleProductChange(product.id, 'notes', e.target.value)}
-                                />
+                                /> */}
+                                <Label
+                                  color={product.notes ? "warning" : "default"}
+                                  sx={{ cursor: 'pointer' }}
+                                  onClick={() => {
+                                    handleOpenNotes(product)
+                                    setCurrentType('item')
+                                  }}
+                                >
+                                  {product.notes ? 'Edit Item Note' : 'Add Item Note'}
+                                </Label>
                               </Box>
                             </TableCell>
                           )}
                           {(index === productsData.length - 1) ? (
                             <TableCell sx={{ width: 100, verticalAlign: !isMobile ? 'none' : 'bottom' }} align="left">
-                              <Box sx={{ display: 'flex', flexDirection: !isMobile ? 'row' : 'column', justifyContent: 'space-between' }}>
+                              <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                                 <IconButton variant="outlined" color='success' onClick={handleAddProduct} disabled={!canAddProduct}>
-                                  <Iconify icon="icon-park-twotone:add" sx={{ width: 40, height: 40 }}/>
+                                  <Iconify icon="icon-park-twotone:add" sx={{ width: 30, height: 30 }} />
                                 </IconButton>
                                 {product.isNew && (
                                   <IconButton variant="outlined" color='error' onClick={() => handleRemoveProduct(product.id)}>
-                                    <Iconify icon="gg:remove-r" sx={{ width: 35, height: 35 }}/>
+                                    <Iconify icon="gg:remove-r" sx={{ width: 25, height: 25 }} />
                                   </IconButton>
                                 )}
                               </Box>
@@ -487,15 +538,19 @@ export function ProjectDetailsInstallationGuideFormView({
                           <>
                             <TableCell>Name</TableCell>
                             <TableCell>Qty</TableCell>
-                            <TableCell>Ticket #</TableCell>
+                            {/* <TableCell>Ticket #</TableCell> */}
                             <TableCell>Cost</TableCell>
-                            <TableCell>Store</TableCell>
-                            <TableCell>
-                              <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-                                <Typography sx={{ mt: materials.length !== 0 ? 0.4 : 2}}>Notes</Typography>
+                            {/* <TableCell>Store</TableCell> */}
+                            <TableCell align="right">
+                              <Box sx={{
+                                display: 'flex',
+                                flexDirection: 'row',
+                                justifyContent: materials.length === 0 ? 'space-between' : 'flex-end'
+                              }}>
+                                <Typography sx={{ mt: materials.length !== 0 ? 0.4 : 2 }}>Notes</Typography>
                                 {materials.length === 0 && (
                                   <IconButton variant="outlined" color='success' onClick={handleAddMaterial} disabled={!canAddMaterial}>
-                                    <Iconify icon="icon-park-twotone:add" sx={{ width: 40, height: 40 }}/>
+                                    <Iconify icon="icon-park-twotone:add" sx={{ width: 30, height: 30 }} />
                                   </IconButton>
                                 )}
                               </Box>
@@ -507,7 +562,7 @@ export function ProjectDetailsInstallationGuideFormView({
                               <Typography>Materials</Typography>
                               {materials.length === 0 && (
                                 <IconButton variant="outlined" color='success' onClick={handleAddMaterial} disabled={!canAddMaterial}>
-                                  <Iconify icon="icon-park-twotone:add" sx={{ width: 40, height: 40, mr: -15 }}/>
+                                  <Iconify icon="icon-park-twotone:add" sx={{ width: 30, height: 30, mr: -15 }} />
                                 </IconButton>
                               )}
                             </Box>
@@ -518,60 +573,78 @@ export function ProjectDetailsInstallationGuideFormView({
                     </TableHead>
                     <TableBody>
                       {materials.map((product, index) => (
-                        <TableRow key={product.id}>
+                        <TableRow key={`material-${product.id}`}>
                           {!isMobile ? (
                             <>
-                              <TableCell sx={{ width: 150 }}>
+                              <TableCell sx={{ width: 300 }}>
                                 <TextField
+                                  // multiline
+                                  // rows={2}
                                   value={product.name}
                                   placeholder="Enter name..."
-                                  sx={{ width: 150 }}
+                                  sx={{ width: 300 }}
                                   onChange={(e) => handleMaterialChange(product.id, 'name', e.target.value)}
                                 />
                               </TableCell>
-                              <TableCell sx={{ width: 50 }}>
+                              <TableCell sx={{ width: 150 }}>
                                 <TextField
                                   type="number"
                                   min="0"
                                   value={product.quantity || ''}
                                   placeholder="Qty"
-                                  sx={{ width: 50 }}
+                                  sx={{ width: 150 }}
                                   onChange={(e) => handleMaterialChange(product.id, 'quantity', Math.max(0, e.target.value))}
                                 />
                               </TableCell>
-                              <TableCell sx={{ width: 100 }}>
+                              {/* <TableCell sx={{ width: 100 }}>
                                 <TextField
+                                  multiline
+                                  rows={2}
                                   value={product.ticket}
                                   placeholder="Enter ticket..."
                                   sx={{ width: 100 }}
                                   onChange={(e) => handleMaterialChange(product.id, 'ticket', e.target.value)}
                                 />
-                              </TableCell>
+                              </TableCell> */}
                               <TableCell sx={{ width: 100 }}>
                                 <TextField
                                   type="number"
                                   min="0"
                                   value={product.cost || ''}
-                                  placeholder="Qty"
+                                  placeholder="Cost"
                                   sx={{ width: 100 }}
                                   onChange={(e) => handleMaterialChange(product.id, 'cost', Math.max(0, e.target.value))}
                                 />
                               </TableCell>
-                              <TableCell sx={{ width: 150 }}>
+                              {/* <TableCell sx={{ width: 100 }}>
                                 <TextField
+                                  multiline
+                                  rows={2}
                                   value={product.store}
                                   placeholder="Enter store..."
-                                  sx={{ width: 150 }}
+                                  sx={{ width: 100 }}
                                   onChange={(e) => handleMaterialChange(product.id, 'store', e.target.value)}
                                 />
-                              </TableCell>
-                              <TableCell sx={{ width: 500 }}>
-                                <TextField
+                              </TableCell> */}
+                              <TableCell align='right'>
+                                {/* <TextField
+                                  multiline
+                                  rows={3}
                                   value={product.notes}
                                   placeholder="Enter notes..."
-                                  sx={{ width: 500 }}
+                                  sx={{ width: 100 }}
                                   onChange={(e) => handleMaterialChange(product.id, 'notes', e.target.value)}
-                                />
+                                /> */}
+                                <Label
+                                  color={product.notes ? "warning" : "default"}
+                                  sx={{ cursor: 'pointer' }}
+                                  onClick={() => {
+                                    handleOpenNotes(product)
+                                    setCurrentType('material')
+                                  }}
+                                >
+                                  {product.notes ? 'Edit Material Note' : 'Add Material Note'}
+                                </Label>
                               </TableCell>
                             </>
                           ) : (
@@ -579,9 +652,11 @@ export function ProjectDetailsInstallationGuideFormView({
                               <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                                 <Typography variant="h6">Material:</Typography>
                                 <TextField
+                                  multiline
+                                  rows={2}
                                   value={product.name}
                                   placeholder="Enter name..."
-                                  sx={{ width: 200 }}
+                                  sx={{ width: 150 }}
                                   onChange={(e) => handleMaterialChange(product.id, 'name', e.target.value)}
                                 />
 
@@ -595,50 +670,60 @@ export function ProjectDetailsInstallationGuideFormView({
                                   sx={{ width: 200 }}
                                   onChange={(e) => handleMaterialChange(product.id, 'quantity', Math.max(0, e.target.value))}
                                 /><br />
-                                <Typography variant="h6">Ticket #:</Typography>
+                                {/* <Typography variant="h6">Ticket #:</Typography>
                                 <TextField
                                   value={product.ticket}
                                   placeholder="Enter ticket..."
                                   sx={{ width: 200 }}
                                   onChange={(e) => handleMaterialChange(product.id, 'ticket', e.target.value)}
-                                /><br />
+                                /><br /> */}
                                 <Typography variant="h6">Cost:</Typography>
                                 <TextField
                                   type="number"
                                   min="0"
                                   value={product.cost || ''}
-                                  placeholder="Qty"
+                                  placeholder="Cost"
                                   sx={{ width: 200 }}
                                   onChange={(e) => handleMaterialChange(product.id, 'cost', Math.max(0, e.target.value))}
                                 /><br />
-                                <Typography variant="h6">Store:</Typography>
+                                {/* <Typography variant="h6">Store:</Typography>
                                 <TextField
                                   value={product.store}
                                   placeholder="Enter store..."
                                   sx={{ width: 200 }}
                                   onChange={(e) => handleMaterialChange(product.id, 'store', e.target.value)}
-                                /><br />
+                                /><br /> */}
                                 <Typography variant="h6">Notes:</Typography>
-                                <TextField
+                                {/* <TextField
                                   multiline
                                   rows={3}
                                   value={product.notes}
                                   placeholder="Enter notes..."
                                   sx={{ width: 200 }}
                                   onChange={(e) => handleMaterialChange(product.id, 'notes', e.target.value)}
-                                />
+                                /> */}
+                                <Label
+                                  color={product.notes ? "warning" : "default"}
+                                  sx={{ cursor: 'pointer' }}
+                                  onClick={() => {
+                                    handleOpenNotes(product)
+                                    setCurrentType('material')
+                                  }}
+                                >
+                                  {product.notes ? 'Edit Item Note' : 'Add Item Note'}
+                                </Label>
                               </Box>
                             </TableCell>
                           )}
                           <TableCell sx={{ width: 100, verticalAlign: !isMobile ? 'none' : 'bottom' }} align="left">
-                            <Box sx={{ display: 'flex', flexDirection: !isMobile ? 'row' : 'column', justifyContent: 'space-between' }}>
+                            <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                               {(index === materials.length - 1) && (
                                 <IconButton variant="outlined" color='success' onClick={handleAddMaterial} disabled={!canAddMaterial}>
-                                  <Iconify icon="icon-park-twotone:add" sx={{ width: 40, height: 40 }}/>
+                                  <Iconify icon="icon-park-twotone:add" sx={{ width: 30, height: 30 }} />
                                 </IconButton>
                               )}
                               <IconButton variant="outlined" color='error' onClick={() => handleRemoveMaterial(product.id)}>
-                              <Iconify icon="gg:remove-r" sx={{ width: 35, height: 35 }}/>
+                                <Iconify icon="gg:remove-r" sx={{ width: 25, height: 25 }} />
                               </IconButton>
                             </Box>
                           </TableCell>
@@ -648,9 +733,9 @@ export function ProjectDetailsInstallationGuideFormView({
                     </TableBody>
                     <TableFooter sx={{ bgcolor: 'grey.300' }}>
                       <TableRow>
-                        <TableCell colSpan={!isMobile ? 3 : 0} align="left" sx={{ fontSize: '15px' }}><b>TOTAL Cost:</b></TableCell>
+                        <TableCell colSpan={!isMobile ? 2 : 0} align="left" sx={{ fontSize: '15px' }}><b>TOTAL Cost:</b></TableCell>
                         <TableCell sx={{ fontSize: '15px' }} align="center"><b>{fCurrency(totalCost)}</b></TableCell>
-                        <TableCell colSpan={!isMobile ? 3 : 0} align="left" sx={{ fontSize: '15px' }} />
+                        <TableCell colSpan={!isMobile ? 2 : 0} align="left" sx={{ fontSize: '15px' }} />
                       </TableRow>
                     </TableFooter>
                   </Table>
@@ -671,8 +756,8 @@ export function ProjectDetailsInstallationGuideFormView({
           ),
           icon: <Iconify icon="pixelarticons:notes-plus" />,
         },
-      ].map((item) => (
-        <Stack key={item.label} spacing={1.5} direction="row">
+      ].map((item, index) => (
+        <Stack key={`${index}-${item.label}`} spacing={1.5} direction="row">
           {item?.icon}
           <Box sx={{ width: '100%', display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
             <ListItemText
@@ -688,7 +773,7 @@ export function ProjectDetailsInstallationGuideFormView({
           </Box>
         </Stack>
       ))}
-      <Stack direction="row" spacing={2} justifyContent="flex-end">
+      <Stack direction="row" spacing={2} justifyContent="flex-end" sx={{ mt: 2 }}>
         <LoadingButton
           type="submit"
           variant="contained"
@@ -699,12 +784,21 @@ export function ProjectDetailsInstallationGuideFormView({
         </LoadingButton>
         <Button
           variant="outlined"
-          onClick={() => generateInstallationGuideFormReport({currentProject, userLogged})}
+          onClick={() => generateInstallationGuideFormReport({ currentProject, userLogged })}
         >
           Generate Report
         </Button>
       </Stack>
     </Card >
+  );
+
+  const renderOverview = (
+    <ProjectDetailsContentOverview
+      project={project}
+      listPermissions={listPermissions}
+      openDialogs={openDialogs}
+      setOpenDialogs={setOpenDialogs}
+    />
   );
 
   if (project === null) {
@@ -718,12 +812,24 @@ export function ProjectDetailsInstallationGuideFormView({
   }
 
   return (
-    <Grid container spacing={3}>
-      <Grid xs={12} md={12}>
-        <Form methods={methods} onSubmit={onSubmit}>
+    <>
+      <Grid container spacing={2}>
+        <Grid xs={12} md={8}>
+          <Form methods={methods} onSubmit={onSubmit}>
+            {renderContent}
+          </Form>
+        </Grid>
+        <Grid xs={12} md={4}>
           {renderOverview}
-        </Form>
-      </Grid>
-    </Grid >
+        </Grid>
+      </Grid >
+      <ProjectEditModalNotesView
+        open={openNotes.value}
+        onClose={openNotes.onFalse}
+        item={currentItem}
+        onSubmitNotes={currentType === 'item' ? handleProductChange : handleMaterialChange}
+        type={currentType}
+      />
+    </>
   );
 }

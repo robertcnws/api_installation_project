@@ -95,7 +95,7 @@ export function SalesOrderCreateProjectDialogForm({ currentProject, loadedUsers,
   const defaultValues = useMemo(
     () => ({
       id: currentProject?.id || '',
-      name: currentProject?.name || '',
+      name: currentProject?.name || `${currentSalesOrder?.salesorder_number} (${currentSalesOrder?.customer_name})`,
       number: currentProject?.number || '',
       description: currentProject?.description || null,
       salesOrder: currentProject?.salesOrder || '',
@@ -105,7 +105,7 @@ export function SalesOrderCreateProjectDialogForm({ currentProject, loadedUsers,
       projectAttachments: currentProject?.projectAttachments || [],
       address: currentProject?.address || '',
     }),
-    [currentProject]
+    [currentProject, currentSalesOrder]
   );
 
   const methods = useForm({

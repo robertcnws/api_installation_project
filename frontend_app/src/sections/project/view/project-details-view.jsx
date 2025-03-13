@@ -28,6 +28,7 @@ import { ProjectDetailsContent } from '../project-details-content';
 import { ProjectDetailsTaskView } from './project-details-task-view';
 import { ProjectEditModalTaskView } from './project-edit-modal-task-view';
 import { ProjectDetailsCommentView } from './project-details-comment-view';
+import { ProjectEditModalAddressView } from './project-edit-modal-address-view';
 import { ProjectDetailsAttachmentView } from './project-details-attachment-view';
 import { ProjectDetailsReleaseFormView } from './project-details-release-form-view';
 import { ProjectDetailsInstallationGuideFormView } from './project-details-installation-guide-form-view';
@@ -52,6 +53,13 @@ export function ProjectDetailsView({ projectId }) {
         loadedProjects,
         listPermissions,
     } = useDataContext();
+
+    const [openDialogs, setOpenDialogs] = useState({
+        userManager: false,
+        date: false,
+        address: false,
+        installationTeam: false,
+    });
 
     const DETAILS_TABS = [
         { label: 'Overview', value: 'overview' },
@@ -212,7 +220,7 @@ export function ProjectDetailsView({ projectId }) {
                             tab.value === 'attachments' ||
                             tab.value === 'comments' ||
                             tab.value === 'releaseForm' ||
-                            tab.value === 'installationGuide') && !itemById.userManager?.username) {
+                            tab.value === 'installationGuide') && !itemById?.userManager?.username) {
                             setOpenValidationDialog(true);
                         }
                     }}
@@ -244,6 +252,8 @@ export function ProjectDetailsView({ projectId }) {
                         refetchProject={refetchProject}
                         setOpenEdit={setOpenEdit}
                         listPermissions={listPermissions}
+                        openDialogs={openDialogs}
+                        setOpenDialogs={setOpenDialogs}
                     />
                 }
 
@@ -259,8 +269,11 @@ export function ProjectDetailsView({ projectId }) {
 
                 {(tabs.value === 'attachments' && itemById?.userManager?.username) &&
                     <ProjectDetailsAttachmentView
-                        projectId={itemById?.id}
+                        project={itemById}
+                        refetchProject={refetchProject}
                         listPermissions={listPermissions}
+                        openDialogs={openDialogs}
+                        setOpenDialogs={setOpenDialogs}
                     />
                 }
 
@@ -269,15 +282,19 @@ export function ProjectDetailsView({ projectId }) {
                         project={itemById}
                         refetchProject={refetchProject}
                         listPermissions={listPermissions}
+                        openDialogs={openDialogs}
+                        setOpenDialogs={setOpenDialogs}
                     />
                 }
 
                 {(tabs.value === 'installationGuide' && itemById?.userManager?.username) &&
                     <ProjectDetailsInstallationGuideFormView
-                    project={itemById}
-                    refetchProject={refetchProject}
-                    listPermissions={listPermissions}
-                />
+                        project={itemById}
+                        refetchProject={refetchProject}
+                        listPermissions={listPermissions}
+                        openDialogs={openDialogs}
+                        setOpenDialogs={setOpenDialogs}
+                    />
                 }
 
                 {(tabs.value === 'comments' && itemById?.userManager?.username) &&
@@ -291,6 +308,12 @@ export function ProjectDetailsView({ projectId }) {
             </DashboardContent>
             <ProjectEditModalView open={openEdit} onClose={() => setOpenEdit(false)} project={itemById} />
             <ProjectEditModalTaskView open={openEditTask} onClose={() => setOpenEditTask(false)} projectId={itemById?.id} />
+            <ProjectEditModalAddressView
+                isEdit={itemById?.address}
+                projectId={itemById?.id}
+                open={openDialogs.address}
+                onClose={() => setOpenDialogs({ ...openDialogs, address: false })}
+            />
 
             <ConfirmDialog
                 open={openValidationDialog}

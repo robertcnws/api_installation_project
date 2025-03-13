@@ -22,12 +22,16 @@ import { Form, Field } from 'src/components/hook-form';
 
 import { LoadingContext } from 'src/auth/context/loading-context';
 
+import { ProjectDetailsContentOverview } from '../project-details-content-overview';
+
 // ----------------------------------------------------------------------
 
 export function ProjectDetailsReleaseFormView({
   project,
   refetchProject,
   listPermissions,
+  openDialogs,
+  setOpenDialogs,
 }) {
 
   const FINAL_RELEASE_FORM_OPTIONS = [
@@ -109,7 +113,7 @@ export function ProjectDetailsReleaseFormView({
     }
   });
 
-  const renderOverview = (
+  const renderContent = (
     <Card sx={{ p: 3, gap: 1, display: 'flex', flexDirection: 'column', maxHeight: !isMobile ? 655 : 'auto', minHeight: !isMobile ? 655 : 'auto', overflow: 'auto' }}>
       {[
         {
@@ -169,6 +173,15 @@ export function ProjectDetailsReleaseFormView({
     </Card >
   );
 
+  const renderOverview = (
+    <ProjectDetailsContentOverview
+      project={project}
+      listPermissions={listPermissions}
+      openDialogs={openDialogs}
+      setOpenDialogs={setOpenDialogs}
+    />
+  );
+
   if (project === null) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 300 }}>
@@ -180,12 +193,14 @@ export function ProjectDetailsReleaseFormView({
   }
 
   return (
-    <Grid container spacing={3}>
-      <Grid xs={12} md={12}>
+    <Grid container spacing={2}>
+      <Grid xs={12} md={8}>
         <Form methods={methods} onSubmit={onSubmit}>
-          {renderOverview}
-
+          {renderContent}
         </Form>
+      </Grid>
+      <Grid xs={12} md={4}>
+        {renderOverview}
       </Grid>
     </Grid >
   );

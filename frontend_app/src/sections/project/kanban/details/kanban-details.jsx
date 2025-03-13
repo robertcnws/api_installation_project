@@ -328,6 +328,28 @@ export function KanbanDetails({
 
       </Box>
 
+      {task?.description && (
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          {/* <StyledLabel>Description</StyledLabel> */}
+          <InputBase
+            multiline
+            rows={3}
+            sx={{
+              // py: 0.75,
+              borderRadius: 1,
+              borderWidth: 1,
+              borderStyle: 'none',
+              fontSize: 14,
+              borderColor: 'transparent',
+              transition: (theme) => theme.transitions.create(['padding-left', 'border-color']),
+              width: '100%',
+            }}
+            value={task?.description}
+            disabled
+          />
+        </Box>
+      )}
+
       {/* Reporter */}
       {!isInstaller(userLogged?.data?.user_role?.name) && (
         <>
@@ -441,6 +463,7 @@ export function KanbanDetails({
               listPermissions={listPermissions}
             />
           </Box>
+
         </>
       )}
 

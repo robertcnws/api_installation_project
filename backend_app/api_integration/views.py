@@ -65,6 +65,7 @@ def list_sales_orders(request):
             items = response.json()
             items_confirmed = [item for item in items.get('results', []) if item.get('status', None).lower() != 'draft']
             items_to_get.extend(items_confirmed)
+            items_to_get = [item for item in items_to_get if item.get('zoho_org_id', None) == settings.ZOHO_ORG_ID]
             if not items.get('next', None):
                 break
             params['page'] += 1

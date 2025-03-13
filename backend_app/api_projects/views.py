@@ -20,7 +20,8 @@ from .models import (
 from .s3_utils import (
     upload_attachment_to_s3, 
     generate_default_file_url,
-    delete_attachment_from_s3
+    delete_attachment_from_s3,
+    backup_mongo_to_s3,
 )
 from .data_util import (
     transform_data_to_mongo,
@@ -231,7 +232,7 @@ def create_project(request):
     try:
         project = Project(
             name=data.get('name', ''),
-            description=data.get('description'), 
+            description=f'{data.get('description')} & {settings.PROJECT_WORK} & {settings.PROJECT_SCOPE}', 
             sales_order=sales_order, 
             users_assignees=users_assignees,
             # start_date=start_date,
@@ -252,7 +253,7 @@ def create_project(request):
             all_screw_marked=False,
             all_trash_marked=False,
             feedback='',
-            work_scope='',
+            work_scope=f'{settings.PROJECT_WORK} & {settings.PROJECT_SCOPE}',
             project_materials=[],
             project_materials_other_notes='',
         )
@@ -348,7 +349,7 @@ def create_projects(request):
         try:
             project = Project(
                 name=f'{sales_order.get("salesorder_number")} ({sales_order.get("customer_name")})',
-                description=f'Project for sales order {sales_order.get("salesorder_number")}', 
+                description=f'Project for sales order {sales_order.get("salesorder_number")} & {settings.PROJECT_WORK} & {settings.PROJECT_SCOPE}', 
                 sales_order=sales_order, 
                 users_assignees=users_assignees,
                 # start_date=start_date,
@@ -370,7 +371,7 @@ def create_projects(request):
                 all_screw_marked=False,
                 all_trash_marked=False,
                 feedback='',
-                work_scope='',
+                work_scope=f'{settings.PROJECT_WORK} & {settings.PROJECT_SCOPE}',
                 project_materials=[],
                 project_materials_other_notes='',
             )
@@ -1757,11 +1758,13 @@ def edit_default_task(request, id):
         description = data.get('description')
         order = data.get('order', 0)
         stage = data.get('projectStage', {})
+        has_attachments = None
         has_attachments_str = data.get('hasAttachments', 'false') if data.get('hasAttachments') else None
-        if not isinstance(has_attachments_str, bool):
-            has_attachments = True if has_attachments_str.lower() == 'true' else False
-        else:
-            has_attachments = has_attachments_str
+        if has_attachments_str:
+            if not isinstance(has_attachments_str, bool):
+                has_attachments = True if has_attachments_str.lower() == 'true' else False
+            else:
+                has_attachments = has_attachments_str
         project_stage_status = data.get('projectStageStatus', 'not started')
         project_stage = ProjectStage.objects(id=stage['id']).first()
         
@@ -1775,7 +1778,7 @@ def edit_default_task(request, id):
         default_task.description = description
         default_task.project_stage = transform_data_to_mongo(project_stage)
         default_task.project_stage_status = project_stage_status
-        default_task.has_attachments = has_attachments
+        default_task.has_attachments = has_attachments if has_attachments is not None else default_task.has_attachments
         default_task.last_modified_time = timezone.now()
         default_task.save()
         
@@ -2597,3 +2600,21 @@ def delete_old_trackings():
     trackings = ProjectTracking.objects(created_time__lt=timezone.now() - timezone.timedelta(days=30)).all()
     trackings.delete()
     return True
+
+
+#############################################
+# GENERATE DB BACKUP
+#############################################
+
+def generate_db_backup():
+    try:
+        backup_mongo_to_s3(
+            logger, 
+            settings.MONGO_URI, 
+            settings.MONGO_DB, 
+            settings.AWS_STORAGE_BUCKET_NAME, 
+            settings.AWS_S3_FOLDER_BACKUPS
+        )
+        return True
+    except Exception as e:
+        return str(e)

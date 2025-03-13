@@ -114,6 +114,10 @@ export const paths = {
       details: (id) => `${ROOTS.DASHBOARD_CONFIG}/default-task/${id}`,
       edit: (id) => `${ROOTS.DASHBOARD_CONFIG}/default-task/${id}/edit`,
     },
+    track: {
+      root: `${ROOTS.DASHBOARD_CONFIG}/track`,
+      list: `${ROOTS.DASHBOARD_CONFIG}/track/list`,
+    },
     role: {
       root: `${ROOTS.DASHBOARD_CONFIG}/role`,
       list: `${ROOTS.DASHBOARD_CONFIG}/role/list`,

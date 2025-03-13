@@ -21,6 +21,7 @@ import { ProjectCalendarView } from 'src/sections/project/calendar/view';
 
 import { useDataContext } from 'src/auth/context/data/data-context';
 
+import { ProjectListView } from './product/view';
 import { WelcomeTypography } from '../welcome-typography';
 import { ProjectsToDoToday } from '../projects-to-do-today';
 import { ProjectsStageToday } from '../projects-stage-today';
@@ -54,6 +55,7 @@ export function OverviewAnalyticsView() {
   const {
     loadedProjects,
     refetchProjects,
+    loadingProjects,
   } = useDataContext();
 
   const [projects, setProjects] = useState([]);
@@ -308,7 +310,7 @@ export function OverviewAnalyticsView() {
                     }}
                   >
                     <ProjectsToDoToday
-                      title="To do today"
+                      title="Intallations today"
                       list={projects.filter(proj => fDate(proj.startDate) === fDate(new Date()) || fIsBetween(new Date(), proj.startDate, proj.endDate))}
                     />
                   </Box>
@@ -367,6 +369,11 @@ export function OverviewAnalyticsView() {
                 <Grid xs={12} md={6} lg={6}>
                   <Box sx={{ mt: 0, mb: 0, width: '100%' }}>
                     <ProjectCalendarView projects={projects} isOnlyWeek={isOnlyWeek.value} />
+                  </Box>
+                </Grid>
+                <Grid xs={12} md={6} lg={6}>
+                  <Box sx={{ mt: 0, mb: 0, width: '100%' }}>
+                    <ProjectListView projects={projects} loadingProjects={loadingProjects} />
                   </Box>
                 </Grid>
               </Grid>

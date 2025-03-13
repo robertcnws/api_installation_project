@@ -428,7 +428,11 @@ function applyFilter({ inputData, comparator, filters, dateError }) {
         file.salesOrder.salesorder_id.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
         file.salesOrder.salesorder_number.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
         file.salesOrder.customer_id.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
-        file.salesOrder.customer_name.toLowerCase().indexOf(name.toLowerCase()) !== -1
+        file.salesOrder.customer_name.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
+        file.address.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
+        JSON.stringify(file.userManager).toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
+        JSON.stringify(file.usersAssignees).toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
+        JSON.stringify(file.currentStage).toLowerCase().indexOf(name.toLowerCase()) !== -1
     );
   }
 

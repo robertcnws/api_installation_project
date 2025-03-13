@@ -46,6 +46,8 @@ const TaskDefaultCreatePage = lazy(() => import('src/pages/dashboard/task-defaul
 // User Roles
 const UserRoleDefaultListPage = lazy(() => import('src/pages/dashboard/user-role/list'));
 const UserRoleDefaultCreatePage = lazy(() => import('src/pages/dashboard/user-role/new'));
+// Track
+const TrackListPage = lazy(() => import('src/pages/dashboard/track/list'));
 // Error
 const Page500 = lazy(() => import('src/pages/error/500'));
 const Page403 = lazy(() => import('src/pages/error/403'));
@@ -153,7 +155,7 @@ export const dashboardRoutes = (listPermissions, user) => [
 
         ],
       },
-      ...(user && listRolesAndSubroles(user?.user_role?.name).includes(CONFIG.roles.superadmin)) ?
+      ...(user && listRolesAndSubroles(user?.user_role?.name).includes(CONFIG.roles.administrator)) ?
         [
           {
             path: 'config/default-task',
@@ -300,6 +302,27 @@ export const dashboardRoutes = (listPermissions, user) => [
                 ).includes(
                   CONFIG.roles.superadmin
                 ) ? <UserRoleDefaultCreatePage /> : <Page403 />
+              },
+            ],
+          },
+          {
+            path: 'config/track',
+            children: [
+              {
+                element: listRolesAndSubroles(
+                  user?.user_role?.name
+                ).includes(
+                  CONFIG.roles.administrator
+                ) ? <TrackListPage /> : <Page403 />,
+                index: true
+              },
+              {
+                path: 'list',
+                element: listRolesAndSubroles(
+                  user?.user_role?.name
+                ).includes(
+                  CONFIG.roles.superadmin
+                ) ? <TrackListPage /> : <Page403 />
               },
             ],
           },

@@ -67,6 +67,27 @@ export const getProjectInstaller = (project, CONFIG) => {
             return objRole.name.toLowerCase().includes(CONFIG.roles.installer.toLowerCase())
         }
     )[0];
-    
+
     return installer;
 };
+
+
+export const filteredDescription = (description) => description
+    .split('\n')
+    .filter(line => {
+        const parts = line.split(':');
+        return parts.length < 2 || parts[1].trim() !== '';
+    })
+    .join('\n');
+
+
+export const filteredDescriptionJson = (description) => description
+    .split('\n')
+    .map(line => line.split(':'))
+    .filter(parts => parts.length >= 2 && parts[1].trim() !== '')
+    .reduce((acc, parts) => {
+        const key = parts[0].trim();
+        const value = parts.slice(1).join(':').trim();
+        acc[key] = value;
+        return acc;
+    }, {});

@@ -183,7 +183,7 @@ export function ProjectEditAttachments({
 
   return (
     <>
-      <Box sx={{ maxHeight: 550, minHeight: !isMobile ? 500 : 0, overflow: 'auto' }}>
+      <Box sx={{ maxHeight: 600, minHeight: !isMobile ? 600 : 0, overflow: 'auto' }}>
         {(project?.currentStage &&
           project?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) === -1) && (
             <>
@@ -308,7 +308,7 @@ export function ProjectEditAttachments({
                     gap: 1,
                     p: 2.5,
                     width: '100%',
-                    minHeight: !isMobile ? 200 : 0,
+                    minHeight: !isMobile ? newFiles.length === 0 ? 240 : 235 : 0,
                     display: 'flex',
                     borderRadius: 2,
                     cursor: 'pointer',

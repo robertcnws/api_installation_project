@@ -5,6 +5,7 @@ import { CONFIG } from 'src/config-global';
 
 import { fCurrency } from './format-number';
 import { fDate, fDateTime } from './format-time';
+import { filteredDescriptionJson } from './project-tasks-utils';
 import logoBase64 from '../../public/files/color_white_background/icon_with_text/NWS-HOME-REPORT.png';
 
 
@@ -411,15 +412,27 @@ export const createScopeArray = ({ listItems }) => {
     ];
 
     listItems?.forEach((item) => {
-        const dimensions = extractDimensions(item.description);
+        // const dimensions = extractDimensions(item.description);
+        const propertiesJson = filteredDescriptionJson(item.description);
+        const dimensions = propertiesJson?.Size ? propertiesJson?.Size?.split(/x/i) : extractDimensions(item.description);
+        const config = propertiesJson?.Config || propertiesJson?.config;
+        console.log('dimensions', dimensions);
+        if (config) {
+            scopeArray[2] = {
+                ...scopeArray[2],
+                quantity: countChar(config, 'O'),
+            }
+            if (countChar(config, 'X') > 1) {
+                scopeArray[4] = {
+                    ...scopeArray[4],
+                    quantity: scopeArray[4].quantity + 1,
+                }
+            }
+
+        }
         if (dimensions) {
-            const [height, width] = dimensions;
-            if ((item.name.toLowerCase().includes('window') &&
-                !item.name.toLowerCase().includes('fixed')) ||
-                item.sku.toLowerCase().includes('mg300') ||
-                item.sku.toLowerCase().includes('mg350') ||
-                item.description.toLowerCase().includes('mg300') ||
-                item.description.toLowerCase().includes('mg350')) {
+            const [width, height] = dimensions;
+            if (item.name.toLowerCase().includes('window')) {
                 if (width <= 74) {
                     scopeArray[0] = {
                         ...scopeArray[0],
@@ -524,3 +537,11 @@ function extractDimensions(text) {
 
     return dimensions.length ? dimensions : null;
 }
+
+
+function countChar(str, char) {
+    const escapedChar = char.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(escapedChar, 'gi'); 
+    const matches = str.match(regex);
+    return matches ? matches.length : 0;
+  }

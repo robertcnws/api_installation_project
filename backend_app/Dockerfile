@@ -13,9 +13,17 @@ RUN pip install gunicorn
 RUN pip install uvicorn
 RUN pip install -r requirements.txt
 
-RUN apt-get update && apt-get install -y wget gnupg2 lsb-release
+RUN apt-get update && apt-get install -y wget gnupg2 lsb-release 
+
+RUN wget -qO - https://www.mongodb.org/static/pgp/server-4.4.asc | apt-key add -
+    
+RUN echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/debian bookworm/mongodb-org/4.4 main" | tee /etc/apt/sources.list.d/mongodb-org-4.4.list
+
+RUN apt-get update && apt-get install -y mongodb-database-tools
 
 RUN apt-get update
+
+RUN mkdir -p /tmp/mongo_backup
 
 COPY . /app/
 

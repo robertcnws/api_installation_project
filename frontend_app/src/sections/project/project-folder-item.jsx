@@ -54,7 +54,7 @@ export function ProjectFolderItem({
   refetchProjects,
   ...other }) {
 
-  const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);  
+  const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
 
   const { copy } = useCopyToClipboard();
 
@@ -142,7 +142,12 @@ export function ProjectFolderItem({
       primary={folder.name}
       secondary={
         <>
-          {folder?.endDate ? `Duration: ${dayjs(folder?.startDate).to(folder?.endDate, true)}` : 'No Closing Date'}
+          {
+            folder?.endDate ? `Duration: ${dayjs(folder?.startDate).to(folder?.endDate, true)}` :
+              <Tooltip title="No Closing Date">
+                <Iconify icon="material-symbols:sms-failed-outline" sx={{ color: 'error.main'}} />
+              </Tooltip>
+          }
           <Box
             component="span"
             sx={{
@@ -170,22 +175,22 @@ export function ProjectFolderItem({
 
   const renderAvatar = (
     <AvatarGroup
-        max={3}
-        sx={{
-          [`& .${avatarGroupClasses.avatar}`]: {
-            width: 24,
-            height: 24,
-            '&:first-of-type': { fontSize: 12 },
-          },
-        }}
-        onClick={details.onTrue}
-      >
-        {folder.usersAssignees?.map((person) => (
-          <Tooltip key={person?.id} title={person?.name}>
-            <Avatar key={person?.id} alt={person?.name} src={person?.avatarUrl} />
-          </Tooltip>
-        ))}
-      </AvatarGroup>
+      max={3}
+      sx={{
+        [`& .${avatarGroupClasses.avatar}`]: {
+          width: 24,
+          height: 24,
+          '&:first-of-type': { fontSize: 12 },
+        },
+      }}
+      onClick={details.onTrue}
+    >
+      {folder.usersAssignees?.map((person) => (
+        <Tooltip key={person?.id} title={person?.name}>
+          <Avatar key={person?.id} alt={person?.name} src={person?.avatarUrl} />
+        </Tooltip>
+      ))}
+    </AvatarGroup>
   );
 
   return (

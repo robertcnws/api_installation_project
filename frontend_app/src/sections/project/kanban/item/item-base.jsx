@@ -237,7 +237,11 @@ const ItemBase = forwardRef(({
               task?.percentage === 100 ? 'success' :
                 task?.percentage < 100 && task?.percentage > 0 ? 'warning' :
                   'default'
-            }>
+            }
+            sx={{
+              cursor: 'pointer',
+            }}
+            >
             {/* <Iconify icon={
               task?.percentage === 100 ? 'gis:flag-finish-b-o' :
                 task?.percentage < 100 && task?.percentage > 0 ? 'grommet-icons:in-progress' :

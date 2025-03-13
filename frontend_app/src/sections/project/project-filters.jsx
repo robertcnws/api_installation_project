@@ -7,7 +7,7 @@ import CheckBox from '@mui/material/Checkbox';
 import TextField from '@mui/material/TextField';
 import CardActionArea from '@mui/material/CardActionArea';
 import InputAdornment from '@mui/material/InputAdornment';
-import { Divider, MenuItem, MenuList, IconButton, Typography, ListItemIcon, ListItemText } from '@mui/material';
+import { Divider, Tooltip, MenuItem, MenuList, IconButton, Typography, ListItemIcon, ListItemText } from '@mui/material';
 
 import { isInstaller } from 'src/utils/check-permissions';
 import { fDateRangeShortLabel } from 'src/utils/format-time';
@@ -251,33 +251,35 @@ export function ProjectFilters({
             <MenuList sx={{ p: 0 }}>
               <MenuItem sx={{ p: 0.5 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 0, mt: 1, ml: 1 }}>
-                  <TextField
-                    value={filters.state.name}
-                    onChange={handleFilterName}
-                    placeholder="Search installation(s) by NAME, NUMBER, CUSTOMER..."
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <Iconify icon="eva:search-fill" sx={{ color: 'text.disabled' }} />
-                        </InputAdornment>
-                      ),
-                      endAdornment: (
-                        <InputAdornment position="end">
-                          <IconButton
-                            onClick={() => {
-                              onResetPage();
-                              filters.setState({ name: '' });
-                            }}
-                            variant='text'
-                            sx={{ color: 'text.disabled' }}
-                          >
-                            <Iconify icon="eva:close-circle-fill" />
-                          </IconButton>
-                        </InputAdornment>
-                      ),
-                    }}
-                    sx={{ width: '100%' }}
-                  />
+                  <Tooltip title="Search installation(s) by NAME, NUMBER, CUSTOMER, RESPONSIBLE...">
+                    <TextField
+                      value={filters.state.name}
+                      onChange={handleFilterName}
+                      placeholder="Search installation(s) by NAME, NUMBER, CUSTOMER, RESPONSIBLE..."
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <Iconify icon="eva:search-fill" sx={{ color: 'text.disabled' }} />
+                          </InputAdornment>
+                        ),
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <IconButton
+                              onClick={() => {
+                                onResetPage();
+                                filters.setState({ name: '' });
+                              }}
+                              variant='text'
+                              sx={{ color: 'text.disabled' }}
+                            >
+                              <Iconify icon="eva:close-circle-fill" />
+                            </IconButton>
+                          </InputAdornment>
+                        ),
+                      }}
+                      sx={{ width: '100%' }}
+                    />
+                  </Tooltip>
                 </Box>
               </MenuItem>
 

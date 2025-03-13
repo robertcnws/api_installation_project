@@ -12,6 +12,7 @@ import { CONFIG } from 'src/config-global';
 import { useUsersQuery } from 'src/_mock/__users';
 import { useStagesQuery } from 'src/_mock/__stages';
 import { useProjectsQuery } from 'src/_mock/__projects';
+import { useTrackingQuery } from 'src/_mock/__tracking';
 import { useUserRolesQuery } from 'src/_mock/__user_roles';
 import { useStagesTaskQuery } from 'src/_mock/__stages_task';
 import { useDefaultTasksQuery } from 'src/_mock/__default_tasks';
@@ -71,6 +72,12 @@ export const DataProvider = ({ children }) => {
     error: errorUserRoles,
     refetch: refetchUserRoles
   } = useUserRolesQuery(['Superadmin']);
+  const {
+    data: tracks,
+    loading: loadingTracks,
+    error: errorTracks,
+    refetch: refetchTracks
+  } = useTrackingQuery();
 
   const loading = loadingProjects || loadingNotifications || loadingUsers || loadingProjectPermissions;
   const error = errorProjects || errorNotifications || errorUsers || errorProjectPermission;
@@ -189,6 +196,8 @@ export const DataProvider = ({ children }) => {
     [loadedProjects]
   );
 
+  const loadedTracks = useMemo(() => tracks.filter((track) => track.action.toLowerCase().indexOf('login') === -1) || [], [tracks]);
+
   // console.log('loadedProjects', loadedProjects);
 
   const { data: permissions, error: errorPermissions, isLoading: isLoadingPermissions, refetch: refetchPermissions } = useQuery({
@@ -268,6 +277,7 @@ export const DataProvider = ({ children }) => {
       refetchSalesOrders,
       loadedProjects,
       refetchProjects,
+      loadingProjects,
       loadedNotifications,
       refetchNotifications,
       loadedUsers,
@@ -277,6 +287,8 @@ export const DataProvider = ({ children }) => {
       loadedStagesTask,
       loadedDefaultTasks,
       loadedUserRoles,
+      loadedTracks,
+      refetchTracks,
       loading,
       error,
       errorStages,
@@ -286,6 +298,8 @@ export const DataProvider = ({ children }) => {
       loadingStagesTask,
       refetchStagesTask,
       loadingUserRoles,
+      loadingTracks,
+      errorTracks,
       errorUserRoles,
       refetchUserRoles,
       errorDefaultTasks,
@@ -302,6 +316,7 @@ export const DataProvider = ({ children }) => {
       refetchSalesOrders,
       loadedProjects,
       refetchProjects,
+      loadingProjects,
       loadedNotifications,
       refetchNotifications,
       loadedUsers,
@@ -311,6 +326,8 @@ export const DataProvider = ({ children }) => {
       loadedStagesTask,
       loadedDefaultTasks,
       loadedUserRoles,
+      loadedTracks,
+      refetchTracks,
       loading,
       error,
       errorStages,
@@ -321,6 +338,8 @@ export const DataProvider = ({ children }) => {
       refetchStagesTask,
       loadingUserRoles,
       errorUserRoles,
+      loadingTracks,
+      errorTracks,
       refetchUserRoles,
       errorDefaultTasks,
       loadingDefaultTasks,

@@ -7,10 +7,10 @@ import ListItem from '@mui/material/ListItem';
 import { styled } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import AvatarGroup, { avatarGroupClasses } from '@mui/material/AvatarGroup';
-import { Label } from 'src/components/label';
 
 import { varAlpha, stylesMode } from 'src/theme/styles';
 
+import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
 import { imageClasses } from 'src/components/image';
 

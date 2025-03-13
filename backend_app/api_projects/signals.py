@@ -6,6 +6,7 @@ from .models import (
     Project,
     ProjectDefaultTask,
     ProjectNotificationUser,
+    ProjectTracking,
 )
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
@@ -237,6 +238,49 @@ def project_default_task_deleted(sender, document, **kwargs):
     }
     async_to_sync(channel_layer.group_send)('project_default_task', serialize_datetime(event))
     
+    
+
+##########################################################################    
+# Project Tracking
+##########################################################################
+
+def project_tracking_saved(sender, document, **kwargs):
+    created = kwargs.get('created', False)
+    channel_layer = get_channel_layer()
+    event = {
+        'type': 'project_tracking_update',
+        'message': {
+            'type': 'created' if created else 'updated',
+            "item": {
+                "id": str(document.id),
+                "userReporter": document.user_reporter,
+                "action": document.action,
+                "createdTime": document.created_time,
+                "managedData": document.managed_data,
+            }
+
+        }
+    }
+    async_to_sync(channel_layer.group_send)('project_tracking', serialize_datetime(event))
+
+
+def project_tracking_deleted(sender, document, **kwargs):
+    channel_layer = get_channel_layer()
+    event = {
+        'type': 'project_tracking_update',
+        'message': {
+            'type': 'deleted',
+            "item": {
+                "id": str(document.id),
+                "userReporter": document.user_reporter,
+                "action": document.action,
+                "createdTime": document.created_time,
+                "managedData": document.managed_data,
+            }
+        }
+    }
+    async_to_sync(channel_layer.group_send)('project_tracking', serialize_datetime(event))
+    
 
 ##########################################################################    
 # Project By ID
@@ -391,3 +435,5 @@ signals.post_save.connect(project_default_task_saved, sender=ProjectDefaultTask)
 signals.post_delete.connect(project_default_task_deleted, sender=ProjectDefaultTask)
 signals.post_save.connect(project_notification_user_saved, sender=ProjectNotificationUser)
 signals.post_delete.connect(project_notification_user_deleted, sender=ProjectNotificationUser)
+signals.post_save.connect(project_tracking_saved, sender=ProjectTracking)
+signals.post_delete.connect(project_tracking_deleted, sender=ProjectTracking)

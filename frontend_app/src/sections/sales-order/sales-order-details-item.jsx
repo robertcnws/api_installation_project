@@ -1,17 +1,12 @@
-import axios from 'axios';
 import React, { useMemo, useState, useEffect, useContext } from 'react';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
 import CardHeader from '@mui/material/CardHeader';
-import IconButton from '@mui/material/IconButton';
-import { Grid, Table, Tooltip, TableRow, TableBody, TableCell, TableHead, TableContainer, TextareaAutosize } from '@mui/material';
-
-import { CONFIG } from 'src/config-global';
+import { Grid, Table, TableRow, TableBody, TableCell, TableHead, TableContainer, TextareaAutosize } from '@mui/material';
 
 import { Label } from 'src/components/label';
-import { Iconify } from 'src/components/iconify';
 
 import { LoadingContext } from 'src/auth/context/loading-context';
 
@@ -150,7 +145,7 @@ export function SalesOrderDetailsItems({ salesOrder, setSalesOrder, setUpdating,
                           !isMobile ? (
                             <TableRow key={`${asset.line_item_id}-${index}-${asset.item_id}`}>
                               <TableCell>
-                                {asset.description}
+                                {asset.description || asset.name || asset.group_name}
                               </TableCell>
                               <TableCell>
                                 {asset.quantity}
@@ -164,7 +159,7 @@ export function SalesOrderDetailsItems({ salesOrder, setSalesOrder, setUpdating,
                                   minRows={3}
                                   placeholder="Minimum 3 rows"
                                   value={
-                                    `Item: ${asset.description}
+                                    `Item: ${asset.description || asset.name || asset.group_name}
                                     Qty: ${asset.quantity}`
                                   }
                                   style={{ width: '100%', fontSize: '0.75rem' }}
@@ -187,56 +182,6 @@ export function SalesOrderDetailsItems({ salesOrder, setSalesOrder, setUpdating,
     <Card>
       <CardHeader
         title="Sales Order Details"
-        action={
-          <Tooltip
-            title="Update from APIs"
-            arrow
-            sx={{
-              '& .MuiTooltip-tooltip': {
-                backgroundColor: '#000000',
-                color: 'white',
-                fontSize: '0.875rem',
-              },
-            }}
-          >
-            <IconButton
-              onClick={() => {
-                const payload = {
-                  // item_number: currentItem?.itemId,
-                  // username: userLogged?.data.username,
-                };
-                // setComponent(`inventory item (SKU: ${currentItem?.sku}, ID: ${currentItem?.itemId}) details`);
-                // setLoading(true);
-                setUpdating(true);
-                axios
-                  .post(`${CONFIG.apiUrl}/api_zoho/load/inventory_items/`, payload)
-                  .then(() => {
-                    axios
-                      .post(`${CONFIG.apiUrl}/api_senitron/load/senitron_inventory_item_assets/`, payload)
-                      .then(() => {
-                        // setSenitronItem(currentSenitronItem);
-                        console.log('Zoho Inventory item fetched');
-                        console.log('Senitron Inventory item fetched');
-                      })
-                      .catch((err) => {
-                        console.error('Error fetching senitron inventory item asset:', err);
-                        setError('There was an error fetching senitron inventory item asset.');
-                      })
-                      .finally(() => {
-                        // setLoading(false);
-                        setUpdating(false);
-                      });
-                  })
-                  .catch((err) => {
-                    console.error('Error fetching inventory item:', err);
-                    setError('There was an error fetching the inventory item.');
-                  })
-              }}
-            >
-              <Iconify icon="mdi:update" />
-            </IconButton>
-          </Tooltip>
-        }
       />
       {renderTotal}
     </Card>

@@ -49,6 +49,7 @@ const ICONS = {
   access: icon('ic-access'),
   radar: icon('ic-radar'),
   config: icon('ic-config'),
+  track: icon('ic-track'),
 };
 
 const userLogged = JSON.parse(sessionStorage.getItem('userLogged'));
@@ -188,6 +189,18 @@ export const navData = () => [
                 {
                   title: 'Create',
                   path: paths.dashboard.role.new
+                },
+              ],
+            },
+            {
+              title: 'Tracking Logs',
+              path: paths.dashboard.track.root,
+              icon: ICONS.track,
+              open: true,
+              children: [
+                {
+                  title: 'List',
+                  path: paths.dashboard.track.root,
                 },
               ],
             },

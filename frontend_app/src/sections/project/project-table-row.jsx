@@ -177,7 +177,10 @@ export function ProjectTableRow({
               onClick={onViewRow}
               sx={{ whiteSpace: 'nowrap', cursor: 'pointer', }}
             >
-              {row?.endDate ? fDuration(row?.startDate, row?.endDate) : 'No Closing Date'}
+              {row?.endDate ? fDuration(row?.startDate, row?.endDate) :
+                <Tooltip title="No Closing Date">
+                  <Iconify icon="material-symbols:sms-failed-outline" sx={{ color: 'error.main'}} />
+                </Tooltip>}
             </TableCell>
 
             <TableCell
@@ -204,7 +207,7 @@ export function ProjectTableRow({
             <TableCell
               // onClick={handleClick} 
               onClick={onViewRow}
-              sx={{ cursor: 'pointer', maxWidth: 200}}
+              sx={{ cursor: 'pointer', maxWidth: 200 }}
             >
               {row?.name}
             </TableCell>
@@ -327,7 +330,10 @@ export function ProjectTableRow({
             Name: <Label color='default'>{row?.name}</Label><br />
             Installation Date: <Label color='default'>{fDate(row?.startDate)}</Label><br />
             {/* Closing Date: <Label color='default'>{fDate(row?.endDate)}</Label><br /> */}
-            Duration: <Label color='default'>{row?.endDate ? fDuration(row?.startDate, row?.endDate) : 'No Closing Date'}</Label><br />
+            Duration: <Label color='default'>{row?.endDate ? fDuration(row?.startDate, row?.endDate) :
+              <Tooltip title="No Closing Date">
+                <Iconify icon="material-symbols:sms-failed-outline" sx={{ color: 'error.main'}} />
+              </Tooltip>}</Label><br />
             <List dense sx={{ width: 1, bgcolor: 'background.paper' }}>
               {loadedStages.map((stage) => {
                 const stageOrder = stage.order;

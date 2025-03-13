@@ -8,7 +8,7 @@ import { useTheme } from '@mui/material/styles';
 import Grid from '@mui/material/Unstable_Grid2';
 import Typography from '@mui/material/Typography';
 import ListItemText from '@mui/material/ListItemText';
-import { Box, Table, Switch, ListItem, TableRow, TableBody, TableCell, TextField, IconButton } from '@mui/material';
+import { Box, Table, Switch, ListItem, TableRow, TableBody, TableCell, IconButton } from '@mui/material';
 
 import { fDate, fDateTime } from 'src/utils/format-time';
 import { getProjectInstaller } from 'src/utils/project-tasks-utils';
@@ -26,7 +26,7 @@ import { useDataContext } from 'src/auth/context/data/data-context';
 import { ProjectDetailsChartTask } from './view/project-details-chart-task';
 import { ProjectEditModalDatesView } from './view/project-edit-modal-dates-view';
 import { ProjectDetailsStageStepper } from './view/project-details-stage-stepper';
-import { ProjectEditModalAddressView } from './view/project-edit-modal-address-view';
+import { ProjectDetailsContentOverview } from './project-details-content-overview';
 import { ProjectEditModalUserManagerView } from './view/project-edit-modal-user-manager-view';
 import { ProjectDetailsChartSemicircleProject } from './view/project-details-chart-semicircle-project';
 import { ProjectEditModalInstallationTeamView } from './view/project-edit-modal-installation-team-view';
@@ -41,6 +41,8 @@ export function ProjectDetailsContent({
   refetchProject,
   setOpenEdit,
   listPermissions,
+  openDialogs,
+  setOpenDialogs,
 }) {
 
   const theme = useTheme();
@@ -67,13 +69,6 @@ export function ProjectDetailsContent({
     }
   }, [project]);
 
-  const [openDialogs, setOpenDialogs] = useState({
-    userManager: false,
-    date: false,
-    address: false,
-    installationTeam: false,
-  });
-
   const [isStartDate, setIsStartDate] = useState(false);
 
   useEffect(() => {
@@ -96,6 +91,9 @@ export function ProjectDetailsContent({
       );
     }
   }, [project]);
+
+  // const items = useMemo(() => project?.salesOrder?.line_items?.filter((product) => product.item_type !== 'sales_and_purchases'), [project]);
+  const items = useMemo(() => project?.salesOrder?.line_items, [project]);
 
   const handleChangePermission = useCallback(async (newPermission) => {
     const formData = new FormData();
@@ -151,7 +149,7 @@ export function ProjectDetailsContent({
 
           <TableRow>
             <TableCell>
-              <Typography variant="subtitle2" color="text.secondary">Responsable:</Typography>
+              <Typography variant="subtitle2" color="text.secondary">Responsible:</Typography>
             </TableCell>
             <TableCell>
               <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, justifyContent: 'space-between' }}>
@@ -379,19 +377,48 @@ export function ProjectDetailsContent({
   );
 
   const renderDescription = (
-    <Card sx={{ p: 3, gap: 1, display: 'flex', flexDirection: 'column', width: '100%' }}>
-      <TextField multiline rows={3} value={project?.description} variant="outlined" fullWidth disabled />
-      <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, mt: 0, mb: -1, textAlign: 'right' }}>
-        <Label variant="filled" sx={{ bgcolor: 'whitesmoke', color: 'text.primary' }}>
-          Created At:
-        </Label>
-        <Typography variant="subtitle2" color="text.primary">{fDateTime(project?.createdTime)}</Typography>
-      </Box>
-      <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, mt: 0, mb: -1, textAlign: 'right' }}>
-        <Label variant="filled" sx={{ bgcolor: 'whitesmoke', color: 'text.primary' }}>
-          Updated At:
-        </Label>
-        <Typography variant="subtitle2" color="text.primary">{fDateTime(project?.lastModifiedTime)}</Typography>
+    <Card sx={{ p: 3, gap: 1.5, display: 'flex', flexDirection: 'column', width: '100%' }}>
+      {project?.description?.split('&').map((line, index) => (
+        <Typography key={index} variant="caption" color="text.primary" sx={{ mb: 0.5, textAlign: 'justify', fontWeight: index === 0 ? 'bold' : 'normal' }}>
+          {line}
+        </Typography>
+      ))}
+      {project?.salesOrder?.custom_fields?.map((field, index) => (
+        <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, mt: 0, mb: 0, textAlign: 'right' }} key={`box-${index}`}>
+          <Typography variant="subtitle2" color="text.primary" key={`typo-${index}`}>
+            <b>{field.label}:</b>
+          </Typography>
+          <Label
+            variant="filled"
+            sx={{
+              bgcolor: field.value.toLowerCase() === 'custom' ? 'whitesmoke' :
+                field.value.toLowerCase() === 'mixed' ? 'warning.lighter' : 'success.lighter',
+              color: field.value.toLowerCase() === 'custom' ? 'text.primary' :
+                field.value.toLowerCase() === 'mixed' ? 'warning.main' : 'success.main'
+            }}
+            key={`label-${index}`}
+          >
+            {field.value}
+          </Label>
+        </Box>
+      ))}
+      <Box sx={{ display: 'flex', flexDirection: 'row', gap: 2, }}>
+        <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, mt: 0, mb: -1, textAlign: 'right' }}>
+          <Typography variant="caption" color="text.primary" sx={{ mt: 0.3 }}>
+            Created At:
+          </Typography>
+          <Label variant="filled" sx={{ bgcolor: 'whitesmoke', color: 'text.primary' }}>
+            {fDateTime(project?.createdTime)}
+          </Label>
+        </Box>
+        <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, mt: 0, mb: -1, textAlign: 'right' }}>
+          <Typography variant="caption" color="text.primary" sx={{ mt: 0.3 }}>
+            Updated At:
+          </Typography>
+          <Label variant="filled" sx={{ bgcolor: 'whitesmoke', color: 'text.primary' }}>
+            {fDateTime(project?.lastModifiedTime)}
+          </Label>
+        </Box>
       </Box>
     </Card>
   );
@@ -460,103 +487,13 @@ export function ProjectDetailsContent({
   );
 
   const renderOverview = (
-    <Card sx={{ p: 3, gap: 1, display: 'flex', flexDirection: 'column', maxHeight: !isMobile ? 655 : 'auto', minHeight: !isMobile ? 655 : 'auto', overflow: 'auto' }}>
-      {[
-        {
-          label: 'Client',
-          value: project?.salesOrder?.customer_name,
-          icon: <Iconify icon="ix:customer-filled" />,
-        },
-        {
-          label: 'Address',
-          value: project?.address,
-          icon: <Iconify icon="hugeicons:address-book" />,
-        },
-        {
-          label: 'Phone Number',
-          value: project?.salesOrder?.customer.phone,
-          icon: <Iconify icon="icon-park:phone" />,
-        },
-        {
-          label: 'Email',
-          value: project?.salesOrder?.customer?.email,
-          icon: <Iconify icon="mage:email-fill" />,
-        },
-        {
-          label: 'Date',
-          value: fDate(project?.salesOrder?.date),
-          icon: <Iconify icon="solar:calendar-date-bold" />,
-        },
-        {
-          label: `${project?.salesOrder?.line_items?.filter((product) => product.item_type !== 'sales_and_purchases').length} Product(s), 
-          Total Qty: ${project?.salesOrder?.line_items?.filter((product) => product.item_type !== 'sales_and_purchases').reduce((total, product) => total + product.quantity, 0)}`,
-          value: (
-            <>
-              {project?.salesOrder?.line_items?.filter((product) => product.item_type !== 'sales_and_purchases').map((product) => (
-                <ListItem key={product.line_item_id}>
-                  <ListItemText
-                    primary={product.name}
-                    secondary={`Qty: ${product.quantity}`}
-                    primaryTypographyProps={{
-                      variant: 'caption',
-                      color: 'text.secondary',
-                    }}
-                    secondaryTypographyProps={{
-                      variant: 'caption',
-                      color: 'text.primary',
-                    }}
-                  />
-                </ListItem>
-              ))}
-            </>
-          ),
-          icon: <Iconify icon="fluent-mdl2:product-list" />,
-        },
-        // {
-        //   label: 'Employment type',
-        //   value: job?.employmentTypes,
-        //   icon: <Iconify icon="solar:clock-circle-bold" />,
-        // },
-        // {
-        //   label: 'Offered salary',
-        //   value: job?.salary.negotiable ? 'Negotiable' : fCurrency(job?.salary.price),
-        //   icon: <Iconify icon="solar:wad-of-money-bold" />,
-        // },
-        // {
-        //   label: 'Experience',
-        //   value: job?.experience,
-        //   icon: <Iconify icon="carbon:skill-level-basic" />,
-        // },
-      ].map((item) => (
-        <Stack key={item.label} spacing={1.5} direction="row">
-          {item?.icon}
-          <Box sx={{ width: '100%', display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-            <ListItemText
-              primary={item.label}
-              secondary={item.value}
-              primaryTypographyProps={{ typography: 'body2', color: 'text.secondary', mb: 0.5 }}
-              secondaryTypographyProps={{
-                component: 'span',
-                color: 'text.primary',
-                typography: 'subtitle2',
-              }}
-            />
-            {(item.label === 'Address' && (verifyPermissions(
-              listPermissions,
-              CONFIG.permissions.system,
-              CONFIG.permissions.moduleProjects,
-              CONFIG.permissions.operationEditAddress
-            ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
-                <IconButton variant="text" color="primary" size="small" sx={{ ml: 1 }}
-                  onClick={() => setOpenDialogs({ ...openDialogs, address: true })}
-                >
-                  <Iconify icon="fluent:slide-text-edit-20-regular" color="primary" width={22} />
-                </IconButton>
-              )}
-          </Box>
-        </Stack>
-      ))}
-    </Card >
+    <ProjectDetailsContentOverview
+      project={project}
+      listPermissions={listPermissions}
+      openDialogs={openDialogs}
+      setOpenDialogs={setOpenDialogs}
+      isOverview={!!project}
+    />
   );
 
   const renderOverviewInstaller = (
@@ -573,17 +510,17 @@ export function ProjectDetailsContent({
       }}>
         {[
           {
-            label: 'Responsable',
+            label: 'Responsible',
             value: (
               <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, justifyContent: 'flex-start' }}>
-                  <Typography variant="body2" color="text.primary">
-                    <b>{project?.userManager?.name}</b>
-                  </Typography>
-                  <Label variant="outlined" color="error" sx={{ gap: 1, p: 1 }}>
-                    <Iconify icon="icon-park:phone" />
-                    {loadedUsers?.find((user) => user.id === project?.userManager?.id)?.phoneNumber}
-                  </Label>
-                </Box>
+                <Typography variant="body2" color="text.primary">
+                  <b>{project?.userManager?.name}</b>
+                </Typography>
+                <Label variant="outlined" color="error" sx={{ gap: 1, p: 1 }}>
+                  <Iconify icon="icon-park:phone" />
+                  {loadedUsers?.find((user) => user.id === project?.userManager?.id)?.phoneNumber}
+                </Label>
+              </Box>
             ),
             icon: <Iconify icon="hugeicons:manager" />,
           },
@@ -655,11 +592,11 @@ export function ProjectDetailsContent({
       }}>
         {[
           {
-            label: `${project?.salesOrder?.line_items?.filter((product) => product.item_type !== 'sales_and_purchases').length} Product(s), 
-            Total Qty: ${project?.salesOrder?.line_items?.filter((product) => product.item_type !== 'sales_and_purchases').reduce((total, product) => total + product.quantity, 0)}`,
+            label: `${items?.length} Product(s), 
+            Total Qty: ${items?.reduce((total, product) => total + product.quantity, 0)}`,
             value: (
               <>
-                {project?.salesOrder?.line_items?.filter((product) => product.item_type !== 'sales_and_purchases').map((product) => (
+                {items?.map((product) => (
                   <ListItem key={product.line_item_id}>
                     <ListItemText
                       primary={product.name}
@@ -765,14 +702,9 @@ export function ProjectDetailsContent({
         isEdit={isStartDate ? project?.startDate : project?.endDate}
         isStartDate={isStartDate}
         project={project}
+        refetchProject={refetchProject}
         open={openDialogs.date}
         onClose={() => setOpenDialogs({ ...openDialogs, date: false })}
-      />
-      <ProjectEditModalAddressView
-        isEdit={project?.address}
-        projectId={project.id}
-        open={openDialogs.address}
-        onClose={() => setOpenDialogs({ ...openDialogs, address: false })}
       />
     </>
   );

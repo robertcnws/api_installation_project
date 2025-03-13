@@ -18,6 +18,7 @@ from .mongo_setup import (
 import os
 import environ
 import warnings 
+import urllib.parse
 
 
 env = environ.Env(
@@ -30,6 +31,36 @@ environ.Env.read_env()
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 REDIS_HOST = env('REDIS_HOST', default='localhost')
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': '/var/log/celery.log',
+            'formatter': 'verbose',
+        },
+    },
+    'formatters': {
+        'verbose': {
+            'format': '%(asctime)s %(levelname)s %(message)s'
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'celery': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    },
+}
 
 
 # Quick-start development settings - unsuitable for production
@@ -244,9 +275,10 @@ CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'America/New_York'
 CELERY_ENABLE_UTC = False
 CELERY_BEAT_SCHEDULE = {
-    'run-task-sequence-daily-delete-old': {
-        'task': 'api_projects_async_task_sequence.tasks.task_sequence_daily_delete_old',
+    'run-task-sequence-daily': {
+        'task': 'api_projects_async_task_sequence.tasks.task_sequence_daily',
         'schedule': crontab(minute=0, hour=8, day_of_week='*'),
+        # 'schedule': crontab(minute='*/2', hour='7-17', day_of_week='*'),
     },
 }
 
@@ -260,6 +292,7 @@ AWS_STORAGE_BUCKET_NAME = env('AWS_STORAGE_BUCKET_NAME', default='')
 AWS_S3_FOLDER_PROJECTS = env('AWS_S3_FOLDER_PROJECTS', default='projects/')
 AWS_S3_FOLDER_TASKS = env('AWS_S3_FOLDER_TASKS', default='tasks/')
 AWS_S3_FOLDER_COMMENTS = env('AWS_S3_FOLDER_COMMENTS', default='comments/')
+AWS_S3_FOLDER_BACKUPS = env('AWS_S3_FOLDER_BACKUPS', default='backups/mongodb/')
 
 # INSTALLATION STAGES
 PREPARATION_STAGE = env('PREPARATION_STAGE', default='Preparation')
@@ -269,6 +302,12 @@ PERMISSION_STAGE = env('PERMISSION_STAGE', default='Permission')
 CLOSING_STAGE = env('CLOSING_STAGE', default='Closing')
 FINISHED_STAGE = env('FINISHED_STAGE', default='Finished')
 
+# ZOHO
+ZOHO_ORG_ID = env('ZOHO_ORG_ID', default='')
+
+# PROJECTS
+PROJECT_WORK = env('PROJECT_WORK', default='Work')
+PROJECT_SCOPE = env('PROJECT_SCOPE', default='Scope')
 
 # MONGOENGINE
 
@@ -279,6 +318,8 @@ MONGO_PORT = int(env('MONGO_PORT', default=27017))
 MONGO_USER = env('MONGO_USER', default='root')
 MONGO_PASSWORD = env('MONGO_PASSWORD', default='')
 MONGO_DB = env('MONGO_DB', default='')
+MONGO_URI = f"mongodb://{MONGO_USER}:{urllib.parse.quote_plus(MONGO_PASSWORD)}@{MONGO_HOST}:{MONGO_PORT}/{MONGO_DB}?authSource=admin&authMechanism=SCRAM-SHA-1"
+
 connect_mongo()
 
 

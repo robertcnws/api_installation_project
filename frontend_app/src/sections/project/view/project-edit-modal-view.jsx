@@ -638,9 +638,9 @@ export function ProjectEditModalView({
                         <Box sx={{ width: !isMobile ? '40%' : '100%', color: 'text.secondary', mt: !isMobile ? 0 : 2, ml: !isMobile ? 2 : 0 }}>
                             <Field.Autocomplete
                                 name="userManager"
-                                placeholder="Responsable"
+                                placeholder="Responsible"
                                 control={control}
-                                label="Responsable"
+                                label="Responsible"
                                 value={watch("userManager") || null}
                                 options={filteredUsersManager || []}
                                 getOptionLabel={(option) => (

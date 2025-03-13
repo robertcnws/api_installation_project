@@ -1,4 +1,5 @@
 import Stack from '@mui/material/Stack';
+import { Tooltip } from '@mui/material';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
@@ -11,6 +12,7 @@ import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
 
 import { SalesOrderCreateProjectDialogForm } from './sales-order-create-project-dialog';
+
 
 // ----------------------------------------------------------------------
 
@@ -28,9 +30,11 @@ export function SalesOrderDetailsToolbar({
     <>
       <Stack spacing={3} direction={{ xs: 'column', md: 'row' }} sx={{ mb: { xs: 3, md: 5 } }}>
         <Stack spacing={1} direction="row" alignItems="flex-start">
-          <IconButton component={RouterLink} href={backLink}>
-            <Iconify icon="eva:arrow-ios-back-fill" />
-          </IconButton>
+          <Tooltip title="Back">
+            <IconButton component={RouterLink} href={backLink}>
+              <Iconify icon="eva:arrow-ios-back-fill" />
+            </IconButton>
+          </Tooltip>
 
           <Stack spacing={0.5}>
             <Stack spacing={1} direction='row' alignItems="center">
@@ -74,12 +78,13 @@ export function SalesOrderDetailsToolbar({
           </Button>
 
           <Button
+            component={RouterLink} 
+            href={backLink}
             color="inherit"
             variant="outlined"
-            startIcon={<Iconify icon="solar:printer-minimalistic-bold" />}
-          // onClick={() => {generateItemPrintablePDF({salesOrder, senitronItem})}}
+            startIcon={<Iconify icon="lets-icons:close-ring" />}
           >
-            Print
+            Close
           </Button>
 
           {/* <Button color="inherit" variant="contained" startIcon={<Iconify icon="solar:pen-bold" />}>
