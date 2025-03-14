@@ -77,6 +77,7 @@ export function ProjectTable({
     { id: 'startDate', label: 'Installation Date' },
     { id: 'duration', label: 'Duration' },
     { id: 'number', label: 'Number' },
+    { id: 'inspectionDate', label: 'Inspection Date' },
     { id: 'name', label: 'Name' },
     { id: 'currentStage', label: 'Stage' },
     ...((loadedStages || []).map((stage) => ({
@@ -89,7 +90,10 @@ export function ProjectTable({
   ];
 
   const TABLE_HEAD_MOBILE = [
-    { id: 'info', label: 'INFO' },
+    { id: 'startDate', label: 'Installation Date' },
+    { id: 'duration', label: 'Duration' },
+    { id: 'number', label: 'Number' },
+    { id: 'hasPermission', label: 'Permission' },
     { id: '' },
   ];
 

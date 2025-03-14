@@ -32,6 +32,8 @@ import { ProjectEditModalAddressView } from './project-edit-modal-address-view';
 import { ProjectDetailsAttachmentView } from './project-details-attachment-view';
 import { ProjectDetailsReleaseFormView } from './project-details-release-form-view';
 import { ProjectDetailsInstallationGuideFormView } from './project-details-installation-guide-form-view';
+import { ProjectDetailsReleaseFormInstallerView } from './project-details-release-form-installer-view';
+import { ProjectDetailsInstallationGuideFormInstallerView } from './project-details-installation-guide-form-installer-view';
 
 
 
@@ -277,25 +279,43 @@ export function ProjectDetailsView({ projectId }) {
                     />
                 }
 
-                {(tabs.value === 'releaseForm' && itemById?.userManager?.username) &&
-                    <ProjectDetailsReleaseFormView
-                        project={itemById}
-                        refetchProject={refetchProject}
-                        listPermissions={listPermissions}
-                        openDialogs={openDialogs}
-                        setOpenDialogs={setOpenDialogs}
-                    />
-                }
+                {(tabs.value === 'releaseForm' && itemById?.userManager?.username) && (
+                    !isInstaller(userLogged?.data?.user_role?.name) ? (
+                        <ProjectDetailsReleaseFormView
+                            project={itemById}
+                            refetchProject={refetchProject}
+                            listPermissions={listPermissions}
+                            openDialogs={openDialogs}
+                            setOpenDialogs={setOpenDialogs}
+                        />
+                    ) : (
+                        <ProjectDetailsReleaseFormInstallerView
+                            project={itemById}
+                            refetchProject={refetchProject}
+                            listPermissions={listPermissions}
+                            openDialogs={openDialogs}
+                            setOpenDialogs={setOpenDialogs}
+                        />
+                    ))}
 
-                {(tabs.value === 'installationGuide' && itemById?.userManager?.username) &&
-                    <ProjectDetailsInstallationGuideFormView
-                        project={itemById}
-                        refetchProject={refetchProject}
-                        listPermissions={listPermissions}
-                        openDialogs={openDialogs}
-                        setOpenDialogs={setOpenDialogs}
-                    />
-                }
+                {(tabs.value === 'installationGuide' && itemById?.userManager?.username) && (
+                    !isInstaller(userLogged?.data?.user_role?.name) ? (
+                        <ProjectDetailsInstallationGuideFormView
+                            project={itemById}
+                            refetchProject={refetchProject}
+                            listPermissions={listPermissions}
+                            openDialogs={openDialogs}
+                            setOpenDialogs={setOpenDialogs}
+                        />
+                    ) : (
+                        <ProjectDetailsInstallationGuideFormInstallerView
+                            project={itemById}
+                            refetchProject={refetchProject}
+                            listPermissions={listPermissions}
+                            openDialogs={openDialogs}
+                            setOpenDialogs={setOpenDialogs}
+                        />
+                    ))}
 
                 {(tabs.value === 'comments' && itemById?.userManager?.username) &&
                     <ProjectDetailsCommentView

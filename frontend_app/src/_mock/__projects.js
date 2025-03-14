@@ -36,6 +36,7 @@ const GET_ALL_PROJECTS = gql`
       projectMaterials
       projectGuideProducts
       projectMaterialsOtherNotes
+      inspectionDate
     }
   }
 `;
@@ -74,6 +75,7 @@ const GET_PROJECT_BY_ID = gql`
       projectMaterials
       projectGuideProducts
       projectMaterialsOtherNotes
+      inspectionDate
     }
   }
 `;

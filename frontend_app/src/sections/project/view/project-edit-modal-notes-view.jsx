@@ -28,7 +28,7 @@ export function ProjectEditModalNotesView({
     
 
     const ProjectDialogSchema = zod.object({
-        notes: zod.string().min(1, { message: 'Address is required!' }),
+        notes: zod.string().min(1, { message: 'Notes are required!' }),
     });
 
     const defaultValues = useMemo(

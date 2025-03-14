@@ -76,9 +76,11 @@ export function ProjectView() {
 
   const upload = useBoolean();
 
-  const [view, setView] = useState(
-    isInstaller(userLogged?.data?.user_role?.name) ? 'grid' : localStorage.getItem('projectView') || 'list'
-  );
+  // const [view, setView] = useState(
+  //   isInstaller(userLogged?.data?.user_role?.name) ? 'grid' : localStorage.getItem('projectView') || 'list'
+  // );
+
+  const [view, setView] = useState(localStorage.getItem('projectView') || 'list');
 
   const [tableData, setTableData] = useState([]);
 
@@ -280,27 +282,29 @@ export function ProjectView() {
         options={{ types: PROJECT_TYPE_OPTIONS }}
       />
 
-      {!isInstaller(userLogged?.data?.user_role?.name) && (
 
-        <ToggleButtonGroup size="small" value={view} exclusive onChange={handleChangeView}>
-          <ToggleButton value="list">
-            <Iconify icon="solar:list-bold" />
-          </ToggleButton>
 
-          <ToggleButton value="grid">
-            <Iconify icon="mingcute:dot-grid-fill" />
-          </ToggleButton>
+      <ToggleButtonGroup size="small" value={view} exclusive onChange={handleChangeView}>
+        <ToggleButton value="list">
+          <Iconify icon="solar:list-bold" />
+        </ToggleButton>
 
-          <ToggleButton value="calendar">
-            <Iconify icon="ion:calendar-outline" />
-          </ToggleButton>
+        <ToggleButton value="grid">
+          <Iconify icon="mingcute:dot-grid-fill" />
+        </ToggleButton>
 
+        <ToggleButton value="calendar">
+          <Iconify icon="ion:calendar-outline" />
+        </ToggleButton>
+
+        {!isInstaller(userLogged?.data?.user_role?.name) && (
           <ToggleButton value="kanban">
             <Iconify icon="tabler:layout-kanban" />
           </ToggleButton>
+        )}
 
-        </ToggleButtonGroup>
-      )}
+      </ToggleButtonGroup>
+
     </Stack>
   );
 

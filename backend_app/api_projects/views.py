@@ -437,6 +437,7 @@ def update_project(request, id):
 
     start_date = parse_custom_date(logger, data.get('startDate')) if data.get('startDate') else project.start_date
     end_date = parse_custom_date(logger, data.get('endDate')) if data.get('endDate') else project.end_date
+    inspection_date = parse_custom_date(logger, data.get('inspectionDate')) if data.get('inspectionDate') else project.inspection_date
     
     user_reporter = json.loads(data.get('userReporter', None)) if data.get('userReporter') else project.user_reporter
     
@@ -498,6 +499,7 @@ def update_project(request, id):
     project.has_permission = has_permission if has_permission_str else project.has_permission
     project.project_default_tasks = project_default_tasks if project_default_tasks else project.project_default_tasks
     project.project_comments = project_comments if project_comments else project.project_comments
+    project.inspection_date = inspection_date if inspection_date else project.inspection_date
         
     project.save()
     

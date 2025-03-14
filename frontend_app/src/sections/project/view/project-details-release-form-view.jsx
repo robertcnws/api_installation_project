@@ -13,6 +13,7 @@ import Typography from '@mui/material/Typography';
 import ListItemText from '@mui/material/ListItemText';
 
 import { generateReleaseFormReport } from 'src/utils/generate-release-form-pdf';
+import { isInstaller } from 'src/utils/check-permissions';
 
 import { CONFIG } from 'src/config-global';
 
@@ -24,6 +25,7 @@ import { LoadingContext } from 'src/auth/context/loading-context';
 
 import { ProjectDetailsContentOverview } from '../project-details-content-overview';
 
+
 // ----------------------------------------------------------------------
 
 export function ProjectDetailsReleaseFormView({
@@ -32,6 +34,7 @@ export function ProjectDetailsReleaseFormView({
   listPermissions,
   openDialogs,
   setOpenDialogs,
+  onClose = () => { },
 }) {
 
   const FINAL_RELEASE_FORM_OPTIONS = [
@@ -163,12 +166,21 @@ export function ProjectDetailsReleaseFormView({
         >
           Save
         </LoadingButton>
-        <Button
-          variant="outlined"
-          onClick={() => generateReleaseFormReport({ project })}
-        >
-          Generate Report
-        </Button>
+        {!isInstaller(userLogged?.data?.user_role.name) ? (
+          <Button
+            variant="outlined"
+            onClick={() => generateReleaseFormReport({ project })}
+          >
+            Generate Report
+          </Button>
+        ) : (
+          <Button
+            variant="outlined"
+            onClick={onClose}
+          >
+            Close
+          </Button>
+        )}
       </Stack>
     </Card >
   );
@@ -199,9 +211,11 @@ export function ProjectDetailsReleaseFormView({
           {renderContent}
         </Form>
       </Grid>
-      <Grid xs={12} md={4}>
-        {renderOverview}
-      </Grid>
+      {!isInstaller(userLogged?.data?.user_role.name) && (
+        <Grid xs={12} md={4}>
+          {renderOverview}
+        </Grid>
+      )}
     </Grid >
   );
 }

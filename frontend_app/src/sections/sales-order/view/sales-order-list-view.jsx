@@ -1,6 +1,8 @@
 import axios from 'axios';
 import { useMemo, useState, useEffect, useContext, useCallback } from 'react';
 
+import { useQuery } from '@tanstack/react-query';
+
 import Box from '@mui/material/Box';
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
@@ -45,6 +47,7 @@ import { useDataContext } from 'src/auth/context/data/data-context';
 import { SalesOrderTableRow } from '../sales-order-table-row';
 import { SalesOrderTableToolbar } from '../sales-order-table-toolbar';
 import { SalesOrderTableFiltersResult } from '../sales-order-table-filters-result';
+
 
 
 
@@ -130,6 +133,8 @@ export function SalesOrderListView() {
 
   const confirm = useBoolean();
 
+  const confirmDelete = useBoolean();
+
   const filters = useSetState({ name: '', status: localStorage.getItem('salesOrderStatus') || 'all' });
 
   const collapse = useBoolean(
@@ -174,31 +179,77 @@ export function SalesOrderListView() {
 
   const notFound = (!dataFiltered.length && canReset) || !dataFiltered.length;
 
+
+  const useDeleteSalesOrdersQuery = (salesOrdersIds) =>
+    useQuery({
+      queryKey: ['sales_orders_ids', salesOrdersIds.join(',')],
+      queryFn: async () => {
+        const res = await axios.get(`${CONFIG.apiUrl}/integration/delete_sales_orders/`, {
+          params: { sales_orders_ids: salesOrdersIds.join(',') },
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+        });
+        return res.data;
+      },
+      refetchOnWindowFocus: false,
+      enabled: false,
+    });
+
+  const [deleteSalesOrdersIds, setDeleteSalesOrdersIds] = useState([]);
+
+  const { data, refetch } = useDeleteSalesOrdersQuery(deleteSalesOrdersIds);
+
+  useEffect(() => {
+    if (deleteSalesOrdersIds.length) {
+      refetch()
+        .then(() => {
+          toast.success('Delete success!');
+          const deleteRow = listSalesOrders?.filter(
+            (row) => deleteSalesOrdersIds.indexOf(row.salesorder_id) === -1
+          );
+          setListSalesOrders(deleteRow);
+          table.onUpdatePageDeleteRow(dataInPage.length);
+          setDeleteSalesOrdersIds([]);
+        })
+        .catch((error) => {
+          toast.error(error.response?.data?.message || 'Error deleting row');
+          setDeleteSalesOrdersIds([]);
+        });
+    }
+  }, [
+    deleteSalesOrdersIds,
+    refetch,
+    listSalesOrders,
+    table,
+    dataInPage.length,
+    setListSalesOrders,
+    setDeleteSalesOrdersIds,
+  ]);
+
+
   const handleDeleteRow = useCallback(
     (id) => {
-      const deleteRow = listSalesOrders?.filter((row) => row.salesorder_id !== id);
+      const deleteRow = listSalesOrders?.filter((row) => row.salesorder_id === id);
 
-      toast.success('Delete success!');
+      const salesOrdersIds = deleteRow?.map((row) => row.salesorder_id) || [];
 
-      setListSalesOrders(deleteRow);
+      setDeleteSalesOrdersIds(salesOrdersIds);
 
-      table.onUpdatePageDeleteRow(dataInPage.length);
     },
-    [dataInPage.length, table, listSalesOrders]
+    [listSalesOrders]
   );
 
+
   const handleDeleteRows = useCallback(() => {
-    const deleteRows = listSalesOrders?.filter((row) => !table.selected.includes(row.salesorder_id));
+    const deleteRows = listSalesOrders?.filter((row) => table.selected.includes(row.salesorder_id));
 
-    toast.success('Delete success!');
+    const salesOrdersIds = deleteRows?.map((row) => row.salesorder_id) || [];
 
-    setListSalesOrders(deleteRows);
+    setDeleteSalesOrdersIds(salesOrdersIds);
 
-    table.onUpdatePageDeleteRows({
-      totalRowsInPage: dataInPage.length,
-      totalRowsFiltered: dataFiltered.length,
-    });
-  }, [dataFiltered.length, dataInPage.length, table, listSalesOrders]);
+  }, [table, listSalesOrders]);
 
   const handleCreateRows = useCallback(async () => {
 
@@ -227,12 +278,12 @@ export function SalesOrderListView() {
     }
 
   }, [
-    dataFiltered.length, 
-    dataInPage.length, 
-    table, 
-    listSalesOrders, 
-    refetchProjects, 
-    refetchSalesOrders, 
+    dataFiltered.length,
+    dataInPage.length,
+    table,
+    listSalesOrders,
+    refetchProjects,
+    refetchSalesOrders,
     router,
     userLogged?.data
   ]);
@@ -413,11 +464,18 @@ export function SalesOrderListView() {
                 )
               }
               action={
-                <Tooltip title="Create Installation(s)">
-                  <IconButton color="primary" onClick={confirm.onTrue}>
-                    <Iconify icon="solar:folder-bold" />
-                  </IconButton>
-                </Tooltip>
+                <>
+                  <Tooltip title="Create Installation(s)">
+                    <IconButton color="primary" onClick={confirm.onTrue}>
+                      <Iconify icon="solar:folder-bold" />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Delete Installation(s)">
+                    <IconButton color="error" onClick={confirmDelete.onTrue}>
+                      <Iconify icon="solar:trash-bin-trash-bold" />
+                    </IconButton>
+                  </Tooltip>
+                </>
               }
             />
             <Scrollbar>
@@ -537,6 +595,26 @@ export function SalesOrderListView() {
           </Button>
         }
       />
+
+      <ConfirmDialog
+        open={confirmDelete.value}
+        onClose={confirmDelete.onFalse}
+        title="Delete Sales Order"
+        content={
+          <>
+            Are you sure want to delete installation(s) from<strong> {table.selected.length} </strong> sales orders?
+          </>
+        }
+        action={
+          <Button variant="contained" color="error" onClick={() => {
+            handleDeleteRows();
+            confirmDelete.onFalse();
+          }}>
+            Delete
+          </Button>
+        }
+      />
+
     </>
   );
 }

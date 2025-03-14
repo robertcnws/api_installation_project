@@ -141,7 +141,7 @@ export const DataProvider = ({ children }) => {
     }
     if (isAdministrator(userLogged?.data?.user_role?.name)) {
       return _avatarUsers.filter(
-        (user) => !isSuperAdmin(user.userRole.name) && !isAdministrator(user.userRole.name)
+        (user) => !isSuperAdmin(user.userRole.name)
       );
     }
     return _avatarUsers.filter(

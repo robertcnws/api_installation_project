@@ -131,5 +131,31 @@ def manage_user_permissions(request):
         logger.error(f"Error managing user permissions: {e}")
         return JsonResponse({'error': 'Failed to managing user permissions'}, status=500)
     return JsonResponse(resp)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def delete_sales_orders(request):
+    headers = config_headers()
+    data = request.query_params if hasattr(request, 'query_params') else request.GET
+    print(f"data: {data}")
+    sales_orders_ids = data.get('sales_orders_ids', None)
+    if not sales_orders_ids:
+        return JsonResponse({'error': 'Missing sales_orders_ids parameter'}, status=400)
+    if isinstance(sales_orders_ids, list):
+        sales_orders_ids = ','.join(sales_orders_ids)
+    url = f'{settings.API_MAIN_DATA_URL}/zoho/delete/sales_orders/?sales_orders_ids={sales_orders_ids}'
+    
+    session = requests.Session()
+    try:
+        response = session.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
+        resp = response.json()
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Error deleting sales orders: {e}")
+        return JsonResponse({'error': 'Failed to delete sales orders'}, status=500)
+    
+    return JsonResponse(resp)
+    
     
     

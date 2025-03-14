@@ -162,48 +162,57 @@ export function ProjectTableRow({
               />
             </TableCell>
           )}
+        <TableCell
+          // onClick={handleClick} 
+          onClick={onViewRow}
+          sx={{ whiteSpace: 'nowrap', cursor: 'pointer', }}
+        >
+          {/* {fDate(row?.salesOrder.date)} */}
+          {fDate(row?.startDate)}
+        </TableCell>
+        <TableCell
+          onClick={onViewRow}
+          sx={{ whiteSpace: 'nowrap', cursor: 'pointer', }}
+        >
+          {row?.endDate ? fDuration(row?.startDate, row?.endDate) :
+            <Tooltip title="No Closing Date">
+              <Iconify icon="material-symbols:sms-failed-outline" sx={{ color: 'error.main' }} />
+            </Tooltip>}
+        </TableCell>
+
+        <TableCell
+          // onClick={handleClick} 
+          onClick={onViewRow}
+        >
+          <Stack direction="row" alignItems="center" spacing={2}>
+            {/* <FileThumbnail file="folder" /> */}
+
+            <Typography
+              noWrap
+              variant="inherit"
+              sx={{
+                maxWidth: 360,
+                cursor: 'pointer',
+                ...(details.value && { fontWeight: 'fontWeightBold' }),
+              }}
+            >
+              {row?.number}
+            </Typography>
+          </Stack>
+        </TableCell>
 
         {!isMobile ? (
           <>
             <TableCell
-              // onClick={handleClick} 
               onClick={onViewRow}
               sx={{ whiteSpace: 'nowrap', cursor: 'pointer', }}
             >
-              {/* {fDate(row?.salesOrder.date)} */}
-              {fDate(row?.startDate)}
+              {row?.inspectionDate ? fDate(row?.inspectionDate) :
+                <Tooltip title="No Inspection Date">
+                  <Iconify icon="material-symbols:sms-failed-outline" sx={{ color: 'error.main' }} />
+                </Tooltip>
+              }
             </TableCell>
-            <TableCell
-              onClick={onViewRow}
-              sx={{ whiteSpace: 'nowrap', cursor: 'pointer', }}
-            >
-              {row?.endDate ? fDuration(row?.startDate, row?.endDate) :
-                <Tooltip title="No Closing Date">
-                  <Iconify icon="material-symbols:sms-failed-outline" sx={{ color: 'error.main'}} />
-                </Tooltip>}
-            </TableCell>
-
-            <TableCell
-              // onClick={handleClick} 
-              onClick={onViewRow}
-            >
-              <Stack direction="row" alignItems="center" spacing={2}>
-                {/* <FileThumbnail file="folder" /> */}
-
-                <Typography
-                  noWrap
-                  variant="inherit"
-                  sx={{
-                    maxWidth: 360,
-                    cursor: 'pointer',
-                    ...(details.value && { fontWeight: 'fontWeightBold' }),
-                  }}
-                >
-                  {row?.number}
-                </Typography>
-              </Stack>
-            </TableCell>
-
             <TableCell
               // onClick={handleClick} 
               onClick={onViewRow}
@@ -211,7 +220,6 @@ export function ProjectTableRow({
             >
               {row?.name}
             </TableCell>
-
             <TableCell
               // onClick={handleClick} 
               onClick={onViewRow}
@@ -308,88 +316,11 @@ export function ProjectTableRow({
             )}
           </>
         ) : (
-          <TableCell
-            // onClick={handleClick} 
-            onClick={onViewRow}
-          >
-            <Stack direction="row" alignItems="center" spacing={2}>
-              <FileThumbnail file="folder" />
-
-              <Typography
-                noWrap
-                variant="inherit"
-                sx={{
-                  maxWidth: 360,
-                  cursor: 'pointer',
-                  ...(details.value && { fontWeight: 'fontWeightBold' }),
-                }}
-              >
-                {row?.number}
-              </Typography>
-            </Stack><br />
-            Name: <Label color='default'>{row?.name}</Label><br />
-            Installation Date: <Label color='default'>{fDate(row?.startDate)}</Label><br />
-            {/* Closing Date: <Label color='default'>{fDate(row?.endDate)}</Label><br /> */}
-            Duration: <Label color='default'>{row?.endDate ? fDuration(row?.startDate, row?.endDate) :
-              <Tooltip title="No Closing Date">
-                <Iconify icon="material-symbols:sms-failed-outline" sx={{ color: 'error.main'}} />
-              </Tooltip>}</Label><br />
-            <List dense sx={{ width: 1, bgcolor: 'background.paper' }}>
-              {loadedStages.map((stage) => {
-                const stageOrder = stage.order;
-                const stageName = stage.name;
-                const itemOrder = row?.currentStage?.order
-                const hasPermission = row?.hasPermission;
-
-                const selectedTasks = row?.projectDefaultTasks?.filter(
-                  (task) => task.project_default_task.project_stage._id === stage.id
-                )
-
-                const sumPercentage = selectedTasks?.reduce((acc, task) => {
-                  if (task.project_default_task.project_stage._id === stage.id) {
-                    return acc + task.percentage;
-                  }
-                  return acc;
-                }, 0);
-
-                const total = selectedTasks?.length;
-
-                const percentage = total > 0 ? sumPercentage / total : 0;
-
-
-                const color =
-                  stageOrder > itemOrder && stageName !== CONFIG.stages.permission && !hasPermission ? 'default.main' :
-                    stageOrder === itemOrder && stageName !== CONFIG.stages.permission && !hasPermission ? 'info.main' :
-                      stageName === CONFIG.stages.permission && hasPermission && percentage < 100 ? 'info.main' :
-                        stageOrder > itemOrder ? 'default.main' :
-                          stageOrder === itemOrder ? 'info.main' : 'success.main'
-
-                const icon =
-                  !hasPermission || stageName !== CONFIG.stages.permission ? (stageOrder > itemOrder ? "jam:pie-chart-alt" :
-                    stageOrder === itemOrder && percentage === 0 ? "icon-park-solid:pie" :
-                      stageOrder === itemOrder && percentage > 0 && percentage < 25 ? "icon-park-solid:pie-two" :
-                        stageOrder === itemOrder && percentage >= 25 && percentage < 50 ? "icon-park-solid:pie-four" :
-                          stageOrder === itemOrder && percentage >= 50 && percentage < 100 ? "icon-park-solid:pie-six" : "garden:circle-full-fill-12") :
-                    (percentage === 0 ? "icon-park-solid:pie" :
-                      percentage > 0 && percentage < 25 ? "icon-park-solid:pie-two" :
-                        percentage >= 25 && percentage < 50 ? "icon-park-solid:pie-four" :
-                          percentage >= 50 && percentage < 100 ? "icon-park-solid:pie-six" : "garden:circle-full-fill-12")
-
-                return (
-                  <ListItem
-                    key={stage.id}
-                    disableGutters
-                    sx={{ py: 0.3 }} // Ajusta si quieres aún menos/más espacio vertical
-                  >
-                    <ListItemText primary={stage.name} />
-                    <Iconify icon={icon} sx={{ color }} />
-                  </ListItem>
-                );
-              })}
-            </List>
-
+          <TableCell>
+            <Label color={row?.hasPermission ? 'success' : 'error'}>{row?.hasPermission ? 'Yes' : 'No'}</Label>
           </TableCell>
         )}
+
 
 
         <TableCell align="right" sx={{ px: 1, whiteSpace: 'nowrap', cursor: 'pointer', }}>

@@ -1,4 +1,8 @@
-import React, { useContext } from 'react';
+import React, { useContext, useMemo } from 'react';
+
+import { CONFIG } from 'src/config-global';
+import { listRolesAndSubroles, verifyPermissions } from 'src/utils/check-permissions';
+import { useDataContext } from 'src/auth/context/data/data-context';
 
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
@@ -8,7 +12,7 @@ import TableRow from '@mui/material/TableRow';
 import Checkbox from '@mui/material/Checkbox';
 import TableCell from '@mui/material/TableCell';
 import IconButton from '@mui/material/IconButton';
-import { Paper, Table, Collapse, TableBody, TableContainer } from '@mui/material';
+import { Paper, Table, Collapse, TableBody, TableContainer, Divider } from '@mui/material';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
@@ -23,25 +27,34 @@ import { LoadingContext } from 'src/auth/context/loading-context';
 
 import { SalesOrderCreateProjectDialogForm } from './sales-order-create-project-dialog';
 
+
 // ----------------------------------------------------------------------
 
 export function SalesOrderTableRow({
-  row, 
-  selected, 
-  onEditRow, 
-  onSelectRow, 
-  onDeleteRow, 
-  onViewRow, 
-  openCreateProjectDialog, 
-  setOpenCreateProjectDialog, 
-  currentSalesOrder, 
+  row,
+  selected,
+  onEditRow,
+  onSelectRow,
+  onDeleteRow,
+  onViewRow,
+  openCreateProjectDialog,
+  setOpenCreateProjectDialog,
+  currentSalesOrder,
   setCurrentSalesOrder,
   loadedUsers,
 }) {
 
   const { isMobile } = useContext(LoadingContext);
 
+  const {
+    listPermissions
+  } = useDataContext();
+
+  const userLogged = useMemo(() => sessionStorage.getItem('userLogged'), []);
+
   const confirm = useBoolean();
+
+  const confirmDelete = useBoolean();
 
   const collapse = useBoolean();
 
@@ -147,7 +160,7 @@ export function SalesOrderTableRow({
                             <TableRow key={`${item.id}-${index}-${item.serialNumber}`}>
                               <TableCell>
                                 <Label color='default'>Item</Label><br />
-                                {item.description}
+                                {item.description || item.name || item.group_name}
                               </TableCell>
                               <TableCell>
                                 <Label color='default'>Qty</Label><br />
@@ -157,7 +170,7 @@ export function SalesOrderTableRow({
                           ) : (
                             <TableRow key={`${item.id}-${index}-${item.serialNumber}`}>
                               <TableCell sx={{ maxWidth: '50px' }}>
-                                <Label color='default'>Item:</Label> {item.description}<br />
+                                <Label color='default'>Item:</Label> {item.description || item.name || item.group_name}<br />
                                 <Label color='default'>Qty:</Label> {item.quantity}
                               </TableCell>
                             </TableRow>
@@ -201,6 +214,27 @@ export function SalesOrderTableRow({
             <Iconify icon="solar:eye-bold" />
             View Sales Order
           </MenuItem>
+          {(verifyPermissions(
+            listPermissions,
+            CONFIG.permissions.system,
+            CONFIG.permissions.moduleProjects,
+            CONFIG.permissions.operationDelete
+          ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) && (
+              <>
+                <Divider key="divider" sx={{ borderStyle: 'dashed' }} />
+                <MenuItem
+                  key="delete"
+                  onClick={() => {
+                    confirmDelete.onTrue();
+                    popover.onClose();
+                  }}
+                  sx={{ color: 'error.main' }}
+                >
+                  <Iconify icon="solar:trash-bin-trash-bold" />
+                  Delete Sales Order
+                </MenuItem>
+              </>
+            )}
 
         </MenuList>
       </CustomPopover>
@@ -221,6 +255,18 @@ export function SalesOrderTableRow({
             setOpenCreateProjectDialog(true);
           }}>
             Create
+          </Button>
+        }
+      />
+
+      <ConfirmDialog
+        open={confirmDelete.value}
+        onClose={confirmDelete.onFalse}
+        title="Delete Sales Order"
+        content={`Are you sure want to delete sales order ${row.salesorder_number}?`}
+        action={
+          <Button variant="contained" color="error" onClick={onDeleteRow}>
+            Delete
           </Button>
         }
       />

@@ -427,7 +427,7 @@ export function ProjectDetailsInstallationGuideFormView({
                               </TableCell>
                             </>
                           ) : (
-                            <TableCell>
+                            <TableCell align="left">
                               <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                                 <Typography variant="h6">Product: </Typography>
                                 {
@@ -438,7 +438,7 @@ export function ProjectDetailsInstallationGuideFormView({
                                       sx={{ width: 200 }}
                                       onChange={(e) => handleProductChange(product.id, 'name', e.target.value)}
                                     />
-                                  ) : <Label color="default">{product.name}</Label>
+                                  ) : <Label color="default" sx={{ bgcolor: 'transparent', justifyContent: 'flex-start' }}>{product.name}</Label>
                                 }<br />
                                 <Typography variant="h6">Price: </Typography>
                                 {
@@ -451,7 +451,7 @@ export function ProjectDetailsInstallationGuideFormView({
                                       sx={{ width: 200 }}
                                       onChange={(e) => handleProductChange(product.id, 'price', Math.max(0, e.target.value))}
                                     />
-                                  ) : <Label color="default">{product.price}</Label>
+                                  ) : <Label color="default" sx={{ bgcolor: 'transparent', justifyContent: 'flex-start' }}>{product.price}</Label>
                                 }<br />
                                 <Typography variant="h6">Quantity: </Typography>
                                 {
@@ -464,10 +464,12 @@ export function ProjectDetailsInstallationGuideFormView({
                                       sx={{ width: 200 }}
                                       onChange={(e) => handleProductChange(product.id, 'quantity', Math.max(0, e.target.value))}
                                     />
-                                  ) : <Label color="default">{product.quantity}</Label>
+                                  ) : <Label color="default" sx={{ bgcolor: 'transparent', justifyContent: 'flex-start' }}>{product.quantity}</Label>
                                 }<br />
                                 <Typography variant="h6">Total: </Typography>
-                                <Label color="success">{fCurrency(product.price * product.quantity)}</Label><br />
+                                <Label color="success" sx={{ bgcolor: 'transparent', justifyContent: 'flex-start' }}>
+                                  {fCurrency(product.price * product.quantity)}
+                                </Label><br />
                                 <Typography variant="h6">Notes: </Typography>
                                 {/* <TextField
                                   multiline
@@ -656,7 +658,7 @@ export function ProjectDetailsInstallationGuideFormView({
                                   rows={2}
                                   value={product.name}
                                   placeholder="Enter name..."
-                                  sx={{ width: 150 }}
+                                  sx={{ width: 200 }}
                                   onChange={(e) => handleMaterialChange(product.id, 'name', e.target.value)}
                                 />
 

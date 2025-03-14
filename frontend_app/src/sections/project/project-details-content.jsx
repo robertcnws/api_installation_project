@@ -30,6 +30,7 @@ import { ProjectDetailsContentOverview } from './project-details-content-overvie
 import { ProjectEditModalUserManagerView } from './view/project-edit-modal-user-manager-view';
 import { ProjectDetailsChartSemicircleProject } from './view/project-details-chart-semicircle-project';
 import { ProjectEditModalInstallationTeamView } from './view/project-edit-modal-installation-team-view';
+import { ProjectDetailsContentOverviewInstaller } from './project-details-content-overview-installer';
 
 
 
@@ -70,6 +71,8 @@ export function ProjectDetailsContent({
   }, [project]);
 
   const [isStartDate, setIsStartDate] = useState(false);
+
+  const [isInspectionDate, setIsInspectionDate] = useState(false);
 
   useEffect(() => {
     if (project) {
@@ -147,47 +150,51 @@ export function ProjectDetailsContent({
             <TableCell />
           </TableRow>
 
-          <TableRow>
-            <TableCell>
-              <Typography variant="subtitle2" color="text.secondary">Responsible:</Typography>
-            </TableCell>
-            <TableCell>
-              <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, justifyContent: 'space-between' }}>
-                <Avatar alt={project?.userManager?.name} src={project?.userManager?.avatarUrl} sx={{ width: 24, height: 24, mr: 1 }} />
-                <Typography variant="body2" color="text.primary">
-                  <b>{project?.userManager?.name ? project?.userManager?.name : ''}</b>
-                </Typography>
-              </Box>
-            </TableCell>
-            <TableCell sx={{ textAlign: 'right', maxWidth: '30px' }}>
-              {(project?.userManager?.name && (verifyPermissions(
-                listPermissions,
-                CONFIG.permissions.system,
-                CONFIG.permissions.moduleProjects,
-                CONFIG.permissions.operationEditResponsable
-              ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
+          {!isInstaller(userLogged?.data?.user_role?.name) && (
 
-                  <IconButton variant="text" color="primary" size="small" sx={{ ml: 0, maxWidth: 10 }}
-                    onClick={() => setOpenDialogs({ ...openDialogs, userManager: true })}
-                  >
-                    <Iconify icon="la:user-edit" color="primary" width={22} />
-                  </IconButton>
+            <TableRow>
+              <TableCell>
+                <Typography variant="subtitle2" color="text.secondary">Responsible:</Typography>
+              </TableCell>
+              <TableCell>
+                <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, justifyContent: 'space-between' }}>
+                  <Avatar alt={project?.userManager?.name} src={project?.userManager?.avatarUrl} sx={{ width: 24, height: 24, mr: 1 }} />
+                  <Typography variant="body2" color="text.primary">
+                    <b>{project?.userManager?.name ? project?.userManager?.name : ''}</b>
+                  </Typography>
+                </Box>
+              </TableCell>
+              <TableCell sx={{ textAlign: 'right', maxWidth: '30px' }}>
+                {(project?.userManager?.name && (verifyPermissions(
+                  listPermissions,
+                  CONFIG.permissions.system,
+                  CONFIG.permissions.moduleProjects,
+                  CONFIG.permissions.operationEditResponsable
+                ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
 
-                )}
-              {(!project?.userManager?.name && (verifyPermissions(
-                listPermissions,
-                CONFIG.permissions.system,
-                CONFIG.permissions.moduleProjects,
-                CONFIG.permissions.operationEditResponsable
-              ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
-                  <IconButton variant="text" color="warning" size="small" sx={{ ml: 0, maxWidth: 10 }}
-                    onClick={() => setOpenDialogs({ ...openDialogs, userManager: true })}
-                  >
-                    <Iconify icon="tdesign:user-add-filled" color="warning" width={20} />
-                  </IconButton>
-                )}
-            </TableCell>
-          </TableRow>
+                    <IconButton variant="text" color="primary" size="small" sx={{ ml: 0, maxWidth: 10 }}
+                      onClick={() => setOpenDialogs({ ...openDialogs, userManager: true })}
+                    >
+                      <Iconify icon="la:user-edit" color="primary" width={22} />
+                    </IconButton>
+
+                  )}
+                {(!project?.userManager?.name && (verifyPermissions(
+                  listPermissions,
+                  CONFIG.permissions.system,
+                  CONFIG.permissions.moduleProjects,
+                  CONFIG.permissions.operationEditResponsable
+                ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
+                    <IconButton variant="text" color="warning" size="small" sx={{ ml: 0, maxWidth: 10 }}
+                      onClick={() => setOpenDialogs({ ...openDialogs, userManager: true })}
+                    >
+                      <Iconify icon="tdesign:user-add-filled" color="warning" width={20} />
+                    </IconButton>
+                  )}
+              </TableCell>
+            </TableRow>
+
+          )}
 
           {project?.userManager?.name && (
 
@@ -268,6 +275,7 @@ export function ProjectDetailsContent({
                   <IconButton variant="text" color="primary" size="small" sx={{ ml: 0, maxWidth: 10 }}
                     onClick={() => {
                       setIsStartDate(true)
+                      setIsInspectionDate(false)
                       setOpenDialogs({ ...openDialogs, date: true })
                     }}
                   >
@@ -283,6 +291,7 @@ export function ProjectDetailsContent({
                   <IconButton variant="text" color="warning" size="small" sx={{ ml: 0, maxWidth: 10 }}
                     onClick={() => {
                       setIsStartDate(true)
+                      setIsInspectionDate(false)
                       setOpenDialogs({ ...openDialogs, date: true })
                     }}
                   >
@@ -318,6 +327,7 @@ export function ProjectDetailsContent({
                   <IconButton variant="text" color="primary" size="small" sx={{ ml: 0, maxWidth: 10 }}
                     onClick={() => {
                       setIsStartDate(false)
+                      setIsInspectionDate(false)
                       setOpenDialogs({ ...openDialogs, date: true })
                     }}
                   >
@@ -333,6 +343,7 @@ export function ProjectDetailsContent({
                   <IconButton variant="text" color="warning" size="small" sx={{ ml: 0, maxWidth: 10 }}
                     onClick={() => {
                       setIsStartDate(false)
+                      setIsInspectionDate(false)
                       setOpenDialogs({ ...openDialogs, date: true })
                     }}
                   >
@@ -341,6 +352,8 @@ export function ProjectDetailsContent({
                 )}
             </TableCell>
           </TableRow>
+
+
 
           <TableRow>
             <TableCell>
@@ -370,6 +383,61 @@ export function ProjectDetailsContent({
                 </TableCell>
               )}
           </TableRow>
+
+          {project?.hasPermission && (
+            <TableRow>
+              <TableCell>
+                <Typography variant="subtitle2" color="text.secondary">Inspection Date:</Typography>
+              </TableCell>
+              <TableCell>
+                <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, justifyContent: 'space-between' }}>
+                  {project?.inspectionDate ? (
+                    <Typography variant="subtitle2" color="text.primary">
+                      {fDate(project?.inspectionDate)}
+                    </Typography>
+                  ) : (
+                    <Iconify icon="fluent-mdl2:date-time" color="warning" width={20} sx={{ ml: 0.5, mt: 0.5 }} />
+                  )}
+
+                </Box>
+              </TableCell>
+              <TableCell sx={{ textAlign: 'right', maxWidth: '30px' }}>
+                {(project?.inspectionDate && (verifyPermissions(
+                  listPermissions,
+                  CONFIG.permissions.system,
+                  CONFIG.permissions.moduleProjects,
+                  CONFIG.permissions.operationEditHasPermission
+                ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
+                    <IconButton variant="text" color="primary" size="small" sx={{ ml: 0, maxWidth: 10 }}
+                      onClick={() => {
+                        setIsStartDate(false)
+                        setIsInspectionDate(true)
+                        setOpenDialogs({ ...openDialogs, date: true })
+                      }}
+                    >
+                      <Iconify icon="fluent:calendar-edit-32-regular" color="primary" width={22} />
+                    </IconButton>
+                  )}
+                {(!project?.inspectionDate && (verifyPermissions(
+                  listPermissions,
+                  CONFIG.permissions.system,
+                  CONFIG.permissions.moduleProjects,
+                  CONFIG.permissions.operationEditHasPermission
+                ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
+                    <IconButton variant="text" color="warning" size="small" sx={{ ml: 0, maxWidth: 10 }}
+                      onClick={() => {
+                        setIsStartDate(false)
+                        setIsInspectionDate(true)
+                        setOpenDialogs({ ...openDialogs, date: true })
+                      }}
+                    >
+                      <Iconify icon="zondicons:date-add" color="warning" width={20} />
+                    </IconButton>
+                  )}
+              </TableCell>
+            </TableRow>
+          )}
+
         </TableBody>
 
       </Table>
@@ -405,7 +473,7 @@ export function ProjectDetailsContent({
       <Box sx={{ display: 'flex', flexDirection: 'row', gap: 2, }}>
         <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, mt: 0, mb: -1, textAlign: 'right' }}>
           <Typography variant="caption" color="text.primary" sx={{ mt: 0.3 }}>
-            Created At:
+            Created:
           </Typography>
           <Label variant="filled" sx={{ bgcolor: 'whitesmoke', color: 'text.primary' }}>
             {fDateTime(project?.createdTime)}
@@ -413,7 +481,7 @@ export function ProjectDetailsContent({
         </Box>
         <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, mt: 0, mb: -1, textAlign: 'right' }}>
           <Typography variant="caption" color="text.primary" sx={{ mt: 0.3 }}>
-            Updated At:
+            Updated:
           </Typography>
           <Label variant="filled" sx={{ bgcolor: 'whitesmoke', color: 'text.primary' }}>
             {fDateTime(project?.lastModifiedTime)}
@@ -497,144 +565,14 @@ export function ProjectDetailsContent({
   );
 
   const renderOverviewInstaller = (
-    <Box sx={{ display: 'flex', flexDirection: !isMobile ? 'row' : 'column', gap: 2 }}>
-      <Card sx={{
-        p: 3,
-        gap: 2,
-        display: 'flex',
-        flexDirection: 'column',
-        maxHeight: !isMobile ? 655 : 'auto',
-        // minHeight: !isMobile ? 655 : 'auto',
-        overflow: 'auto',
-        minWidth: '50%'
-      }}>
-        {[
-          {
-            label: 'Responsible',
-            value: (
-              <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, justifyContent: 'flex-start' }}>
-                <Typography variant="body2" color="text.primary">
-                  <b>{project?.userManager?.name}</b>
-                </Typography>
-                <Label variant="outlined" color="error" sx={{ gap: 1, p: 1 }}>
-                  <Iconify icon="icon-park:phone" />
-                  {loadedUsers?.find((user) => user.id === project?.userManager?.id)?.phoneNumber}
-                </Label>
-              </Box>
-            ),
-            icon: <Iconify icon="hugeicons:manager" />,
-          },
-          {
-            label: 'Client',
-            value: project?.salesOrder?.customer_name,
-            icon: <Iconify icon="ix:customer-filled" />,
-          },
-          {
-            label: 'Address',
-            value: project?.address,
-            icon: <Iconify icon="hugeicons:address-book" />,
-          },
-          {
-            label: 'Phone Number',
-            value: project?.salesOrder?.customer.phone,
-            icon: <Iconify icon="icon-park:phone" />,
-          },
-          {
-            label: 'Email',
-            value: project?.salesOrder?.customer?.email,
-            icon: <Iconify icon="mage:email-fill" />,
-          },
-          {
-            label: 'Date',
-            value: fDate(project?.salesOrder?.date),
-            icon: <Iconify icon="solar:calendar-date-bold" />,
-          },
-        ].map((item) => (
-          <Stack key={item.label} spacing={1.5} direction="row">
-            {item?.icon}
-            <Box sx={{ width: '100%', display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-              <ListItemText
-                primary={item.label}
-                secondary={item.value}
-                primaryTypographyProps={{ typography: 'body2', color: 'text.secondary', mb: 0.5 }}
-                secondaryTypographyProps={{
-                  component: 'span',
-                  color: 'text.primary',
-                  typography: 'subtitle2',
-                }}
-              />
-              {(item.label === 'Address' && (verifyPermissions(
-                listPermissions,
-                CONFIG.permissions.system,
-                CONFIG.permissions.moduleProjects,
-                CONFIG.permissions.operationEditAddress
-              ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
-                  <IconButton variant="text" color="primary" size="small" sx={{ ml: 1 }}
-                    onClick={() => setOpenDialogs({ ...openDialogs, address: true })}
-                  >
-                    <Iconify icon="fluent:slide-text-edit-20-regular" color="primary" width={22} />
-                  </IconButton>
-                )}
-            </Box>
-          </Stack>
-        ))}
-
-      </Card >
-      <Card sx={{
-        p: 1,
-        gap: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        maxHeight: !isMobile ? 655 : 'auto',
-        // minHeight: !isMobile ? 655 : 'auto',
-        overflow: 'auto',
-        minWidth: '50%'
-      }}>
-        {[
-          {
-            label: `${items?.length} Product(s), 
-            Total Qty: ${items?.reduce((total, product) => total + product.quantity, 0)}`,
-            value: (
-              <>
-                {items?.map((product) => (
-                  <ListItem key={product.line_item_id}>
-                    <ListItemText
-                      primary={product.name}
-                      secondary={`Qty: ${product.quantity}`}
-                      primaryTypographyProps={{
-                        variant: 'caption',
-                        color: 'text.secondary',
-                      }}
-                      secondaryTypographyProps={{
-                        variant: 'caption',
-                        color: 'text.primary',
-                      }}
-                    />
-                  </ListItem>
-                ))}
-              </>
-            ),
-            icon: <Iconify icon="fluent-mdl2:product-list" />,
-          },
-        ].map((item) => (
-          <Stack key={item.label} spacing={1.5} direction="row">
-            {item?.icon}
-            <Box sx={{ width: '100%', display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-              <ListItemText
-                primary={item.label}
-                secondary={item.value}
-                primaryTypographyProps={{ typography: 'body2', color: 'text.secondary', mb: 0.5 }}
-                secondaryTypographyProps={{
-                  component: 'span',
-                  color: 'text.primary',
-                  typography: 'subtitle2',
-                }}
-              />
-            </Box>
-          </Stack>
-        ))}
-      </Card>
-    </Box>
+    <ProjectDetailsContentOverviewInstaller
+      project={project}
+      listPermissions={listPermissions}
+      openDialogs={openDialogs}
+      setOpenDialogs={setOpenDialogs}
+      isOverview={!!project}
+      loadedUsers={loadedUsers}
+    />
   );
 
   if (project === null) {
@@ -680,9 +618,17 @@ export function ProjectDetailsContent({
           </>
         )}
         {isInstaller(userLogged?.data?.user_role?.name) && (
-          <Grid xs={12} md={12}>
-            {renderOverviewInstaller}
-          </Grid>
+          <>
+            <Grid xs={12} md={12}>
+              {renderOverviewInstaller}
+            </Grid>
+            <Grid xs={12} md={12}>
+              <Box sx={{ display: 'flex', flexDirection: !isMobile ? 'row' : 'column', gap: 2, mb: 1, mt: -1 }}>
+                {renderMainContent}
+                {renderDescription}
+              </Box>
+            </Grid>
+          </>
         )}
 
       </Grid >
@@ -699,8 +645,9 @@ export function ProjectDetailsContent({
         onClose={() => setOpenDialogs({ ...openDialogs, installationTeam: false })}
       />
       <ProjectEditModalDatesView
-        isEdit={isStartDate ? project?.startDate : project?.endDate}
+        isEdit={isStartDate ? project?.startDate : isInspectionDate ? project?.inspectionDate : project?.endDate}
         isStartDate={isStartDate}
+        isInspectionDate={isInspectionDate}
         project={project}
         refetchProject={refetchProject}
         open={openDialogs.date}

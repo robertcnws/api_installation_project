@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, useCallback, useContext } from 'react';
+import { useMemo, useState, useEffect, useContext, useCallback } from 'react';
 
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
@@ -16,9 +16,7 @@ import {
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
 
-import { useBoolean } from 'src/hooks/use-boolean';
 import { useSetState } from 'src/hooks/use-set-state';
-import { LoadingContext } from 'src/auth/context/loading-context';
 
 import { CONFIG } from 'src/config-global';
 import { PRODUCT_STOCK_OPTIONS } from 'src/_mock';
@@ -28,14 +26,16 @@ import { Iconify } from 'src/components/iconify';
 import { Scrollbar } from 'src/components/scrollbar';
 import { EmptyContent } from 'src/components/empty-content';
 
+import { LoadingContext } from 'src/auth/context/loading-context';
+
 import { ProjectTableToolbar } from '../project-table-toolbar';
 import { ProjectTableFiltersResult } from '../project-table-filters-result';
 import {
   RenderCellDate,
   RenderCellStage,
+  RenderCellMobile,
   RenderCellProject,
   RenderCellPercentage,
-  RenderCellMobile,
 } from '../project-table-row';
 
 

@@ -414,7 +414,7 @@ export const createScopeArray = ({ listItems }) => {
     listItems?.forEach((item) => {
         // const dimensions = extractDimensions(item.description);
         const propertiesJson = filteredDescriptionJson(item.description);
-        const dimensions = propertiesJson?.Size ? propertiesJson?.Size?.split(/x/i) : extractDimensions(item.description);
+        const dimensions = propertiesJson?.Size ? propertiesJson?.Size?.split(/[x'"]/i) : extractDimensions(item.description);
         const config = propertiesJson?.Config || propertiesJson?.config;
         console.log('dimensions', dimensions);
         if (config) {

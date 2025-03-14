@@ -23,12 +23,15 @@ export const generateReleaseFormReport = ({ project }) => {
 
     // Project Details
     doc.setFontSize(12);
+
+    const customerName = project?.salesOrder?.customer?.customer_name || project?.salesOrder?.customer_name;
+
     const details = [
-        ["CUSTOMER NAME:", project.salesOrder.customer.customer_name || ""],
-        ["ORDER NUMBER:", project.salesOrder.salesorder_number || ""],
-        ["DATE:", fDate(project.salesOrder.date) || ""],
-        ["ADDRESS:", project.address || ""],
-        ["CONTACT PHONE:", project.salesOrder.customer.phone || ""],
+        ["CUSTOMER NAME:", customerName || ""],
+        ["ORDER NUMBER:", project?.salesOrder?.salesorder_number || ""],
+        ["DATE:", fDate(project?.salesOrder?.date) || ""],
+        ["ADDRESS:", project?.address || ""],
+        ["CONTACT PHONE:", project?.salesOrder?.customer.phone || ""],
     ];
     doc.autoTable({
         startY: 30,
@@ -41,10 +44,10 @@ export const generateReleaseFormReport = ({ project }) => {
     doc.text("PLEASE MARK IF THE FOLLOWING HAS BEEN COMPLETED:", 14, doc.lastAutoTable.finalY + 10);
 
     const checklist = [
-        [project.allProductsMarked, "All Products (Windows, doors, hardware, screens) are installed and working properly."],
-        [project.allWindowsMarked, "All windows hardware/screens are installed and working properly."],
-        [project.allScrewMarked, "All screw covers/caps are installed on ALL window(s)/door(s)."],
-        [project.allTrashMarked, "All trash has been removed."],
+        [project?.allProductsMarked, "All Products (Windows, doors, hardware, screens) are installed and working properly."],
+        [project?.allWindowsMarked, "All windows hardware/screens are installed and working properly."],
+        [project?.allScrewMarked, "All screw covers/caps are installed on ALL window(s)/door(s)."],
+        [project?.allTrashMarked, "All trash has been removed."],
     ];
 
     // Draw Table with Checkboxes
@@ -68,7 +71,7 @@ export const generateReleaseFormReport = ({ project }) => {
     doc.text("FEEDBACK:", 14, doc.lastAutoTable.finalY + 10);
     doc.autoTable({
         startY: doc.lastAutoTable.finalY + 15,
-        body: [[project.feedback || "No feedback provided."]],
+        body: [[project?.feedback || "No feedback provided."]],
         styles: { fontSize: 11, cellPadding: 4 },
         columnStyles: {
             0: { cellWidth: 180 },
@@ -84,7 +87,7 @@ export const generateReleaseFormReport = ({ project }) => {
     doc.autoTable({
         startY: doc.lastAutoTable.finalY + 10,
         head: [["Customer Name & Signature:", "Date Signed:"]],
-        body: [[`${project.salesOrder.customer.customer_name} ${autoFillUnderscoard(project.salesOrder.customer.customer_name, 150)}`, fDate(new Date())]],
+        body: [[`${customerName} ${autoFillUnderscoard(customerName, 150)}`, fDate(new Date())]],
         styles: { fontSize: 11, cellPadding: 3 },
         columnStyles: {
             0: { cellWidth: 150 },

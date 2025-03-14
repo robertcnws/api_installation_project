@@ -31,6 +31,7 @@ import { ConfirmDialog } from 'src/components/custom-dialog';
 export function ProjectEditModalDatesView({
     isEdit,
     isStartDate,
+    isInspectionDate,
     project,
     open,
     onClose,
@@ -79,18 +80,25 @@ export function ProjectEditModalDatesView({
 
     const handleDateChange = useCallback(
         (date) => {
-            const currentStage = project?.currentStage;
-            if (currentStage?.name === CONFIG.stages.preparation ||
-                (currentStage?.name === CONFIG.stages.coordination && totalPercentageProjectStage(project, CONFIG.stages.coordination, CONFIG) < 50)
-            ) {
-                const today = dayjs().format('YYYY-MM-DD');
-                const formatDate = dayjs(date).format('YYYY-MM-DD');
-                const isSame = fIsSame(today, formatDate);
-                if (isSame) {
-                    const message = isStartDate ? 'You have to finish all tasks in the previous stages before setting the install date.' :
-                        'You have to finish all tasks in the previous stages before setting the closing date.';
-                    setConfirmValidInstallMessage(message);
-                    confirmValidInstallDate.onTrue();
+            if (!isInspectionDate) {
+                const currentStage = project?.currentStage;
+                if (currentStage?.name === CONFIG.stages.preparation ||
+                    (currentStage?.name === CONFIG.stages.coordination && totalPercentageProjectStage(project, CONFIG.stages.coordination, CONFIG) < 50)
+                ) {
+                    const today = dayjs().format('YYYY-MM-DD');
+                    const formatDate = dayjs(date).format('YYYY-MM-DD');
+                    const isSame = fIsSame(today, formatDate);
+                    if (isSame) {
+                        const message = isStartDate ? 'You have to finish all tasks in the previous stages before setting the install date.' :
+                            'You have to finish all tasks in the previous stages before setting the closing date.';
+                        setConfirmValidInstallMessage(message);
+                        confirmValidInstallDate.onTrue();
+                    }
+                }
+                else {
+                    setSelectedDate(date);
+                    setFormChanged(true);
+                    setConfirmValidInstallMessage(null);
                 }
             }
             else {
@@ -99,7 +107,7 @@ export function ProjectEditModalDatesView({
                 setConfirmValidInstallMessage(null);
             }
         },
-        [project, confirmValidInstallDate, isStartDate]
+        [project, confirmValidInstallDate, isStartDate, isInspectionDate]
     );
 
     const ProjectDialogSchema = zod.object({
@@ -114,6 +122,7 @@ export function ProjectEditModalDatesView({
             userReporter: userLogged?.data,
             startDate: project?.startDate || null,
             endDate: project?.endDate ? dayjs(project?.endDate).toISOString() : null,
+            inspectionDate: project?.inspectionDate ? dayjs(project?.inspectionDate).toISOString() : null,
         }),
         [project, userLogged]
     );
@@ -140,19 +149,20 @@ export function ProjectEditModalDatesView({
                 userReporter: userLogged?.data,
                 startDate: project.startDate || null,
                 endDate: project.endDate || null,
+                inspectionDate: project.inspectionDate || null,
             });
-            setSelectedDate(isStartDate ? dayjs(project?.startDate) : dayjs(project?.endDate));
+            setSelectedDate(isStartDate ? dayjs(project?.startDate) : isInspectionDate ? dayjs(project?.inspectionDate) : dayjs(project?.endDate));
             setDaysToInstall(diffDays);
             setFormChanged(false);
         }
-    }, [project, userLogged?.data, reset, diffDays, isStartDate]);
+    }, [project, userLogged?.data, reset, diffDays, isStartDate, isInspectionDate]);
 
 
     const onSubmit = handleSubmit(async (data) => {
         const formData = new FormData();
         formData.append('userReporter', JSON.stringify(userLogged?.data));
 
-        const field = isStartDate ? 'startDate' : 'endDate';
+        const field = isStartDate ? 'startDate' : isInspectionDate ? 'inspectionDate' : 'endDate';
         formData.append(field, fDate(selectedDate));
         if (isStartDate) {
             if (isEdit) {
@@ -162,6 +172,10 @@ export function ProjectEditModalDatesView({
                 const newEndDate = dayjs(selectedDate).add(daysToInstall, 'day');
                 formData.append('endDate', fDate(newEndDate));
             }
+        }
+
+        if (isInspectionDate) {
+            formData.append('inspectionDate', fDate(selectedDate));
         }
 
 
@@ -204,13 +218,12 @@ export function ProjectEditModalDatesView({
                                 <Box sx={{ width: '100%', color: 'text.secondary', mt: -0.8 }}>
                                     <DatePicker
                                         label={
-                                            isStartDate ? 'Install Date' : 'Closing Date'
+                                            isStartDate ? 'Install Date' : isInspectionDate ? 'Inspection Date' : 'Closing Date'
                                         }
                                         value={selectedDate}
                                         onChange={handleDateChange}
                                         minDate={
-                                            isStartDate ? dayjs(project?.salesOrder?.date) :
-                                                project?.startDate ? dayjs(project?.startDate) : dayjs(project?.salesOrder?.date)
+                                            isStartDate || isInspectionDate ? dayjs(project?.salesOrder?.date) : project?.startDate ? dayjs(project?.startDate) : dayjs(project?.salesOrder?.date)
                                         }
                                         maxDate={
                                             isStartDate ? dayjs(project?.endDate) : null
@@ -285,7 +298,7 @@ export function ProjectEditModalDatesView({
 
     const renderProject = (
         <Dialog fullWidth maxWidth="xs" open={open} onClose={onClose}>
-            <DialogTitle>{isEdit ? 'Update' : 'Add'} {isStartDate ? 'Install' : 'Closing'} date to Project {project?.name} </DialogTitle>
+            <DialogTitle>{isEdit ? 'Update' : 'Add'} {isStartDate ? 'Install' : isInspectionDate ? 'Inspection' : 'Closing'} date to Project {project?.name} </DialogTitle>
 
             <Form methods={methods} onSubmit={onSubmit}>
 

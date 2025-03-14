@@ -67,11 +67,13 @@ export function ProjectDetailsContentOverview({
   return (
     <>
       <Card sx={{
-        p: 3, gap: 1,
+        p: 3, 
+        gap: 1,
         display: 'flex',
         flexDirection: 'column',
-        maxHeight: !isMobile ? (isOverview ? (project?.userManager?.name ? 692 : 652) : 652) : 'auto',
-        minHeight: !isMobile ? (isOverview ? (project?.userManager?.name ? 692 : 652) : 652) : 'auto',
+        ml: isMobile && isOverview ? 5 : 0,
+        maxHeight: !isMobile ? (isOverview ? (project?.userManager?.name && !project?.hasPermission ? 696 : (project?.userManager?.name && project?.hasPermission ? 740 : 652)) : 652) : 'auto',
+        minHeight: !isMobile ? (isOverview ? (project?.userManager?.name && !project?.hasPermission ? 696 : (project?.userManager?.name && project?.hasPermission ? 740 : 652)) : 652) : 'auto',
         overflow: 'auto'
       }}>
         {[

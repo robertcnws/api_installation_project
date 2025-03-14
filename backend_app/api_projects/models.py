@@ -162,6 +162,7 @@ class Project(Document):
     project_materials = ListField(DynamicField(), default=list, null=True)
     project_guide_products = ListField(DynamicField(), default=list, null=True)
     project_materials_other_notes = StringField(null=True)
+    inspection_date = DateTimeField(null=True)
     meta = {
         'collection': 'project',
         'indexes': [

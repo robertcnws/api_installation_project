@@ -136,7 +136,7 @@ export function KanbanDetails({
         });
         formData.append('userReporter', JSON.stringify(userLogged?.data));
 
-        const taskId = task.project_default_task.id;
+        const taskId = task?.project_default_task?.id;
 
         const { id } = project;
 
@@ -192,7 +192,7 @@ export function KanbanDetails({
           return;
         }
         refetchProject?.();
-        const lTasks = loadedTasks.map((t) => (t.project_default_task.id === updatedTask.project_default_task.id ? updatedTask : t));
+        const lTasks = loadedTasks.map((t) => (t.project_default_task?.id === updatedTask?.project_default_task?.id ? updatedTask : t));
         setLoadedTasks(lTasks)
         setTaskStatus(updatedTask.status);
       } catch (error) {
@@ -246,7 +246,7 @@ export function KanbanDetails({
           disabled
         />
         {(loadedTasks?.length > 0 &&
-          loadedTasks?.some((t) => t.project_default_task.id === task.project_default_task.id)) ? (
+          loadedTasks?.some((t) => t.project_default_task?.id === task.project_default_task?.id)) ? (
           <>
             {task ? (
               <>
@@ -364,7 +364,7 @@ export function KanbanDetails({
             </Typography>
           </Box>
           {(task?.users_assignees?.length > 1 ||
-            (task?.users_assignees?.length === 1 && task?.users_assignees[0].id !== project?.userManager.id)) && (
+            (task?.users_assignees?.length === 1 && task?.users_assignees[0].id !== project?.userManager?.id)) && (
               <Box sx={{ display: 'flex' }}>
                 <StyledLabel sx={{
                   height: 40,
