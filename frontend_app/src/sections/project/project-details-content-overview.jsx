@@ -1,10 +1,11 @@
+import { parsePhoneNumber } from 'react-phone-number-input';
 import { useRef, useMemo, useState, useEffect, useContext } from 'react';
 
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import ListItemText from '@mui/material/ListItemText';
-import { Box, ListItem, IconButton } from '@mui/material';
+import { Box, Tooltip, ListItem, IconButton } from '@mui/material';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
@@ -20,6 +21,7 @@ import { Iconify } from 'src/components/iconify';
 import { LoadingContext } from 'src/auth/context/loading-context';
 
 import { ProjectDetailsContentOverviewModalService } from './project-details-content-overview-modal-service';
+
 
 // ----------------------------------------------------------------------
 
@@ -67,7 +69,7 @@ export function ProjectDetailsContentOverview({
   return (
     <>
       <Card sx={{
-        p: 3, 
+        p: 3,
         gap: 1,
         display: 'flex',
         flexDirection: 'column',
@@ -78,33 +80,76 @@ export function ProjectDetailsContentOverview({
       }}>
         {[
           {
+            label: 'SO Number',
+            value: project?.salesOrder?.salesorder_number,
+            icon: <Iconify
+              icon="fluent:book-number-24-regular"
+              sx={{ color: project?.salesOrder?.salesorder_number?.length > 0 ? 'text.primary' : 'warning.main' }}
+            />,
+            hasValue: project?.salesOrder?.salesorder_number?.length > 0,
+          },
+          {
+            label: 'REF Number',
+            value: project?.salesOrder?.reference_number ? project?.salesOrder?.reference_number : 'No REF Number',
+            icon: <Iconify
+              icon="carbon:term-reference"
+              sx={{ color: project?.salesOrder?.reference_number?.length > 0 ? 'text.primary' : 'warning.main' }}
+            />,
+            hasValue: project?.salesOrder?.reference_number?.length > 0,
+          },
+          {
             label: 'Client',
             value: project?.salesOrder?.customer_name,
-            icon: <Iconify icon="ix:customer-filled" />,
+            icon: <Iconify
+              icon="ix:customer-filled"
+              sx={{ color: project?.salesOrder?.customer_name?.length > 0 ? 'text.primary' : 'warning.main' }}
+            />,
+            hasValue: project?.salesOrder?.customer_name?.length > 0,
           },
           {
             label: 'Address',
             value: project?.address,
-            icon: <Iconify icon="hugeicons:address-book" />,
+            icon: <Iconify
+              icon="hugeicons:address-book"
+              sx={{ color: project?.address?.length > 0 ? 'text.primary' : 'warning.main' }}
+            />,
+            hasValue: project?.address?.length > 0,
           },
           {
             label: 'Phone Number',
-            value: project?.salesOrder?.customer.phone,
-            icon: <Iconify icon="icon-park:phone" />,
+            value: project?.salesOrder?.customer?.phone || project?.salesOrder?.customer?.mobile,
+            icon: <Iconify
+              icon="icon-park:phone"
+              sx={{ color: (project?.salesOrder?.customer?.phone || project?.salesOrder?.customer?.mobile) ? 'text.primary' : 'warning.main' }}
+            />,
+            hasValue: project?.salesOrder?.customer?.phone?.length > 0 || project?.salesOrder?.customer?.mobile?.length > 0,
           },
           {
             label: 'Email',
             value: project?.salesOrder?.customer?.email,
-            icon: <Iconify icon="mage:email-fill" />,
+            icon: <Iconify
+              icon="mage:email-fill"
+              sx={{ color: project?.salesOrder?.customer?.email?.length > 0 ? 'text.primary' : 'warning.main' }}
+            />,
+            hasValue: project?.salesOrder?.customer?.email?.length > 0,
           },
           {
             label: 'Order Date',
             value: fDate(project?.salesOrder?.date),
-            icon: <Iconify icon="solar:calendar-date-bold" />,
+            icon: <Iconify
+              icon="solar:calendar-date-bold"
+              sx={{ color: project?.salesOrder?.date?.length > 0 ? 'text.primary' : 'warning.main' }}
+            />,
+            hasValue: project?.salesOrder?.date?.length > 0,
           },
           {
             label: `${items?.length} Product(s), 
               Total Qty: ${items?.reduce((total, product) => total + product.quantity, 0)}`,
+            icon: <Iconify
+              icon="fluent-mdl2:product-list"
+              sx={{ color: items?.length > 0 ? 'text.primary' : 'warning.main' }}
+            />,
+            hasValue: items?.length > 0,
             value: (
               <>
                 {listItems?.map((product) => (
@@ -144,7 +189,7 @@ export function ProjectDetailsContentOverview({
                 </Label>
               </>
             ),
-            icon: <Iconify icon="fluent-mdl2:product-list" />,
+
           },
         ].map((item) => (
           <Stack key={item.label} spacing={1.5} direction="row">
@@ -152,11 +197,28 @@ export function ProjectDetailsContentOverview({
             <Box sx={{ width: '100%', display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
               <ListItemText
                 primary={item.label}
-                secondary={item.value}
-                primaryTypographyProps={{ typography: 'body2', color: 'text.secondary', mb: 0.5 }}
+                secondary={
+                  item.label === 'Phone Number'
+                    ? item.value
+                      ? (() => {
+                        const phoneNumberObj = parsePhoneNumber(item.value, 'US');
+                        if (phoneNumberObj && phoneNumberObj.isValid()) {
+                          const countryCode = phoneNumberObj.countryCallingCode;
+                          const nsn = phoneNumberObj.nationalNumber;
+                          if (nsn.length === 10) {
+                            return `+${countryCode} (${nsn.slice(0, 3)}) ${nsn.slice(3, 6)} ${nsn.slice(6)}`;
+                          }
+                          return phoneNumberObj.formatInternational();
+                        }
+                        return item.value;
+                      })()
+                      : item.value
+                    : item.value
+                }
+                primaryTypographyProps={{ typography: 'body2', color: item.hasValue ? 'text.secondary' : 'warning.main', mb: 0.5 }}
                 secondaryTypographyProps={{
                   component: 'span',
-                  color: 'text.primary',
+                  color: item.hasValue ? 'text.secondary' : 'warning.main',
                   typography: 'subtitle2',
                 }}
               />
@@ -166,11 +228,63 @@ export function ProjectDetailsContentOverview({
                 CONFIG.permissions.moduleProjects,
                 CONFIG.permissions.operationEditAddress
               ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
-                  <IconButton variant="text" color="primary" size="small" sx={{ ml: 1 }}
-                    onClick={() => setOpenDialogs({ ...openDialogs, address: true })}
-                  >
-                    <Iconify icon="fluent:slide-text-edit-20-regular" color="primary" width={22} />
-                  </IconButton>
+                  <Tooltip title={project?.address ? "Edit Address" : "Add Address"} arrow>
+                    <IconButton variant="text" color={project?.address ? "primary" : "warning"} size="small" sx={{
+                      ml: 1,
+                      '&:hover': {
+                        boxShadow: 'none',
+                        backgroundColor: 'transparent',
+                      },
+                    }}
+                      onClick={() => setOpenDialogs({ ...openDialogs, address: true })}
+                    >
+                      <Iconify icon="fluent:slide-text-edit-20-regular" color="primary" width={22} />
+                    </IconButton>
+                  </Tooltip>
+                )}
+              {(item.label === 'REF Number' && (verifyPermissions(
+                listPermissions,
+                CONFIG.permissions.system,
+                CONFIG.permissions.moduleProjects,
+                CONFIG.permissions.operationEditReferenceNumber
+              ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
+                  <Tooltip title={project?.salesOrder?.reference_number ? "Edit REF Number" : "Add REF Number"} arrow>
+                    <IconButton variant="text" color={project?.salesOrder?.reference_number ? "primary" : "warning"} size="small" sx={{
+                      ml: 1,
+                      '&:hover': {
+                        boxShadow: 'none',
+                        backgroundColor: 'transparent',
+                      },
+                    }}
+                      onClick={() => setOpenDialogs({ ...openDialogs, refNumber: true })}
+                    >
+                      <Iconify icon="fluent:slide-text-edit-20-regular" color="primary" width={22} />
+                    </IconButton>
+                  </Tooltip>
+                )}
+              {(item.label === 'Phone Number' && (verifyPermissions(
+                listPermissions,
+                CONFIG.permissions.system,
+                CONFIG.permissions.moduleProjects,
+                CONFIG.permissions.operationEditPhoneNumber
+              ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
+                  <Tooltip title={(project?.salesOrder?.customer.phone || project?.salesOrder?.customer.mobile) ? "Edit Phone Number" : "Add Phone Number"} arrow>
+                    <IconButton
+                      variant="text"
+                      color={(project?.salesOrder?.customer.phone || project?.salesOrder?.customer.mobile) ? "primary" : "warning"}
+                      size="small"
+                      sx={{
+                        ml: 1,
+                        '&:hover': {
+                          boxShadow: 'none',
+                          backgroundColor: 'transparent',
+                        },
+                      }}
+                      onClick={() => setOpenDialogs({ ...openDialogs, phoneNumber: true })}
+                    >
+                      <Iconify icon="fluent:slide-text-edit-20-regular" color="primary" width={22} />
+                    </IconButton>
+                  </Tooltip>
                 )}
             </Box>
           </Stack>

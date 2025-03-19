@@ -10,7 +10,7 @@ import { useRouter } from 'src/routes/hooks';
 
 import { useTabs } from 'src/hooks/use-tabs';
 
-import { isInstaller, listRolesAndSubroles } from 'src/utils/check-permissions';
+import { isInstaller, isFinancialStaff, isWarehouseStaff, listRolesAndSubroles } from 'src/utils/check-permissions';
 
 import { CONFIG } from 'src/config-global';
 import { DashboardContent } from 'src/layouts/dashboard';
@@ -28,11 +28,14 @@ import { ProjectDetailsContent } from '../project-details-content';
 import { ProjectDetailsTaskView } from './project-details-task-view';
 import { ProjectEditModalTaskView } from './project-edit-modal-task-view';
 import { ProjectDetailsCommentView } from './project-details-comment-view';
+import { ProjectDetailsFinancialView } from './project-details-financial-view';
 import { ProjectEditModalAddressView } from './project-edit-modal-address-view';
 import { ProjectDetailsAttachmentView } from './project-details-attachment-view';
 import { ProjectDetailsReleaseFormView } from './project-details-release-form-view';
-import { ProjectDetailsInstallationGuideFormView } from './project-details-installation-guide-form-view';
+import { ProjectEditModalRefNumberView } from './project-edit-modal-ref-number-view';
+import { ProjectEditModalPhoneNumberView } from './project-edit-modal-phone-number-view';
 import { ProjectDetailsReleaseFormInstallerView } from './project-details-release-form-installer-view';
+import { ProjectDetailsInstallationGuideFormView } from './project-details-installation-guide-form-view';
 import { ProjectDetailsInstallationGuideFormInstallerView } from './project-details-installation-guide-form-installer-view';
 
 
@@ -60,18 +63,27 @@ export function ProjectDetailsView({ projectId }) {
         userManager: false,
         date: false,
         address: false,
+        phoneNumber: false,
+        refNumber: false,
         installationTeam: false,
     });
 
     const DETAILS_TABS = [
         { label: 'Overview', value: 'overview' },
-        { label: 'Tasks', value: 'tasks' },
-        ...!isInstaller(userLogged?.data?.user_role?.name) ? [
+        ...!isFinancialStaff(userLogged?.data?.user_role?.name) ? [
+            { label: 'Tasks', value: 'tasks' },
+        ] : [],
+        ...(!isInstaller(userLogged?.data?.user_role?.name) &&
+            !isFinancialStaff(userLogged?.data?.user_role?.name) &&
+            !isWarehouseStaff(userLogged?.data?.user_role?.name)) ? [
             { label: 'Attachments', value: 'attachments' },
         ] : [],
         ...listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.installer) ? [
             { label: 'Release Form', value: 'releaseForm' },
             { label: 'Installation Guide', value: 'installationGuide' },
+        ] : [],
+        ...listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.financialStaff) ? [
+            { label: 'Financial', value: 'financial' },
         ] : [],
         { label: 'Comments', value: 'comments' },
     ];
@@ -85,13 +97,14 @@ export function ProjectDetailsView({ projectId }) {
     const [itemById, setItemById] = useState(fetchedProject);
 
     const [openValidationDialog, setOpenValidationDialog] = useState(false);
+    const [validationMessage, setValidationMessage] = useState('');
 
-    useEffect(() => {
-        if (refetchProject) {
-            refetchProject?.();
-        }
-        setItemById(fetchedProject);
-    }, [refetchProject, fetchedProject]);
+    // useEffect(() => {
+    //     if (refetchProject) {
+    //         refetchProject?.();
+    //     }
+    //     setItemById(fetchedProject);
+    // }, [refetchProject, fetchedProject]);
 
     useEffect(() => {
         if (fetchedProject) {
@@ -101,18 +114,13 @@ export function ProjectDetailsView({ projectId }) {
 
     useEffect(() => {
         const socket = new WebSocket(`wss://${CONFIG.apiHost}/api/projects/ws/project/${projectId}/`);
-        // socket.onopen = () => {
-        //     console.log('WebSocket connected');
-        // };
         socket.onerror = (errorEvent) => {
             console.dir(errorEvent);
             console.error('WebSocket error (toString):', errorEvent.toString());
         };
-        // socket.onclose = (e) => {
-        //     console.log('WebSocket closed', e);
-        // };
         socket.onmessage = (event) => {
             const message = JSON.parse(event.data);
+            // console.log("WebSocket message:", message);
             if (message.type === 'created' || message.type === 'updated') {
                 setItemById((prevData) => {
                     if (prevData?.id === message.item.id) {
@@ -222,8 +230,14 @@ export function ProjectDetailsView({ projectId }) {
                             tab.value === 'attachments' ||
                             tab.value === 'comments' ||
                             tab.value === 'releaseForm' ||
+                            tab.value === 'financial' ||
                             tab.value === 'installationGuide') && !itemById?.userManager?.username) {
                             setOpenValidationDialog(true);
+                            setValidationMessage('You need to add a RESPONSIBLE to perform this action');
+                        }
+                        else if (tab.value === 'financial' && (itemById?.projectGuideProducts?.length === 0 || itemById?.projectMaterials?.length === 0)) {
+                            setOpenValidationDialog(true);
+                            setValidationMessage('You need to save the information in the INSTALLATION GUIDE section to perform this action');
                         }
                     }}
                 />
@@ -317,6 +331,20 @@ export function ProjectDetailsView({ projectId }) {
                         />
                     ))}
 
+                {(tabs.value === 'financial' &&
+                    itemById?.userManager?.username &&
+                    itemById?.projectGuideProducts?.length > 0 &&
+                    itemById?.projectMaterials?.length > 0
+                ) &&
+                    <ProjectDetailsFinancialView
+                        project={itemById}
+                        refetchProject={refetchProject}
+                        listPermissions={listPermissions}
+                        openDialogs={openDialogs}
+                        setOpenDialogs={setOpenDialogs}
+                    />
+                }
+
                 {(tabs.value === 'comments' && itemById?.userManager?.username) &&
                     <ProjectDetailsCommentView
                         project={itemById}
@@ -334,6 +362,18 @@ export function ProjectDetailsView({ projectId }) {
                 open={openDialogs.address}
                 onClose={() => setOpenDialogs({ ...openDialogs, address: false })}
             />
+            <ProjectEditModalPhoneNumberView
+                isEdit={itemById?.salesOrder?.customer?.phone || itemById?.salesOrder?.customer?.mobile}
+                projectId={itemById?.id}
+                open={openDialogs.phoneNumber}
+                onClose={() => setOpenDialogs({ ...openDialogs, phoneNumber: false })}
+            />
+            <ProjectEditModalRefNumberView
+                isEdit={itemById?.address}
+                projectId={itemById?.id}
+                open={openDialogs.refNumber}
+                onClose={() => setOpenDialogs({ ...openDialogs, refNumber: false })}
+            />
 
             <ConfirmDialog
                 open={openValidationDialog}
@@ -345,7 +385,7 @@ export function ProjectDetailsView({ projectId }) {
                 maxWidth="xs"
                 content={
                     <Typography variant="body2">
-                        <b>You need to add a responsable to perform that action</b>
+                        <b>{validationMessage}</b>
                     </Typography>
                 }
             />

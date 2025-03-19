@@ -121,7 +121,7 @@ export function RenderCellProject({ params, onViewRow }) {
       <ListItemText
         disableTypography
         primary={
-          <Box sx={{ diplay: 'flex', flexDirection: 'row', justifyContent: 'space-between', gap: 2 }}>
+          <Box sx={{ diplay: 'flex', flexDirection: 'row', justifyContent: 'space-between', gap: 4 }}>
             <Link
               noWrap
               color="inherit"
@@ -131,10 +131,11 @@ export function RenderCellProject({ params, onViewRow }) {
             >
               {params?.row?.name}
             </Link>
+            <br/>
             <Label
               color="default"
               variant="outlined"
-              sx={{ textTransform: 'capitalize', typography: 'caption', cursor: 'pointer', ml: 2 }}
+              sx={{ textTransform: 'capitalize', typography: 'caption', cursor: 'pointer', ml: 0 }}
               onClick={showTasks.onToggle}
             >
               {showTasks.value ? 'Hide' : 'See'} tasks <Iconify icon={showTasks.value ? 'heroicons-solid:arrow-sm-up' : 'heroicons-solid:arrow-sm-down'} />

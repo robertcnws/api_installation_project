@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 
 import Box from '@mui/material/Box';
 import Alert from '@mui/material/Alert';
@@ -29,9 +30,12 @@ import { NotificationsDrawer } from '../components/notifications-drawer';
 
 
 
+
 // ----------------------------------------------------------------------
 
 export function DashboardLayout({ sx, children, header, data }) {
+
+  const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
 
   // const {
   //   countLostItems,
@@ -161,7 +165,7 @@ export function DashboardLayout({ sx, children, header, data }) {
                 {/* -- Settings button -- */}
                 <SettingsButton />
                 {/* -- Account drawer -- */}
-                <AccountDrawer data={_account} />
+                <AccountDrawer data={_account({ role: userLogged?.data?.user_role?.name })} />
               </Box>
             ),
           }}

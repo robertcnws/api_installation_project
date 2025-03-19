@@ -101,7 +101,6 @@ export function ProjectsToDoToday({
                                     sx={{ px: 2, py: 0, bgcolor: index % 2 === 0 ? 'background.default' : 'background.paper' }}
                                     router={router}
                                     userLogged={userLogged}
-                                    openDialog={openDialog}
                                 />
                             ))}
                         </Box>

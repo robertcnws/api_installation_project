@@ -1,10 +1,11 @@
+import { parsePhoneNumber } from 'react-phone-number-input';
 import { useRef, useMemo, useState, useEffect, useContext } from 'react';
 
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import ListItemText from '@mui/material/ListItemText';
-import { Box, ListItem, IconButton } from '@mui/material';
+import { Box, Tooltip, ListItem, IconButton } from '@mui/material';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
@@ -20,6 +21,7 @@ import { Iconify } from 'src/components/iconify';
 import { LoadingContext } from 'src/auth/context/loading-context';
 
 import { ProjectDetailsContentOverviewModalService } from './project-details-content-overview-modal-service';
+
 
 // ----------------------------------------------------------------------
 
@@ -88,7 +90,23 @@ export function ProjectDetailsContentOverviewInstaller({
                   </Typography>
                   <Label variant="outlined" color="error" sx={{ gap: 1, p: 1 }}>
                     <Iconify icon="icon-park:phone" />
-                    {loadedUsers?.find((user) => user.id === project?.userManager?.id)?.phoneNumber}
+                    {(() => {
+                      const phone = loadedUsers?.find(
+                        (user) => user.id === project?.userManager?.id
+                      )?.phoneNumber;
+                      if (!phone) return "No phone number";
+
+                      const phoneNumberObj = parsePhoneNumber(phone, 'US');
+                      if (phoneNumberObj && phoneNumberObj.isValid()) {
+                        const countryCode = phoneNumberObj.countryCallingCode;
+                        const nsn = phoneNumberObj.nationalNumber;
+                        if (nsn.length === 10) {
+                          return `+${countryCode} (${nsn.slice(0, 3)}) ${nsn.slice(3, 6)} ${nsn.slice(6)}`;
+                        }
+                        return phoneNumberObj.formatInternational();
+                      }
+                      return phone;
+                    })()}
                   </Label>
                 </Box>
               ),
@@ -106,7 +124,7 @@ export function ProjectDetailsContentOverviewInstaller({
             },
             {
               label: 'Phone Number',
-              value: project?.salesOrder?.customer.phone,
+              value: project?.salesOrder?.customer.phone || project?.salesOrder?.customer.mobile,
               icon: <Iconify icon="icon-park:phone" />,
             },
             {
@@ -125,7 +143,24 @@ export function ProjectDetailsContentOverviewInstaller({
               <Box sx={{ width: '100%', display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
                 <ListItemText
                   primary={item.label}
-                  secondary={item.value}
+                  secondary={
+                    item.label === 'Phone Number'
+                      ? item.value
+                        ? (() => {
+                          const phoneNumberObj = parsePhoneNumber(item.value, 'US');
+                          if (phoneNumberObj && phoneNumberObj.isValid()) {
+                            const countryCode = phoneNumberObj.countryCallingCode;
+                            const nsn = phoneNumberObj.nationalNumber;
+                            if (nsn.length === 10) {
+                              return `+${countryCode} (${nsn.slice(0, 3)}) ${nsn.slice(3, 6)} ${nsn.slice(6)}`;
+                            }
+                            return phoneNumberObj.formatInternational();
+                          }
+                          return item.value;
+                        })()
+                        : item.value
+                      : item.value
+                  }
                   primaryTypographyProps={{ typography: 'body2', color: 'text.secondary', mb: 0.5 }}
                   secondaryTypographyProps={{
                     component: 'span',
@@ -139,11 +174,27 @@ export function ProjectDetailsContentOverviewInstaller({
                   CONFIG.permissions.moduleProjects,
                   CONFIG.permissions.operationEditAddress
                 ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
-                    <IconButton variant="text" color="primary" size="small" sx={{ ml: 1 }}
-                      onClick={() => setOpenDialogs({ ...openDialogs, address: true })}
-                    >
-                      <Iconify icon="fluent:slide-text-edit-20-regular" color="primary" width={22} />
-                    </IconButton>
+                    <Tooltip title={project?.address ? "Edit Address" : "Add Address"} arrow>
+                      <IconButton variant="text" color={project?.address ? "primary" : "warning"} size="small" sx={{ ml: 1 }}
+                        onClick={() => setOpenDialogs({ ...openDialogs, address: true })}
+                      >
+                        <Iconify icon="fluent:slide-text-edit-20-regular" color="primary" width={22} />
+                      </IconButton>
+                    </Tooltip>
+                  )}
+                {(item.label === 'Phone Number' && (verifyPermissions(
+                  listPermissions,
+                  CONFIG.permissions.system,
+                  CONFIG.permissions.moduleProjects,
+                  CONFIG.permissions.operationEditPhoneNumber
+                ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
+                    <Tooltip title={(project?.salesOrder?.customer.phone || project?.salesOrder?.customer.mobile) ? "Edit Phone Number" : "Add Phone Number"} arrow>
+                      <IconButton variant="text" color={(project?.salesOrder?.customer.phone || project?.salesOrder?.customer.mobile) ? "primary" : "warning"} size="small" sx={{ ml: 1 }}
+                        onClick={() => setOpenDialogs({ ...openDialogs, phoneNumber: true })}
+                      >
+                        <Iconify icon="fluent:slide-text-edit-20-regular" color="primary" width={22} />
+                      </IconButton>
+                    </Tooltip>
                   )}
               </Box>
             </Stack>
@@ -224,7 +275,7 @@ export function ProjectDetailsContentOverviewInstaller({
           ))}
         </Card>
       </Box>
-      
+
       <ProjectDetailsContentOverviewModalService project={project} items={serviceItems} open={openServiceItems.value} onClose={openServiceItems.onFalse} />
     </>
   );

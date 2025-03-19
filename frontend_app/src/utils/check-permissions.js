@@ -21,26 +21,51 @@ export const verifyRole = (roles, role) => {
 
 export const listRolesAndSubroles = (role) =>
   role?.toLowerCase().indexOf(CONFIG.roles.superadmin.toLowerCase()) !== -1 ?
-    [CONFIG.roles.superadmin, CONFIG.roles.administrator, CONFIG.roles.projectManager, CONFIG.roles.installer, CONFIG.roles.officeStaff] :
+    [
+      CONFIG.roles.superadmin,
+      CONFIG.roles.administrator,
+      CONFIG.roles.projectManager,
+      CONFIG.roles.installer,
+      CONFIG.roles.officeStaff,
+      CONFIG.roles.warehouseStaff,
+      CONFIG.roles.financialStaff
+    ] :
     role?.toLowerCase().indexOf(CONFIG.roles.administrator.toLowerCase()) !== -1 ?
-      [CONFIG.roles.administrator, CONFIG.roles.projectManager, CONFIG.roles.installer, CONFIG.roles.officeStaff] :
+      [
+        CONFIG.roles.administrator,
+        CONFIG.roles.projectManager,
+        CONFIG.roles.installer,
+        CONFIG.roles.officeStaff,
+        CONFIG.roles.warehouseStaff,
+        CONFIG.roles.financialStaff
+      ] :
       role?.toLowerCase().indexOf(CONFIG.roles.projectManager.toLowerCase()) !== -1 ?
-        [CONFIG.roles.projectManager, CONFIG.roles.installer, CONFIG.roles.officeStaff] :
+        [
+          CONFIG.roles.projectManager,
+          CONFIG.roles.installer,
+          CONFIG.roles.officeStaff
+        ] :
         role?.toLowerCase().indexOf(CONFIG.roles.installer.toLowerCase()) !== -1 ?
           [CONFIG.roles.installer] :
           role?.toLowerCase().indexOf(CONFIG.roles.officeStaff.toLowerCase()) !== -1 ?
-            [CONFIG.roles.officeStaff] : [];
+            [CONFIG.roles.officeStaff] :
+            role?.toLowerCase().indexOf(CONFIG.roles.warehouseStaff.toLowerCase()) !== -1 ?
+              [CONFIG.roles.warehouseStaff] :
+              role?.toLowerCase().indexOf(CONFIG.roles.financialStaff.toLowerCase()) !== -1 ?
+                [CONFIG.roles.financialStaff] : [];
 
 export const isSuperAdmin = (role) => role?.toLowerCase().indexOf(CONFIG.roles.superadmin.toLowerCase()) !== -1;
 export const isAdministrator = (role) => role?.toLowerCase().indexOf(CONFIG.roles.administrator.toLowerCase()) !== -1;
 export const isProjectManager = (role) => role?.toLowerCase().indexOf(CONFIG.roles.projectManager.toLowerCase()) !== -1;
 export const isInstaller = (role) => role?.toLowerCase().indexOf(CONFIG.roles.installer.toLowerCase()) !== -1;
 export const isOfficeStaff = (role) => role?.toLowerCase().indexOf(CONFIG.roles.officeStaff.toLowerCase()) !== -1;
+export const isWarehouseStaff = (role) => role?.toLowerCase().indexOf(CONFIG.roles.warehouseStaff.toLowerCase()) !== -1;
+export const isFinancialStaff = (role) => role?.toLowerCase().indexOf(CONFIG.roles.financialStaff.toLowerCase()) !== -1;
 
 
 export const createDefaultPermissions = (role) => {
   const data = {};
-  const {system} = CONFIG.permissions;
+  const { system } = CONFIG.permissions;
   const modules = [];
   modules.push({
     name: CONFIG.permissions.moduleProjects,
@@ -83,6 +108,8 @@ export const createDefaultPermissions = (role) => {
         { name: CONFIG.permissions.operationDetails },
         { name: CONFIG.permissions.operationEditCalendar },
         { name: CONFIG.permissions.operationEditAddress },
+        { name: CONFIG.permissions.operationEditPhoneNumber },
+        { name: CONFIG.permissions.operationEditReferenceNumber },
         { name: CONFIG.permissions.operationEditResponsable },
         { name: CONFIG.permissions.operationEditInstaller },
         { name: CONFIG.permissions.operationEditInstallDate },

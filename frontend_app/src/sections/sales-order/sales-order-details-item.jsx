@@ -48,7 +48,7 @@ export function SalesOrderDetailsItems({ salesOrder, setSalesOrder, setUpdating,
   const renderTotal = (
     <Stack spacing={1} alignItems="flex-start" sx={{ p: 3, textAlign: 'left', typography: 'body2' }}>
       <Grid container spacing={2}>
-        {salesOrder && salesOrder?.salesorder_id && (
+        {/* {salesOrder && salesOrder?.salesorder_id && (
           <Grid container item xs={12}>
               <Grid item xs={3}>
                 <Box sx={{ color: 'text.secondary' }}>ID: </Box>
@@ -59,7 +59,7 @@ export function SalesOrderDetailsItems({ salesOrder, setSalesOrder, setUpdating,
                 </Box>
               </Grid>
             </Grid>
-        )}
+        )} */}
         {salesOrder && salesOrder?.customer_name && (
           <Grid container item xs={12}>
               <Grid item xs={3}>
@@ -90,7 +90,7 @@ export function SalesOrderDetailsItems({ salesOrder, setSalesOrder, setUpdating,
               </Grid>
               <Grid item xs={9}>
                 <Box sx={{ typography: 'subtitle2' }}>
-                  <Label color="default">{salesOrder?.customer?.phone || '-'} </Label>
+                  <Label color="default">{salesOrder?.customer?.phone || salesOrder?.customer?.mobile || '-'} </Label>
                 </Box>
               </Grid>
             </Grid>

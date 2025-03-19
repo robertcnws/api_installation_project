@@ -109,7 +109,7 @@ export const DataProvider = ({ children }) => {
 
   let finalProjects = useMemo(() => sortedProjects, [sortedProjects]);
 
-  if (!listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) {
+  if (!listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.financialStaff)) {
     finalProjects = sortedProjects.filter((project) =>
       project.usersAssignees.some((user) => user.username === userLogged?.data.username) ||
       project.userManager.username === userLogged?.data.username
@@ -132,7 +132,7 @@ export const DataProvider = ({ children }) => {
       if (isProjectManager(userLogged?.data?.user_role?.name)) {
         return _avatarUsers.filter(
           (user) =>
-            isInstaller(user.userRole.name) || isOfficeStaff(user.userRole.name) 
+            isInstaller(user.userRole.name) || isOfficeStaff(user.userRole.name) || isProjectManager(user.userRole.name)
         );
       }
       return _avatarUsers.filter(

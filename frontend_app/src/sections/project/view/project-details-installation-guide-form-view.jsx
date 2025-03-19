@@ -41,6 +41,10 @@ export function ProjectDetailsInstallationGuideFormView({
   setOpenDialogs,
 }) {
 
+  useEffect(() => {
+    refetchProject?.();
+  }, [refetchProject]);
+
   const { isMobile } = useContext(LoadingContext);
 
   const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
@@ -85,24 +89,24 @@ export function ProjectDetailsInstallationGuideFormView({
   // Cargar productos iniciales
   useEffect(() => {
     if (listItems.length > 0) {
-      const items = createScopeArray({ listItems }).filter((item) => item.quantity > 0).map((item) => ({
-        ...item,
-        isNew: false,
-      }));
-      const lastItems = items.map((item) => {
-        const product = project?.projectGuideProducts?.find((p) => p.id === item.id);
-        const finalItem = {
+      if (project?.projectGuideProducts.length > 0) {
+        setProductsData(project?.projectGuideProducts);
+      }
+      else {
+        const items = createScopeArray({ listItems }).filter((item) => item.quantity > 0).map((item) => ({
           ...item,
-          notes: product?.notes || '',
-        }
-        const productCustom = project?.projectGuideProducts?.find((p) => p.itemId === item.itemId);
-        if (productCustom) {
-          finalItem.price = productCustom.price;
-          finalItem.quantity = productCustom.quantity;
-        }
-        return finalItem;
-      });
-      setProductsData(lastItems);
+          isNew: false,
+        }));
+        const lastItems = items.map((item) => {
+          const product = project?.projectGuideProducts?.find((p) => p.id === item.id);
+          const finalItem = {
+            ...item,
+            notes: product?.notes || '',
+          }
+          return finalItem;
+        });
+        setProductsData(lastItems);
+      }
     }
   }, [listItems, project]);
 
@@ -129,7 +133,7 @@ export function ProjectDetailsInstallationGuideFormView({
       ...prev,
       {
         id: lastIndex + 1,
-        name: 'OTHER: ',
+        name: '',
         price: 0,
         quantity: 1,
         notes: '',
@@ -162,7 +166,7 @@ export function ProjectDetailsInstallationGuideFormView({
       ...prev,
       {
         id: lastIndex + 1,
-        name: 'OTHER: ',
+        name: '',
         quantity: 1,
         ticket: '',
         cost: 0,
@@ -296,6 +300,15 @@ export function ProjectDetailsInstallationGuideFormView({
 
   const renderContent = (
     <Card sx={{ p: 3, gap: 1, display: 'flex', flexDirection: 'column', maxHeight: !isMobile ? 655 : 'auto', minHeight: !isMobile ? 655 : 'auto', overflow: 'auto' }}>
+      {/* {!isFormValid || !isCustomDirty && ( */}
+      {/* <Stack spacing={1} direction="row"> */}
+      <Label color="default" sx={{ height: 100 }}>
+        <Stack direction="column" spacing={0.5}>
+          <Typography variant="caption">To enable Save button: <b>1. Fill all fields</b>, <b>2. If all is filled, at least one change</b></Typography>
+        </Stack>
+      </Label>
+      {/* </Stack> */}
+      {/* )} */}
       {[
         {
           label: 'Work Scope & Description',
@@ -311,7 +324,14 @@ export function ProjectDetailsInstallationGuideFormView({
           icon: <Iconify icon="arcticons:radarscope" />,
         },
         {
-          label: 'Items:',
+          label: (
+            <Stack spacing={1} direction="row">
+              <Typography>Items:</Typography>
+              {project?.projectGuideProducts.length === 0 && (
+                <Label color="error">This info has not been saved yet...</Label>
+              )}
+            </Stack>
+          ),
           value: (
             <>
               <Stack spacing={1} direction="column">
@@ -333,8 +353,16 @@ export function ProjectDetailsInstallationGuideFormView({
                               }}>
                                 <Typography sx={{ mt: productsData.length !== 0 ? 0.3 : 2 }}>Notes</Typography>
                                 {productsData.length === 0 && (
-                                  <IconButton variant="outlined" color='success' onClick={handleAddProduct} disabled={!canAddProduct}>
-                                    <Iconify icon="icon-park-twotone:add" sx={{ width: 30, height: 30 }} />
+                                  <IconButton variant="outlined" color='success' onClick={handleAddProduct} disabled={!canAddProduct} sx={{
+                                    '&:hover': {
+                                      boxShadow: 'none',
+                                      backgroundColor: 'transparent',
+                                    },
+                                  }}>
+                                    <Iconify icon="icon-park-twotone:add" sx={{
+                                      width: 30,
+                                      height: 30,
+                                    }} />
                                   </IconButton>
                                 )}
                               </Box>
@@ -345,7 +373,12 @@ export function ProjectDetailsInstallationGuideFormView({
                             <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
                               <Typography>Items</Typography>
                               {productsData.length === 0 && (
-                                <IconButton variant="outlined" color='success' onClick={handleAddProduct} disabled={!canAddProduct}>
+                                <IconButton variant="outlined" color='success' onClick={handleAddProduct} disabled={!canAddProduct} sx={{
+                                  '&:hover': {
+                                    boxShadow: 'none',
+                                    backgroundColor: 'transparent',
+                                  },
+                                }}>
                                   <Iconify icon="icon-park-twotone:add" sx={{ width: 30, height: 30 }} />
                                 </IconButton>
                               )}
@@ -495,11 +528,21 @@ export function ProjectDetailsInstallationGuideFormView({
                           {(index === productsData.length - 1) ? (
                             <TableCell sx={{ width: 100, verticalAlign: !isMobile ? 'none' : 'bottom' }} align="left">
                               <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                                <IconButton variant="outlined" color='success' onClick={handleAddProduct} disabled={!canAddProduct}>
+                                <IconButton variant="outlined" color='success' onClick={handleAddProduct} disabled={!canAddProduct} sx={{
+                                  '&:hover': {
+                                    boxShadow: 'none',
+                                    backgroundColor: 'transparent',
+                                  },
+                                }}>
                                   <Iconify icon="icon-park-twotone:add" sx={{ width: 30, height: 30 }} />
                                 </IconButton>
                                 {product.isNew && (
-                                  <IconButton variant="outlined" color='error' onClick={() => handleRemoveProduct(product.id)}>
+                                  <IconButton variant="outlined" color='error' onClick={() => handleRemoveProduct(product.id)} sx={{
+                                    '&:hover': {
+                                      boxShadow: 'none',
+                                      backgroundColor: 'transparent',
+                                    },
+                                  }}>
                                     <Iconify icon="gg:remove-r" sx={{ width: 25, height: 25 }} />
                                   </IconButton>
                                 )}
@@ -551,7 +594,12 @@ export function ProjectDetailsInstallationGuideFormView({
                               }}>
                                 <Typography sx={{ mt: materials.length !== 0 ? 0.4 : 2 }}>Notes</Typography>
                                 {materials.length === 0 && (
-                                  <IconButton variant="outlined" color='success' onClick={handleAddMaterial} disabled={!canAddMaterial}>
+                                  <IconButton variant="outlined" color='success' onClick={handleAddMaterial} disabled={!canAddMaterial} sx={{
+                                    '&:hover': {
+                                      boxShadow: 'none',
+                                      backgroundColor: 'transparent',
+                                    },
+                                  }}>
                                     <Iconify icon="icon-park-twotone:add" sx={{ width: 30, height: 30 }} />
                                   </IconButton>
                                 )}
@@ -563,7 +611,12 @@ export function ProjectDetailsInstallationGuideFormView({
                             <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
                               <Typography>Materials</Typography>
                               {materials.length === 0 && (
-                                <IconButton variant="outlined" color='success' onClick={handleAddMaterial} disabled={!canAddMaterial}>
+                                <IconButton variant="outlined" color='success' onClick={handleAddMaterial} disabled={!canAddMaterial} sx={{
+                                  '&:hover': {
+                                    boxShadow: 'none',
+                                    backgroundColor: 'transparent',
+                                  },
+                                }}>
                                   <Iconify icon="icon-park-twotone:add" sx={{ width: 30, height: 30, mr: -15 }} />
                                 </IconButton>
                               )}
@@ -720,11 +773,21 @@ export function ProjectDetailsInstallationGuideFormView({
                           <TableCell sx={{ width: 100, verticalAlign: !isMobile ? 'none' : 'bottom' }} align="left">
                             <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                               {(index === materials.length - 1) && (
-                                <IconButton variant="outlined" color='success' onClick={handleAddMaterial} disabled={!canAddMaterial}>
+                                <IconButton variant="outlined" color='success' onClick={handleAddMaterial} disabled={!canAddMaterial} sx={{
+                                  '&:hover': {
+                                    boxShadow: 'none',
+                                    backgroundColor: 'transparent',
+                                  },
+                                }}>
                                   <Iconify icon="icon-park-twotone:add" sx={{ width: 30, height: 30 }} />
                                 </IconButton>
                               )}
-                              <IconButton variant="outlined" color='error' onClick={() => handleRemoveMaterial(product.id)}>
+                              <IconButton variant="outlined" color='error' onClick={() => handleRemoveMaterial(product.id)} sx={{
+                                '&:hover': {
+                                  boxShadow: 'none',
+                                  backgroundColor: 'transparent',
+                                },
+                              }}>
                                 <Iconify icon="gg:remove-r" sx={{ width: 25, height: 25 }} />
                               </IconButton>
                             </Box>

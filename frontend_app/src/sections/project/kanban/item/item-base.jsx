@@ -9,8 +9,8 @@ import { styled } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import AvatarGroup, { avatarGroupClasses } from '@mui/material/AvatarGroup';
 
-import { availableTasks } from 'src/utils/project-tasks-utils';
 import { isInstaller, listRolesAndSubroles } from 'src/utils/check-permissions';
+import { availableTasks, previousTasksInStatus } from 'src/utils/project-tasks-utils';
 
 import { CONFIG } from 'src/config-global';
 import { varAlpha, stylesMode } from 'src/theme/styles';
@@ -139,40 +139,82 @@ const ItemBase = forwardRef(({
             project?.userManager?.id === userLogged?.data?.id
           ) && (
               <>
-                {task && task.status === CONFIG.taskStatus.notStarted && (
-                  <IconButton
-                    variant="soft"
-                    color="default"
-                    sx={{ width: 20, height: 20, fontSize: 10, mt: -0.6, mr: 1 }}
-                    disabled={!task || task.status !== CONFIG.taskStatus.notStarted || task?.users_assignees?.length === 0}
-                    onClick={() => handleManageTask('start')}
-                  >
-                    <Iconify icon="vaadin:start-cog" sx={{ width: 15, height: 15 }} /> Start
-                  </IconButton>
-                )}
+                {(task && task.status === CONFIG.taskStatus.notStarted && (task?.project_default_task?.order === 1 ||
+                  (project?.hasPermission && task?.project_default_task?.project_stage.name.toLowerCase() === CONFIG.stages.permission.toLowerCase()))) && (
+                    <IconButton
+                      variant="soft"
+                      color="default"
+                      sx={{
+                        width: 20,
+                        height: 20,
+                        fontSize: 10,
+                        mt: -0.6,
+                        mr: 1,
+                        '&:hover': {
+                          boxShadow: 'none',
+                          backgroundColor: 'transparent',
+                        },
+                      }}
+                      disabled={!task || task.status !== CONFIG.taskStatus.notStarted || task?.users_assignees?.length === 0}
+                      onClick={() => handleManageTask('start')}
+                    >
+                      <Iconify icon="vaadin:start-cog" sx={{ width: 15, height: 15 }} /> Start
+                    </IconButton>
+                  )}
                 {task && task.status !== CONFIG.taskStatus.notStarted && task.status !== 'finished' && (
-                  <IconButton
-                    variant="soft"
-                    color="success"
-                    size="small"
-                    sx={{ width: 20, height: 20, fontSize: 10, mt: -0.6, mr: 1 }}
-                    disabled={
-                      !task ||
-                      task?.users_assignees?.length === 0 ||
-                      task.status === 'finished' ||
-                      (isInstaller(userLogged?.data?.user_role?.name) && task?.project_task_attachments?.length === 0)
-                    }
-                    onClick={() => handleManageTask('finish')}
-                  >
-                    <Iconify icon="octicon:tracked-by-closed-completed-16" sx={{ width: 15, height: 15 }} /> Finish
-                  </IconButton>
+                  previousTasksInStatus(
+                    task,
+                    project?.projectDefaultTasks,
+                    CONFIG.taskStatus.inProgress,
+                    task?.project_default_task?.project_stage?.name.toLowerCase().indexOf(CONFIG.stages.permission.toLowerCase()) !== -1,
+                    CONFIG
+                  ).length === 0 && (
+                    <IconButton
+                      variant="soft"
+                      color="success"
+                      size="small"
+                      sx={{
+                        width: 20,
+                        height: 20,
+                        fontSize: 10,
+                        mt: -0.6,
+                        mr: 1,
+                        '&:hover': {
+                          boxShadow: 'none',
+                          backgroundColor: 'transparent',
+                        },
+                      }}
+                      disabled={
+                        !task ||
+                        task?.users_assignees?.length === 0 ||
+                        task.status === 'finished' ||
+                        (isInstaller(userLogged?.data?.user_role?.name) && task?.project_task_attachments?.length === 0)
+                      }
+                      onClick={() => handleManageTask('finish')}
+                    >
+                      <Iconify icon="octicon:tracked-by-closed-completed-16" sx={{ width: 15, height: 15 }} /> Finish
+                    </IconButton>
+                  )
+                  // : (
+                  //   <Label color='error' sx={{ fontSize: '8px', mr: -3 }}>Finish previous tasks</Label>
+                  // )
                 )}
                 {(task && task.status === 'finished' && listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.superadmin)) && (
                   <IconButton
                     variant="soft"
                     color="warning"
                     size="small"
-                    sx={{ width: 20, height: 20, fontSize: 10, mt: -0.6, mr: 1 }}
+                    sx={{
+                      width: 20,
+                      height: 20,
+                      fontSize: 10,
+                      mt: -0.6,
+                      mr: 1,
+                      '&:hover': {
+                        boxShadow: 'none',
+                        backgroundColor: 'transparent',
+                      },
+                    }}
                     disabled={!task || task?.users_assignees?.length === 0}
                     onClick={() => handleManageTask('rollback')}
                   >
@@ -241,7 +283,7 @@ const ItemBase = forwardRef(({
             sx={{
               cursor: 'pointer',
             }}
-            >
+          >
             {/* <Iconify icon={
               task?.percentage === 100 ? 'gis:flag-finish-b-o' :
                 task?.percentage < 100 && task?.percentage > 0 ? 'grommet-icons:in-progress' :

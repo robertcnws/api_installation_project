@@ -12,8 +12,8 @@ import Grid from '@mui/material/Unstable_Grid2';
 import Typography from '@mui/material/Typography';
 import ListItemText from '@mui/material/ListItemText';
 
-import { generateReleaseFormReport } from 'src/utils/generate-release-form-pdf';
 import { isInstaller } from 'src/utils/check-permissions';
+import { generateReleaseFormReport } from 'src/utils/generate-release-form-pdf';
 
 import { CONFIG } from 'src/config-global';
 
@@ -206,7 +206,7 @@ export function ProjectDetailsReleaseFormView({
 
   return (
     <Grid container spacing={2}>
-      <Grid xs={12} md={8}>
+      <Grid xs={12} md={!isInstaller(userLogged?.data?.user_role.name) ? 8 : 12}>
         <Form methods={methods} onSubmit={onSubmit}>
           {renderContent}
         </Form>

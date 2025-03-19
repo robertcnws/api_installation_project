@@ -1,8 +1,4 @@
-import React, { useContext, useMemo } from 'react';
-
-import { CONFIG } from 'src/config-global';
-import { listRolesAndSubroles, verifyPermissions } from 'src/utils/check-permissions';
-import { useDataContext } from 'src/auth/context/data/data-context';
+import React, { useMemo, useContext } from 'react';
 
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
@@ -12,11 +8,14 @@ import TableRow from '@mui/material/TableRow';
 import Checkbox from '@mui/material/Checkbox';
 import TableCell from '@mui/material/TableCell';
 import IconButton from '@mui/material/IconButton';
-import { Paper, Table, Collapse, TableBody, TableContainer, Divider } from '@mui/material';
+import { Paper, Table, Divider, Collapse, TableBody, TableContainer } from '@mui/material';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
 import { fDate } from 'src/utils/format-time';
+import { verifyPermissions, listRolesAndSubroles } from 'src/utils/check-permissions';
+
+import { CONFIG } from 'src/config-global';
 
 import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
@@ -24,6 +23,7 @@ import { ConfirmDialog } from 'src/components/custom-dialog';
 import { usePopover, CustomPopover } from 'src/components/custom-popover';
 
 import { LoadingContext } from 'src/auth/context/loading-context';
+import { useDataContext } from 'src/auth/context/data/data-context';
 
 import { SalesOrderCreateProjectDialogForm } from './sales-order-create-project-dialog';
 

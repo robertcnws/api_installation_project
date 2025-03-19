@@ -2,13 +2,11 @@ import axios from 'axios';
 import { useMemo, useState, useEffect, useContext, useCallback } from 'react';
 
 import Card from '@mui/material/Card';
-import Stack from '@mui/material/Stack';
 import Avatar from '@mui/material/Avatar';
 import { useTheme } from '@mui/material/styles';
 import Grid from '@mui/material/Unstable_Grid2';
 import Typography from '@mui/material/Typography';
-import ListItemText from '@mui/material/ListItemText';
-import { Box, Table, Switch, ListItem, TableRow, TableBody, TableCell, IconButton } from '@mui/material';
+import { Box, Table, Switch, TableRow, TableBody, TableCell, IconButton } from '@mui/material';
 
 import { fDate, fDateTime } from 'src/utils/format-time';
 import { getProjectInstaller } from 'src/utils/project-tasks-utils';
@@ -28,9 +26,9 @@ import { ProjectEditModalDatesView } from './view/project-edit-modal-dates-view'
 import { ProjectDetailsStageStepper } from './view/project-details-stage-stepper';
 import { ProjectDetailsContentOverview } from './project-details-content-overview';
 import { ProjectEditModalUserManagerView } from './view/project-edit-modal-user-manager-view';
+import { ProjectDetailsContentOverviewInstaller } from './project-details-content-overview-installer';
 import { ProjectDetailsChartSemicircleProject } from './view/project-details-chart-semicircle-project';
 import { ProjectEditModalInstallationTeamView } from './view/project-edit-modal-installation-team-view';
-import { ProjectDetailsContentOverviewInstaller } from './project-details-content-overview-installer';
 
 
 

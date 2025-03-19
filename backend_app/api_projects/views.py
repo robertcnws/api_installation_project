@@ -1,6 +1,8 @@
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
+from pymongo import MongoClient
+from bson import json_util
 from django.utils import timezone
 from django.conf import settings
 from .models import (
@@ -32,9 +34,13 @@ from .data_util import (
     fix_order_after_edit,
     get_current_stage_from_tasks,
     to_aware,
+    findTaskInStage
 )
+import zipfile
+from django.http import HttpResponse
 import json
 import logging
+import io
 
 logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
@@ -612,6 +618,124 @@ def change_project_address(request, id):
         info=f'has changed address in project {project.name}'
         info_id=project.id
         type='change_project_address'
+        create_notification(module, info_id, info, type, user_reporter['username'])
+        
+    return Response({
+        'message': 'Project updated successfully',
+        'data': json.loads(project.to_json())
+    }, status=201)
+    
+    
+#############################################
+# CHANGE PROJECT PHONE NUMBER
+#############################################
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def change_project_phone_number(request, id): 
+    
+    project = Project.objects(id=id).first()
+    if not project:
+        return Response({'error': 'Project not found'}, status=404)
+            
+    data = request.data
+    
+    user_reporter = json.loads(data.get('userReporter', None)) if data.get('userReporter') else project.user_reporter
+    
+    current_phone_number = project.sales_order.get('customer', None).get('phone', '') or project.sales_order.get('customer', None).get('mobile', '')
+    
+    phone_number = data.get('phoneNumber', current_phone_number) if data.get('phoneNumber') else current_phone_number
+    
+    sales_order = project.sales_order
+    
+    sales_order['customer']['phone'] = phone_number
+    sales_order['customer']['mobile'] = phone_number
+    
+    project.sales_order = sales_order
+    
+    project.last_modified_time = timezone.now()
+    project.user_reporter = user_reporter if user_reporter else project.user_reporter
+        
+    project.save()
+    
+    tracking = ProjectTracking(
+        user_reporter=user_reporter,
+        action=f'change project phone number ({project.id} - {project.name})',
+        created_time=timezone.now(),
+        managed_data={
+            'data': transform_data_to_mongo(project, include_fields=['id', 'name', 'sales_order'])
+        },
+    )
+    tracking.save()
+    
+    if user_reporter:
+        module='projects'
+        info=f'has changed phone number in project {project.name}'
+        info_id=project.id
+        type='change_project_phone_number'
+        create_notification(module, info_id, info, type, user_reporter['username'])
+        
+    return Response({
+        'message': 'Project updated successfully',
+        'data': json.loads(project.to_json())
+    }, status=201)
+    
+    
+#############################################
+# CHANGE PROJECT REFERENCE NUMBER
+#############################################
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def change_project_reference_number(request, id): 
+    
+    project = Project.objects(id=id).first()
+    if not project:
+        return Response({'error': 'Project not found'}, status=404)
+            
+    # data = request.data
+    
+    # user_reporter = json.loads(data.get('userReporter', None)) if data.get('userReporter') else project.user_reporter
+    
+    # current_ref_number = project.sales_order.get('reference_number', '') if project.sales_order else ''
+    # ref_number = data.get('refNumber', '') if data.get('refNumber', '') else current_ref_number
+    
+    # project.update(
+    #     set__sales_order__reference_number=ref_number,
+    #     set__last_modified_time=timezone.now(),
+    #     set__user_reporter=user_reporter if user_reporter else project.user_reporter
+    # )
+    # project.reload()
+    
+    data = request.data
+    user_reporter = json.loads(data.get('userReporter', None)) if data.get('userReporter') else project.user_reporter
+    current_ref_number = project.sales_order.get('reference_number', '') if project.sales_order else ''
+    ref_number = data.get('refNumber', '') if data.get('refNumber', '') else current_ref_number
+    
+    if not project.sales_order or not isinstance(project.sales_order, dict):
+        project.sales_order = {}
+    
+    project.sales_order['reference_number'] = ref_number
+    project.last_modified_time = timezone.now()
+    project.user_reporter = user_reporter if user_reporter else project.user_reporter
+        
+    project.save()
+    
+    tracking = ProjectTracking(
+        user_reporter=user_reporter,
+        action=f'change project reference number ({project.id} - {project.name})',
+        created_time=timezone.now(),
+        managed_data={
+            'data': transform_data_to_mongo(project, include_fields=['id', 'name', 'sales_order'])
+        },
+    )
+    tracking.save()
+    
+    if user_reporter:
+        module='projects'
+        info=f'has changed reference number in project {project.name}'
+        info_id=project.id
+        type='change_project_reference_number'
         create_notification(module, info_id, info, type, user_reporter['username'])
         
     return Response({
@@ -1960,6 +2084,32 @@ def change_status_project_default_task(request, projectId, id):
         task['user_reporter'] = user_reporter
         task['last_modified_time'] = timezone.now()
         
+        def get_next_task(task, all_tasks, has_permission):
+            if has_permission:
+                return next(
+                    (tt for tt in all_tasks if tt['project_default_task']['order'] == task['project_default_task']['order'] + 1),
+                    None
+                )
+            else:
+                last_task = findTaskInStage(all_tasks, 'Installation', position='last')
+                if str(last_task['project_default_task']['_id']) == str(task['project_default_task']['_id']):
+                    return findTaskInStage(all_tasks, 'Closing')
+                else:
+                    return next(
+                        (tt for tt in all_tasks if tt['project_default_task']['order'] == task['project_default_task']['order'] + 1),
+                        None
+                    )
+        
+        if status == 'finished':
+            next_task = get_next_task(task, all_tasks, project.has_permission)
+            if next_task and next_task['status'] == 'not started':
+                next_task['status'] = 'in progress'
+                next_task['percentage'] = 50
+                next_task['user_reporter'] = user_reporter
+                next_task['last_modified_time'] = timezone.now()
+                all_tasks = [t for t in all_tasks if str(t['project_default_task']['_id']) != str(next_task['project_default_task']['_id'])]
+                all_tasks.append(next_task)
+        
         all_tasks = [task for task in all_tasks if str(task['project_default_task']['_id']) != id]
         all_tasks.append(task)
         sorted_tasks = sorted(all_tasks, key=lambda x: x['project_default_task']['order'], reverse=True)
@@ -2620,3 +2770,32 @@ def generate_db_backup():
         return True
     except Exception as e:
         return str(e)
+    
+    
+#############################################
+# DOWNLOAD MONGO DB
+#############################################
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def download_mongo_db(request):
+    mongo_uri = settings.MONGO_URI
+    db_name = settings.MONGO_DB
+    client = MongoClient(mongo_uri)
+    db = client[db_name]
+    zip_buffer = io.BytesIO()
+    
+    with zipfile.ZipFile(zip_buffer, mode='w', compression=zipfile.ZIP_DEFLATED) as zip_file:
+        for collection_name in db.list_collection_names():
+            collection = db[collection_name]
+            documents = list(collection.find())
+            json_data = json_util.dumps(documents, indent=2)
+            zip_file.writestr(f"{collection_name}.json", json_data)
+    
+    zip_buffer.seek(0)
+    
+    timestamp = timezone.now().strftime('%Y%m%d_%H%M%S')
+    response = HttpResponse(zip_buffer, content_type="application/zip")
+    response['Content-Disposition'] = f'attachment; filename="mongo_db_export_{timestamp}.zip"'
+    response['Access-Control-Expose-Headers'] = 'Content-Disposition'
+    return response

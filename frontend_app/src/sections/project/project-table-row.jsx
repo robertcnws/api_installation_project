@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useContext, useCallback } from 'react';
 
 import Stack from '@mui/material/Stack';
+import { Tooltip } from '@mui/material';
 import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
 import MenuList from '@mui/material/MenuList';
@@ -9,8 +10,6 @@ import Checkbox from '@mui/material/Checkbox';
 import { useTheme } from '@mui/material/styles';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
-import ListItemText from '@mui/material/ListItemText';
-import { List, Tooltip, ListItem } from '@mui/material';
 import TableRow, { tableRowClasses } from '@mui/material/TableRow';
 import TableCell, { tableCellClasses } from '@mui/material/TableCell';
 
@@ -28,7 +27,6 @@ import { Label } from 'src/components/label';
 import { toast } from 'src/components/snackbar';
 import { Iconify } from 'src/components/iconify';
 import { ConfirmDialog } from 'src/components/custom-dialog';
-import { FileThumbnail } from 'src/components/file-thumbnail';
 import { usePopover, CustomPopover } from 'src/components/custom-popover';
 
 import { LoadingContext } from 'src/auth/context/loading-context';

@@ -12,8 +12,6 @@ import logoBase64 from '../../public/files/color_white_background/icon_with_text
 export const generateInstallationGuideFormReport = ({ currentProject, userLogged }) => {
     const doc = new JsPDF();
 
-    console.log('userLogged', userLogged);
-
     const margin = 2;
     const logoWidth = 25;
     const logoHeight = 15;
@@ -217,23 +215,23 @@ export const generateInstallationGuideFormReport = ({ currentProject, userLogged
 
     doc.setFontSize(12);
 
-    const totalMaterials = currentProject?.projectMaterials?.reduce((acc, product) => acc + product.cost, 0);
+    const totalMaterials = currentProject?.projectMaterials?.reduce((acc, product) => acc + (product.quantity * product.cost), 0);
 
     let materialsDetails = currentProject?.projectMaterials?.map((product) => [
         { content: product.name, styles: { halign: 'left', fontStyle: 'bold' } },
         { content: product.quantity, styles: { halign: 'center' } },
-        { content: product.ticket, styles: { halign: 'left' } },
+        // { content: product.ticket, styles: { halign: 'left' } },
         { content: fCurrency(product.cost), styles: { halign: 'left' } },
-        { content: product.store, styles: { halign: 'left' } },
+        // { content: product.store, styles: { halign: 'left' } },
         { content: product.notes, styles: { halign: 'left' } },
     ]) || [];
 
     materialsDetails = [
         ...materialsDetails,
         [
-            { content: "TOTALS:", colSpan: 3, styles: { halign: 'left', fontStyle: 'bold' } },
+            { content: "TOTALS:", colSpan: 2, styles: { halign: 'left', fontStyle: 'bold' } },
             { content: fCurrency(totalMaterials), styles: { halign: 'left', fontStyle: 'bold' } },
-            { content: "", styles: { halign: 'center', fontStyle: 'bold' } },
+            // { content: "", styles: { halign: 'center', fontStyle: 'bold' } },
             { content: "", styles: { halign: 'center', fontStyle: 'bold' } },
         ]
     ]
@@ -261,21 +259,21 @@ export const generateInstallationGuideFormReport = ({ currentProject, userLogged
         head: [[
             { content: "NAME", styles: { halign: 'left' } },
             { content: "QTY", styles: { halign: 'center', fontStyle: 'bold' } },
-            { content: "TICKET", styles: { halign: 'left', fontStyle: 'bold' } },
+            // { content: "TICKET", styles: { halign: 'left', fontStyle: 'bold' } },
             { content: "COST", styles: { halign: 'left', fontStyle: 'bold' } },
-            { content: "STORE", styles: { halign: 'left', fontStyle: 'bold' } },
+            // { content: "STORE", styles: { halign: 'left', fontStyle: 'bold' } },
             { content: "NOTES", styles: { halign: 'left', fontStyle: 'bold' } },
         ]],
         body: materialsDetails,
         theme: "grid",
         styles: { fontSize: 11, cellPadding: 2 },
         columnStyles: {
-            0: { cellWidth: 55, halign: 'left' },
-            1: { cellWidth: 15, halign: 'center' },
-            2: { cellWidth: 25, halign: 'left' },
-            3: { cellWidth: 20, halign: 'left' },
-            4: { cellWidth: 25, halign: 'left' },
-            5: { cellWidth: 60, halign: 'left' },
+            0: { cellWidth: 65, halign: 'left' },
+            1: { cellWidth: 25, halign: 'center' },
+            // 2: { cellWidth: 25, halign: 'left' },
+            2: { cellWidth: 30, halign: 'left' },
+            // 4: { cellWidth: 25, halign: 'left' },
+            3: { cellWidth: 80, halign: 'left' },
         }
     });
 
@@ -415,59 +413,44 @@ export const createScopeArray = ({ listItems }) => {
         // const dimensions = extractDimensions(item.description);
         const propertiesJson = filteredDescriptionJson(item.description);
         const dimensions = propertiesJson?.Size ? propertiesJson?.Size?.split(/[x'"]/i) : extractDimensions(item.description);
-        const config = propertiesJson?.Config || propertiesJson?.config;
-        console.log('dimensions', dimensions);
-        if (config) {
+        const config = propertiesJson?.Config || propertiesJson?.config || propertiesJson?.Size || propertiesJson?.size;
+        if (config?.length > 0) {
             scopeArray[2] = {
                 ...scopeArray[2],
-                quantity: countChar(config, 'O'),
+                quantity: scopeArray[2].quantity + countChar(config, 'O'),
             }
-            if (countChar(config, 'X') > 1) {
-                scopeArray[4] = {
-                    ...scopeArray[4],
-                    quantity: scopeArray[4].quantity + 1,
-                }
-            }
+
 
         }
         if (dimensions) {
             const [width, height] = dimensions;
             if (item.name.toLowerCase().includes('window')) {
-                if (width <= 74) {
+                if (Number(width) <= 74) {
                     scopeArray[0] = {
                         ...scopeArray[0],
                         quantity: scopeArray[0].quantity + item.quantity,
                     }
-                } else if (width <= 111 && width > 74) {
+                } else if (Number(width) > 74) {
                     scopeArray[1] = {
                         ...scopeArray[1],
                         quantity: scopeArray[1].quantity + item.quantity,
                     }
                 }
             }
-            else if ((!item.name.toLowerCase().includes('window') &&
-                item.name.toLowerCase().includes('fixed')) ||
-                item.description.toLowerCase().includes('mg450')) {
-                scopeArray[2] = {
-                    ...scopeArray[2],
-                    quantity: scopeArray[2].quantity + item.quantity,
-                }
-            }
             else if ((item.name.toLowerCase().includes('french') &&
                 item.name.toLowerCase().includes('door')) ||
                 (item.description.toLowerCase().includes('french') &&
                     item.description.toLowerCase().includes('door')) ||
-                item.description.toLowerCase().includes('fd') ||
-                item.description.toLowerCase().includes('mg3000')) {
-                if (width <= 39) {
+                item.description.toLowerCase().includes('fd')) {
+                if (Number(width) <= 39) {
                     scopeArray[3] = {
                         ...scopeArray[3],
-                        quantity: scopeArray[3].quantity + item.quantity,
+                        quantity: countChar(config, 'X') > 1 ? scopeArray[3].quantity + countChar(config, 'X') : scopeArray[3].quantity + item.quantity,
                     }
-                } else if (width <= 76 && width > 39) {
+                } else if (Number(width) > 39) {
                     scopeArray[4] = {
                         ...scopeArray[4],
-                        quantity: scopeArray[4].quantity + item.quantity,
+                        quantity: countChar(config, 'X') > 1 ? scopeArray[4].quantity + countChar(config, 'X') : scopeArray[4].quantity + item.quantity,
                     }
                 }
             }
@@ -477,12 +460,12 @@ export const createScopeArray = ({ listItems }) => {
                     item.description.toLowerCase().includes('door')) ||
                 item.name.toLowerCase().includes('sgd') ||
                 item.description.toLowerCase().includes('sgd')) {
-                if (width <= 72) {
+                if (Number(width) <= 72) {
                     scopeArray[5] = {
                         ...scopeArray[5],
                         quantity: scopeArray[5].quantity + item.quantity,
                     }
-                } else if (width <= 96 && width > 72) {
+                } else if (Number(width) > 72) {
                     scopeArray[6] = {
                         ...scopeArray[6],
                         quantity: scopeArray[6].quantity + item.quantity,
@@ -494,7 +477,7 @@ export const createScopeArray = ({ listItems }) => {
                 scopeArray[7] = {
                     ...scopeArray[7],
                     quantity: scopeArray[7].quantity + item.quantity,
-                    price: ((width * width) / 144) * 10,
+                    price: ((Number(width) * Number(height)) / 144) * 10,
                 }
             }
             else {
@@ -519,29 +502,30 @@ export const createScopeArray = ({ listItems }) => {
             });
         }
     });
+    
     return scopeArray;
 }
 
-function extractDimensions(text) {
-    let dimensions = [];
-
-    const match1 = text.match(/(\d+)(?:\.\d+)?\s+(\d+)(?:\.\d+)?/);
-    if (match1) {
-        dimensions = [parseInt(match1[1], 10), parseInt(match1[2], 10)];
+export function extractDimensions(text) {
+    const patterns = [
+      /(\d+(?:\.\d+)?)(?:["])?\s*[xX]\s*(\d+(?:\.\d+)?)(?:["])?/,
+      /(\d+(?:\.\d+)?)(?:["])\s+(\d+(?:\.\d+)?)(?:["])/
+    ];
+    
+    const matches = patterns.map((pattern) => text.match(pattern));
+    
+    const match = matches.find((result) => result !== null);
+    
+    if (match) {
+      return [parseFloat(match[1]), parseFloat(match[2])];
     }
-
-    const match2 = text.match(/Size:\s+(\d+)\s*\S*\s*X\s*(\d+)\s*\S*/);
-    if (match2) {
-        dimensions = [parseInt(match2[1], 10), parseInt(match2[2], 10)];
-    }
-
-    return dimensions.length ? dimensions : null;
-}
+    return null;
+  }
 
 
 function countChar(str, char) {
     const escapedChar = char.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const regex = new RegExp(escapedChar, 'gi'); 
-    const matches = str.match(regex);
+    const regex = new RegExp(escapedChar, 'gi');
+    const matches = str?.match(regex);
     return matches ? matches.length : 0;
-  }
+}

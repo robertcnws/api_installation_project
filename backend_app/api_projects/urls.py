@@ -16,6 +16,8 @@ urlpatterns = [
     path('update/project/<str:id>/', views.update_project, name='update_project'),
     path('update/project/<str:id>/change-permission/', views.change_project_permission, name='change_project_permission'),
     path('update/project/<str:id>/change-address/', views.change_project_address, name='change_project_address'),
+    path('update/project/<str:id>/change-phone-number/', views.change_project_phone_number, name='change_project_phone_number'),
+    path('update/project/<str:id>/change-reference-number/', views.change_project_reference_number, name='change_project_reference_number'),
     path('update/project/<str:id>/change-release-form/', views.change_project_release_form, name='change_project_release_form'),
     path('update/project/<str:id>/change-installation-guide-form/', views.change_project_installation_guide_form, name='change_project_installation_guide_form'),
     path('delete/project/<str:id>/', views.delete_project, name='delete_project'),
@@ -54,6 +56,8 @@ urlpatterns = [
     path('edit/stage-task/<str:id>/', views.edit_stage_task, name='edit_stage_task'),
     path('delete/stage-task/<str:id>/', views.delete_stage_task, name='delete_stage_task'),
     path('delete/stages-task/', views.delete_stages_task, name='delete_stages_task'),
+    # DOWNLOAD BACKUP
+    path('download/backup/', views.download_mongo_db, name='download_mongo_db'),
     # GET FILE URL FROM AWS S3
     path('get-file-url/', views.get_default_file_url, name='get_file_url'),
 

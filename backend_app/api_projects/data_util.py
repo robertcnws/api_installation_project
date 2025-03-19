@@ -174,3 +174,14 @@ def create_notification(module, info_id, info, type, username):
         user_notification.save()
     
     return notification
+
+
+def findTaskInStage(tasks, stage, position=0):
+    filtered_tasks = [task for task in tasks if task.get("project_default_task", {}).get("project_stage", {}).get("name") == stage]
+    filtered_tasks.sort(key=lambda x: x.get("project_default_task", {}).get("order", 0), reverse=False)
+    print(filtered_tasks)
+    if isinstance(position, int):
+        return filtered_tasks[position] if len(filtered_tasks) > position else None
+    elif isinstance(position, str):
+        if position == 'last':
+            return filtered_tasks[-1] if filtered_tasks else None

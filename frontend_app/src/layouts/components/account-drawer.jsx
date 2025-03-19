@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { useMemo, useState, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
@@ -5,6 +6,7 @@ import Stack from '@mui/material/Stack';
 import Drawer from '@mui/material/Drawer';
 import MenuItem from '@mui/material/MenuItem';
 import { useTheme } from '@mui/material/styles';
+import { CircularProgress } from '@mui/material';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 
@@ -13,6 +15,7 @@ import { useRouter, usePathname } from 'src/routes/hooks';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
+import { CONFIG } from 'src/config-global';
 import { varAlpha } from 'src/theme/styles';
 
 import { Label } from 'src/components/label';
@@ -26,7 +29,6 @@ import { useMockedUser } from 'src/auth/hooks';
 
 import { AccountButton } from './account-button';
 import { SignOutButton } from './sign-out-button';
-
 
 
 // ----------------------------------------------------------------------
@@ -43,6 +45,8 @@ export function AccountDrawer({ data = [], sx, ...other }) {
   const { user } = useMockedUser();
 
   const quickChangePassword = useBoolean();
+
+  const [isDownloadingBackup, setIsDownloadingBackup] = useState(false);
 
   const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
 
@@ -79,6 +83,46 @@ export function AccountDrawer({ data = [], sx, ...other }) {
       {userLogged?.data.firstName?.charAt(0).toUpperCase() || userLogged?.data.first_name?.charAt(0).toUpperCase()}
     </AnimateAvatar>
   );
+
+  const downloadBackup = async () => {
+    try {
+      const response = await axios.get(`${CONFIG.apiUrl}/projects/download/backup/`, {
+        responseType: 'blob',
+      });
+
+      const contentDisposition = response.headers['content-disposition'];
+
+      console.log('response.headers:', response.headers);
+      let fileName = 'download.zip';
+      if (contentDisposition) {
+        const fileNameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
+        if (fileNameMatch && fileNameMatch.length > 1) {
+          fileName = fileNameMatch[1];
+        }
+      }
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error al descargar el archivo:', error);
+    }
+  };
+
+  const downloadBackupHandler = async () => {
+    setIsDownloadingBackup(true);
+    try {
+      await downloadBackup();
+    } catch (error) {
+      console.error('Error al descargar el backup:', error);
+    } finally {
+      setIsDownloadingBackup(false);
+    }
+  };
 
   return (
     <>
@@ -163,20 +207,42 @@ export function AccountDrawer({ data = [], sx, ...other }) {
               return (
                 <MenuItem
                   key={option.label}
-                  onClick={() => handleClickItem(option.label === 'Home' ? rootHref :
-                    option.label === 'Change password' ? quickChangePassword.onTrue() : option.href
-                  )}
+                  onClick={() => {
+                    if (option.label === 'Download backup') {
+                      downloadBackupHandler();
+                    } else if (option.label === 'Change password') {
+                      quickChangePassword.onTrue();
+                      handleCloseDrawer();
+                    } else if (option.label === 'Home') {
+                      handleClickItem(rootHref);
+                    } else {
+                      handleClickItem(option.href);
+                    }
+                  }}
                   sx={{
                     py: 1,
                     color: 'text.secondary',
                     '& svg': { width: 24, height: 24 },
                     '&:hover': { color: 'text.primary' },
                   }}
+                  disabled={isDownloadingBackup}
                 >
                   {option.icon}
 
-                  <Box component="span" sx={{ ml: 2 }}>
-                    {option.label === 'Home' ? rootLabel : option.label}
+                  <Box component="span" sx={{ ml: 2, color: isDownloadingBackup ? 'text.disabled' : 'inherit' }}>
+                    {option.label === 'Home'
+                      ? rootLabel
+                      : option.label === 'Download backup'
+                        ? isDownloadingBackup
+                          ? (
+                            <>
+                              <CircularProgress size={12} sx={{ mr: 3, mt: 2, ml: 1 }} />
+                              Downloading backup...
+                            </>
+                          )
+                          : 'Download backup'
+                        : option.label
+                    }
                   </Box>
 
                   {option.info && (

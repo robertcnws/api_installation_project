@@ -38,6 +38,8 @@ export const CONFIG = {
     operationRemoveFile: import.meta.env.VITE_PERMISSION_OPERATION_REMOVE_FILE_NAME ?? '',
     operationEditCalendar: import.meta.env.VITE_PERMISSION_OPERATION_EDIT_CALENDAR_NAME ?? '',
     operationEditAddress: import.meta.env.VITE_PERMISSION_OPERATION_EDIT_ADDRESS_NAME ?? '',
+    operationEditPhoneNumber: import.meta.env.VITE_PERMISSION_OPERATION_EDIT_PHONE_NUMBER_NAME ?? '',
+    operationEditReferenceNumber: import.meta.env.VITE_PERMISSION_OPERATION_EDIT_REFERENCE_NUMBER_NAME ?? '',
     operationEditResponsable: import.meta.env.VITE_PERMISSION_OPERATION_EDIT_RESPONSABLE_NAME ?? '',
     operationEditInstaller: import.meta.env.VITE_PERMISSION_OPERATION_EDIT_INSTALLER_NAME ?? '',
     operationEditInstallDate: import.meta.env.VITE_PERMISSION_OPERATION_EDIT_INSTALL_DATE_NAME ?? '',
@@ -65,6 +67,8 @@ export const CONFIG = {
     projectManager: import.meta.env.VITE_ROLE_PROJECT_MANAGER ?? '',
     installer: import.meta.env.VITE_ROLE_INSTALLER ?? '',
     officeStaff: import.meta.env.VITE_ROLE_OFFICE_STAFF ?? '',
+    warehouseStaff: import.meta.env.VITE_ROLE_WAREHOUSE_STAFF ?? '',
+    financialStaff: import.meta.env.VITE_ROLE_FINANCIAL_STAFF ?? '',
   },
   projectPermissions: {
     fullAccess: import.meta.env.VITE_PROJECT_PERMISSION_FULL_ACCESS ?? '',

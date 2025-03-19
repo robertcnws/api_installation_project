@@ -17,7 +17,7 @@ import IconButton from '@mui/material/IconButton';
 import { useTabs } from 'src/hooks/use-tabs';
 import { useBoolean } from 'src/hooks/use-boolean';
 
-import { availableTasks } from 'src/utils/project-tasks-utils';
+import { availableTasks, previousTasksInStatus } from 'src/utils/project-tasks-utils';
 import { isInstaller, verifyPermissions, listRolesAndSubroles } from 'src/utils/check-permissions';
 
 import { CONFIG } from 'src/config-global';
@@ -246,85 +246,95 @@ export function KanbanDetails({
           disabled
         />
         {(loadedTasks?.length > 0 &&
-          loadedTasks?.some((t) => t.project_default_task?.id === task.project_default_task?.id)) ? (
-          <>
-            {task ? (
-              <>
-                {(
-                  listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator) ||
-                  task?.users_assignees?.some((u) => u.id === userLogged?.data?.id) ||
-                  project?.userManager?.id === userLogged?.data?.id
-                ) ? (
-                  <>
-                    {task && task.status === CONFIG.taskStatus.notStarted && (
-                      <Button
-                        variant="soft"
-                        color="default"
-                        size="medium"
-                        startIcon={<Iconify icon="vaadin:start-cog" />}
-                        sx={{ ml: 2.5, height: 50 }}
-                        disabled={!task || task.status !== CONFIG.taskStatus.notStarted || task?.users_assignees?.length === 0 || !priority}
-                        onClick={() => handleManageTask('start')}
-                      >
-                        Start Task
-                      </Button>
+          loadedTasks?.some((t) => t.project_default_task?.id === task.project_default_task?.id)) && (
+            <>
+              {task ? (
+                <>
+                  {(
+                    listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator) ||
+                    task?.users_assignees?.some((u) => u.id === userLogged?.data?.id) ||
+                    project?.userManager?.id === userLogged?.data?.id
+                  ) && (
+                      <>
+                        {(task && task.status === CONFIG.taskStatus.notStarted && (task?.project_default_task?.order === 1 ||
+                          (project?.hasPermission && task?.project_default_task?.project_stage.name.toLowerCase() === CONFIG.stages.permission.toLowerCase()))) && (
+                            <Button
+                              variant="soft"
+                              color="default"
+                              size="medium"
+                              startIcon={<Iconify icon="vaadin:start-cog" />}
+                              sx={{ ml: 2.5, height: 50 }}
+                              disabled={!task || task.status !== CONFIG.taskStatus.notStarted || task?.users_assignees?.length === 0 || !priority}
+                              onClick={() => handleManageTask('start')}
+                            >
+                              Start Task
+                            </Button>
+                          )}
+                        {task && task.status !== CONFIG.taskStatus.notStarted && task.status !== 'finished' && (
+                          previousTasksInStatus(
+                            task,
+                            project?.projectDefaultTasks,
+                            CONFIG.taskStatus.inProgress,
+                            task?.project_default_task?.project_stage?.name.toLowerCase().indexOf(CONFIG.stages.permission.toLowerCase()) !== -1,
+                            CONFIG
+                          ).length === 0 && (
+                            <Button
+                              variant="soft"
+                              color="success"
+                              size="medium"
+                              startIcon={<Iconify icon="octicon:tracked-by-closed-completed-16" />}
+                              sx={{ ml: 2.5, height: 50 }}
+                              disabled={
+                                !task ||
+                                task?.users_assignees?.length === 0 ||
+                                !priority ||
+                                task.status === 'finished' ||
+                                (isInstaller(userLogged?.data?.user_role?.name) && task?.project_task_attachments?.length === 0)
+                              }
+                              onClick={() => handleManageTask('finish')}
+                            >
+                              Finish Task
+                            </Button>
+                          ))}
+                        {(task && task.status === 'finished' && listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.superadmin)) && (
+                          <Button
+                            variant="soft"
+                            color="warning"
+                            size="medium"
+                            startIcon={<Iconify icon="eos-icons:snapshot-rollback" />}
+                            sx={{ ml: 2.5, height: 50 }}
+                            disabled={!task || task?.users_assignees?.length === 0 || !priority}
+                            onClick={() => handleManageTask('rollback')}
+                          >
+                            Rollback Task
+                          </Button>
+                        )}
+                      </>
                     )}
-                    {task && task.status !== CONFIG.taskStatus.notStarted && task.status !== 'finished' && (
-                      <Button
-                        variant="soft"
-                        color="success"
-                        size="medium"
-                        startIcon={<Iconify icon="octicon:tracked-by-closed-completed-16" />}
-                        sx={{ ml: 2.5, height: 50 }}
-                        disabled={
-                          !task ||
-                          task?.users_assignees?.length === 0 ||
-                          !priority ||
-                          task.status === 'finished' ||
-                          (isInstaller(userLogged?.data?.user_role?.name) && task?.project_task_attachments?.length === 0)
-                        }
-                        onClick={() => handleManageTask('finish')}
-                      >
-                        Finish Task
-                      </Button>
-                    )}
-                    {(task && task.status === 'finished' && listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.superadmin)) && (
-                      <Button
-                        variant="soft"
-                        color="warning"
-                        size="medium"
-                        startIcon={<Iconify icon="eos-icons:snapshot-rollback" />}
-                        sx={{ ml: 2.5, height: 50 }}
-                        disabled={!task || task?.users_assignees?.length === 0 || !priority}
-                        onClick={() => handleManageTask('rollback')}
-                      >
-                        Rollback Task
-                      </Button>
-                    )}
-                  </>
-                ) : (
+                  {/* : (
                   <Box sx={{ display: 'flex', alignItems: 'right', justifyContent: 'flex-end', width: '100%' }}>
                     <Label color="error" sx={{ ml: 2.5, height: 50 }}>
                       Task Unavailable
                     </Label>
                   </Box>
-                )}
-              </>
-            ) : (
-              <Box sx={{ display: 'flex', alignItems: 'right', justifyContent: 'flex-end', width: '100%' }}>
-                <Label color="error" sx={{ ml: 2.5, height: 50 }} variant="outlined">
-                  Not assigned to you
-                </Label>
-              </Box>
-            )}
-          </>
-        ) : (
+                )} */}
+                </>
+              ) : (
+                <Box sx={{ display: 'flex', alignItems: 'right', justifyContent: 'flex-end', width: '100%' }}>
+                  <Label color="error" sx={{ ml: 2.5, height: 50 }} variant="outlined">
+                    Not assigned to you
+                  </Label>
+                </Box>
+              )}
+            </>
+          )}
+        {/* : (
           <Box sx={{ display: 'flex', alignItems: 'right', justifyContent: 'flex-end', width: '100%' }}>
             <Label color="error" sx={{ ml: 2.5, height: 50 }} >
               Task Unavailable
             </Label>
           </Box>
-        )}
+        )} */}
 
       </Box>
 

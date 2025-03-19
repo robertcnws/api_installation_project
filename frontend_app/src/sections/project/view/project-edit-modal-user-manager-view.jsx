@@ -16,6 +16,8 @@ import { useRouter } from 'src/routes/hooks';
 
 import { useTabs } from 'src/hooks/use-tabs';
 
+import { isAdministrator, isProjectManager } from 'src/utils/check-permissions';
+
 import { CONFIG } from 'src/config-global';
 import { useProjectByIdQuery } from 'src/_mock/__projects';
 
@@ -44,7 +46,9 @@ export function ProjectEditModalUserManagerView({
 
     const item = useMemo(() => loadedProjects?.find((project) => project.id === projectId), [loadedProjects, projectId]);
 
-    const cleanLoadedUsers = useMemo(() => loadedUsers.map(({ __typename, ...rest }) => rest), [loadedUsers]);
+    const managerUsers = useMemo(() => loadedUsers.filter((user) => isProjectManager(user.userRole.name) || isAdministrator(user.userRole.name)), [loadedUsers]);
+
+    const cleanLoadedUsers = useMemo(() => managerUsers.map(({ __typename, ...rest }) => rest), [managerUsers]);
 
     const { isMobile } = useContext(LoadingContext);
 

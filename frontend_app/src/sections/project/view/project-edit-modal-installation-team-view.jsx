@@ -11,6 +11,7 @@ import { LoadingButton } from '@mui/lab';
 import Button from '@mui/material/Button';
 import { Avatar, Dialog, DialogTitle, DialogActions } from '@mui/material';
 
+import { isInstaller } from 'src/utils/check-permissions';
 import { getProjectInstaller } from 'src/utils/project-tasks-utils';
 
 import { CONFIG } from 'src/config-global';
@@ -35,6 +36,8 @@ export function ProjectEditModalInstallationTeamView({
         loadedUsers,
         loadedProjectPermissions,
     } = useDataContext();
+
+    const installerUsers = useMemo(() => loadedUsers.filter((user) => isInstaller(user.userRole.name)), [loadedUsers]);
 
     const cleanLoadedUsers = useMemo(() => loadedUsers.map(({ __typename, ...rest }) => rest), [loadedUsers]);
 

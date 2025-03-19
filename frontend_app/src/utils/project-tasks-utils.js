@@ -7,7 +7,12 @@ export const availableTasks = (project, projectTasks, CONFIG) => {
         (a, b) => a.project_default_task.order - b.project_default_task.order
     );
     let foundNotStarted = false;
-    const nextTasks = sortedTasks?.filter((t) => {
+
+    const filteredTasks = project?.hasPermission ? sortedTasks : sortedTasks?.filter(
+        (t) => t.project_default_task?.project_stage?.name !== CONFIG.stages.permission
+    );
+
+    const nextTasks = filteredTasks?.filter((t) => {
         if (t.status !== "not started") return true;
         if (!foundNotStarted) {
             foundNotStarted = true;
@@ -15,7 +20,9 @@ export const availableTasks = (project, projectTasks, CONFIG) => {
         }
         return false;
     });
+
     let finalTasks = [];
+    
     if (project?.hasPermission) {
         const permissionTasks = sortedTasks?.filter(
             (t) => t.project_default_task?.project_stage?.name === CONFIG.stages.permission
@@ -91,3 +98,21 @@ export const filteredDescriptionJson = (description) => description
         acc[key] = value;
         return acc;
     }, {});
+
+export const previousTasks = (task, projectTasks, inStagePermission, CONFIG) => {
+    const tasks = inStagePermission ?
+        projectTasks?.filter(
+            (t) => t.project_default_task.order < task.project_default_task.order &&
+                t.project_default_task?.project_stage?.name.toLowerCase().indexOf(CONFIG.stages.permission.toLowerCase()) !== -1
+        ) : 
+        projectTasks?.filter(
+            (t) => t.project_default_task.order < task.project_default_task.order &&
+                t.project_default_task?.project_stage?.name.toLowerCase().indexOf(CONFIG.stages.permission.toLowerCase()) === -1
+        );
+    return tasks;
+}
+
+export const previousTasksInStatus = (task, projectTasks, status, inStagePermission, CONFIG) => {
+    const tasks = previousTasks(task, projectTasks, inStagePermission, CONFIG);
+    return tasks?.filter((t) => t.status === status);
+}
