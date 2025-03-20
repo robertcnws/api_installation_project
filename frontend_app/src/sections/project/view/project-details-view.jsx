@@ -80,6 +80,9 @@ export function ProjectDetailsView({ projectId }) {
         ] : [],
         ...listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.installer) ? [
             { label: 'Release Form', value: 'releaseForm' },
+        ] : [],
+        ...listRolesAndSubroles(userLogged?.data?.user_role?.name)
+            .some(elem => [CONFIG.roles.installer, CONFIG.roles.warehouseStaff]) ? [
             { label: 'Installation Guide', value: 'installationGuide' },
         ] : [],
         ...listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.financialStaff) ? [

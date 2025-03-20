@@ -199,7 +199,7 @@ const ItemBase = forwardRef(({
                   //   <Label color='error' sx={{ fontSize: '8px', mr: -3 }}>Finish previous tasks</Label>
                   // )
                 )}
-                {(task && task.status === 'finished' && listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.superadmin)) && (
+                {(task && task.status === 'finished' && listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) && (
                   <IconButton
                     variant="soft"
                     color="warning"

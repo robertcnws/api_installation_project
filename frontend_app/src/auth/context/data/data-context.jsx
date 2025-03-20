@@ -108,21 +108,21 @@ export const DataProvider = ({ children }) => {
   const sortedProjects = useMemo(() => typedProjects.sort((a, b) => fIsAfter(a.startDate, b.startDate)), [typedProjects]);
 
   let finalProjects = useMemo(() => sortedProjects, [sortedProjects]);
-
-  if (!listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.financialStaff)) {
+  if (!listRolesAndSubroles(userLogged?.data?.user_role?.name)
+    .some(elem => [CONFIG.roles.financialStaff, CONFIG.roles.warehouseStaff].includes(elem))) {
     finalProjects = sortedProjects.filter((project) =>
       project.usersAssignees.some((user) => user.username === userLogged?.data.username) ||
       project.userManager.username === userLogged?.data.username
     );
     if (userLogged?.data.user_role.name.toLowerCase().indexOf(CONFIG.roles.installer.toLowerCase()) !== -1) {
       finalProjects = sortedProjects.filter((project) =>
+      (
+        project.currentStage.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1 ||
         (
-          project.currentStage.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1 ||
-          (
-            project.currentStage.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 &&
-            totalPercentageProjectStage(project, CONFIG.stages.coordination, CONFIG) >= 50
-          )
+          project.currentStage.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 &&
+          totalPercentageProjectStage(project, CONFIG.stages.coordination, CONFIG) >= 50
         )
+      )
       );
     }
   }

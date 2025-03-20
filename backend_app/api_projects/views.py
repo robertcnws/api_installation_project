@@ -743,6 +743,62 @@ def change_project_reference_number(request, id):
         'data': json.loads(project.to_json())
     }, status=201)
     
+
+#############################################
+# CHECK ITEM INSTALLATION GUIDE
+#############################################
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def check_project_item_installation_guide(request, id): 
+    
+    project = Project.objects(id=id).first()
+    if not project:
+        return Response({'error': 'Project not found'}, status=404)
+    
+    data = request.data
+    user_reporter = json.loads(data.get('userReporter', None)) if data.get('userReporter') else project.user_reporter
+    new_product = json.loads(data.get('product', {})) if data.get('product') else {}
+    
+    products_guide = project.project_guide_products if project.project_guide_products else []
+    
+    new_product_id = new_product.get("id")
+    
+    product_exists = next((p for p in products_guide if p.get("id") == new_product_id), None)
+        
+    if product_exists:
+        products_guide = [p for p in products_guide if p.get("id") != new_product_id]
+        
+    products_guide.append(new_product)
+        
+    products_guide = sorted(products_guide, key=lambda x: x["id"], reverse=True)
+        
+    project.project_guide_products = products_guide
+            
+    project.save()
+        
+    tracking = ProjectTracking(
+        user_reporter=user_reporter,
+        action=f'check project item in installation guide ({project.id} - {project.name})',
+        created_time=timezone.now(),
+        managed_data={
+            'data': transform_data_to_mongo(project, include_fields=['id', 'name', 'project_guide_products'])
+        },
+    )
+    tracking.save()
+        
+    if user_reporter:
+        module='projects'
+        info=f'has checked item in installation guide for project {project.name}'
+        info_id=project.id
+        type='check_project_item_installation_guide'
+        create_notification(module, info_id, info, type, user_reporter['username'])
+            
+    return Response({
+        'message': 'Project updated successfully',
+        'data': json.loads(project.to_json())
+    }, status=201)
+    
     
 #############################################
 # CHANGE PROJECT RELEASE FORM

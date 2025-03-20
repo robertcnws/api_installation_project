@@ -296,7 +296,7 @@ export function KanbanDetails({
                               Finish Task
                             </Button>
                           ))}
-                        {(task && task.status === 'finished' && listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.superadmin)) && (
+                        {(task && task.status === 'finished' && listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) && (
                           <Button
                             variant="soft"
                             color="warning"

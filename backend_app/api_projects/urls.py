@@ -20,6 +20,7 @@ urlpatterns = [
     path('update/project/<str:id>/change-reference-number/', views.change_project_reference_number, name='change_project_reference_number'),
     path('update/project/<str:id>/change-release-form/', views.change_project_release_form, name='change_project_release_form'),
     path('update/project/<str:id>/change-installation-guide-form/', views.change_project_installation_guide_form, name='change_project_installation_guide_form'),
+    path('update/project/<str:id>/check-item-installation-guide/', views.check_project_item_installation_guide, name='check_project_item_installation_guide'),
     path('delete/project/<str:id>/', views.delete_project, name='delete_project'),
     path('delete/projects/', views.delete_projects, name='delete_projects'),
     path('delete/project/<str:id>/user/<str:userId>/', views.delete_project_user, name='delete_project_user'),
