@@ -7,10 +7,57 @@ from .models import (
     ProjectDefaultTask,
     ProjectNotificationUser,
     ProjectTracking,
+    ProjectDefaultGuideProduct,
 )
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 import json
+
+
+##########################################################################
+# ProjectDefaultGuideProduct
+##########################################################################
+
+def project_default_guide_product_saved(sender, document, **kwargs):
+    created = kwargs.get('created', False)
+    channel_layer = get_channel_layer()
+    event = {
+        'type': 'project_default_guide_product_update',
+        'message': {
+            'type': 'created' if created else 'updated',
+            "item": {
+                "id": str(document.id),
+                "name": document.name,
+                "price": document.price,
+                "description": document.description,
+                "isActive": document.is_active,
+                "createdTime": document.created_time,
+                "lastModifiedTime": document.last_modified_time,
+            }
+
+        }
+    }
+    async_to_sync(channel_layer.group_send)('project_default_guide_product', serialize_datetime(event))
+    
+
+def project_default_guide_product_deleted(sender, document, **kwargs):
+    channel_layer = get_channel_layer()
+    event = {
+        'type': 'project_default_guide_product_update',
+        'message': {
+            'type': 'deleted',
+            "item": {
+                "id": str(document.id),
+                "name": document.name,
+                "price": document.price,
+                "description": document.description,
+                "isActive": document.is_active,
+                "createdTime": document.created_time,
+                "lastModifiedTime": document.last_modified_time,
+            }
+        }
+    }
+    async_to_sync(channel_layer.group_send)('project_default_guide_product', serialize_datetime(event))
 
 ##########################################################################
 # ProjectStage
@@ -441,3 +488,5 @@ signals.post_save.connect(project_notification_user_saved, sender=ProjectNotific
 signals.post_delete.connect(project_notification_user_deleted, sender=ProjectNotificationUser)
 signals.post_save.connect(project_tracking_saved, sender=ProjectTracking)
 signals.post_delete.connect(project_tracking_deleted, sender=ProjectTracking)
+signals.post_save.connect(project_default_guide_product_saved, sender=ProjectDefaultGuideProduct)
+signals.post_delete.connect(project_default_guide_product_deleted, sender=ProjectDefaultGuideProduct)

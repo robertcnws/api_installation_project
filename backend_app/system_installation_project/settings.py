@@ -32,14 +32,18 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 REDIS_HOST = env('REDIS_HOST', default='localhost')
 
+LOGGING_LEVEL = env('LOGGING_LEVEL', default='WARNING')
+
+LOGGING_FILE = env('LOGGING_FILE', default='backend_app.log')
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'handlers': {
         'file': {
-            'level': 'DEBUG',
+            'level': LOGGING_LEVEL,
             'class': 'logging.FileHandler',
-            'filename': '/var/log/celery.log',
+            'filename': LOGGING_FILE,
             'formatter': 'verbose',
         },
     },
@@ -51,12 +55,12 @@ LOGGING = {
     'loggers': {
         'django': {
             'handlers': ['file'],
-            'level': 'DEBUG',
+            'level': LOGGING_LEVEL,
             'propagate': True,
         },
         'celery': {
             'handlers': ['file'],
-            'level': 'DEBUG',
+            'level': LOGGING_LEVEL,
             'propagate': True,
         },
     },
@@ -136,6 +140,7 @@ INSTALLED_APPS = [
     # 'api_projects',
     'api_projects.apps.ApiProjectsConfig',
     'api_projects_async_task_sequence',
+    'api_services.apps.ApiServicesConfig',
 ]
 
 MIDDLEWARE = [
@@ -308,6 +313,17 @@ ZOHO_ORG_ID = env('ZOHO_ORG_ID', default='')
 # PROJECTS
 PROJECT_WORK = env('PROJECT_WORK', default='Work')
 PROJECT_SCOPE = env('PROJECT_SCOPE', default='Scope')
+
+# TASKS
+TASK_START_INSTALLATION = env('TASK_START_INSTALLATION', default='Start Installation')
+TASK_FINISH_INSTALLATION = env('TASK_FINISH_INSTALLATION', default='Finish Installation')
+TASK_ASSIGN_INSTALLATION_CREW = env('TASK_ASSIGN_INSTALLATION_CREW', default='Assign Installation Crew')
+TASK_COORDINATE_INSTALLATION_DATE = env('TASK_COORDINATE_INSTALLATION_DATE', default='Coordinate Installation Date')
+TASK_COORDINATE_INSPECTION = env('TASK_COORDINATE_INSPECTION', default='Coordinate Inspection')
+TASK_ORDER_IS_READY_TO_PICK_UP = env('TASK_ORDER_IS_READY_TO_PICK_UP', default='Order is ready to pick up')
+TASK_PICK_UP_ORDER = env('TASK_PICK_UP_ORDER', default='Pick up Order')
+TASK_COMPLETE_SATISFACTION_FORM = env('TASK_COMPLETE_SATISFACTION_FORM', default='Complete Satisfaction Form')
+TASK_GENERATE_INSTALLATION_GUIDE = env('TASK_GENERATE_INSTALLATION_GUIDE', default='Generate Installation Guide')
 
 # MONGOENGINE
 

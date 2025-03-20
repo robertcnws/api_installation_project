@@ -62,7 +62,7 @@ export function TrackTableToolbar({ filters, onResetPage, dataFiltered, headersC
               fullWidth
               value={filters.state.name}
               onChange={handleFilterName}
-              placeholder={isListAll ? "Search by item (NAME, SKU, ID or STOCK ON HAND)..." : "Search by item SKU..."}
+              placeholder={isListAll ? "Search by item (NAME or DESCRIPTION)..." : "Search by item NAME..."}
               // disabled={dataFiltered?.length === 0}
               InputProps={{
                 startAdornment: (

@@ -93,6 +93,17 @@ export const CONFIG = {
     sgdForPanel96Price: import.meta.env.VITE_INSTALLATION_SGD_FOR_PANEL_96_PRICE ?? '',
     storefrontName: import.meta.env.VITE_INSTALLATION_STOREFRONT_NAME ?? '',
   },
+  tasks: {
+    startInstallation: import.meta.env.VITE_TASK_START_INSTALLATION ?? '',
+    finishInstallation: import.meta.env.VITE_TASK_FINISH_INSTALLATION ?? '',
+    assignInstallationCrew: import.meta.env.VITE_TASK_ASSIGN_INSTALLATION_CREW ?? '',
+    coordinateInstallationDate: import.meta.env.VITE_TASK_COORDINATE_INSTALLATION_DATE ?? '',
+    coordinateInspection: import.meta.env.VITE_TASK_COORDINATE_INSPECTION ?? '',
+    orderIsReadyToPickUp: import.meta.env.VITE_TASK_ORDER_IS_READY_TO_PICK_UP ?? '',
+    pickUpOrder: import.meta.env.VITE_TASK_PICK_UP_ORDER ?? '',
+    completeSatisfactionForm: import.meta.env.VITE_TASK_COMPLETE_SATISFACTION_FORM ?? '',
+    generateInstallationGuide: import.meta.env.VITE_TASK_GENERATE_INSTALLATION_GUIDE ?? '',
+  },
   // aws: {
   //   accessKeyId: import.meta.env.VITE_AWS_ACCESS_KEY_ID ?? '',
   //   secretAccessKey: import.meta.env.VITE_AWS_SECRET_ACCESS_KEY ?? '',

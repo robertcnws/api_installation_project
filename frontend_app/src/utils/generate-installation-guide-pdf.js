@@ -349,70 +349,19 @@ export const generateInstallationGuideFormReport = ({ currentProject, userLogged
     window.open(blobUrl, '_blank');
 }
 
-export const createScopeArray = ({ listItems }) => {
-    const scopeArray = [
-        {
-            id: 1,
-            name: CONFIG.installationGuide.windowUntil74Name,
-            price: CONFIG.installationGuide.windowUntil74Price,
-            quantity: 0,
-            predefined: true,
-        },
-        {
-            id: 2,
-            name: CONFIG.installationGuide.windowUntil111Name,
-            price: CONFIG.installationGuide.windowUntil111Price,
-            quantity: 0,
-            predefined: true,
-        },
-        {
-            id: 3,
-            name: CONFIG.installationGuide.fixedSideName,
-            price: CONFIG.installationGuide.fixedSidePrice,
-            quantity: 0,
-            predefined: true,
-        },
-        {
-            id: 4,
-            name: CONFIG.installationGuide.fdUntil39Name,
-            price: CONFIG.installationGuide.fdUntil39Price,
-            quantity: 0,
-            predefined: true,
-        },
-        {
-            id: 5,
-            name: CONFIG.installationGuide.fdDoubleUntil76Name,
-            price: CONFIG.installationGuide.fdDoubleUntil76Price,
-            quantity: 0,
-            predefined: true,
-        },
-        {
-            id: 6,
-            name: CONFIG.installationGuide.sgdForPanel72Name,
-            price: CONFIG.installationGuide.sgdForPanel72Price,
-            quantity: 0,
-            predefined: true,
-        },
-        {
-            id: 7,
-            name: CONFIG.installationGuide.sgdForPanel96Name,
-            price: CONFIG.installationGuide.sgdForPanel96Price,
-            quantity: 0,
-            predefined: true,
-        },
-        {
-            id: 8,
-            name: CONFIG.installationGuide.storefrontName,
-            price: 0,
-            quantity: 0,
-            predefined: true,
-        }
-    ];
+export const createScopeArray = ({ listItems, loadedDefaultGuideProducts }) => {
+    const scopeArray = loadedDefaultGuideProducts?.map((item) => ({
+        id: item.order,
+        name: item.name,
+        price: item.price,
+        quantity: 0,
+        predefined: true,
+    })) || [];
 
     listItems?.forEach((item) => {
         // const dimensions = extractDimensions(item.description);
         const propertiesJson = filteredDescriptionJson(item.description);
-        const dimensions = propertiesJson?.Size ? propertiesJson?.Size?.split(/[x'"]/i) : extractDimensions(item.description);
+        const dimensions = propertiesJson?.Size ? extractDimensions(item.description) : item.description ? extractDimensions(item.description) : null;
         const config = propertiesJson?.Config || propertiesJson?.config || propertiesJson?.Size || propertiesJson?.size;
         if (config?.length > 0) {
             scopeArray[2] = {
@@ -502,25 +451,74 @@ export const createScopeArray = ({ listItems }) => {
             });
         }
     });
-    
-    return scopeArray;
+
+    const finalArray = combineByName(scopeArray);
+
+    return combineByName(finalArray);
 }
+
+
+export function combineByName(arr) {
+    const grouped = arr.reduce((acc, cur) => {
+        const key = cur.name.trim().toLowerCase();
+        if (!acc[key]) {
+            acc[key] = { ...cur };
+        } else {
+            acc[key].quantity = Number(acc[key].quantity) + Number(cur.quantity);
+        }
+        return acc;
+    }, {});
+    return Object.values(grouped);
+}
+
 
 export function extractDimensions(text) {
     const patterns = [
-      /(\d+(?:\.\d+)?)(?:["])?\s*[xX]\s*(\d+(?:\.\d+)?)(?:["])?/,
-      /(\d+(?:\.\d+)?)(?:["])\s+(\d+(?:\.\d+)?)(?:["])/
+        // Formato estándar: 36.0" x 48.0" o 36.0x48.0 o 36.0 x 48.0 (con o sin comillas)
+        /(\d+(?:\.\d+)?)(?:["])?\s*[xX]\s*(\d+(?:\.\d+)?)(?:["])?/,
+        // Variante sin 'x', solo con comillas: 36.0" 48.0"
+        /(\d+(?:\.\d+)?)(?:["])\s+(\d+(?:\.\d+)?)(?:["])/,
+        // Formato con "W=" y "H1=" (que pueden incluir fracciones), por ejemplo: "W=48 X H1=57 1/8"
+        /W\s*=\s*([\d\s/]+)\s*[xX]\s*H1\s*=\s*([\d\s/]+)/i,
+        // Nuevo patrón: opcionalmente "Mg" seguido de dígitos y espacios, luego un número con comillas, espacio, otro número con comillas.
+        /(?:Mg\d+\s+)?(\d+(?:\.\d+)?)(?:["])\s+(\d+(?:\.\d+)?)(?:["])/i,
     ];
-    
-    const matches = patterns.map((pattern) => text.match(pattern));
-    
-    const match = matches.find((result) => result !== null);
-    
+
+    // Función auxiliar para convertir una cadena con fracción a número.
+    // Ejemplo: "57 1/8" => 57 + (1/8) = 57.125
+    const parseFraction = (str) => {
+        str = str.trim();
+        if (str.includes(' ') && str.includes('/')) {
+            const parts = str.split(/\s+/);
+            if (parts.length === 2) {
+                const whole = parseFloat(parts[0]);
+                const fractionParts = parts[1].split('/');
+                if (fractionParts.length === 2) {
+                    const numerator = parseFloat(fractionParts[0]);
+                    const denominator = parseFloat(fractionParts[1]);
+                    if (!Number.isNaN(whole) && !Number.isNaN(numerator) && !Number.isNaN(denominator) && denominator !== 0) {
+                        return whole + numerator / denominator;
+                    }
+                }
+            }
+        }
+        return parseFloat(str);
+    };
+
+    // Recorremos los patrones usando map() y find() para obtener el primer match válido
+    const match = patterns
+        .map((pattern) => text.match(pattern))
+        .find((result) => result !== null);
+
     if (match) {
-      return [parseFloat(match[1]), parseFloat(match[2])];
+        // match[1] y match[2] contienen los valores capturados
+        const width = parseFraction(match[1]);
+        const height = parseFraction(match[2]);
+        return [width, height];
     }
     return null;
-  }
+}
+
 
 
 function countChar(str, char) {

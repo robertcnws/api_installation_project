@@ -101,10 +101,20 @@ export function KanbanView({
 
   const [defaultTasks, setDefaultTasks] = useState(null);
 
+  const tasksBeforeNoMatter = useMemo(() => [
+    CONFIG.tasks.orderIsReadyToPickUp.toLowerCase(), CONFIG.tasks.pickUpOrder.toLowerCase()
+  ], []);
+
+  // console.log('tasksBeforeNoMatter', tasksBeforeNoMatter);
+
   useEffect(() => {
     if (tasks) {
+      const initialTasks = tasks.map((task) => ({
+        ...task,
+        beforeNoMatter: tasksBeforeNoMatter.includes(task.project_default_task.name.toLowerCase()),
+      }));
       if (isInstaller(userLogged?.data?.user_role?.name)) {
-        const selectedTasks = tasks.filter(
+        const selectedTasks = initialTasks.filter(
           (task) => task.project_default_task.project_stage.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
         );
         const finalTasks = selectedTasks.filter(
@@ -116,10 +126,10 @@ export function KanbanView({
         );
         setDefaultTasks(withUsersTasks);
       } else {
-        setDefaultTasks(tasks);
+        setDefaultTasks(initialTasks);
       }
     }
-  }, [tasks, userLogged]);
+  }, [tasks, userLogged, tasksBeforeNoMatter]);
 
   const newBoard = useMemo(
     () => adaptToKanbanData(defaultTasks, stages),

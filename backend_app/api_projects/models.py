@@ -199,7 +199,7 @@ class ProjectUser(Document):
 
 class ProjectNotification(Document):
     module = StringField(max_length=255, null=True)
-    info = StringField(max_length=255, null=True)
+    info = StringField(null=True)
     info_id = StringField(max_length=255, null=True)
     created_time = DateTimeField(default=timezone.now, null=True)
     last_modified_time = DateTimeField(default=timezone.now, null=True)
@@ -413,7 +413,7 @@ class ProjectPermissions(Document):
     
 class ProjectTracking(Document):
     user_reporter = DynamicField(required=True)
-    action = StringField(max_length=255, required=True)
+    action = StringField(required=True)
     created_time = DateTimeField(default=timezone.now, null=True)
     managed_data = DynamicField(null=True)
     
@@ -428,3 +428,25 @@ class ProjectTracking(Document):
     
     def __str__(self):
         return self.action
+    
+class ProjectDefaultGuideProduct(Document):
+    name = StringField(max_length=255, required=True)
+    description = StringField(max_length=255, null=True)
+    price = FloatField(default=0.0)
+    is_active = BooleanField(default=True)
+    order = IntField(default=0)
+    created_time = DateTimeField(default=timezone.now, null=True)
+    last_modified_time = DateTimeField(default=timezone.now, null=True)
+    
+    meta = {
+        'collection': 'project_default_guide_product',
+        'ordering': ['order'],
+        'indexes': [
+            'name', 'order', 'created_time', 'last_modified_time', 'is_active'
+        ],
+        'verbose_name': 'Project Default Guide Product',
+        'verbose_name_plural': 'Project Default Guide Products'
+    }
+
+    def __str__(self):
+        return self.name

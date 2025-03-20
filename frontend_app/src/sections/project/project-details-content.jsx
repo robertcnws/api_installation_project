@@ -1,4 +1,5 @@
 import axios from 'axios';
+import dayjs from 'dayjs';
 import { useMemo, useState, useEffect, useContext, useCallback } from 'react';
 
 import Card from '@mui/material/Card';
@@ -8,7 +9,7 @@ import Grid from '@mui/material/Unstable_Grid2';
 import Typography from '@mui/material/Typography';
 import { Box, Table, Switch, TableRow, TableBody, TableCell, IconButton } from '@mui/material';
 
-import { fDate, fDateTime } from 'src/utils/format-time';
+import { fDate, fIsAfter, fDateTime } from 'src/utils/format-time';
 import { getProjectInstaller } from 'src/utils/project-tasks-utils';
 import { isInstaller, verifyPermissions, listRolesAndSubroles } from 'src/utils/check-permissions';
 
@@ -29,6 +30,7 @@ import { ProjectEditModalUserManagerView } from './view/project-edit-modal-user-
 import { ProjectDetailsContentOverviewInstaller } from './project-details-content-overview-installer';
 import { ProjectDetailsChartSemicircleProject } from './view/project-details-chart-semicircle-project';
 import { ProjectEditModalInstallationTeamView } from './view/project-edit-modal-installation-team-view';
+
 
 
 
@@ -254,7 +256,37 @@ export function ProjectDetailsContent({
             <TableCell>
               <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, justifyContent: 'space-between' }}>
                 {project?.startDate ? (
-                  <Typography variant="subtitle2" color="text.primary">
+                  <Typography
+                    variant="subtitle2"
+                    color={
+                      project?.endDate
+                        ? (
+                          (fIsAfter(dayjs(new Date()), dayjs(project?.endDate).format('YYYY-MM-DD')) &&
+                            (
+                              project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.preparation.toLowerCase()) ||
+                              project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.coordination.toLowerCase()) ||
+                              project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.installation.toLowerCase())
+                            )
+                          )
+                            ? 'error.main'
+                            : 'text.primary'
+                        )
+                        : 'text.primary'
+                    }
+                    sx={{
+                      fontWeight: project?.endDate ? (
+                        (fIsAfter(dayjs(new Date()), dayjs(project?.endDate).format('YYYY-MM-DD')) &&
+                          (
+                            project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.preparation.toLowerCase()) ||
+                            project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.coordination.toLowerCase()) ||
+                            project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.installation.toLowerCase())
+                          )
+                        )
+                          ? 'bold'
+                          : 'normal'
+                      ) : 'normal'
+                    }}
+                  >
                     {fDate(project?.startDate)}
                   </Typography>
                 ) : (
@@ -306,7 +338,37 @@ export function ProjectDetailsContent({
             <TableCell>
               <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, justifyContent: 'space-between' }}>
                 {project?.endDate ? (
-                  <Typography variant="subtitle2" color="text.primary">
+                  <Typography
+                    variant="subtitle2"
+                    color={
+                      project?.endDate
+                        ? (
+                          (fIsAfter(dayjs(new Date()), dayjs(project?.endDate).format('YYYY-MM-DD')) &&
+                            (
+                              project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.preparation.toLowerCase()) ||
+                              project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.coordination.toLowerCase()) ||
+                              project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.installation.toLowerCase())
+                            )
+                          )
+                            ? 'error.main'
+                            : 'text.primary'
+                        )
+                        : 'text.primary'
+                    }
+                    sx={{
+                      fontWeight: project?.endDate ? (
+                        (fIsAfter(dayjs(new Date()), dayjs(project?.endDate).format('YYYY-MM-DD')) &&
+                          (
+                            project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.preparation.toLowerCase()) ||
+                            project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.coordination.toLowerCase()) ||
+                            project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.installation.toLowerCase())
+                          )
+                        )
+                          ? 'bold'
+                          : 'normal'
+                      ) : 'normal'
+                    }}
+                  >
                     {fDate(project?.endDate)}
                   </Typography>
                 ) : (

@@ -84,7 +84,7 @@ export function ProjectDetailsContentOverview({
             value: project?.salesOrder?.salesorder_number,
             icon: <Iconify
               icon="fluent:book-number-24-regular"
-              sx={{ color: project?.salesOrder?.salesorder_number?.length > 0 ? 'text.primary' : 'warning.main' }}
+              sx={{ color: 'text.primary' }}
             />,
             hasValue: project?.salesOrder?.salesorder_number?.length > 0,
           },
@@ -93,7 +93,7 @@ export function ProjectDetailsContentOverview({
             value: project?.salesOrder?.reference_number ? project?.salesOrder?.reference_number : 'No REF Number',
             icon: <Iconify
               icon="carbon:term-reference"
-              sx={{ color: project?.salesOrder?.reference_number?.length > 0 ? 'text.primary' : 'warning.main' }}
+              sx={{ color: 'text.primary' }}
             />,
             hasValue: project?.salesOrder?.reference_number?.length > 0,
           },
@@ -102,7 +102,7 @@ export function ProjectDetailsContentOverview({
             value: project?.salesOrder?.customer_name,
             icon: <Iconify
               icon="ix:customer-filled"
-              sx={{ color: project?.salesOrder?.customer_name?.length > 0 ? 'text.primary' : 'warning.main' }}
+              sx={{ color: 'text.primary' }}
             />,
             hasValue: project?.salesOrder?.customer_name?.length > 0,
           },
@@ -111,34 +111,36 @@ export function ProjectDetailsContentOverview({
             value: project?.address,
             icon: <Iconify
               icon="hugeicons:address-book"
-              sx={{ color: project?.address?.length > 0 ? 'text.primary' : 'warning.main' }}
+              sx={{ color: 'text.primary' }}
             />,
             hasValue: project?.address?.length > 0,
           },
           {
             label: 'Phone Number',
-            value: project?.salesOrder?.customer?.phone || project?.salesOrder?.customer?.mobile,
+            value: (project?.salesOrder?.customer || project?.salesOrder?.contact_person_details)?.phone ||
+              (project?.salesOrder?.customer || project?.salesOrder?.contact_person_details)?.mobile,
             icon: <Iconify
               icon="icon-park:phone"
-              sx={{ color: (project?.salesOrder?.customer?.phone || project?.salesOrder?.customer?.mobile) ? 'text.primary' : 'warning.main' }}
+              sx={{ color: 'text.primary' }}
             />,
-            hasValue: project?.salesOrder?.customer?.phone?.length > 0 || project?.salesOrder?.customer?.mobile?.length > 0,
+            hasValue: (project?.salesOrder?.customer || project?.salesOrder?.contact_person_details)?.phone?.length > 0 ||
+              (project?.salesOrder?.customer || project?.salesOrder?.contact_person_details)?.mobile?.length > 0,
           },
           {
             label: 'Email',
-            value: project?.salesOrder?.customer?.email,
+            value: (project?.salesOrder?.customer || project?.salesOrder?.contact_person_details)?.email,
             icon: <Iconify
               icon="mage:email-fill"
-              sx={{ color: project?.salesOrder?.customer?.email?.length > 0 ? 'text.primary' : 'warning.main' }}
+              sx={{ color: 'text.primary' }}
             />,
-            hasValue: project?.salesOrder?.customer?.email?.length > 0,
+            hasValue: (project?.salesOrder?.customer || project?.salesOrder?.contact_person_details)?.email?.length > 0,
           },
           {
             label: 'Order Date',
             value: fDate(project?.salesOrder?.date),
             icon: <Iconify
               icon="solar:calendar-date-bold"
-              sx={{ color: project?.salesOrder?.date?.length > 0 ? 'text.primary' : 'warning.main' }}
+              sx={{ color: 'text.primary' }}
             />,
             hasValue: project?.salesOrder?.date?.length > 0,
           },
@@ -147,7 +149,7 @@ export function ProjectDetailsContentOverview({
               Total Qty: ${items?.reduce((total, product) => total + product.quantity, 0)}`,
             icon: <Iconify
               icon="fluent-mdl2:product-list"
-              sx={{ color: items?.length > 0 ? 'text.primary' : 'warning.main' }}
+              sx={{ color: 'text.primary' }}
             />,
             hasValue: items?.length > 0,
             value: (
@@ -215,10 +217,10 @@ export function ProjectDetailsContentOverview({
                       : item.value
                     : item.value
                 }
-                primaryTypographyProps={{ typography: 'body2', color: item.hasValue ? 'text.secondary' : 'warning.main', mb: 0.5 }}
+                primaryTypographyProps={{ typography: 'body2', color: 'text.secondary', mb: 0.5 }}
                 secondaryTypographyProps={{
                   component: 'span',
-                  color: item.hasValue ? 'text.secondary' : 'warning.main',
+                  color: 'text.secondary',
                   typography: 'subtitle2',
                 }}
               />
@@ -268,10 +270,12 @@ export function ProjectDetailsContentOverview({
                 CONFIG.permissions.moduleProjects,
                 CONFIG.permissions.operationEditPhoneNumber
               ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
-                  <Tooltip title={(project?.salesOrder?.customer.phone || project?.salesOrder?.customer.mobile) ? "Edit Phone Number" : "Add Phone Number"} arrow>
+                  <Tooltip title={((project?.salesOrder?.customer || project?.salesOrder?.contact_person_details)?.phone || 
+                  (project?.salesOrder?.customer || project?.salesOrder?.contact_person_details)?.mobile) ? "Edit Phone Number" : "Add Phone Number"} arrow>
                     <IconButton
                       variant="text"
-                      color={(project?.salesOrder?.customer.phone || project?.salesOrder?.customer.mobile) ? "primary" : "warning"}
+                      color={((project?.salesOrder?.customer || project?.salesOrder?.contact_person_details)?.phone || 
+                        (project?.salesOrder?.customer || project?.salesOrder?.contact_person_details)?.mobile) ? "primary" : "warning"}
                       size="small"
                       sx={{
                         ml: 1,

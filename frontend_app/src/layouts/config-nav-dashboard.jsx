@@ -50,6 +50,9 @@ const ICONS = {
   radar: icon('ic-radar'),
   config: icon('ic-config'),
   track: icon('ic-track'),
+  defaultGuideProduct: icon('ic-guide-product'),
+  service: icon('ic-service'),
+  serviceIssue: icon('ic-service-issue'),
 };
 
 const userLogged = JSON.parse(sessionStorage.getItem('userLogged'));
@@ -96,6 +99,21 @@ export const navData = () => [
       },
       ...(userLogged && listRolesAndSubroles(userLogged?.data.user_role.name).includes(CONFIG.roles.administrator) ? [
         {
+          title: 'Services',
+          path: paths.dashboard.service.root,
+          icon: ICONS.service,
+          children: [
+            // {
+            //   title: 'List',
+            //   path: paths.dashboard.service.list,
+            // },
+            {
+              title: 'Create',
+              path: paths.dashboard.service.new
+            },
+          ],
+        },
+        {
           title: 'Sales Orders',
           path: paths.dashboard.salesOrder.root,
           icon: ICONS.salesOrder,
@@ -103,9 +121,6 @@ export const navData = () => [
             {
               title: 'List',
               path: paths.dashboard.salesOrder.list,
-              onClick: () => {
-                alert('List');
-              }
             },
           ],
         },
@@ -128,6 +143,22 @@ export const navData = () => [
           icon: ICONS.config,
           open: true,
           children: [
+            {
+              title: 'Default Guide Products',
+              path: paths.dashboard.defaultGuideProduct.root,
+              icon: ICONS.defaultGuideProduct,
+              open: true,
+              children: [
+                {
+                  title: 'List',
+                  path: paths.dashboard.defaultGuideProduct.root,
+                },
+                {
+                  title: 'Create',
+                  path: paths.dashboard.defaultGuideProduct.new
+                },
+              ],
+            },
             {
               title: 'Installation Stages',
               path: paths.dashboard.stage.root,
@@ -173,6 +204,22 @@ export const navData = () => [
                 {
                   title: 'Create',
                   path: paths.dashboard.task.new
+                },
+              ],
+            },
+            {
+              title: 'Service Issues',
+              path: paths.dashboard.serviceIssue.root,
+              icon: ICONS.serviceIssue,
+              open: true,
+              children: [
+                {
+                  title: 'List',
+                  path: paths.dashboard.serviceIssue.root,
+                },
+                {
+                  title: 'Create',
+                  path: paths.dashboard.serviceIssue.new
                 },
               ],
             },

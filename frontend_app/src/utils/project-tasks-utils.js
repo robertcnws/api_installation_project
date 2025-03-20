@@ -88,6 +88,15 @@ export const filteredDescription = (description) => description
     .join('\n');
 
 
+export const filteredSomeDescription = (description, someFields) => description
+    .split('\n')
+    .filter(line => {
+        const parts = line.split(':');
+        return parts.length < 2 || (parts[1].trim() !== '' && someFields.some(field => parts[0].trim().toLowerCase().includes(field.toLowerCase())));
+    })
+    .join('\n');
+
+
 export const filteredDescriptionJson = (description) => description
     .split('\n')
     .map(line => line.split(':'))

@@ -10,10 +10,18 @@ const httpLinkUsers = new HttpLink({
   uri: `${CONFIG.apiUrl}/users/graphql/`,
 });
 
+const httpLinkServices = new HttpLink({
+  uri: `${CONFIG.apiUrl}/services/graphql/`,
+});
+
 const splitLink = split(
   (operation) => operation.getContext().clientName === 'Projects',
   httpLinkProjects,
-  httpLinkUsers
+  split(
+    (operation) => operation.getContext().clientName === 'Users',
+    httpLinkUsers,
+    httpLinkServices
+  )
 );
 
 const client = new ApolloClient({

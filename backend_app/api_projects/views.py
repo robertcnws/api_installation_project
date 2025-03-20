@@ -5,6 +5,8 @@ from pymongo import MongoClient
 from bson import json_util
 from django.utils import timezone
 from django.conf import settings
+from api_authorization.models import LoginUser
+from api_users.models import UserRole
 from .models import (
     Project, 
     ProjectAttachment, 
@@ -17,7 +19,8 @@ from .models import (
     ProjectDefaultTask,
     ProjectTaskComment,
     ProjectNotification,
-    ProjectNotificationUser
+    ProjectNotificationUser,
+    ProjectDefaultGuideProduct,
 )
 from .s3_utils import (
     upload_attachment_to_s3, 
@@ -34,7 +37,8 @@ from .data_util import (
     fix_order_after_edit,
     get_current_stage_from_tasks,
     to_aware,
-    findTaskInStage
+    find_task_in_stage,
+    transform_dict_to_camelcase,
 )
 import zipfile
 from django.http import HttpResponse
@@ -179,6 +183,7 @@ def create_project(request):
     user_manager = data.get('userManager', None)
     
     if user_manager:
+        user_manager['project_permissions'] = [permission]
         users_assignees.append(user_manager)
     
     has_permission_str = data.get('hasPermission', 'false') if data.get('hasPermission') else None
@@ -234,6 +239,30 @@ def create_project(request):
             'project_task_attachments': [],
         }
         list_default_tasks_info.append(info)
+        
+    warehouse_role = UserRole.objects(name__iexact='warehouse staff').first()
+        
+    warehouse_users = LoginUser.objects.all()
+    
+    warehouse_users = [user for user in warehouse_users if user.user_role.get('id') == warehouse_role.id]
+        
+    def add_name_field(user_obj):
+        transformed = transform_data_to_mongo(user_obj, exclude_fields=['password'])
+        transformed = transform_dict_to_camelcase(transformed)
+        first = transformed.get('firstName') or (user_obj.get('first_name') if isinstance(user_obj, dict) else '')
+        last  = transformed.get('lastName')  or (user_obj.get('last_name') if isinstance(user_obj, dict) else '')
+        transformed['name'] = f"{first} {last}".strip()
+        transformed['project_permissions'] = [permission]
+        return transformed
+        
+    for default_task in list_default_tasks_info:
+        if default_task['project_default_task']['name'].lower() == settings.TASK_ORDER_IS_READY_TO_PICK_UP.lower() or \
+            default_task['project_default_task']['name'].lower() == settings.TASK_PICK_UP_ORDER.lower():
+                assignees = [add_name_field(user) for user in warehouse_users]
+                default_task['users_assignees'] = assignees
+                
+    if isinstance(users_assignees, list):
+        users_assignees.extend(add_name_field(user) for user in warehouse_users)
 
     try:
         project = Project(
@@ -349,6 +378,36 @@ def create_projects(request):
             'project_task_attachments': [],
         }
         list_default_tasks_info.append(info)
+        
+    
+    warehouse_role = UserRole.objects(name__iexact='warehouse staff').first()
+        
+    warehouse_users = LoginUser.objects.all()
+    
+    warehouse_users = [user for user in warehouse_users if user.user_role.get('id') == str(warehouse_role.id)]
+    
+    def add_name_field(user_obj):
+        transformed = transform_data_to_mongo(user_obj, exclude_fields=['password'])
+        transformed = transform_dict_to_camelcase(transformed)
+        first = transformed.get('firstName') or (user_obj.get('first_name') if isinstance(user_obj, dict) else '')
+        last  = transformed.get('lastName')  or (user_obj.get('last_name') if isinstance(user_obj, dict) else '')
+        transformed['name'] = f"{first} {last}".strip()
+        transformed['project_permissions'] = [permission]
+        return transformed
+        
+    for default_task in list_default_tasks_info:
+        if default_task['project_default_task']['name'].lower() == settings.TASK_ORDER_IS_READY_TO_PICK_UP.lower() or \
+            default_task['project_default_task']['name'].lower() == settings.TASK_PICK_UP_ORDER.lower():
+                assignees = [add_name_field(user) for user in warehouse_users]
+                default_task['users_assignees'] = assignees
+                
+    if user_manager:    
+        user_manager['project_permissions'] = [permission]
+                  
+    users_assignees = [user_manager] if user_manager else []
+    
+    users_assignees.extend(add_name_field(user) for user in warehouse_users)
+            
     
     for sales_order in sales_orders:
 
@@ -490,6 +549,20 @@ def update_project(request, id):
     last_attachments.extend(project_attachments)
             
     last_attachments = sorted(last_attachments, key=lambda x: x['name'], reverse=True)
+    
+    if start_date or inspection_date:
+        all_tasks = project.project_default_tasks if project.project_default_tasks else []
+        for task in all_tasks:
+            if start_date and settings.TASK_COORDINATE_INSTALLATION_DATE.lower() in task['project_default_task']['name'].lower():
+                task['status'] = 'finished'
+                task['percentage'] = 100
+                task['last_modified_time'] = timezone.now()
+            if inspection_date and settings.TASK_COORDINATE_INSPECTION.lower() in task['project_default_task']['name'].lower():
+                task['status'] = 'finished'
+                task['percentage'] = 100
+                task['last_modified_time'] = timezone.now()
+        project.project_default_tasks = all_tasks
+    
     
     project.name = data.get('name', project.name) if data.get('name') else project.name
     project.description = data.get('description', project.description) if data.get('description') else project.description
@@ -839,6 +912,15 @@ def change_project_release_form(request, id):
     project.feedback = data.get('feedback', project.feedback) if data.get('feedback') else project.feedback
     project.last_modified_time = timezone.now()
     project.user_reporter = user_reporter if user_reporter else project.user_reporter
+    
+    all_tasks = project.project_default_tasks if project.project_default_tasks else []
+    for task in all_tasks:
+        if settings.TASK_COMPLETE_SATISFACTION_FORM.lower() in task['project_default_task']['name'].lower():
+            task['status'] = 'finished'
+            task['percentage'] = 100
+            task['last_modified_time'] = timezone.now()
+            
+    project.project_default_tasks = all_tasks
         
     project.save()
     
@@ -900,6 +982,15 @@ def change_project_installation_guide_form(request, id):
     project.project_guide_products = project_guide_products
     project.last_modified_time = timezone.now()
     project.user_reporter = user_reporter if user_reporter else project.user_reporter
+    
+    all_tasks = project.project_default_tasks if project.project_default_tasks else []
+    for task in all_tasks:
+        if settings.TASK_GENERATE_INSTALLATION_GUIDE.lower() in task['project_default_task']['name'].lower():
+            task['status'] = 'finished'
+            task['percentage'] = 100
+            task['last_modified_time'] = timezone.now()
+    
+    project.project_default_tasks = all_tasks
         
     project.save()
     
@@ -2140,31 +2231,52 @@ def change_status_project_default_task(request, projectId, id):
         task['user_reporter'] = user_reporter
         task['last_modified_time'] = timezone.now()
         
-        def get_next_task(task, all_tasks, has_permission):
-            if has_permission:
-                return next(
-                    (tt for tt in all_tasks if tt['project_default_task']['order'] == task['project_default_task']['order'] + 1),
-                    None
-                )
-            else:
-                last_task = findTaskInStage(all_tasks, 'Installation', position='last')
-                if str(last_task['project_default_task']['_id']) == str(task['project_default_task']['_id']):
-                    return findTaskInStage(all_tasks, 'Closing')
-                else:
-                    return next(
-                        (tt for tt in all_tasks if tt['project_default_task']['order'] == task['project_default_task']['order'] + 1),
-                        None
-                    )
+        not_started_tasks = [t for t in all_tasks if t['status'] == 'not started' and t['project_default_task']['order'] > task['project_default_task']['order']]
+        # not_started_tasks.append(task)
+        if not project.has_permission:
+            not_started_tasks = [t for t in not_started_tasks if t['project_default_task']['project_stage']['name'] != 'Permission']
+            
+        sorted_tasks = sorted(not_started_tasks, key=lambda tt: tt['project_default_task']['order'])
+        
+        def get_next_task(task, sorted_tasks):
+            return next(
+                (tt for tt in sorted_tasks if tt['project_default_task']['order'] > task['project_default_task']['order']),
+                None
+            )
+            # if has_permission:
+            #     return next(
+            #         (tt for tt in sorted_tasks if tt['project_default_task']['order'] > task['project_default_task']['order']),
+            #         None
+            #     )
+            # else:
+            #     last_task = find_task_in_stage(sorted_tasks, 'Installation', position='last')
+            #     print('last task name', last_task['project_default_task']['name'])
+            #     print('task name', task['project_default_task']['name'])
+            #     if str(last_task['project_default_task']['_id']) == str(task['project_default_task']['_id']):
+            #         return find_task_in_stage(sorted_tasks, 'Closing')
+            #     else:
+            #         return next(
+            #             (tt for tt in sorted_tasks if tt['project_default_task']['order'] > task['project_default_task']['order']),
+            #             None
+            #         )
         
         if status == 'finished':
-            next_task = get_next_task(task, all_tasks, project.has_permission)
+            next_task = get_next_task(task, sorted_tasks)
+            print('next name', next_task)
             if next_task and next_task['status'] == 'not started':
-                next_task['status'] = 'in progress'
-                next_task['percentage'] = 50
-                next_task['user_reporter'] = user_reporter
-                next_task['last_modified_time'] = timezone.now()
-                all_tasks = [t for t in all_tasks if str(t['project_default_task']['_id']) != str(next_task['project_default_task']['_id'])]
-                all_tasks.append(next_task)
+                less_ordered_tasks = [t for t in all_tasks if t['project_default_task']['order'] < next_task['project_default_task']['order']]
+                if not project.has_permission:
+                    less_ordered_tasks = [t for t in less_ordered_tasks if t['project_default_task']['project_stage']['name'] != 'Permission']
+                print('less ordered tasks', less_ordered_tasks)
+                unfinished_tasks = [t for t in less_ordered_tasks if t['status'] != 'finished']
+                print('unfinished tasks', unfinished_tasks)
+                if not unfinished_tasks:
+                    next_task['status'] = 'in progress'
+                    next_task['percentage'] = 50
+                    next_task['user_reporter'] = user_reporter
+                    next_task['last_modified_time'] = timezone.now()
+                    all_tasks = [t for t in all_tasks if str(t['project_default_task']['_id']) != str(next_task['project_default_task']['_id'])]
+                    all_tasks.append(next_task)
         
         all_tasks = [task for task in all_tasks if str(task['project_default_task']['_id']) != id]
         all_tasks.append(task)
@@ -2307,11 +2419,45 @@ def change_installer_project(request, id):
             if isinstance(task.get('project_default_task', {}).get('project_stage', {}), dict):
                 if task.get('project_default_task', {}).get('project_stage', {}).get('name', '') == settings.INSTALLATION_STAGE:
                     name = task.get('project_default_task', {}).get('name', '').lower()
-                    if 'start' in name or 'finish' in name or 'complete' in name:
+                    if settings.TASK_START_INSTALLATION.lower() in name or \
+                        settings.TASK_FINISH_INSTALLATION.lower() in name or \
+                        settings.TASK_COMPLETE_SATISFACTION_FORM.lower() in name:
                         if installer:
                             task['users_assignees'] = [installer]
                             task['user_reporter'] = user_reporter
                             task['last_modified_time'] = timezone.now()
+                            
+        for task in all_tasks:
+            name = task.get('project_default_task', {}).get('name', '').lower()
+            if settings.TASK_ASSIGN_INSTALLATION_CREW.lower() in name:
+                if installer:
+                    task['status'] = 'finished'
+                    task['percentage'] = 100
+                    task['user_reporter'] = user_reporter
+                    task['last_modified_time'] = timezone.now()
+                    
+                    not_started_tasks = [t for t in all_tasks if t['status'] == 'not started' and t['project_default_task']['order'] > task['project_default_task']['order']]
+                    
+                    if not project.has_permission:
+                        not_started_tasks = [t for t in not_started_tasks if t['project_default_task']['project_stage']['name'] != 'Permission']
+                        
+                    sorted_tasks = sorted(not_started_tasks, key=lambda tt: tt['project_default_task']['order'])
+                    
+                    def get_next_task(task, sorted_tasks):
+                        return next(
+                            (tt for tt in sorted_tasks if tt['project_default_task']['order'] > task['project_default_task']['order']),
+                            None
+                        )
+                                
+                    next_task = get_next_task(task, sorted_tasks)
+                    
+                    if next_task:
+                        next_task['status'] = 'in progress'
+                        next_task['percentage'] = 50
+                        next_task['user_reporter'] = user_reporter
+                        next_task['last_modified_time'] = timezone.now()
+                        all_tasks = [t for t in all_tasks if str(t['project_default_task']['_id']) != str(next_task['project_default_task']['_id'])]
+                        all_tasks.append(next_task)
                            
         sorted_tasks = sorted(all_tasks, key=lambda x: x['project_default_task']['order'], reverse=True)
         
@@ -2707,6 +2853,184 @@ def delete_project_comment(request, id, projectId):
         'data': json.loads(project.to_json())
     }, status=201)
     
+    
+#############################################
+# CREATE DEFAULT GUIDE PRODUCT
+#############################################
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def create_default_guide_product(request):
+    data = request.data
+    user_reporter = data.get('userReporter', None)
+    try:
+        name = data.get('name')
+        description = data.get('description')
+        order = data.get('order', 0)
+        price = data.get('price', 0)
+        product = ProjectDefaultGuideProduct.objects(name=name).first()
+        if product:
+            return Response({'error': 'Default guide product already exists'}, status=404)
+        product = ProjectDefaultGuideProduct.objects(order=order).first()
+        if product:
+            return Response({'error': 'Default guide product with this order already exists'}, status=404)
+        product = ProjectDefaultGuideProduct(
+            name=name,
+            order=order,
+            price=price,    
+            description=description,
+            created_time=timezone.now(),
+            last_modified_time=timezone.now()
+        )
+        product.save()
+        tracking_info = transform_data_to_mongo(product)
+        tracking = ProjectTracking(
+            user_reporter=user_reporter,
+            action=f'create default guide product ({tracking_info["id"]} - {tracking_info["name"]})',
+            created_time=timezone.now(),
+            managed_data={
+                'data': tracking_info
+            },
+        )
+        tracking.save()
+        if user_reporter:
+            module='default_guide_products'
+            info=f'has created new default guide product {product.name}'
+            info_id=product.id
+            type='create_default_guide_product'
+            create_notification(module, info_id, info, type, user_reporter['username'])
+        return Response({'message': 'Default guide product created successfully'})
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+    
+    
+#############################################
+# EDIT DEFAULT GUIDE PRODUCT
+#############################################
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def edit_default_guide_product(request, id):
+    data = request.data
+    user_reporter = data.get('userReporter', None)
+    try:
+        name = data.get('name')
+        description = data.get('description')
+        order = data.get('order', 0)
+        price = data.get('price', 0)
+        product = ProjectDefaultGuideProduct.objects(name=name).first()
+        if product and str(product.id) != id:
+            return Response({'error': 'Default guide product already exists'}, status=404)
+        product = ProjectDefaultGuideProduct.objects(order=order).first()
+        if product and str(product.id) != id:
+            return Response({'error': 'Default guide product with this order already exists'}, status=404)
+        product = ProjectDefaultGuideProduct.objects(id=id).first()
+        if not product:
+            return Response({'error': 'Stage not found'}, status=404)
+        product.name = name
+        product.price = price
+        product.description = description
+        product.order = order
+        product.save()
+        tracking_info = transform_data_to_mongo(product)
+        tracking = ProjectTracking(
+            user_reporter=user_reporter,
+            action=f'update default guide product ({tracking_info["id"]} - {tracking_info["name"]})',
+            created_time=timezone.now(),
+            managed_data={
+                'data': tracking_info
+            },
+        )
+        tracking.save()
+        if user_reporter:
+            module='default_guide_products'
+            info=f'has updated default guide product {product.name}'
+            info_id=product.id
+            type='update_default_guide_product'
+            create_notification(module, info_id, info, type, user_reporter['username'])
+        return Response({'message': 'Default guide product updated successfully'})
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+    
+
+#############################################
+# DELETE DEFAULT GUIDE PRODUCT
+#############################################
+
+@api_view(['DELETE'])
+@permission_classes([AllowAny])
+def delete_default_guide_product(request, id):
+    data = request.data
+    user_reporter = data.get('userReporter', None)
+    try:
+        product = ProjectDefaultGuideProduct.objects(id=id).first()
+        if not product:
+            return Response({'error': 'Default guide product not found'}, status=404)
+        tracking_info = transform_data_to_mongo(product)
+        
+        tracking = ProjectTracking(
+            user_reporter=user_reporter,
+            action=f'delete default guide product ({tracking_info["id"]} - {tracking_info["name"]})',
+            created_time=timezone.now(),
+            managed_data={
+                'data': tracking_info
+            },
+        )
+        tracking.save()
+        
+        if user_reporter:
+            module='default_guide_products'
+            info=f'has deleted default guide product {product.name}'
+            info_id=product.id
+            type='delete_default_guide_product'
+            create_notification(module, info_id, info, type, user_reporter['username'])
+            
+        product.delete()
+        
+        return Response({'message': 'Default guide product deleted successfully'})
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+    
+#############################################
+# DELETE DEFAULT GUIDE PRODUCTS
+#############################################
+
+@api_view(['DELETE'])
+@permission_classes([AllowAny])
+def delete_default_guide_products(request):
+    data = request.data
+    ids = data.get('ids', [])
+    user_reporter = data.get('userReporter', None)
+    try:
+        products = ProjectDefaultGuideProduct.objects(id__in=ids).all()
+        if not products:
+            return Response({'error': 'Default guide products not found'}, status=404)
+        tracking_info = [transform_data_to_mongo(p) for p in products]
+        
+        tracking = ProjectTracking(
+            user_reporter=user_reporter,
+            action=f'delete list default guide products',
+            created_time=timezone.now(),
+            managed_data={
+                'data': tracking_info
+            },
+        )
+        tracking.save()
+        
+        if user_reporter:
+            module='default_guide_products'
+            info=f'has deleted {len(ids)} default guide products'
+            info_id='list'
+            type='delete_default_guide_products'
+            create_notification(module, info_id, info, type, user_reporter['username'])
+            
+        ProjectDefaultGuideProduct.objects(id__in=ids).delete()
+        
+        return Response({'message': 'Default guide products deleted successfully'})
+    
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+    
 
 #############################################
 # REMOVE ALL NOTIFICATIONS
@@ -2845,7 +3169,9 @@ def download_mongo_db(request):
         for collection_name in db.list_collection_names():
             collection = db[collection_name]
             documents = list(collection.find())
-            json_data = json_util.dumps(documents, indent=2)
+            plain_data = json.loads(json_util.dumps(documents))
+            # json_data = json.dumps(plain_data, indent=2)
+            json_data = json.dumps(plain_data)
             zip_file.writestr(f"{collection_name}.json", json_data)
     
     zip_buffer.seek(0)
@@ -2855,3 +3181,165 @@ def download_mongo_db(request):
     response['Content-Disposition'] = f'attachment; filename="mongo_db_export_{timestamp}.zip"'
     response['Access-Control-Expose-Headers'] = 'Content-Disposition'
     return response
+
+
+#############################################
+# CHANGE STAFF ALL PROJECTS
+#############################################
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def change_staff_all_projects(request): 
+    data = request.data
+    
+    ids = data.get('ids', [])
+    user_reporter = json.loads(data.get('userReporter', None))
+    staffs = data.get('staff', [])
+    staff_role = data.get('staffRole', 'installer')
+    
+    list_tracking_info = []
+    
+    permission = ProjectPermissions.objects(name='full access').first()
+    if not permission:
+        permission = ProjectPermissions(
+            name='full access',
+            description='Full access to project',
+        )
+        permission.save()
+    permission = transform_data_to_mongo(permission)
+    
+    projects = Project.objects(id__in=ids).all()
+    for project in projects:
+        assignees = project.users_assignees if project.users_assignees else []
+        new_assignees = [
+            {**staff, 'project_permissions': [permission]}
+            for staff in staffs
+            if staff['id'] not in [user.get('id') for user in assignees]
+        ]
+        assignees.extend(new_assignees)
+        project.users_assignees = assignees
+        project.save()
+        
+        tasks = project.project_default_tasks if project.project_default_tasks else []
+        not_started_tasks = [t for t in tasks if t['status'] == 'not started']
+        
+        for task in tasks:
+            name = task.get('project_default_task', {}).get('name', '').lower()
+            if staff_role == 'installer':
+                if (settings.TASK_START_INSTALLATION.lower() in name or 
+                    settings.TASK_FINISH_INSTALLATION.lower() in name or 
+                    settings.TASK_COMPLETE_SATISFACTION_FORM.lower() in name):
+                    task_assignees = task.get('users_assignees', [])
+                    task_assignees.extend([staff for staff in staffs if staff['id'] not in [user.get('id') for user in task_assignees]])
+                    task['users_assignees'] = task_assignees
+                    task['user_reporter'] = user_reporter
+                    task['last_modified_time'] = timezone.now()
+                if (settings.TASK_ASSIGN_INSTALLATION_CREW.lower() in name):
+                    task['status'] = 'finished'
+                    task['percentage'] = 100
+                    task['user_reporter'] = user_reporter
+                    task['last_modified_time'] = timezone.now()
+                    
+                    not_started_tasks = [t for t in tasks if t['status'] == 'not started' and t['project_default_task']['order'] > task['project_default_task']['order']]
+                    
+                    if not project.has_permission:
+                        not_started_tasks = [t for t in not_started_tasks if t['project_default_task']['project_stage']['name'] != 'Permission']
+                        
+                    sorted_tasks = sorted(not_started_tasks, key=lambda tt: tt['project_default_task']['order'])
+                    
+                    def get_next_task(task, sorted_tasks):
+                        return next(
+                            (tt for tt in sorted_tasks if tt['project_default_task']['order'] > task['project_default_task']['order']),
+                            None
+                        )
+                                
+                    next_task = get_next_task(task, sorted_tasks)
+                    
+                    if next_task:
+                        next_task['status'] = 'in progress'
+                        next_task['percentage'] = 50
+                        next_task['user_reporter'] = user_reporter
+                        next_task['last_modified_time'] = timezone.now()
+                        tasks = [t for t in tasks if str(t['project_default_task']['_id']) != str(next_task['project_default_task']['_id'])]
+                        tasks.append(next_task)
+                                
+                    
+            elif staff_role == 'warehouse staff':
+                if (settings.TASK_ORDER_IS_READY_TO_PICK_UP.lower() in name or 
+                    settings.TASK_PICK_UP_ORDER.lower() in name or 
+                    settings.TASK_COMPLETE_SATISFACTION_FORM.lower() in name or 
+                    settings.TASK_GENERATE_INSTALLATION_GUIDE.lower() in name):
+                    
+                    task_assignees = task.get('users_assignees', [])
+                    task_assignees.extend([staff for staff in staffs if staff['id'] not in [user.get('id') for user in task_assignees]])
+                    task['users_assignees'] = task_assignees
+                    task['user_reporter'] = user_reporter
+                    task['last_modified_time'] = timezone.now()
+                        
+        project.project_default_tasks = tasks
+        project.save()
+        
+        tracking_info = transform_data_to_mongo(project, include_fields=['id', 'name', 'number', 'users_assignees', 'project_default_tasks'])
+        list_tracking_info.append(tracking_info)        
+    
+    tracking = ProjectTracking(
+        user_reporter=user_reporter,
+        action=f'update list project with new {staff_role}',
+        created_time=timezone.now(),
+        managed_data={
+            'data': list_tracking_info
+        },
+    )
+    tracking.save()
+    
+    if user_reporter:
+        module = 'projects'
+        info = f'has updated {len(ids)} projects with new {staff_role}'
+        info_id = 'list'
+        type = 'update_list_project'
+        create_notification(module, info_id, info, type, user_reporter['username'])
+        
+    return Response({
+        'message': 'Projects updated successfully',
+        'data': list_tracking_info
+    }, status=201)
+    
+    
+#############################################
+# CHANGE INSTALLER PROJECT
+#############################################
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def remove_install_date_project(request, id):
+    data = request.data
+    user_reporter = json.loads(data.get('userReporter', None))
+    try:
+        project = Project.objects(id=id).first()
+        if not project:
+            return Response({'error': 'Project not found'}, status=404)
+        
+        project.start_date = None
+        project.end_date = None
+        project.save()
+        
+        tracking = ProjectTracking(
+            user_reporter=user_reporter,
+            action=f'remove install date in project ({project.id} - {project.name})',
+            created_time=timezone.now(),
+            managed_data={
+                'data': transform_data_to_mongo(project, include_fields=['id', 'name', 'number'])
+            },
+        )
+        tracking.save()
+        
+        if user_reporter:
+            module='projects'
+            info=f'has removed install date in project {project.name}'
+            info_id=project.id
+            type='remove_install_date_project'
+            create_notification(module, info_id, info, type, user_reporter['username'])
+            
+        return Response({'message': 'Install date removed successfully'})
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)

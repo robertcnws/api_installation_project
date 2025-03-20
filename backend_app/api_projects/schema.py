@@ -15,6 +15,7 @@ from .models import (
     ProjectTaskStage,
     ProjectTracking,
     ProjectDefaultTask,
+    ProjectDefaultGuideProduct,
 )
 from api_authorization.models import LoginUser
 from .data_util import serialize_datetime, dynamic_field_to_json
@@ -34,6 +35,10 @@ class ProjectPermissionsType(MongoengineObjectType):
 class ProjectStageType(MongoengineObjectType):
     class Meta:
         model = ProjectStage
+        
+class ProjectDefaultGuideProductType(MongoengineObjectType):
+    class Meta:
+        model = ProjectDefaultGuideProduct
         
 class ProjectTaskStageType(MongoengineObjectType):
     class Meta:
@@ -201,6 +206,7 @@ class ProjectDefaultTaskType(MongoengineObjectType):
 class Query(graphene.ObjectType):
     all_project_permissions = graphene.List(ProjectPermissionsType)
     all_project_stages = graphene.List(ProjectStageType)
+    all_project_default_guide_products = graphene.List(ProjectDefaultGuideProductType)
     all_project_task_stages = graphene.List(ProjectTaskStageType)
     all_project_roles = graphene.List(ProjectRoleType)
     all_projects = graphene.List(ProjectType)
@@ -250,6 +256,9 @@ class Query(graphene.ObjectType):
     
     def resolve_all_project_default_tasks(self, info):
         return list(ProjectDefaultTask.objects.all())
+    
+    def resolve_all_project_default_guide_products(self, info):
+        return list(ProjectDefaultGuideProduct.objects.all())
     
     def resolve_all_project_notification_users(self, info, username=None, user=None, page=1, pageSize=100):
         qs = ProjectNotificationUser.objects.all()

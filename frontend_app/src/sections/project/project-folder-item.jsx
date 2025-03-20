@@ -13,12 +13,13 @@ import MenuItem from '@mui/material/MenuItem';
 import Checkbox from '@mui/material/Checkbox';
 import IconButton from '@mui/material/IconButton';
 import ListItemText from '@mui/material/ListItemText';
+import { lighten, useTheme } from '@mui/material/styles';
 import AvatarGroup, { avatarGroupClasses } from '@mui/material/AvatarGroup';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 import { useCopyToClipboard } from 'src/hooks/use-copy-to-clipboard';
 
-import { fDate } from 'src/utils/format-time';
+import { fDate, fIsAfter } from 'src/utils/format-time';
 import { isInstaller, verifyPermissions, listRolesAndSubroles } from 'src/utils/check-permissions';
 
 import { CONFIG } from 'src/config-global';
@@ -55,6 +56,10 @@ export function ProjectFolderItem({
   ...other }) {
 
   const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
+
+  const th = useTheme();
+
+  const today = dayjs().format('YYYY-MM-DD');
 
   const { copy } = useCopyToClipboard();
 
@@ -145,7 +150,7 @@ export function ProjectFolderItem({
           {
             folder?.endDate ? `Duration: ${dayjs(folder?.startDate).to(folder?.endDate, true)}` :
               <Tooltip title="No Closing Date">
-                <Iconify icon="material-symbols:sms-failed-outline" sx={{ color: 'error.main'}} />
+                <Iconify icon="material-symbols:sms-failed-outline" sx={{ color: 'error.main' }} />
               </Tooltip>
           }
           <Box
@@ -205,7 +210,11 @@ export function ProjectFolderItem({
           borderRadius: 2,
           cursor: 'pointer',
           position: 'relative',
-          bgcolor: 'transparent',
+          bgcolor: folder?.endDate ? ((fIsAfter(today, dayjs(folder?.endDate).format('YYYY-MM-DD')) && (
+            folder?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
+            folder?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
+            folder?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
+          )) ? lighten(th.palette.error.lighter, 0.7) : 'transparent') : 'transparent',
           flexDirection: 'column',
           alignItems: 'flex-start',
           ...((checkbox.value || selected) && {

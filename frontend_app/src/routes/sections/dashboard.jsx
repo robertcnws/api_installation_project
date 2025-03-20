@@ -46,6 +46,20 @@ const TaskDefaultCreatePage = lazy(() => import('src/pages/dashboard/task-defaul
 // User Roles
 const UserRoleDefaultListPage = lazy(() => import('src/pages/dashboard/user-role/list'));
 const UserRoleDefaultCreatePage = lazy(() => import('src/pages/dashboard/user-role/new'));
+// Default Guide Product
+const DefaultGuideProductListPage = lazy(() => import('src/pages/dashboard/default-guide-product/list'));
+const DefaultGuideProductCreatePage = lazy(() => import('src/pages/dashboard/default-guide-product/new'));
+// Service
+// const ServicePage = lazy(() => import('src/pages/dashboard/project'));
+const ServiceCreatePage = lazy(() => import('src/pages/dashboard/service/new'));
+// const ProjectEditPage = lazy(() => import('src/pages/dashboard/project/edit'));
+// const ProjectDetailsPage = lazy(() => import('src/pages/dashboard/project/details'));
+// const KanbanPage = lazy(() => import('src/pages/dashboard/project/kanban-id'));
+
+// Service Issue
+const ServiceIssueListPage = lazy(() => import('src/pages/dashboard/service-issue/list'));
+const ServiceIssueCreatePage = lazy(() => import('src/pages/dashboard/service-issue/new'));
+
 // Track
 const TrackListPage = lazy(() => import('src/pages/dashboard/track/list'));
 // Error
@@ -232,6 +246,43 @@ export const dashboardRoutes = (listPermissions, user) => [
             ],
           },
           {
+            path: 'config/default-guide-product',
+            children: [
+              {
+                element: listRolesAndSubroles(
+                  user?.user_role?.name
+                ).includes(
+                  CONFIG.roles.superadmin
+                ) ? <DefaultGuideProductListPage /> : <Page403 />,
+                index: true
+              },
+              {
+                path: 'list',
+                element: listRolesAndSubroles(
+                  user?.user_role?.name
+                ).includes(
+                  CONFIG.roles.superadmin
+                ) ? <DefaultGuideProductListPage /> : <Page403 />
+              },
+              {
+                path: 'new',
+                element: listRolesAndSubroles(
+                  user?.user_role?.name
+                ).includes(
+                  CONFIG.roles.superadmin
+                ) ? <DefaultGuideProductCreatePage /> : <Page403 />
+              },
+              {
+                path: ':id/edit',
+                element: listRolesAndSubroles(
+                  user?.user_role?.name
+                ).includes(
+                  CONFIG.roles.superadmin
+                ) ? <DefaultGuideProductCreatePage /> : <Page403 />
+              },
+            ],
+          },
+          {
             path: 'config/task-stage',
             children: [
               {
@@ -265,6 +316,43 @@ export const dashboardRoutes = (listPermissions, user) => [
                 ).includes(
                   CONFIG.roles.superadmin
                 ) ? <StageTaskCreatePage /> : <Page403 />
+              },
+            ],
+          },
+          {
+            path: 'config/service-issue',
+            children: [
+              {
+                element: listRolesAndSubroles(
+                  user?.user_role?.name
+                ).includes(
+                  CONFIG.roles.superadmin
+                ) ? <ServiceIssueListPage /> : <Page403 />,
+                index: true
+              },
+              {
+                path: 'list',
+                element: listRolesAndSubroles(
+                  user?.user_role?.name
+                ).includes(
+                  CONFIG.roles.superadmin
+                ) ? <ServiceIssueListPage /> : <Page403 />
+              },
+              {
+                path: 'new',
+                element: listRolesAndSubroles(
+                  user?.user_role?.name
+                ).includes(
+                  CONFIG.roles.superadmin
+                ) ? <ServiceIssueCreatePage /> : <Page403 />
+              },
+              {
+                path: ':id/edit',
+                element: listRolesAndSubroles(
+                  user?.user_role?.name
+                ).includes(
+                  CONFIG.roles.superadmin
+                ) ? <ServiceIssueCreatePage /> : <Page403 />
               },
             ],
           },
@@ -379,6 +467,38 @@ export const dashboardRoutes = (listPermissions, user) => [
                 ).includes(
                   CONFIG.roles.projectManager
                 ) ? <UserEditPage /> : <Page403 />,
+              },
+            ],
+          },
+        ] : [],
+        ...(user && listRolesAndSubroles(user?.user_role?.name).includes(CONFIG.roles.administrator)) ?
+        [
+          {
+            path: 'service',
+            children: [
+              // {
+              //   element: listRolesAndSubroles(
+              //     user?.user_role?.name
+              //   ).includes(
+              //     CONFIG.roles.administrator
+              //   ) ? <UserProfilePage /> : <Page403 />,
+              //   index: true
+              // },
+              // {
+              //   path: 'list',
+              //   element: listRolesAndSubroles(
+              //     user?.user_role?.name
+              //   ).includes(
+              //     CONFIG.roles.projectManager
+              //   ) ? <UserListPage /> : <Page403 />,
+              // },
+              {
+                path: 'new',
+                element: listRolesAndSubroles(
+                  user?.user_role?.name
+                ).includes(
+                  CONFIG.roles.administrator
+                ) ? <ServiceCreatePage /> : <Page403 />,
               },
             ],
           },

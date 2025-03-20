@@ -50,6 +50,9 @@ export function ProjectTable({
   setTableData,
   refetchProjects,
   loadedProjects,
+  onOpenConfirmStaff,
+  isWarehouseStaff,
+  setIsWarehouseStaff,
   ...other
 }) {
   const {
@@ -125,8 +128,26 @@ export function ProjectTable({
                 </IconButton>
               </Tooltip> */}
 
-              <Tooltip title="Delete">
-                <IconButton color="primary" onClick={onOpenConfirm}>
+              <Tooltip title="Set Warehouse Staff" arrow>
+                <IconButton color="info" onClick={() => {
+                  setIsWarehouseStaff(true);
+                  onOpenConfirmStaff()
+                }}>
+                  <Iconify icon="mdi:warehouse" />
+                </IconButton>
+              </Tooltip>
+
+              <Tooltip title="Set Installation Staff" arrow>
+                <IconButton color="secondary" onClick={() => {
+                  setIsWarehouseStaff(false);
+                  onOpenConfirmStaff()
+                }}>
+                  <Iconify icon="fluent-emoji-high-contrast:mechanic" />
+                </IconButton>
+              </Tooltip>
+
+              <Tooltip title="Delete" arrow>
+                <IconButton color="error" onClick={onOpenConfirm}>
                   <Iconify icon="solar:trash-bin-trash-bold" />
                 </IconButton>
               </Tooltip>

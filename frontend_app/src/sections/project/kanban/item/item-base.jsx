@@ -79,7 +79,17 @@ const ItemBase = forwardRef(({
 
   const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
 
-  const possibleTasks = useMemo(() => availableTasks(project, project?.projectDefaultTasks, CONFIG), [project]);
+  const tasksBeforeNoMatter = useMemo(() => [
+      CONFIG.tasks.orderIsReadyToPickUp.toLowerCase(), CONFIG.tasks.pickUpOrder.toLowerCase()
+    ], []);
+
+  const initialTasks = useMemo(() => availableTasks(project, project?.projectDefaultTasks, CONFIG), [project]);
+
+  const extraTasks = useMemo(() => project?.projectDefaultTasks.filter(
+    t => tasksBeforeNoMatter.some(item => item.toLowerCase().includes(t.project_default_task.name.toLowerCase()))
+  ), [project, tasksBeforeNoMatter]);
+
+  const possibleTasks = useMemo(() => initialTasks.concat(extraTasks), [initialTasks, extraTasks]);
 
   const isAvailableTask = useMemo(() => possibleTasks?.some((t) => t.project_default_task.id === task.project_default_task.id), [possibleTasks, task]);
 
@@ -139,8 +149,9 @@ const ItemBase = forwardRef(({
             project?.userManager?.id === userLogged?.data?.id
           ) && (
               <>
-                {(task && task.status === CONFIG.taskStatus.notStarted && (task?.project_default_task?.order === 1 ||
-                  (project?.hasPermission && task?.project_default_task?.project_stage.name.toLowerCase() === CONFIG.stages.permission.toLowerCase()))) && (
+                {((task && task.status === CONFIG.taskStatus.notStarted && (task?.project_default_task?.order === 1 ||
+                  (project?.hasPermission && task?.project_default_task?.project_stage.name.toLowerCase() === CONFIG.stages.permission.toLowerCase()))) ||
+                  (task.beforeNoMatter && task.status === CONFIG.taskStatus.notStarted)) && (
                     <IconButton
                       variant="soft"
                       color="default"
@@ -155,20 +166,21 @@ const ItemBase = forwardRef(({
                           backgroundColor: 'transparent',
                         },
                       }}
-                      disabled={!task || task.status !== CONFIG.taskStatus.notStarted || task?.users_assignees?.length === 0}
+                      // disabled={!task || task.status !== CONFIG.taskStatus.notStarted || task?.users_assignees?.length === 0}
+                      disabled={!task || task.status !== CONFIG.taskStatus.notStarted }
                       onClick={() => handleManageTask('start')}
                     >
                       <Iconify icon="vaadin:start-cog" sx={{ width: 15, height: 15 }} /> Start
                     </IconButton>
                   )}
-                {task && task.status !== CONFIG.taskStatus.notStarted && task.status !== 'finished' && (
-                  previousTasksInStatus(
+                {(task && task.status !== CONFIG.taskStatus.notStarted && task.status !== 'finished') && (
+                  ((previousTasksInStatus(
                     task,
                     project?.projectDefaultTasks,
                     CONFIG.taskStatus.inProgress,
                     task?.project_default_task?.project_stage?.name.toLowerCase().indexOf(CONFIG.stages.permission.toLowerCase()) !== -1,
                     CONFIG
-                  ).length === 0 && (
+                  ).length === 0) || (task.beforeNoMatter && task.status === CONFIG.taskStatus.inProgress)) && (
                     <IconButton
                       variant="soft"
                       color="success"
@@ -186,7 +198,7 @@ const ItemBase = forwardRef(({
                       }}
                       disabled={
                         !task ||
-                        task?.users_assignees?.length === 0 ||
+                        // task?.users_assignees?.length === 0 ||
                         task.status === 'finished' ||
                         (isInstaller(userLogged?.data?.user_role?.name) && task?.project_task_attachments?.length === 0)
                       }
@@ -215,7 +227,10 @@ const ItemBase = forwardRef(({
                         backgroundColor: 'transparent',
                       },
                     }}
-                    disabled={!task || task?.users_assignees?.length === 0}
+                    disabled={
+                      !task 
+                      // || task?.users_assignees?.length === 0
+                    }
                     onClick={() => handleManageTask('rollback')}
                   >
                     <Iconify icon="eos-icons:snapshot-rollback" sx={{ width: 15, height: 15 }} /> Rollback

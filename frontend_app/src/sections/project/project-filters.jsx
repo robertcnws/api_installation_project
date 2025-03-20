@@ -58,6 +58,7 @@ export function ProjectFilters({
     if (custom.isInstallation?.value) active.push('In installation stage');
     if (custom.isPermission?.value) active.push('In permission stage');
     if (custom.isClosing?.value) active.push('In closing stage');
+    if (custom.hasComments) active.push('Have comments');
     if (filters.state.startDate && filters.state.endDate) active.push(fDateRangeShortLabel(filters.state.startDate, filters.state.endDate));
     if (filters.state.name) active.push(`matches: ${filters.state.name}`);
     return active.length > 0 ? `Installations (${active.join(', ')})` : 'All installations';
@@ -95,7 +96,16 @@ export function ProjectFilters({
           },
         },
       });
+    } else if (fieldName === 'hasComments') {
+      const hasComments = !filters.state.custom.hasComments;
+      filters.setState({
+        custom: {
+          ...filters.state.custom,
+          hasComments,
+        },
+      });
     }
+
     setCustomFilterName(createCustomFilterName());
   }, [filters, createCustomFilterName, onResetPage, setCustomFilterName]);
 
@@ -362,6 +372,24 @@ export function ProjectFilters({
                     />
                   </ListItemIcon>
                   <ListItemText primary="Closing Stage" />
+                </Box>
+              </MenuItem>
+              <MenuItem sx={{ py: 0 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', p: 0 }}>
+                  <Divider orientation="vertical" flexItem sx={{ color: 'text.disabled' }} >
+                    <ListItemText primary="Comments" />
+                  </Divider>
+                </Box>
+              </MenuItem>
+              <MenuItem sx={{ py: 0 }} onClick={() => handleFilterCustom('hasComments')}>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <ListItemIcon>
+                    <CheckBox
+                      checked={filters.state.custom.hasComments}
+                      onChange={() => handleFilterCustom('hasComments')}
+                    />
+                  </ListItemIcon>
+                  <ListItemText primary="Has Comments?" />
                 </Box>
               </MenuItem>
               {/* <MenuItem sx={{ py: 0 }}>

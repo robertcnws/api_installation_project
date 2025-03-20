@@ -25,5 +25,6 @@ urlpatterns = [
     path('api/authorization/', include('api_authorization.urls')),
     path('api/projects/', include('api_projects.urls')),
     path('api/users/', include('api_users.urls')),
+    path('api/services/', include('api_services.urls')),
     path('api/health-check/', views.health_check, name='health_check'),
 ]

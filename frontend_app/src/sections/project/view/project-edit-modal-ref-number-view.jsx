@@ -52,7 +52,7 @@ export function ProjectEditModalRefNumberView({
                 id: itemById?.id || '',
                 name: itemById?.name || '',
                 number: itemById?.number || '',
-                refNumber: itemById?.salesOrder?.reference_number || 'REF-',   
+                refNumber: itemById?.salesOrder?.reference_number || '',   
             }));
         }
     }, [itemById, setProjectData]);
@@ -60,7 +60,7 @@ export function ProjectEditModalRefNumberView({
     const ProjectDialogSchema = zod.object({
         name: zod.string().min(1, { message: 'Name is required!' }),
         description: schemaHelper.editor().optional().nullable(),
-        refNumber: zod.string().min(5, { message: 'Reference Number is required!' }),
+        refNumber: zod.string().min(1, { message: 'Reference Number is required!' }),
     });
 
     const defaultValues = useMemo(
@@ -68,7 +68,7 @@ export function ProjectEditModalRefNumberView({
             id: itemById?.id || '',
             name: itemById?.name || '',
             number: itemById?.number || '',
-            refNumber: itemById?.salesOrder?.reference_number || 'REF-',   
+            refNumber: itemById?.salesOrder?.reference_number || '',   
         }),
         [itemById]
     );
@@ -95,7 +95,7 @@ export function ProjectEditModalRefNumberView({
                 id: itemById.id || '',
                 name: itemById.name || '',
                 number: itemById.number || '',
-                refNumber: itemById?.salesOrder?.reference_number || 'REF-',   
+                refNumber: itemById?.salesOrder?.reference_number || '',   
             });
         }
     }, [itemById, userLogged?.data, reset]);

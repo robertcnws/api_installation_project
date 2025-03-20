@@ -16,6 +16,7 @@ import { verifyPermissions, listRolesAndSubroles } from 'src/utils/check-permiss
 
 import { CONFIG } from 'src/config-global';
 
+import { toast } from 'src/components/snackbar';
 import { Iconify } from 'src/components/iconify';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 
@@ -78,6 +79,24 @@ export function ProjectDetailsToolbar({
     [project, userLogged]
   );
 
+  const handleRefetchSalesOrder = useCallback(
+    async () => {
+      try {
+        const promise = axios.get(`${CONFIG.apiUrl}/integration/refetch_salesorder/${project?.id}/`);
+
+        toast.promise(promise, {
+          loading: 'Loading...',
+          success: `Sales Order refetched!`,
+          error: `Sales Order error in refetching!`,
+        });
+
+      } catch (error) {
+        console.error(error);
+      }
+    },
+    [project]
+  );
+
   return (
     <>
       {/* <Divider sx={{ borderStyle: 'dashed', mb: 1 }} /> */}
@@ -95,6 +114,13 @@ export function ProjectDetailsToolbar({
 
         {(type === 'project' || type === 'tasks') && (
           <>
+            {(listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) && (
+              <Tooltip title='Refetch Sales Order' arrow>
+                <IconButton onClick={handleRefetchSalesOrder} color='default'>
+                  <Iconify icon="codicon:repo-fetch" />
+                </IconButton>
+              </Tooltip>
+            )}
             {(verifyPermissions(
               listPermissions,
               CONFIG.permissions.system,

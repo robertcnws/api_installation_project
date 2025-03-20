@@ -1,0 +1,9 @@
+from django.apps import AppConfig
+
+
+class ApiServicesConfig(AppConfig):
+    default_auto_field = 'django.db.models.BigAutoField'
+    name = 'api_services'
+    
+    def ready(self):
+        import api_services.signals

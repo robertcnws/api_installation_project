@@ -24,14 +24,14 @@ export const generateReleaseFormReport = ({ project }) => {
     // Project Details
     doc.setFontSize(12);
 
-    const customerName = project?.salesOrder?.customer?.customer_name || project?.salesOrder?.customer_name;
+    const customerName = (project?.salesOrder?.customer || project?.salesOrder?.contact_person_details)?.customer_name || project?.salesOrder?.customer_name;
 
     const details = [
         ["CUSTOMER NAME:", customerName || ""],
         ["ORDER NUMBER:", project?.salesOrder?.salesorder_number || ""],
         ["DATE:", fDate(project?.salesOrder?.date) || ""],
         ["ADDRESS:", project?.address || ""],
-        ["CONTACT PHONE:", project?.salesOrder?.customer.phone || ""],
+        ["CONTACT PHONE:", (project?.salesOrder?.customer || project?.salesOrder?.contact_person_details)?.phone || ""],
     ];
     doc.autoTable({
         startY: 30,

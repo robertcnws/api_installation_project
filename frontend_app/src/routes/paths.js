@@ -90,8 +90,24 @@ export const paths = {
       edit: (id) => `${ROOTS.DASHBOARD}/installation/${id}/edit`,
       details: (id) => `${ROOTS.DASHBOARD}/installation/${id}/details`,
     },
+    service: {
+      root: `${ROOTS.DASHBOARD}/service`,
+      list: `${ROOTS.DASHBOARD}/service/list`,
+      new: `${ROOTS.DASHBOARD}/service/new`,
+      kanban: `${ROOTS.DASHBOARD}/service/kanban`,
+      kanbanId: (id) => `${ROOTS.DASHBOARD}/service/${id}/kanban`,
+      edit: (id) => `${ROOTS.DASHBOARD}/service/${id}/edit`,
+      details: (id) => `${ROOTS.DASHBOARD}/service/${id}/details`,
+    },
     config: {
       root: `${ROOTS.DASHBOARD_CONFIG}`,
+    },
+    defaultGuideProduct: {
+      root: `${ROOTS.DASHBOARD_CONFIG}/default-guide-product`,
+      list: `${ROOTS.DASHBOARD_CONFIG}/default-guide-product/list`,
+      new: `${ROOTS.DASHBOARD_CONFIG}/default-guide-product/new`,
+      details: (id) => `${ROOTS.DASHBOARD_CONFIG}/default-guide-product/${id}`,
+      edit: (id) => `${ROOTS.DASHBOARD_CONFIG}/default-guide-product/${id}/edit`,
     },
     stage: {
       root: `${ROOTS.DASHBOARD_CONFIG}/stage`,
@@ -113,6 +129,13 @@ export const paths = {
       new: `${ROOTS.DASHBOARD_CONFIG}/default-task/new`,
       details: (id) => `${ROOTS.DASHBOARD_CONFIG}/default-task/${id}`,
       edit: (id) => `${ROOTS.DASHBOARD_CONFIG}/default-task/${id}/edit`,
+    },
+    serviceIssue: {
+      root: `${ROOTS.DASHBOARD_CONFIG}/service-issue`,
+      list: `${ROOTS.DASHBOARD_CONFIG}/service-issue/list`,
+      new: `${ROOTS.DASHBOARD_CONFIG}/service-issue/new`,
+      details: (id) => `${ROOTS.DASHBOARD_CONFIG}/service-issue/${id}`,
+      edit: (id) => `${ROOTS.DASHBOARD_CONFIG}/service-issue/${id}/edit`,
     },
     track: {
       root: `${ROOTS.DASHBOARD_CONFIG}/track`,

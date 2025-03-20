@@ -3,6 +3,7 @@ from django.conf import settings
 from django.http import JsonResponse
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from api_projects.models import Project
 import json
 import requests
 import logging
@@ -30,7 +31,6 @@ def config_headers():
 def list_sales_orders(request):
     headers = config_headers()
     data = request.query_params if hasattr(request, 'query_params') else request.GET
-    print(f"data: {data}")
     start_date = data.get('start_date', None)
     end_date = data.get('end_date', None)
     installation_name = data.get('installation_name', 'INSTALLATION')
@@ -43,7 +43,7 @@ def list_sales_orders(request):
         not_sales_orders_ids = ','.join(not_sales_orders_ids)
     else:
         not_sales_orders_ids = data.get('not_sales_order_ids', None)
-    url = settings.API_MAIN_DATA_URL + '/zoho/full_sales_orders/?page=1&page_size=200'
+    url = f'{settings.API_MAIN_DATA_URL}/zoho/full_sales_orders/?page=1&page_size=200'
     params = []
     if start_date:
         params.append(f"start_date={start_date}")
@@ -73,6 +73,155 @@ def list_sales_orders(request):
             logger.error(f"Error fetching sales orders: {e}")
             return JsonResponse({'error': 'Failed to fetch sales orders'}, status=500)
     return JsonResponse({'count': len(items_to_get), 'results': items_to_get})
+
+
+#############################################
+# LOAD CUSTOMERS
+#############################################
+    
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def list_customers(request):
+    headers = config_headers()
+    data = request.query_params if hasattr(request, 'query_params') else request.GET
+    first_name = data.get('firstName', None)
+    last_name = data.get('lastName', None)
+    zoho_org_id = data.get('zohoOrgId', None)
+    phone = data.get('phone', None)
+    mobile = data.get('mobile', None)
+    email = data.get('email', None)
+    params = []
+    params.append(f"page=1")
+    params.append(f"page_size=200")
+    url = f'{settings.API_MAIN_DATA_URL}/zoho/customers/?'
+    if first_name and first_name != '':
+        params.append(f"first_name={first_name}")
+    if last_name and last_name != '':
+        params.append(f"last_name={last_name}")
+    if zoho_org_id and zoho_org_id != '':
+        params.append(f"zoho_org_id={zoho_org_id}")
+    if phone and phone != '':
+        params.append(f"phone={phone}")
+    if mobile and mobile != '':
+        params.append(f"mobile={mobile}")
+    if email and email != '':
+        params.append(f"email={email}")
+    
+    if len(params) > 0:
+        url = f"{url}{'&'.join(params)}"
+    
+    items_to_get = []
+    session = requests.Session()
+    while True:
+        try:
+            response = session.get(url, headers=headers)
+            response.raise_for_status()
+            items = response.json()
+            items_confirmed = [item for item in items.get('results', []) if item.get('status', None).lower() != 'draft']
+            items_to_get.extend(items_confirmed)
+            items_to_get = [item for item in items_to_get if item.get('zoho_org_id', None) == zoho_org_id]
+            if not items.get('next', None):
+                break
+            params['page'] += 1
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Error fetching sales orders: {e}")
+            return JsonResponse({'error': 'Failed to fetch customers'}, status=500)
+    return JsonResponse({'count': len(items_to_get), 'results': items_to_get})
+
+
+#############################################
+# LOAD SALES ORDERS TO SERVICE
+#############################################
+    
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def list_salesorder_to_service(request):
+    headers = config_headers()
+    data = request.query_params if hasattr(request, 'query_params') else request.GET
+    company_name = data.get('companyName', None)
+    first_name = data.get('firstName', None)
+    last_name = data.get('lastName', None)
+    phone = data.get('phone', None)
+    mobile = data.get('mobile', None)
+    email = data.get('email', None)
+    salesorder_number = data.get('salesorderNumber', None)
+    is_not_recent = data.get('isNotRecent')
+    print('isinstance(is_not_recent, str): ', isinstance(is_not_recent, str))
+    if isinstance(is_not_recent, str):
+        print('is_not_recent.lower() == false: ', is_not_recent.lower() == 'false')
+        is_not_recent = is_not_recent.lower() == 'false'
+    is_recent = 'true' if not is_not_recent else 'false'
+    params = []
+    url = f'{settings.API_MAIN_DATA_URL}/zoho/sales_orders_to_service/?'
+    if company_name and company_name != '':
+        params.append(f"company_name={company_name}")
+    if first_name and first_name != '':
+        params.append(f"first_name={first_name}")
+    if last_name and last_name != '':
+        params.append(f"last_name={last_name}")
+    if phone and phone != '':
+        params.append(f"phone={phone}")
+    if mobile and mobile != '':
+        params.append(f"mobile={mobile}")
+    if email and email != '':
+        params.append(f"email={email}")
+    if salesorder_number and salesorder_number != '':
+        params.append(f"salesorder_number={salesorder_number}")    
+    params.append(f"is_recent={is_recent}")
+    
+    if len(params) > 0:
+        url = f"{url}{'&'.join(params)}"
+    
+    items_to_get = []
+    session = requests.Session()
+    while True:
+        try:
+            response = session.get(url, headers=headers)
+            response.raise_for_status()
+            items = response.json()
+            items_confirmed = [item for item in items.get('results', []) if item.get('status', None).lower() != 'draft']
+            items_to_get.extend(items_confirmed)
+            if not items.get('next', None):
+                break
+            params['page'] += 1
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Error fetching sales orders: {e}")
+            return JsonResponse({'error': 'Failed to fetch sales orders to service'}, status=500)
+    return JsonResponse({'count': len(items_to_get), 'results': items_to_get})
+
+
+#############################################
+# REFETCH SALES ORDERS TO PROJECT
+#############################################
+    
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def refetch_salesorder(request, project_id):
+    project = Project.objects(id=project_id).first()
+    salesorder_number = project.sales_order.get('salesorder_number', None)
+    if not salesorder_number:
+        return JsonResponse({'error': 'Missing salesorder_number in project'}, status=400)
+    zogo_org_id = settings.ZOHO_ORG_ID
+    headers = config_headers()
+    url = f'{settings.API_MAIN_DATA_URL}/zoho/refetch_salesorder/{zogo_org_id}/{salesorder_number}/'
+    items_to_get = []
+    session = requests.Session()
+    while True:
+        try:
+            response = session.get(url, headers=headers)
+            response.raise_for_status()
+            items = response.json()
+            items_confirmed = [item for item in items.get('results', []) if item.get('status', None).lower() != 'draft']
+            items_to_get.extend(items_confirmed)
+            if not items.get('next', None):
+                break
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Error fetching sales orders: {e}")
+            return JsonResponse({'error': 'Failed to fetch sales orders to service'}, status=500)
+    if len(items_to_get) > 0:
+        project.sales_order = items_to_get[0]
+        project.save()
+    return JsonResponse({'message': 'Sales order refetched successfully'})
 
 
 #############################################

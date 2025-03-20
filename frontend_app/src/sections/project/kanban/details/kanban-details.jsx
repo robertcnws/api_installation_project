@@ -256,15 +256,21 @@ export function KanbanDetails({
                     project?.userManager?.id === userLogged?.data?.id
                   ) && (
                       <>
-                        {(task && task.status === CONFIG.taskStatus.notStarted && (task?.project_default_task?.order === 1 ||
-                          (project?.hasPermission && task?.project_default_task?.project_stage.name.toLowerCase() === CONFIG.stages.permission.toLowerCase()))) && (
+                        {((task && task.status === CONFIG.taskStatus.notStarted && (task?.project_default_task?.order === 1 ||
+                          (project?.hasPermission && task?.project_default_task?.project_stage.name.toLowerCase() === CONFIG.stages.permission.toLowerCase()))) ||
+                          (task.beforeNoMatter && task.status === CONFIG.taskStatus.notStarted)) && (
                             <Button
                               variant="soft"
                               color="default"
                               size="medium"
                               startIcon={<Iconify icon="vaadin:start-cog" />}
                               sx={{ ml: 2.5, height: 50 }}
-                              disabled={!task || task.status !== CONFIG.taskStatus.notStarted || task?.users_assignees?.length === 0 || !priority}
+                              disabled={
+                                !task
+                                || task.status !== CONFIG.taskStatus.notStarted
+                                // || task?.users_assignees?.length === 0 
+                                || !priority
+                              }
                               onClick={() => handleManageTask('start')}
                             >
                               Start Task
@@ -286,7 +292,7 @@ export function KanbanDetails({
                               sx={{ ml: 2.5, height: 50 }}
                               disabled={
                                 !task ||
-                                task?.users_assignees?.length === 0 ||
+                                // task?.users_assignees?.length === 0 ||
                                 !priority ||
                                 task.status === 'finished' ||
                                 (isInstaller(userLogged?.data?.user_role?.name) && task?.project_task_attachments?.length === 0)
@@ -303,7 +309,11 @@ export function KanbanDetails({
                             size="medium"
                             startIcon={<Iconify icon="eos-icons:snapshot-rollback" />}
                             sx={{ ml: 2.5, height: 50 }}
-                            disabled={!task || task?.users_assignees?.length === 0 || !priority}
+                            disabled={
+                              !task 
+                              // || task?.users_assignees?.length === 0 
+                              || !priority
+                            }
                             onClick={() => handleManageTask('rollback')}
                           >
                             Rollback Task

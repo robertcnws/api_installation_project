@@ -1,9 +1,9 @@
 // src/contexts/DataContext.jsx
 import axios from 'axios';
+import dayjs from 'dayjs';
 import { useQuery } from '@tanstack/react-query';
 import React, { useMemo, useState, useEffect, useContext, createContext } from 'react';
 
-import { fIsAfter } from 'src/utils/format-time';
 import { totalPercentageProjectStage } from 'src/utils/project-tasks-utils';
 import { isInstaller, isSuperAdmin, isOfficeStaff, isAdministrator, isProjectManager, listRolesAndSubroles } from 'src/utils/check-permissions';
 
@@ -13,11 +13,14 @@ import { useUsersQuery } from 'src/_mock/__users';
 import { useStagesQuery } from 'src/_mock/__stages';
 import { useProjectsQuery } from 'src/_mock/__projects';
 import { useTrackingQuery } from 'src/_mock/__tracking';
+import { useServicesQuery } from 'src/_mock/__services';
 import { useUserRolesQuery } from 'src/_mock/__user_roles';
 import { useStagesTaskQuery } from 'src/_mock/__stages_task';
 import { useDefaultTasksQuery } from 'src/_mock/__default_tasks';
 import { useProjectPermissionsQuery } from 'src/_mock/__project_permissions';
 import { useNotificationsQuery } from 'src/_mock/__projects_notifications_users';
+import { useDefaultGuideProductsQuery } from 'src/_mock/__default_guide_products';
+import { useServiceIssuesQuery } from 'src/_mock/__service_issues';
 
 const DataContext = createContext();
 export const useDataContext = () => useContext(DataContext);
@@ -31,6 +34,18 @@ export const DataProvider = ({ children }) => {
     error: errorProjects,
     refetch: refetchProjects
   } = useProjectsQuery();
+  const {
+    data: services,
+    loading: loadingServices,
+    error: errorServices,
+    refetch: refetchServices
+  } = useServicesQuery();
+  const {
+    data: serviceIssues,
+    loading: loadingServiceIssues,
+    error: errorServiceIssues,
+    refetch: refetchServiceIssues
+  } = useServiceIssuesQuery();
   const {
     data: users,
     loading: loadingUsers,
@@ -54,6 +69,12 @@ export const DataProvider = ({ children }) => {
     error: errorStages,
     refetch: refetchStages
   } = useStagesQuery();
+  const {
+    data: defaultGuideProducts,
+    loading: loadingDefaultGuideProducts,
+    error: errorDefaultGuideProducts,
+    refetch: refetchDefaultGuideProducts
+  } = useDefaultGuideProductsQuery();
   const {
     data: stagesTask,
     loading: loadingStagesTask,
@@ -79,8 +100,8 @@ export const DataProvider = ({ children }) => {
     refetch: refetchTracks
   } = useTrackingQuery();
 
-  const loading = loadingProjects || loadingNotifications || loadingUsers || loadingProjectPermissions;
-  const error = errorProjects || errorNotifications || errorUsers || errorProjectPermission;
+  const loading = loadingProjects || loadingNotifications || loadingUsers || loadingProjectPermissions || loadingServices;
+  const error = errorProjects || errorNotifications || errorUsers || errorProjectPermission || errorServices;
 
   const _avatarUsers = useMemo(() => users.map((user, index) => ({
     ...user,
@@ -105,7 +126,18 @@ export const DataProvider = ({ children }) => {
     })),
   })), [projects, _avatarUsers]);
 
-  const sortedProjects = useMemo(() => typedProjects.sort((a, b) => fIsAfter(a.startDate, b.startDate)), [typedProjects]);
+  const sortedProjects = useMemo(() => typedProjects.sort((a, b) => {
+    if (a.startDate && b.startDate) {
+      return dayjs(a.startDate).diff(dayjs(b.startDate));
+    }
+    if (!a.startDate && b.startDate) {
+      return 1;
+    }
+    if (a.startDate && !b.startDate) {
+      return -1;
+    }
+    return 0;
+  }), [typedProjects]);
 
   let finalProjects = useMemo(() => sortedProjects, [sortedProjects]);
   if (!listRolesAndSubroles(userLogged?.data?.user_role?.name)
@@ -165,6 +197,16 @@ export const DataProvider = ({ children }) => {
   const loadedUsers = useMemo(() => finalUsers || [], [finalUsers]);
   const loadedProjectPermissions = useMemo(() => projectPermissions || [], [projectPermissions]);
   const loadedUserRoles = useMemo(() => finalUserRoles || [], [finalUserRoles]);
+  const loadedServices = useMemo(() => services || [], [services]);
+  const loadedServiceIssues = useMemo(() => serviceIssues || [], [serviceIssues]);
+
+
+  const orderedDefaultGuideProducts = useMemo(() => {
+    const sortedDefaultGuideProducts = [...defaultGuideProducts].sort((a, b) => a.order - b.order);
+    return sortedDefaultGuideProducts;
+  }, [defaultGuideProducts]);
+
+  const loadedDefaultGuideProducts = useMemo(() => orderedDefaultGuideProducts || [], [orderedDefaultGuideProducts]);
 
   const orderedStages = useMemo(() => {
     const sortedStages = [...stages].sort((a, b) => a.order - b.order);
@@ -282,10 +324,15 @@ export const DataProvider = ({ children }) => {
       refetchNotifications,
       loadedUsers,
       refetchUsers,
+      loadedServices,
+      refetchServices,
+      loadedServiceIssues,
+      refetchServiceIssues,
       loadedProjectPermissions,
       loadedStages,
       loadedStagesTask,
       loadedDefaultTasks,
+      loadedDefaultGuideProducts,
       loadedUserRoles,
       loadedTracks,
       refetchTracks,
@@ -297,6 +344,9 @@ export const DataProvider = ({ children }) => {
       errorStagesTask,
       loadingStagesTask,
       refetchStagesTask,
+      errorDefaultGuideProducts,
+      loadingDefaultGuideProducts,
+      refetchDefaultGuideProducts,
       loadingUserRoles,
       loadingTracks,
       errorTracks,
@@ -321,10 +371,15 @@ export const DataProvider = ({ children }) => {
       refetchNotifications,
       loadedUsers,
       refetchUsers,
+      loadedServices,
+      refetchServices,
+      loadedServiceIssues,
+      refetchServiceIssues,
       loadedProjectPermissions,
       loadedStages,
       loadedStagesTask,
       loadedDefaultTasks,
+      loadedDefaultGuideProducts,
       loadedUserRoles,
       loadedTracks,
       refetchTracks,
@@ -336,6 +391,9 @@ export const DataProvider = ({ children }) => {
       errorStagesTask,
       loadingStagesTask,
       refetchStagesTask,
+      errorDefaultGuideProducts,
+      loadingDefaultGuideProducts,
+      refetchDefaultGuideProducts,
       loadingUserRoles,
       errorUserRoles,
       loadingTracks,

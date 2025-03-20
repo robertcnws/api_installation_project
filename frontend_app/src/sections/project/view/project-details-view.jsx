@@ -57,6 +57,7 @@ export function ProjectDetailsView({ projectId }) {
     const {
         loadedProjects,
         listPermissions,
+        loadedDefaultGuideProducts,
     } = useDataContext();
 
     const [openDialogs, setOpenDialogs] = useState({
@@ -68,6 +69,21 @@ export function ProjectDetailsView({ projectId }) {
         installationTeam: false,
     });
 
+    const item = useMemo(() => loadedProjects?.find((project) => project.id === projectId), [loadedProjects, projectId]);
+
+    const { data: fetchedProject, refetch: refetchProject } = useProjectByIdQuery(item?.id, {
+        skip: !item?.id,
+    });
+
+    const [itemById, setItemById] = useState(fetchedProject);
+
+    const taskFinishInstallation = useMemo(() => 
+        itemById?.projectDefaultTasks?.find(
+            (t) => t.project_default_task?.name.trim().toLowerCase().includes(CONFIG.tasks.finishInstallation.trim().toLowerCase())
+        ),
+        [itemById]
+    );
+
     const DETAILS_TABS = [
         { label: 'Overview', value: 'overview' },
         ...!isFinancialStaff(userLogged?.data?.user_role?.name) ? [
@@ -78,7 +94,9 @@ export function ProjectDetailsView({ projectId }) {
             !isWarehouseStaff(userLogged?.data?.user_role?.name)) ? [
             { label: 'Attachments', value: 'attachments' },
         ] : [],
-        ...listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.installer) ? [
+        ...((listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.installer) || 
+            listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.warehouseStaff)) &&
+            taskFinishInstallation?.status.toLowerCase().indexOf(CONFIG.taskStatus.finished.toLowerCase()) !== -1 ) ? [
             { label: 'Release Form', value: 'releaseForm' },
         ] : [],
         ...listRolesAndSubroles(userLogged?.data?.user_role?.name)
@@ -91,13 +109,7 @@ export function ProjectDetailsView({ projectId }) {
         { label: 'Comments', value: 'comments' },
     ];
 
-    const item = useMemo(() => loadedProjects?.find((project) => project.id === projectId), [loadedProjects, projectId]);
-
-    const { data: fetchedProject, refetch: refetchProject } = useProjectByIdQuery(item?.id, {
-        skip: !item?.id,
-    });
-
-    const [itemById, setItemById] = useState(fetchedProject);
+    
 
     const [openValidationDialog, setOpenValidationDialog] = useState(false);
     const [validationMessage, setValidationMessage] = useState('');
@@ -211,16 +223,25 @@ export function ProjectDetailsView({ projectId }) {
                     icon={
                         (tab.value === 'tasks' || tab.value === 'attachments' || tab.value === 'comments') ? (
                             !isInstaller(userLogged?.data?.user_role?.name) ? (
-                                <Label variant="filled" color="primary">
-                                    {tab.value === 'tasks' ? totalTasks :
-                                        tab.value === 'attachments' ? totalAttachments : totalComments}
-                                </Label>
-                            ) : (
+                                ((tab.value === 'tasks' && totalTasks > 0) ||
+                                (tab.value === 'attachments' && totalAttachments > 0) ||
+                                (tab.value === 'comments' && totalComments > 0))
+                                ? (
+                                    <Label variant="filled" color="primary">
+                                        {tab.value === 'tasks' ? totalTasks :
+                                            tab.value === 'attachments' ? totalAttachments : totalComments}
+                                    </Label>
+                                ) : (
+                                    ''
+                                )) : (
                                 tab.value === 'comments' ? (
+                                    (tab.value === 'comments' && totalComments > 0) ? (
                                     <Label variant="filled" color="primary">
                                         {totalComments}
                                     </Label>
                                 ) : (
+                                    ''
+                                )) : (
                                     ''
                                 )
                             )
@@ -323,6 +344,7 @@ export function ProjectDetailsView({ projectId }) {
                             listPermissions={listPermissions}
                             openDialogs={openDialogs}
                             setOpenDialogs={setOpenDialogs}
+                            loadedDefaultGuideProducts={loadedDefaultGuideProducts}
                         />
                     ) : (
                         <ProjectDetailsInstallationGuideFormInstallerView
@@ -331,6 +353,7 @@ export function ProjectDetailsView({ projectId }) {
                             listPermissions={listPermissions}
                             openDialogs={openDialogs}
                             setOpenDialogs={setOpenDialogs}
+                            loadedDefaultGuideProducts={loadedDefaultGuideProducts}
                         />
                     ))}
 

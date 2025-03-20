@@ -14,21 +14,25 @@ import { ProjectShareDialog } from './project-share-dialog';
 import { ProjectActionSelected } from './project-action-selected';
 import { ProjectNewFolderDialog } from './project-new-folder-dialog';
 
+
 // ----------------------------------------------------------------------
 
-export function ProjectGridView({ 
-  table, 
-  dataFiltered, 
-  onDeleteItem, 
+export function ProjectGridView({
+  table,
+  dataFiltered,
+  onDeleteItem,
   onViewRow,
   onOpenConfirm,
-  loadedUsers, 
+  loadedUsers,
   loadedProjectPermissions,
   loadedStages,
   loadedStagesTask,
   listPermissions,
   setTableData,
   refetchProjects,
+  onOpenConfirmStaff,
+  isWarehouseStaff,
+  setIsWarehouseStaff,
 }) {
   const { selected, onSelectRow: onSelectItem, onSelectAllRows: onSelectAllItems } = table;
 
@@ -138,41 +142,57 @@ export function ProjectGridView({
         </Collapse> */}
 
         {!!selected?.length && (
-          <ProjectActionSelected
-            numSelected={selected.length}
-            rowCount={dataFiltered.length}
-            selected={selected}
-            onSelectAllItems={(checked) =>
-              onSelectAllItems(
-                checked,
-                dataFiltered.map((row) => row.id)
-              )
-            }
-            action={
-              <>
-                <Button
-                  size="small"
-                  color="error"
-                  variant="contained"
-                  startIcon={<Iconify icon="solar:trash-bin-trash-bold" />}
-                  onClick={onOpenConfirm}
-                  sx={{ mr: 1 }}
-                >
-                  Delete
-                </Button>
-
-                <Button
-                  color="primary"
-                  size="small"
-                  variant="contained"
-                  startIcon={<Iconify icon="solar:share-bold" />}
-                  onClick={share.onTrue}
-                >
-                  Share
-                </Button>
-              </>
-            }
-          />
+            <ProjectActionSelected
+              numSelected={selected.length}
+              rowCount={dataFiltered.length}
+              selected={selected}
+              onSelectAllItems={(checked) =>
+                onSelectAllItems(
+                  checked,
+                  dataFiltered.map((row) => row.id)
+                )
+              }
+              action={
+                <>
+                  <Button
+                    size="small"
+                    color="info"
+                    variant="contained"
+                    startIcon={<Iconify icon="mdi:warehouse" />}
+                    onClick={() => {
+                      setIsWarehouseStaff(true);
+                      onOpenConfirmStaff()
+                    }}
+                    sx={{ mr: 1, mb: 2 }}
+                  >
+                    Set Warehouse Staff
+                  </Button>
+                  <Button
+                    size="small"
+                    color="success"
+                    variant="contained"
+                    startIcon={<Iconify icon="fluent-emoji-high-contrast:mechanic" />}
+                    onClick={() => {
+                      setIsWarehouseStaff(false);
+                      onOpenConfirmStaff()
+                    }}
+                    sx={{ mr: 1, mb: 2 }}
+                  >
+                    Set Installer
+                  </Button>
+                  <Button
+                    size="small"
+                    color="error"
+                    variant="contained"
+                    startIcon={<Iconify icon="solar:trash-bin-trash-bold" />}
+                    onClick={onOpenConfirm}
+                    sx={{ mr: 1, mb: 2 }}
+                  >
+                    Delete
+                  </Button>
+                </>
+              }
+            />
         )}
       </Box>
 

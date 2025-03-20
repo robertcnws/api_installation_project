@@ -62,6 +62,8 @@ export function ProjectEditModalDatesView({
 
     const [confirmValidInstallMessage, setConfirmValidInstallMessage] = useState(null);
 
+    const [isRemovingDate, setIsRemovingDate] = useState(false);
+
     const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
 
     const [selectedDate, setSelectedDate] = useState(null);
@@ -82,9 +84,7 @@ export function ProjectEditModalDatesView({
         (date) => {
             if (!isInspectionDate) {
                 const currentStage = project?.currentStage;
-                if (currentStage?.name === CONFIG.stages.preparation ||
-                    (currentStage?.name === CONFIG.stages.coordination && totalPercentageProjectStage(project, CONFIG.stages.coordination, CONFIG) < 50)
-                ) {
+                if (currentStage?.name === CONFIG.stages.preparation && totalPercentageProjectStage(project, CONFIG.stages.preparation, CONFIG) < 50) {
                     const today = dayjs().format('YYYY-MM-DD');
                     const formatDate = dayjs(date).format('YYYY-MM-DD');
                     const isSame = fIsSame(today, formatDate);
@@ -207,6 +207,42 @@ export function ProjectEditModalDatesView({
         }
     });
 
+
+    const handleRemoveInstallDate = useCallback(
+        async() => {
+            setIsRemovingDate(true);
+            const formData = new FormData();
+            formData.append('userReporter', JSON.stringify(userLogged?.data));
+
+
+            const promise = axios.post(`${CONFIG.apiUrl}/projects/update/project/${project.id}/revove-install-date/`, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+
+            try {
+                toast.promise(promise, {
+                    loading: 'Loading...',
+                    success: `Update Project (${project.name}) success!`,
+                    error: `Update Project (${project.name}) error!`,
+                });
+
+                const response = await promise;
+
+                if (!response.data) {
+                    return;
+                }
+                
+                setIsRemovingDate(false);
+
+                onClose();
+
+            } catch (error) {
+                console.error(error);
+            }
+        }, [onClose, project, userLogged]);
+
     const renderMainInfo = (
         <Stack spacing={1.5}>
 
@@ -320,6 +356,16 @@ export function ProjectEditModalDatesView({
                         disabled={!formChanged || confirmValidInstallMessage !== null}
                     >
                         {isEdit ? 'Update' : 'Add'}
+                    </LoadingButton>
+                    <LoadingButton
+                        type="button"
+                        variant="contained"
+                        loading={isRemovingDate}
+                        onClick={handleRemoveInstallDate}
+                        color='error'
+                        disabled={!project?.startDate}
+                    >
+                        Remove install date
                     </LoadingButton>
                     <Button variant="outlined" onClick={onClose}>
                         Cancel

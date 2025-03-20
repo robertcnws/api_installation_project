@@ -124,12 +124,13 @@ export function ProjectDetailsContentOverviewInstaller({
             },
             {
               label: 'Phone Number',
-              value: project?.salesOrder?.customer.phone || project?.salesOrder?.customer.mobile,
+              value: (project?.salesOrder?.customer || project?.salesOrder?.contact_person_details)?.phone || 
+              (project?.salesOrder?.customer || project?.salesOrder?.contact_person_details)?.mobile,
               icon: <Iconify icon="icon-park:phone" />,
             },
             {
               label: 'Email',
-              value: project?.salesOrder?.customer?.email,
+              value: (project?.salesOrder?.customer || project?.salesOrder?.contact_person_details)?.email,
               icon: <Iconify icon="mage:email-fill" />,
             },
             {
@@ -188,8 +189,10 @@ export function ProjectDetailsContentOverviewInstaller({
                   CONFIG.permissions.moduleProjects,
                   CONFIG.permissions.operationEditPhoneNumber
                 ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
-                    <Tooltip title={(project?.salesOrder?.customer.phone || project?.salesOrder?.customer.mobile) ? "Edit Phone Number" : "Add Phone Number"} arrow>
-                      <IconButton variant="text" color={(project?.salesOrder?.customer.phone || project?.salesOrder?.customer.mobile) ? "primary" : "warning"} size="small" sx={{ ml: 1 }}
+                    <Tooltip title={((project?.salesOrder?.customer || project?.salesOrder?.contact_person_details)?.phone || 
+                    (project?.salesOrder?.customer || project?.salesOrder?.contact_person_details)?.mobile) ? "Edit Phone Number" : "Add Phone Number"} arrow>
+                      <IconButton variant="text" color={((project?.salesOrder?.customer || project?.salesOrder?.contact_person_details)?.phone || 
+                      (project?.salesOrder?.customer || project?.salesOrder?.contact_person_details)?.mobile) ? "primary" : "warning"} size="small" sx={{ ml: 1 }}
                         onClick={() => setOpenDialogs({ ...openDialogs, phoneNumber: true })}
                       >
                         <Iconify icon="fluent:slide-text-edit-20-regular" color="primary" width={22} />

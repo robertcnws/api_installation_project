@@ -35,6 +35,7 @@ import { ProjectCalendarView } from '../calendar/view';
 import { KanbanProjectView } from '../kanban-project/view';
 import { ProjectFiltersResult } from '../project-filters-result';
 import { ProjectNewFolderDialog } from '../project-new-folder-dialog';
+import { ProjectEditModalManageStaffView } from './project-edit-modal-manage-staff-view';
 
 
 
@@ -73,6 +74,10 @@ export function ProjectView() {
   const openDateRange = useBoolean();
 
   const confirm = useBoolean();
+
+  const confirmStaff = useBoolean();
+
+  const [isWarehouseStaff, setIsWarehouseStaff] = useState(false);
 
   const upload = useBoolean();
 
@@ -160,6 +165,7 @@ export function ProjectView() {
         name: 'closing',
         value: false,
       },
+      hasComments: false,
     }
   });
 
@@ -183,7 +189,8 @@ export function ProjectView() {
     filters.state.custom.isCoordination?.value ||
     filters.state.custom.isInstallation?.value ||
     filters.state.custom.isPermission?.value ||
-    filters.state.custom.isClosing?.value;
+    filters.state.custom.isClosing?.value ||
+    filters.state.custom.hasComments;
 
   const notFound = (!dataFiltered.length && canReset) || !dataFiltered.length;
 
@@ -358,6 +365,9 @@ export function ProjectView() {
                 setTableData={setTableData}
                 refetchProjects={refetchProjects}
                 loadedProjects={loadedProjects}
+                onOpenConfirmStaff={confirmStaff.onTrue}
+                isWarehouseStaff={isWarehouseStaff}
+                setIsWarehouseStaff={setIsWarehouseStaff}
               />
             ) : view === 'grid' ? (
               <ProjectGridView
@@ -374,6 +384,9 @@ export function ProjectView() {
                 listPermissions={listPermissions}
                 setTableData={setTableData}
                 refetchProjects={refetchProjects}
+                onOpenConfirmStaff={confirmStaff.onTrue}
+                isWarehouseStaff={isWarehouseStaff}
+                setIsWarehouseStaff={setIsWarehouseStaff}
               />
             ) : view === 'calendar' ? (
               <ProjectCalendarView projects={dataFiltered} isOnlyWeek={false} />
@@ -385,6 +398,17 @@ export function ProjectView() {
       </DashboardContent>
 
       <ProjectNewFolderDialog open={upload.value} onClose={upload.onFalse} />
+
+
+      <ProjectEditModalManageStaffView
+        isWarehouseStaff={isWarehouseStaff}
+        open={confirmStaff.value}
+        onClose={confirmStaff.onFalse}
+        loadedUsers={loadedUsers}
+        loadedProjectPermissions={loadedProjectPermissions}
+        tableSelected={table.selected}
+        table={table}
+      />
 
       <ConfirmDialog
         open={confirm.value}
@@ -465,6 +489,10 @@ function applyFilter({ inputData, comparator, filters, dateError }) {
 
   if (custom.hasPermission) {
     inputData = inputData.filter(file => file.hasPermission);
+  }
+
+  if (custom.hasComments) {
+    inputData = inputData.filter(file => file.projectComments.length > 0);
   }
 
   if (!dateError) {

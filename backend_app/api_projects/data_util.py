@@ -29,6 +29,23 @@ def transform_data_to_mongo(data, exclude_fields=None, include_fields=None):
     return data
 
 
+def transform_dict_to_camelcase(data):
+    if isinstance(data, dict):
+        new_data = {}
+        for key, value in data.items():
+            if '_' in key and key != '_id':
+                words = key.split('_')
+                new_key = words[0].lower() + ''.join(word.capitalize() for word in words[1:])
+            else:
+                new_key = key[0].lower() + key[1:] if key else key
+            new_data[new_key] = transform_dict_to_camelcase(value)
+        return new_data
+    elif isinstance(data, list):
+        return [transform_dict_to_camelcase(item) for item in data]
+    else:
+        return data
+
+
 def serialize_datetime(value):
     if isinstance(value, datetime):
         return value.isoformat()
@@ -176,10 +193,9 @@ def create_notification(module, info_id, info, type, username):
     return notification
 
 
-def findTaskInStage(tasks, stage, position=0):
+def find_task_in_stage(tasks, stage, position=0):
     filtered_tasks = [task for task in tasks if task.get("project_default_task", {}).get("project_stage", {}).get("name") == stage]
     filtered_tasks.sort(key=lambda x: x.get("project_default_task", {}).get("order", 0), reverse=False)
-    print(filtered_tasks)
     if isinstance(position, int):
         return filtered_tasks[position] if len(filtered_tasks) > position else None
     elif isinstance(position, str):

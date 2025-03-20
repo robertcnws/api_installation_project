@@ -1,13 +1,17 @@
+import dayjs from 'dayjs';
 import { memo, useEffect, forwardRef } from 'react';
 
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Avatar from '@mui/material/Avatar';
 import ListItem from '@mui/material/ListItem';
-import { styled } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
+import { styled, lighten, useTheme } from '@mui/material/styles';
 import AvatarGroup, { avatarGroupClasses } from '@mui/material/AvatarGroup';
 
+import { fIsAfter } from 'src/utils/format-time';
+
+import { CONFIG } from 'src/config-global';
 import { varAlpha, stylesMode } from 'src/theme/styles';
 
 import { Label } from 'src/components/label';
@@ -15,6 +19,7 @@ import { Iconify } from 'src/components/iconify';
 import { imageClasses } from 'src/components/image';
 
 import { kanbanClasses } from '../classes';
+
 
 
 // ----------------------------------------------------------------------
@@ -74,6 +79,9 @@ const ItemBase = forwardRef(({ task, stateProps, sx, ...other }, ref) => {
       document.body.style.cursor = '';
     };
   }, [stateProps?.dragOverlay]);
+
+  const th = useTheme();
+  const today = dayjs().format('YYYY-MM-DD');
 
   const itemWrapClassName = kanbanClasses.itemWrap.concat(
     (stateProps?.fadeIn && ` ${kanbanClasses.state.fadeIn}`) ||
@@ -135,8 +143,8 @@ const ItemBase = forwardRef(({ task, stateProps, sx, ...other }, ref) => {
         flexGrow={1}
         direction="row"
         alignItems="center"
-        sx={{ 
-          typography: 'caption', 
+        sx={{
+          typography: 'caption',
           color: task?.percentage === 0 ? 'default.lighter' :
             task?.percentage === 100 ? 'success.main' : 'warning.main'
         }}
@@ -155,11 +163,11 @@ const ItemBase = forwardRef(({ task, stateProps, sx, ...other }, ref) => {
             </Box>
           </>
         )}
-        
+
         <Box component="span" sx={{ mr: 0.3 }}>{task?.percentage?.toFixed(2) ?? 0}</Box>
-        <Iconify width={16} icon="lets-icons:percent"  />
+        <Iconify width={16} icon="lets-icons:percent" />
         <Label color={task?.percentage === 0 ? 'default' :
-            task?.percentage === 100 ? 'success' : 'warning'} sx={{ ml: 1 }}>
+          task?.percentage === 100 ? 'success' : 'warning'} sx={{ ml: 1 }}>
           {task?.percentage === 0 ? 'Not Started' :
             task?.percentage === 100 ? 'Finished' : 'In Progress'}
         </Label>
@@ -199,7 +207,18 @@ const ItemBase = forwardRef(({ task, stateProps, sx, ...other }, ref) => {
       >
         {renderImg}
 
-        <Box sx={{ px: 2, py: 2.5, position: 'relative' }}>
+        <Box
+          sx={{
+            px: 2,
+            py: 2.5,
+            position: 'relative',
+            bgcolor: task?.endDate ? ((fIsAfter(today, dayjs(task?.endDate).format('YYYY-MM-DD')) && (
+              task?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
+              task?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
+              task?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
+            )) ? lighten(th.palette.error.lighter, 0.6) : 'inherit') : 'inherit',
+          }}
+        >
           {renderPriority}
 
           <Typography variant="subtitle2" sx={{ mb: 2 }}>

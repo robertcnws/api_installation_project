@@ -1,3 +1,4 @@
+import dayjs from 'dayjs';
 import React, { useMemo, useState, useContext, useCallback } from 'react';
 
 import Stack from '@mui/material/Stack';
@@ -7,9 +8,9 @@ import Divider from '@mui/material/Divider';
 import MenuList from '@mui/material/MenuList';
 import MenuItem from '@mui/material/MenuItem';
 import Checkbox from '@mui/material/Checkbox';
-import { useTheme } from '@mui/material/styles';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
+import { lighten, useTheme } from '@mui/material/styles';
 import TableRow, { tableRowClasses } from '@mui/material/TableRow';
 import TableCell, { tableCellClasses } from '@mui/material/TableCell';
 
@@ -17,7 +18,7 @@ import { useBoolean } from 'src/hooks/use-boolean';
 import { useDoubleClick } from 'src/hooks/use-double-click';
 import { useCopyToClipboard } from 'src/hooks/use-copy-to-clipboard';
 
-import { fDate, fDuration } from 'src/utils/format-time';
+import { fDate, fIsAfter, fDuration } from 'src/utils/format-time';
 import { verifyPermissions, listRolesAndSubroles } from 'src/utils/check-permissions';
 
 import { CONFIG } from 'src/config-global';
@@ -33,6 +34,7 @@ import { LoadingContext } from 'src/auth/context/loading-context';
 
 import { ProjectShareDialog } from './project-share-dialog';
 import { ProjectFileDetails } from './project-file-details';
+
 
 
 
@@ -59,6 +61,14 @@ export function ProjectTableRow({
   const [rowUpdated, setRowUpdated] = useState(null);
 
   const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
+
+  const today = dayjs().format('YYYY-MM-DD');
+
+  // const endDate = dayjs(row?.endDate).format('YYYY-MM-DD');
+
+  // console.log('now', today);
+  // console.log('endDate', endDate);
+  // console.log('fIsAfter', fIsAfter(now, endDate));
 
   // useEffect(() => {
   //   if (item) {
@@ -134,15 +144,29 @@ export function ProjectTableRow({
         sx={{
           borderRadius: 2,
           [`&.${tableRowClasses.selected}, &:hover`]: {
-            backgroundColor: 'background.paper',
+            backgroundColor: row?.endDate ? ((fIsAfter(today, dayjs(row?.endDate).format('YYYY-MM-DD')) && (
+              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
+              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
+              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
+            )) ? lighten(theme.palette.error.lighter, 0.6) : 'background.paper' ) : 'background.paper',
             boxShadow: theme.customShadows.z20,
             transition: theme.transitions.create(['background-color', 'box-shadow'], {
               duration: theme.transitions.duration.shortest,
             }),
-            '&:hover': { backgroundColor: 'background.paper', boxShadow: theme.customShadows.z20 },
+            '&:hover': { backgroundColor: row?.endDate ? ((fIsAfter(today, dayjs(row?.endDate).format('YYYY-MM-DD')) && (
+              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
+              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
+              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
+            )) ? lighten(theme.palette.error.lighter, 0.6) : 'background.paper' ) : 'background.paper'
+            , boxShadow: theme.customShadows.z20 },
           },
           [`& .${tableCellClasses.root}`]: { ...defaultStyles },
           ...(details.value && { [`& .${tableCellClasses.root}`]: { ...defaultStyles } }),
+          bgcolor: row?.endDate ? ((fIsAfter(today, dayjs(row?.endDate).format('YYYY-MM-DD')) && (
+            row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
+            row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
+            row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
+          )) ? lighten(theme.palette.error.lighter, 0.7) : 'inherit' ) : 'inherit', 
         }}
       >
         {(verifyPermissions(
@@ -151,7 +175,7 @@ export function ProjectTableRow({
           CONFIG.permissions.moduleProjects,
           CONFIG.permissions.operationDelete
         ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) && (
-            <TableCell padding="checkbox">
+            <TableCell  padding="checkbox">
               <Checkbox
                 checked={selected}
                 onDoubleClick={() => console.info('ON DOUBLE CLICK')}
@@ -163,17 +187,38 @@ export function ProjectTableRow({
         <TableCell
           // onClick={handleClick} 
           onClick={onViewRow}
-          sx={{ whiteSpace: 'nowrap', cursor: 'pointer', }}
+          sx={{ 
+            whiteSpace: 'nowrap', 
+            cursor: 'pointer',
+            fontWeight: row?.endDate ? ((fIsAfter(today, dayjs(row?.endDate).format('YYYY-MM-DD')) && (
+              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
+              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
+              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
+            )) ? 'fontWeightBold' : 'inherit' ) : 'inherit',
+          }}
+          align='center'
         >
           {/* {fDate(row?.salesOrder.date)} */}
-          {fDate(row?.startDate)}
+          {fDate(row?.startDate) ? fDate(row?.startDate) :
+            <Tooltip title="No Start Date" arrow>
+              <Iconify icon="ph:calendar-x-bold" sx={{ color: 'error.main' }} />
+            </Tooltip>
+          }
         </TableCell>
         <TableCell
           onClick={onViewRow}
-          sx={{ whiteSpace: 'nowrap', cursor: 'pointer', }}
+          sx={{ 
+            whiteSpace: 'nowrap', 
+            cursor: 'pointer', 
+            fontWeight: row?.endDate ?  ((fIsAfter(today, dayjs(row?.endDate).format('YYYY-MM-DD')) && (
+              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
+              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
+              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
+            )) ? 'fontWeightBold' : 'inherit' ) : 'inherit',
+          }}
         >
           {row?.endDate ? fDuration(row?.startDate, row?.endDate) :
-            <Tooltip title="No Closing Date">
+            <Tooltip title="No Closing Date" arrow>
               <Iconify icon="material-symbols:sms-failed-outline" sx={{ color: 'error.main' }} />
             </Tooltip>}
         </TableCell>
@@ -181,6 +226,15 @@ export function ProjectTableRow({
         <TableCell
           // onClick={handleClick} 
           onClick={onViewRow}
+          sx={{ 
+            whiteSpace: 'nowrap', 
+            cursor: 'pointer', 
+            fontWeight: row?.endDate ?  ((fIsAfter(today, dayjs(row?.endDate).format('YYYY-MM-DD')) && (
+              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
+              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
+              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
+            )) ? 'fontWeightBold' : 'inherit' ) : 'inherit',
+          }}
         >
           <Stack direction="row" alignItems="center" spacing={2}>
             {/* <FileThumbnail file="folder" /> */}
@@ -204,17 +258,30 @@ export function ProjectTableRow({
             <TableCell
               onClick={onViewRow}
               sx={{ whiteSpace: 'nowrap', cursor: 'pointer', }}
+              align='center'
             >
               {row?.inspectionDate ? fDate(row?.inspectionDate) :
-                <Tooltip title="No Inspection Date">
-                  <Iconify icon="material-symbols:sms-failed-outline" sx={{ color: 'error.main' }} />
-                </Tooltip>
+                row.hasPermission ?
+                  <Tooltip title="No Inspection Date" arrow>
+                    <Iconify icon="ph:calendar-x-bold" sx={{ color: 'error.main' }} />
+                  </Tooltip> :
+                  <Tooltip title="No Permission to Inspect" arrow>
+                    <Iconify icon="fluent:document-none-20-regular" sx={{ color: 'default' }} />
+                  </Tooltip>
               }
             </TableCell>
             <TableCell
               // onClick={handleClick} 
               onClick={onViewRow}
-              sx={{ cursor: 'pointer', maxWidth: 200 }}
+              sx={{ 
+                cursor: 'pointer', 
+                maxWidth: 200,
+                fontWeight: row?.endDate ?  ((fIsAfter(today, dayjs(row?.endDate).format('YYYY-MM-DD')) && (
+                  row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
+                  row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
+                  row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
+                )) ? 'fontWeightBold' : 'inherit' ) : 'inherit',
+              }}
             >
               {row?.name}
             </TableCell>
@@ -274,18 +341,18 @@ export function ProjectTableRow({
                   }}>
                     {!hasPermission || stageName !== CONFIG.stages.permission ? (
                       <Tooltip title={
-                        stageOrder > itemOrder ? `${stageName} is ahead of current stage` :
-                          stageOrder === itemOrder && percentage === 0 ? `${stageName} is current stage` :
-                            stageOrder === itemOrder && percentage > 0 && percentage < 50 ? `${stageName} is current stage and ${percentage.toFixed(2)} % completed` :
-                              stageOrder === itemOrder && percentage >= 50 && percentage < 100 ? `${stageName} is current stage and ${percentage.toFixed(2)} % completed` :
+                        stageOrder > itemOrder ? (stageName !== CONFIG.stages.permission ? `${stageName} is ahead of current stage` : `${stageName} is not available`) :
+                          stageOrder === itemOrder && percentage === 0 ? (stageName !== CONFIG.stages.permission ? `${stageName} is current stage` : `${stageName} is not available`) :
+                            stageOrder === itemOrder && percentage > 0 && percentage < 50 ? (stageName !== CONFIG.stages.permission ? `${stageName} is current stage and ${percentage.toFixed(2)} % completed` : `${stageName} is not available`) :
+                              stageOrder === itemOrder && percentage >= 50 && percentage < 100 ? (stageName !== CONFIG.stages.permission ? `${stageName} is current stage and ${percentage.toFixed(2)} % completed` : `${stageName} is not available`) :
                                 `${stageName} is ${percentage.toFixed(2)} % completed and past current stage`
                       } placement="top" arrow>
                         <Iconify sx={{ width: '14px' }} icon={
-                          stageOrder > itemOrder ? "jam:pie-chart-alt" :
-                            stageOrder === itemOrder && percentage === 0 ? "icon-park-solid:pie" :
-                              stageOrder === itemOrder && percentage > 0 && percentage < 25 ? "icon-park-solid:pie-two" :
-                                stageOrder === itemOrder && percentage >= 25 && percentage < 50 ? "icon-park-solid:pie-four" :
-                                  stageOrder === itemOrder && percentage >= 50 && percentage < 100 ? "icon-park-solid:pie-six" : "garden:circle-full-fill-12"
+                          stageOrder > itemOrder ? (stageName !== CONFIG.stages.permission ? "jam:pie-chart-alt" : "garden:circle-full-fill-12") :
+                            stageOrder === itemOrder && percentage === 0 ? (stageName !== CONFIG.stages.permission ? "icon-park-solid:pie" : "garden:circle-full-fill-12") :
+                              stageOrder === itemOrder && percentage > 0 && percentage < 25 ? (stageName !== CONFIG.stages.permission ? "icon-park-solid:pie-two" : "garden:circle-full-fill-12") :
+                                stageOrder === itemOrder && percentage >= 25 && percentage < 50 ? (stageName !== CONFIG.stages.permission ? "icon-park-solid:pie-four" : "garden:circle-full-fill-12") :
+                                  stageOrder === itemOrder && percentage >= 50 && percentage < 100 ? (stageName !== CONFIG.stages.permission ? "icon-park-solid:pie-six" : "garden:circle-full-fill-12") : "garden:circle-full-fill-12"
                           // stageOrder === itemOrder ? "mdi:circle-half-full" : "garden:circle-full-fill-12"
                         } />
                       </Tooltip>

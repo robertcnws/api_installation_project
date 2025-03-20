@@ -3,7 +3,7 @@ import { z as zod } from 'zod';
 import isEqual from 'lodash.isequal';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMemo, useState, useEffect, useContext } from 'react';
+import { useMemo, useState, useEffect, useContext, useCallback } from 'react';
 
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
@@ -11,14 +11,13 @@ import { LoadingButton } from '@mui/lab';
 import Grid from '@mui/material/Unstable_Grid2';
 import Typography from '@mui/material/Typography';
 import ListItemText from '@mui/material/ListItemText';
-import { Box, Table, Button, TableRow, TableBody, TableCell, TableHead, TextField, IconButton, TableFooter, TableContainer, TextareaAutosize } from '@mui/material';
+import { Box, Table, Button, Tooltip, TableRow, TableBody, TableCell, TableHead, TextField, IconButton, TableFooter, TableContainer } from '@mui/material';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
 import { fCurrency } from 'src/utils/format-number';
-import { createScopeArray, generateInstallationGuideFormReport } from 'src/utils/generate-installation-guide-pdf';
-
-import { isAdministrator, isWarehouseStaff, listRolesAndSubroles } from 'src/utils/check-permissions';
+import { listRolesAndSubroles } from 'src/utils/check-permissions';
+import { combineByName, createScopeArray, generateInstallationGuideFormReport } from 'src/utils/generate-installation-guide-pdf';
 
 import { CONFIG } from 'src/config-global';
 
@@ -42,6 +41,7 @@ export function ProjectDetailsInstallationGuideFormView({
   listPermissions,
   openDialogs,
   setOpenDialogs,
+  loadedDefaultGuideProducts,
 }) {
 
   useEffect(() => {
@@ -73,7 +73,7 @@ export function ProjectDetailsInstallationGuideFormView({
 
   const [materials, setMaterials] = useState(
     project?.projectMaterials.length > 0 ?
-      project?.projectMaterials :
+      combineByName(project?.projectMaterials) :
       [
         {
           id: 1,
@@ -92,7 +92,7 @@ export function ProjectDetailsInstallationGuideFormView({
   // Cargar productos iniciales
   useEffect(() => {
     if (listItems.length > 0) {
-      const items = createScopeArray({ listItems }).filter((item) => item.quantity > 0).map((item) => ({
+      const items = createScopeArray({ listItems, loadedDefaultGuideProducts }).filter((item) => item.quantity > 0).map((item) => ({
         ...item,
         isNew: false,
         checked: item?.checked || false,
@@ -102,27 +102,27 @@ export function ProjectDetailsInstallationGuideFormView({
         const finalItem = {
           ...item,
           name: product?.name || item.name,
-          price: product?.price || item.price,
+          price: product?.price || (item.name.toLowerCase().includes('mullion') ? 0 : item.price),
           quantity: product?.quantity || item.quantity,
           notes: product?.notes || '',
           checked: product?.checked,
         }
         return finalItem;
       });
-      const newItems = project?.projectGuideProducts?.filter((item) => !lastItems.some((i) => i.id === item.id));
-      
+      const newItems = project?.projectGuideProducts?.filter((item) => !lastItems.some((i) => i.id === item.id)) || [];
+
       const finalItems = [...lastItems, ...newItems];
-      
-      setProductsData(finalItems.sort((a, b) => a.id - b.id));
+
+      setProductsData(combineByName(finalItems.sort((a, b) => a.id - b.id)));
     }
-  }, [listItems, project]);
+  }, [listItems, project, loadedDefaultGuideProducts]);
 
 
   useEffect(() => {
     if (project && productsData?.length > 0 && materials?.length > 0) {
       const current = {
         ...project,
-        projectGuideProducts: productsData,
+        projectGuideProducts: combineByName(productsData),
         projectMaterials: materials,
       }
       setCurrentProject(current);
@@ -139,7 +139,7 @@ export function ProjectDetailsInstallationGuideFormView({
     socket.onmessage = (event) => {
       const message = JSON.parse(event.data);
       if (message.type === 'created' || message.type === 'updated') {
-        setProductsData((prevData) => project?.id === message.item.id ? message.item.projectGuideProducts : prevData);
+        setProductsData((prevData) => project?.id === message.item.id ? combineByName(message.item.projectGuideProducts) : prevData);
         setMaterials((prevData) => project?.id === message.item.id ? message.item.projectMaterials : prevData);
       }
       else if (message.type === 'deleted') {
@@ -169,7 +169,7 @@ export function ProjectDetailsInstallationGuideFormView({
   ), [productsData]);
 
   const handleAddProduct = () => {
-    const lastIndex = productsData.reduce((max, obj) => obj.id > max.id ? obj : max, productsData[0]).id;
+    const lastIndex = productsData.reduce((max, obj) => obj.id > max.id ? obj : max, productsData[0])?.id || 0;
     setProductsData((prev) => [
       ...prev,
       {
@@ -189,6 +189,9 @@ export function ProjectDetailsInstallationGuideFormView({
   };
 
   const handleProductChange = (id, field, value) => {
+    console.log('id', id);
+    console.log('field', field);
+    console.log('value', value);
     setProductsData((prev) => (
       prev.map((item) => (
         item.id === id ? { ...item, [field]: value } : item
@@ -196,16 +199,20 @@ export function ProjectDetailsInstallationGuideFormView({
     ));
   };
 
-  const isValidProductRow = (product) => product?.name?.trim() !== '' && product?.price > 0 && product?.quantity > 0;
+  const isValidProductRow = (product) => product?.name?.trim() !== '' &&
+    (product?.name?.toLowerCase().includes('mullion') ? Number(product?.price) >= 0 : Number(product?.price) > 0) &&
+    product?.quantity > 0;
 
   const canAddProduct = useMemo(() => {
     if (productsData?.length === 0) return true;
     const lastProduct = productsData[productsData.length - 1];
-    return lastProduct?.name?.trim() !== '' && lastProduct?.price > 0 && lastProduct?.quantity > 0;
+    return lastProduct?.name?.trim() !== '' &&
+      (lastProduct?.name?.toLowerCase().includes('mullion') ? Number(lastProduct?.price) >= 0 : Number(lastProduct?.price) > 0) &&
+      lastProduct?.quantity > 0;
   }, [productsData]);
 
   const handleAddMaterial = () => {
-    const lastIndex = materials.reduce((max, obj) => obj.id > max.id ? obj : max, materials[0]).id;
+    const lastIndex = materials.reduce((max, obj) => obj.id > max.id ? obj : max, materials[0])?.id || 0;
     setMaterials((prev) => [
       ...prev,
       {
@@ -257,7 +264,7 @@ export function ProjectDetailsInstallationGuideFormView({
   const defaultValues = useMemo(() => ({
     workScope: project?.workScope || '',
     otherNotes: project?.projectMaterialsOtherNotes || '',
-    projectGuideProducts: project?.projectGuideProducts || [],
+    projectGuideProducts: combineByName(project?.projectGuideProducts) || [],
     projectMaterials: project?.projectMaterials || [],
   }), [project]);
 
@@ -280,7 +287,7 @@ export function ProjectDetailsInstallationGuideFormView({
     const areProductsValid = productsData?.every((product) =>
       product?.name?.trim() !== '' &&
       Number(product?.quantity) > 0 &&
-      Number(product?.price) > 0
+      (product?.name?.toLowerCase().includes('mullion') ? Number(product?.price) >= 0 : Number(product?.price) > 0)
     );
 
     const areMaterialsValid = materials?.every((material) =>
@@ -310,7 +317,39 @@ export function ProjectDetailsInstallationGuideFormView({
 
   const currentValues = useWatch({ control });
 
-  const isCustomDirty = useMemo(() => !isEqual(currentValues, defaultValues), [currentValues, defaultValues]);
+  const normalizeProducts = (products = []) =>
+    products.map((p) => {
+      if (p.name && p.name.toLowerCase().includes('mullion')) {
+        return { ...p, price: p.price || 0 };
+      }
+      return p;
+    });
+
+  const sortById = (arr = []) => arr.slice().sort((a, b) => a.id - b.id);
+
+  const normalizeValues = useCallback(
+    (values) => ({
+      ...values,
+      projectGuideProducts: sortById(normalizeProducts(combineByName(values.projectGuideProducts))),
+      projectMaterials: sortById(values.projectMaterials || []),
+    }), []);
+
+  const normalizedDefaultValues = useMemo(() => normalizeValues(defaultValues), [defaultValues, normalizeValues]);
+  const normalizedCurrentValues = useMemo(() => normalizeValues(currentValues), [currentValues, normalizeValues]);
+
+  const normalizedDefault = useMemo(() => JSON.parse(JSON.stringify(normalizedDefaultValues)), [normalizedDefaultValues]);
+  const normalizedCurrent = useMemo(() => JSON.parse(JSON.stringify(normalizedCurrentValues)), [normalizedCurrentValues]);
+
+  // console.log('normalizedDefault', normalizedDefault);
+  // console.log('normalizedCurrent', normalizedCurrent);
+  // console.log('!isEqual(normalizedCurrent, normalizedDefault)', !isEqual(normalizedCurrent, normalizedDefault));
+
+  const isCustomDirty = useMemo(
+    () => !isEqual(normalizedCurrent, normalizedDefault),
+    [normalizedCurrent, normalizedDefault],
+  );
+
+  const allProductsChecked = useMemo(() => productsData?.every((product) => product.checked), [productsData]);
 
 
   const onSubmit = handleSubmit(async (data) => {
@@ -346,9 +385,9 @@ export function ProjectDetailsInstallationGuideFormView({
     const product = productsData.find((p) => p.id === id);
     const maxId = productsData.reduce((max, obj) => obj.id > max.id ? obj : max, productsData[0]).id;
     console.log('maxId', maxId);
-    const newProduct = { 
-      ...product, 
-      checked: true, 
+    const newProduct = {
+      ...product,
+      checked: true,
       isNew: false,
       predefined: true,
       id: product.id ? product.id : Number(maxId) + 1,
@@ -410,42 +449,68 @@ export function ProjectDetailsInstallationGuideFormView({
                             <TableCell>Pay</TableCell>
                             <TableCell>Qty</TableCell>
                             <TableCell align="right">Total</TableCell>
-                            <TableCell align="right">
+                            <TableCell>
                               <Box sx={{
                                 display: 'flex',
                                 flexDirection: 'row',
-                                justifyContent: productsData.length === 0 ? 'space-between' : 'flex-end'
+                                justifyContent: materials.length === 0 ? 'space-between' : 'flex-end'
                               }}>
-                                <Typography sx={{ mt: productsData.length !== 0 ? 0.3 : 2 }}>Notes</Typography>
-                                {productsData.length === 0 && (
-                                  <IconButton variant="outlined" color='success' onClick={handleAddProduct} disabled={!canAddProduct} sx={{
-                                    '&:hover': {
-                                      boxShadow: 'none',
-                                      backgroundColor: 'transparent',
-                                    },
-                                  }}>
-                                    <Iconify icon="lets-icons:add-duotone" sx={{
-                                      width: 30,
-                                      height: 30,
-                                    }} />
-                                  </IconButton>
+                                <Typography sx={{ mt: productsData.length !== 0 ? 0.4 : 1.5 }} variant='subtitle2'>Notes</Typography>
+                                {(productsData.length === 0 && !listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) && (
+                                  <Box sx={{ display: 'flex', justifyContent: 'flex-end', mr: -25 }}>
+                                    <IconButton variant="outlined" color='success' onClick={handleAddProduct} disabled={!canAddProduct} sx={{
+                                      '&:hover': {
+                                        boxShadow: 'none',
+                                        backgroundColor: 'transparent',
+                                      },
+                                    }}>
+                                      <Iconify icon="lets-icons:add-duotone" sx={{
+                                        width: 30,
+                                        height: 30,
+                                      }} />
+                                    </IconButton>
+                                  </Box>
                                 )}
                               </Box>
                             </TableCell>
                             {listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator) && (
-                              <TableCell>Checked?</TableCell>
+                              <TableCell>
+                                <Box sx={{
+                                  display: 'flex',
+                                  flexDirection: 'row',
+                                  justifyContent: materials.length === 0 ? 'space-between' : 'flex-end'
+                                }}>
+                                  <Typography sx={{ mt: productsData.length !== 0 ? 0.4 : 1.5 }} variant='subtitle2'>Checked?</Typography>
+                                  {(productsData.length === 0 && listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) && (
+                                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mr: -20 }}>
+                                      <IconButton variant="outlined" color='success' onClick={handleAddProduct} disabled={!canAddProduct} sx={{
+                                        '&:hover': {
+                                          boxShadow: 'none',
+                                          backgroundColor: 'transparent',
+                                        },
+                                      }}>
+                                        <Iconify icon="lets-icons:add-duotone" sx={{
+                                          width: 30,
+                                          height: 30,
+                                        }} />
+                                      </IconButton>
+                                    </Box>
+                                  )}
+                                </Box>
+                              </TableCell>
                             )}
                           </>
                         ) : (
                           <TableCell>
                             <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-                              <Typography>Items</Typography>
+                              <Typography sx={{ mt: productsData.length === 0 ? 1.5 : 0 }}>Items</Typography>
                               {productsData.length === 0 && (
                                 <IconButton variant="outlined" color='success' onClick={handleAddProduct} disabled={!canAddProduct} sx={{
                                   '&:hover': {
                                     boxShadow: 'none',
                                     backgroundColor: 'transparent',
                                   },
+                                  mr: -18,
                                 }}>
                                   <Iconify icon="lets-icons:add-duotone" sx={{ width: 30, height: 30 }} />
                                 </IconButton>
@@ -489,8 +554,8 @@ export function ProjectDetailsInstallationGuideFormView({
                                     listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) ? (
                                     <TextField
                                       type="number"
-                                      min="0"
-                                      value={product.price || ''}
+                                      min={product.name.toLowerCase().includes('mullion') ? 0 : 1}
+                                      value={product.price}
                                       placeholder="Price..."
                                       sx={{ width: 70 }}
                                       InputProps={{
@@ -524,14 +589,6 @@ export function ProjectDetailsInstallationGuideFormView({
                                 {fCurrency(product.price * product.quantity)}
                               </TableCell>
                               <TableCell align="right">
-                                {/* <TextField
-                                  multiline
-                                  rows={3}
-                                  value={product.notes}
-                                  placeholder="Enter notes..."
-                                  sx={{ width: 250 }}
-                                  onChange={(e) => handleProductChange(product.id, 'notes', e.target.value)}
-                                /> */}
                                 <Label
                                   color={product.notes ? "warning" : "default"}
                                   sx={{ cursor: 'pointer' }}
@@ -540,14 +597,16 @@ export function ProjectDetailsInstallationGuideFormView({
                                     setCurrentType('item')
                                   }}
                                 >
-                                  {product.notes ? 'Edit Item Note' : 'Add Item Note'}
+                                  {product.notes ? 'Edit Note' : 'Add Note'}
                                 </Label>
                               </TableCell>
                               {listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator) && (
                                 <TableCell>
-                                  {product.checked ? 
-                                  <Iconify icon="lets-icons:check-fill" sx={{ width: 20, height: 20, color: 'success.main' }} /> : 
-                                  <Iconify icon="clarity:error-solid" sx={{ width: 20, height: 20, color: 'error.main' }} />}
+                                  <Tooltip title={`Checked: ${product.checked ? 'Yes' : 'No'}`} arrow>
+                                    {product.checked ?
+                                      <Iconify icon="lets-icons:check-fill" sx={{ width: 20, height: 20, color: 'success.main' }} /> :
+                                      <Iconify icon="clarity:error-solid" sx={{ width: 20, height: 20, color: 'error.main' }} />}
+                                  </Tooltip>
                                 </TableCell>
                               )}
                             </>
@@ -556,7 +615,9 @@ export function ProjectDetailsInstallationGuideFormView({
                               <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                                 <Typography variant="h6">Product: </Typography>
                                 {
-                                  product.isNew ? (
+                                  (product.isNew ||
+                                    !product.checked ||
+                                    listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) ? (
                                     <TextField
                                       value={product.name}
                                       placeholder="Enter name..."
@@ -570,11 +631,14 @@ export function ProjectDetailsInstallationGuideFormView({
                                 }<br />
                                 <Typography variant="h6">Price: </Typography>
                                 {
-                                  (product.isNew || !product.predefined) ? (
+                                  (product.isNew ||
+                                    !product.predefined ||
+                                    !product.checked ||
+                                    listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) ? (
                                     <TextField
                                       type="number"
-                                      min="0"
-                                      value={product.price || ''}
+                                      min={product.name.toLowerCase().includes('mullion') ? 0 : 1}
+                                      value={product.price}
                                       placeholder="Enter price"
                                       sx={{ width: 200 }}
                                       InputProps={{
@@ -586,7 +650,9 @@ export function ProjectDetailsInstallationGuideFormView({
                                 }<br />
                                 <Typography variant="h6">Quantity: </Typography>
                                 {
-                                  product.isNew ? (
+                                  (product.isNew ||
+                                    !product.checked ||
+                                    listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) ? (
                                     <TextField
                                       type="number"
                                       min="0"
@@ -621,27 +687,38 @@ export function ProjectDetailsInstallationGuideFormView({
                                     setCurrentType('item')
                                   }}
                                 >
-                                  {product.notes ? 'Edit Item Note' : 'Add Item Note'}
+                                  {product.notes ? 'Edit Note' : 'Add Note'}
                                 </Label>
+                                {listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator) && (
+                                  <>
+                                    <br /><Typography variant="h6">Checked?: </Typography>
+                                    {product.checked ?
+                                      <Iconify icon="lets-icons:check-fill" sx={{ width: 20, height: 20, color: 'success.main' }} /> :
+                                      <Iconify icon="clarity:error-solid" sx={{ width: 20, height: 20, color: 'error.main' }} />
+                                    }
+                                  </>
+                                )}
                               </Box>
                             </TableCell>
                           )}
 
                           <TableCell sx={{ verticalAlign: !isMobile ? 'none' : 'bottom' }} align="left">
-                            <Box sx={{ display: 'flex', flexDirection: !isMobile ? 'row' : 'column', justifyContent: 'flex-end', gap: 0 }}>
-                              {(!product.checked && isWarehouseStaff(userLogged?.data?.user_role?.name) && isValidProductRow(product)) && (
-                                <IconButton 
-                                variant="outlined" 
-                                color='default'
-                                onClick={() => handleCheckProduct(product.id)} sx={{
-                                  '&:hover': {
-                                    boxShadow: 'none',
-                                    backgroundColor: 'transparent',
-                                  },
-                                }}>
-                                  <Iconify icon="lets-icons:check-fill" sx={{ width: 29, height: 29 }} />
-                                </IconButton>
-                              )}
+                            <Box sx={{ display: 'flex', flexDirection: !isMobile ? 'row' : 'column', justifyContent: 'flex-end', gap: -1 }}>
+                              {(!product.checked &&
+                                listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.warehouseStaff) &&
+                                isValidProductRow(product)) && (
+                                  <IconButton
+                                    variant="outlined"
+                                    color='default'
+                                    onClick={() => handleCheckProduct(product.id)} sx={{
+                                      '&:hover': {
+                                        boxShadow: 'none',
+                                        backgroundColor: 'transparent',
+                                      },
+                                    }}>
+                                    <Iconify icon="lets-icons:check-ring" sx={{ width: 26, height: 26 }} />
+                                  </IconButton>
+                                )}
                               {(index === productsData.length - 1) && (
                                 <IconButton variant="outlined" color='success' onClick={handleAddProduct} disabled={!canAddProduct} sx={{
                                   '&:hover': {
@@ -649,7 +726,7 @@ export function ProjectDetailsInstallationGuideFormView({
                                     backgroundColor: 'transparent',
                                   },
                                 }}>
-                                  <Iconify icon="lets-icons:add-duotone" sx={{ width: 30, height: 30 }} />
+                                  <Iconify icon="icons8:plus" sx={{ width: 28, height: 28 }} />
                                 </IconButton>
                               )}
                               {(product.isNew || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) && (
@@ -711,7 +788,7 @@ export function ProjectDetailsInstallationGuideFormView({
                                 flexDirection: 'row',
                                 justifyContent: materials.length === 0 ? 'space-between' : 'flex-end'
                               }}>
-                                <Typography sx={{ mt: materials.length !== 0 ? 0.4 : 1.5 }}>Notes</Typography>
+                                <Typography sx={{ mt: materials.length !== 0 ? 0.4 : 1.5 }} variant='subtitle2'>Notes</Typography>
                                 {materials.length === 0 && (
                                   <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'flex-end', mr: -29 }}>
                                     <IconButton variant="outlined" color='success' onClick={handleAddMaterial} disabled={!canAddMaterial} sx={{
@@ -730,13 +807,14 @@ export function ProjectDetailsInstallationGuideFormView({
                         ) : (
                           <TableCell>
                             <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-                              <Typography>Materials</Typography>
+                              <Typography sx={{ mt: materials.length === 0 ? 1.5 : 0 }}>Materials</Typography>
                               {materials.length === 0 && (
                                 <IconButton variant="outlined" color='success' onClick={handleAddMaterial} disabled={!canAddMaterial} sx={{
                                   '&:hover': {
                                     boxShadow: 'none',
                                     backgroundColor: 'transparent',
                                   },
+                                  mr: -5,
                                 }}>
                                   <Iconify icon="lets-icons:add-duotone" sx={{ width: 30, height: 30, mr: -15 }} />
                                 </IconButton>
@@ -828,7 +906,7 @@ export function ProjectDetailsInstallationGuideFormView({
                                     setCurrentType('material')
                                   }}
                                 >
-                                  {product.notes ? 'Edit Material Note' : 'Add Material Note'}
+                                  {product.notes ? 'Edit Note' : 'Add Note'}
                                 </Label>
                               </TableCell>
                             </>
@@ -904,7 +982,7 @@ export function ProjectDetailsInstallationGuideFormView({
                                     setCurrentType('material')
                                   }}
                                 >
-                                  {product.notes ? 'Edit Item Note' : 'Add Item Note'}
+                                  {product.notes ? 'Edit Note' : 'Add Note'}
                                 </Label>
                               </Box>
                             </TableCell>
@@ -918,7 +996,7 @@ export function ProjectDetailsInstallationGuideFormView({
                                     backgroundColor: 'transparent',
                                   },
                                 }}>
-                                  <Iconify icon="lets-icons:add-duotone" sx={{ width: 30, height: 30 }} />
+                                  <Iconify icon="icons8:plus" sx={{ width: 28, height: 28 }} />
                                 </IconButton>
                               )}
                               <IconButton variant="outlined" color='warning' onClick={() => handleRemoveMaterial(product.id)} sx={{
@@ -979,7 +1057,7 @@ export function ProjectDetailsInstallationGuideFormView({
       ))}
       <Label color="default">
         <Stack direction="column" spacing={0.5}>
-          <Typography variant="caption">To enable Save button: <b>1. Fill all fields</b>, <b>2. If all is filled, at least one change</b></Typography>
+          <Typography variant="caption">To enable Save button: <b>1. Fill all fields</b>, <b>2. If all is filled, at least one change</b>, <b>3. Check each item in Items Section</b></Typography>
         </Stack>
       </Label>
       <Stack direction="row" spacing={2} justifyContent="flex-end" sx={{ mt: 2 }}>
@@ -987,7 +1065,7 @@ export function ProjectDetailsInstallationGuideFormView({
           type="submit"
           variant="contained"
           loading={isSubmitting}
-          disabled={!isFormValid || !isCustomDirty}
+          disabled={!isFormValid || !isCustomDirty || !allProductsChecked}
         >
           Save
         </LoadingButton>

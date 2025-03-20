@@ -37,6 +37,11 @@ export function ProjectFiltersResult({ filters, onResetPage, totalResults, sx })
           custom: { ...prevState.custom, hasPermission: false }
         }));
       }
+      else if (customType === 'hasComments') {
+        filters.setState((prevState) => ({
+          custom: { ...prevState.custom, hasComments: false }
+        }));
+      }
       else if (customType === 'isPreparation') {
         filters.setState((prevState) => ({
           custom: { ...prevState.custom, isPreparation: { value: false, name: 'preparation' } }
@@ -98,6 +103,10 @@ export function ProjectFiltersResult({ filters, onResetPage, totalResults, sx })
 
       <FiltersBlock label="Need Permission:" isShow={Boolean(filters.state.custom.hasPermission)}>
         <Chip {...chipProps} label='Yes' onDelete={() => handleRemoveCustom('hasPermission')} />
+      </FiltersBlock>
+
+      <FiltersBlock label="Has Comment(s):" isShow={Boolean(filters.state.custom.hasComments)}>
+        <Chip {...chipProps} label='Yes' onDelete={() => handleRemoveCustom('hasComments')} />
       </FiltersBlock>
 
       <FiltersBlock label="Stage(s):" isShow={

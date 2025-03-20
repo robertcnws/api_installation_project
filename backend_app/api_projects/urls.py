@@ -13,6 +13,7 @@ urlpatterns = [
     # PROJECTS
     path('create/project/', views.create_project, name='create_project'),
     path('create/projects/', views.create_projects, name='create_projects'),
+    path('update/projects/change-staff-all-projects/', views.change_staff_all_projects, name='change_staff_all_projects'),
     path('update/project/<str:id>/', views.update_project, name='update_project'),
     path('update/project/<str:id>/change-permission/', views.change_project_permission, name='change_project_permission'),
     path('update/project/<str:id>/change-address/', views.change_project_address, name='change_project_address'),
@@ -21,6 +22,7 @@ urlpatterns = [
     path('update/project/<str:id>/change-release-form/', views.change_project_release_form, name='change_project_release_form'),
     path('update/project/<str:id>/change-installation-guide-form/', views.change_project_installation_guide_form, name='change_project_installation_guide_form'),
     path('update/project/<str:id>/check-item-installation-guide/', views.check_project_item_installation_guide, name='check_project_item_installation_guide'),
+    path('update/project/<str:id>/revove-install-date/', views.remove_install_date_project, name='remove_install_date_project'),
     path('delete/project/<str:id>/', views.delete_project, name='delete_project'),
     path('delete/projects/', views.delete_projects, name='delete_projects'),
     path('delete/project/<str:id>/user/<str:userId>/', views.delete_project_user, name='delete_project_user'),
@@ -57,6 +59,11 @@ urlpatterns = [
     path('edit/stage-task/<str:id>/', views.edit_stage_task, name='edit_stage_task'),
     path('delete/stage-task/<str:id>/', views.delete_stage_task, name='delete_stage_task'),
     path('delete/stages-task/', views.delete_stages_task, name='delete_stages_task'),
+    # PROJECT DEFAULT GUIDE PRODUCTS
+    path('create/default-guide-product/', views.create_default_guide_product, name='create_default_guide_product'),
+    path('edit/default-guide-product/<str:id>/', views.edit_default_guide_product, name='edit_default_guide_product'),
+    path('delete/default-guide-product/<str:id>/', views.delete_default_guide_product, name='delete_default_guide_product'),
+    path('delete/default-guide-products/', views.delete_default_guide_products, name='delete_default_guide_products'),
     # DOWNLOAD BACKUP
     path('download/backup/', views.download_mongo_db, name='download_mongo_db'),
     # GET FILE URL FROM AWS S3
