@@ -77,6 +77,8 @@ export function ProjectView() {
 
   const confirmStaff = useBoolean();
 
+  const confirmAllDescriptions = useBoolean();
+
   const [isWarehouseStaff, setIsWarehouseStaff] = useState(false);
 
   const upload = useBoolean();
@@ -104,16 +106,10 @@ export function ProjectView() {
 
   useEffect(() => {
     const socket = new WebSocket(`wss://${CONFIG.apiHost}/api/projects/ws/projects/`);
-    // socket.onopen = () => {
-    //   console.log('WebSocket connected');
-    // };
     socket.onerror = (errorEvent) => {
       console.dir(errorEvent);
       console.error('WebSocket error (toString):', errorEvent.toString());
     };
-    // socket.onclose = (e) => {
-    //   console.log('WebSocket closed', e);
-    // };
     socket.onmessage = (event) => {
       const message = JSON.parse(event.data);
       if (message.type === 'created' || message.type === 'updated') {
@@ -139,6 +135,7 @@ export function ProjectView() {
   }, []);
 
   const filters = useSetState({
+    list: 'in progress',
     name: '',
     type: [],
     startDate: null,
@@ -255,6 +252,27 @@ export function ProjectView() {
     }, [dataFiltered.length, dataInPage.length, table, tableData, refetchSalesOrders, refetchProjects, userLogged]);
 
 
+  const handleUpdateAllDescriptions = useCallback(
+    async () => {
+
+      const promise = axios.post(`${CONFIG.apiUrl}/projects/update/projects/change-description-all-projects/`, {
+        ids: table.selected,
+        userReporter: userLogged?.data,
+      });
+
+      const response = await promise;
+
+      toast.success('Update success!');
+
+      refetchProjects?.();
+
+      table.onUpdatePageDeleteRows({
+        totalRowsInPage: dataInPage.length,
+        totalRowsFiltered: dataFiltered.length,
+      });
+    }, [dataFiltered.length, dataInPage.length, table, refetchProjects, userLogged]);
+
+
   const handleViewKanban = useCallback(
     (id) => {
       localStorage.setItem('projectId', id);
@@ -357,6 +375,7 @@ export function ProjectView() {
                 onViewRow={handleDetailsView}
                 notFound={notFound}
                 onOpenConfirm={confirm.onTrue}
+                onOpenConfirmAllDescriptions={confirmAllDescriptions.onTrue}
                 loadedUsers={loadedUsers}
                 loadedProjectPermissions={loadedProjectPermissions}
                 loadedStages={finalStages}
@@ -377,6 +396,7 @@ export function ProjectView() {
                 onKanbanView={handleViewKanban}
                 onViewRow={handleDetailsView}
                 onOpenConfirm={confirm.onTrue}
+                onOpenConfirmAllDescriptions={confirmAllDescriptions.onTrue}
                 loadedUsers={loadedUsers}
                 loadedProjectPermissions={loadedProjectPermissions}
                 loadedStages={finalStages}
@@ -432,12 +452,35 @@ export function ProjectView() {
           </Button>
         }
       />
+
+      <ConfirmDialog
+        open={confirmAllDescriptions.value}
+        onClose={confirmAllDescriptions.onFalse}
+        title="Update All Descriptions"
+        content={
+          <>
+            Are you sure want to update all descriptions in <strong> {table.selected.length} </strong> installation project(s)?
+          </>
+        }
+        action={
+          <Button
+            variant="contained"
+            color="warning"
+            onClick={() => {
+              handleUpdateAllDescriptions();
+              confirmAllDescriptions.onFalse();
+            }}
+          >
+            Update
+          </Button>
+        }
+      />
     </>
   );
 }
 
 function applyFilter({ inputData, comparator, filters, dateError }) {
-  const { name, type, startDate, endDate, custom } = filters;
+  const { list, name, type, startDate, endDate, custom } = filters;
 
   const stabilizedThis = inputData.map((el, index) => [el, index]);
 
@@ -448,6 +491,15 @@ function applyFilter({ inputData, comparator, filters, dateError }) {
   });
 
   inputData = stabilizedThis.map((el) => el[0]);
+
+  if (list) {
+    if (list === 'in progress') {
+      inputData = inputData.filter((file) => file.currentStage.name.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) === -1);
+    }
+    else if (list === 'finished') {
+      inputData = inputData.filter((file) => file.currentStage.name.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) !== -1);
+    }
+  }
 
   if (name) {
     inputData = inputData.filter(

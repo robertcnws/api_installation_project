@@ -32,7 +32,7 @@ from .data_util import (
     transform_data_to_mongo,
     parse_custom_date,
     create_notification,
-    create_project_number,
+    create_entity_number,
     fix_order,
     fix_order_after_edit,
     get_current_stage_from_tasks,
@@ -201,7 +201,7 @@ def create_project(request):
     
     sales_order = json.loads(data.get('salesOrder'))
 
-    number = create_project_number(sales_order.get('salesorder_number'))
+    number = create_entity_number(sales_order.get('salesorder_number'))
     
     project_attachments = []
     files = request.FILES.getlist('projectAttachments')
@@ -263,11 +263,26 @@ def create_project(request):
                 
     if isinstance(users_assignees, list):
         users_assignees.extend(add_name_field(user) for user in warehouse_users)
+        
+    installation_description = sales_order.get('line_items', [])
+    installation_description = [
+        item.get('description') for item in installation_description if item.get('description') \
+        and item.get('name').lower() == settings.PROJECT_ITEM_INSTALLATION_NAME.lower()
+    ]
+    structural_description = sales_order.get('line_items', [])
+    structural_description = [
+        item.get('description') for item in structural_description if item.get('description') \
+        and item.get('name').lower() == settings.PROJECT_ITEM_STRUCTURAL_NAME.lower()
+    ]
+    
+    description = f'{data.get('description')} & ' + '.'.join(installation_description) + ' & ' + '.'.join(structural_description)
+    
+    work_scope = '.'.join(installation_description) + ' & ' + '.'.join(structural_description)
 
     try:
         project = Project(
             name=data.get('name', ''),
-            description=f'{data.get('description')} & {settings.PROJECT_WORK} & {settings.PROJECT_SCOPE}', 
+            description=description, 
             sales_order=sales_order, 
             users_assignees=users_assignees,
             # start_date=start_date,
@@ -288,7 +303,7 @@ def create_project(request):
             all_screw_marked=False,
             all_trash_marked=False,
             feedback='',
-            work_scope=f'{settings.PROJECT_WORK} & {settings.PROJECT_SCOPE}',
+            work_scope=work_scope,
             project_materials=[],
             project_materials_other_notes='',
         )
@@ -407,14 +422,27 @@ def create_projects(request):
     users_assignees = [user_manager] if user_manager else []
     
     users_assignees.extend(add_name_field(user) for user in warehouse_users)
-            
     
     for sales_order in sales_orders:
+        
+        installation_description = sales_order.get('line_items', [])
+        installation_description = [
+            item.get('description') for item in installation_description if item.get('description') \
+            and item.get('name').lower() == settings.PROJECT_ITEM_INSTALLATION_NAME.lower()
+        ]
+        structural_description = sales_order.get('line_items', [])
+        structural_description = [
+            item.get('description') for item in structural_description if item.get('description') \
+            and item.get('name').lower() == settings.PROJECT_ITEM_STRUCTURAL_NAME.lower()
+        ]
+        description = f'Project for sales order {sales_order.get("salesorder_number")} & ' + '.'.join(installation_description) + ' & ' + '.'.join(structural_description)
 
+        work_scope = '.'.join(installation_description) + ' & ' + '.'.join(structural_description)
+        
         try:
             project = Project(
                 name=f'{sales_order.get("salesorder_number")} ({sales_order.get("customer_name")})',
-                description=f'Project for sales order {sales_order.get("salesorder_number")} & {settings.PROJECT_WORK} & {settings.PROJECT_SCOPE}', 
+                description=description, 
                 sales_order=sales_order, 
                 users_assignees=users_assignees,
                 # start_date=start_date,
@@ -427,7 +455,7 @@ def create_projects(request):
                 user_reporter=user_reporter,
                 project_attachments=project_attachments,
                 project_tasks=[],
-                number = create_project_number(sales_order.get('salesorder_number')), 
+                number = create_entity_number(sales_order.get('salesorder_number')), 
                 user_manager=user_manager,
                 has_permission=has_permission,
                 project_default_tasks=list_default_tasks_info,
@@ -436,7 +464,7 @@ def create_projects(request):
                 all_screw_marked=False,
                 all_trash_marked=False,
                 feedback='',
-                work_scope=f'{settings.PROJECT_WORK} & {settings.PROJECT_SCOPE}',
+                work_scope=work_scope,
                 project_materials=[],
                 project_materials_other_notes='',
             )
@@ -765,30 +793,16 @@ def change_project_reference_number(request, id):
     project = Project.objects(id=id).first()
     if not project:
         return Response({'error': 'Project not found'}, status=404)
-            
-    # data = request.data
-    
-    # user_reporter = json.loads(data.get('userReporter', None)) if data.get('userReporter') else project.user_reporter
-    
-    # current_ref_number = project.sales_order.get('reference_number', '') if project.sales_order else ''
-    # ref_number = data.get('refNumber', '') if data.get('refNumber', '') else current_ref_number
-    
-    # project.update(
-    #     set__sales_order__reference_number=ref_number,
-    #     set__last_modified_time=timezone.now(),
-    #     set__user_reporter=user_reporter if user_reporter else project.user_reporter
-    # )
-    # project.reload()
     
     data = request.data
     user_reporter = json.loads(data.get('userReporter', None)) if data.get('userReporter') else project.user_reporter
-    current_ref_number = project.sales_order.get('reference_number', '') if project.sales_order else ''
-    ref_number = data.get('refNumber', '') if data.get('refNumber', '') else current_ref_number
+    ref_number = data.get('refNumber', '')
+        
+    sales_order = project.sales_order if project.sales_order else {}
+    sales_order['reference_number'] = ref_number
     
-    if not project.sales_order or not isinstance(project.sales_order, dict):
-        project.sales_order = {}
-    
-    project.sales_order['reference_number'] = ref_number
+    project.sales_order = sales_order
+    project.reference_number = ref_number if ref_number else '000000'
     project.last_modified_time = timezone.now()
     project.user_reporter = user_reporter if user_reporter else project.user_reporter
         
@@ -1951,6 +1965,13 @@ def create_default_task(request):
         description = data.get('description')
         order = data.get('order', 0)
         stage = data.get('projectStage', {})
+        has_attachments = None
+        has_attachments_str = data.get('hasAttachments', 'false') if data.get('hasAttachments') else None
+        if has_attachments_str:
+            if not isinstance(has_attachments_str, bool):
+                has_attachments = True if has_attachments_str.lower() == 'true' else False
+            else:
+                has_attachments = has_attachments_str
         project_stage_status = data.get('projectStageStatus', 'not started')
         project_stage = ProjectStage.objects(id=stage['id']).first()
         
@@ -1962,6 +1983,7 @@ def create_default_task(request):
             project_stage_status=project_stage_status,
             created_time=timezone.now(),
             last_modified_time=timezone.now(),
+            has_attachments=has_attachments if has_attachments is not None else False,
         )
         task.save()
         tasks_after_order = ProjectDefaultTask.objects.all()
@@ -3181,6 +3203,68 @@ def download_mongo_db(request):
     response['Content-Disposition'] = f'attachment; filename="mongo_db_export_{timestamp}.zip"'
     response['Access-Control-Expose-Headers'] = 'Content-Disposition'
     return response
+
+
+#############################################
+# CHANGE DESCRIPTION ALL PROJECTS
+#############################################
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def change_description_all_projects(request):
+    data = request.data
+    ids = data.get('ids', [])
+    user_reporter = data.get('userReporter', None)
+    list_tracking_info = []
+    try:
+        projects = Project.objects(id__in=ids).all()
+        if not projects:
+            return Response({'error': 'Projects not found'}, status=404)
+        for project in projects:
+            
+            sales_order = project.sales_order if project.sales_order else None
+            if not sales_order:
+                return Response({'error': f'Sales order not found for project {project.name}'}, status=404)
+            
+            installation_description = sales_order.get('line_items', [])
+            installation_description = [
+                item.get('description') for item in installation_description if item.get('description') \
+                and item.get('name').lower() == settings.PROJECT_ITEM_INSTALLATION_NAME.lower()
+            ]
+            structural_description = sales_order.get('line_items', [])
+            structural_description = [
+                item.get('description') for item in structural_description if item.get('description') \
+                and item.get('name').lower() == settings.PROJECT_ITEM_STRUCTURAL_NAME.lower()
+            ]
+            all_description = f'Project for sales order {sales_order.get("salesorder_number")} & ' + '.'.join(installation_description) + ' & ' + '.'.join(structural_description)
+            work_scope = '.'.join(installation_description) + ' & ' + '.'.join(structural_description)
+            
+            project.description = all_description
+            project.work_scope = work_scope
+            project.last_modified_time = timezone.now()
+            project.user_reporter = user_reporter if user_reporter else project.user_reporter
+            project.save()
+            
+            list_tracking_info.append(transform_data_to_mongo(project, include_fields=['id', 'name', 'number', 'description']))
+            
+        tracking = ProjectTracking(
+            user_reporter=user_reporter,
+            action=f'update description list projects',
+            created_time=timezone.now(),
+            managed_data={
+                'data': list_tracking_info
+            },
+        )
+        tracking.save()
+        if user_reporter:
+            module='projects'
+            info=f'has updated description in {len(ids)} projects'
+            info_id='list'
+            type='update_projects'
+            create_notification(module, info_id, info, type, user_reporter['username'])
+        return Response({'message': 'Projects updated successfully'})
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
 
 
 #############################################

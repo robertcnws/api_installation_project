@@ -313,6 +313,8 @@ ZOHO_ORG_ID = env('ZOHO_ORG_ID', default='')
 # PROJECTS
 PROJECT_WORK = env('PROJECT_WORK', default='Work')
 PROJECT_SCOPE = env('PROJECT_SCOPE', default='Scope')
+PROJECT_ITEM_INSTALLATION_NAME = env('PROJECT_ITEM_INSTALLATION_NAME', default='Installation of Impact Windows and/or Doors')
+PROJECT_ITEM_STRUCTURAL_NAME = env('PROJECT_ITEM_STRUCTURAL_NAME', default='Structural Modifications & Exterior Alterations')
 
 # TASKS
 TASK_START_INSTALLATION = env('TASK_START_INSTALLATION', default='Start Installation')

@@ -17,7 +17,6 @@ import { DashboardContent } from 'src/layouts/dashboard';
 
 import { Scrollbar } from 'src/components/scrollbar';
 import {
-    useTable,
     TableNoData,
     TableHeadCustom,
 } from 'src/components/table';
@@ -36,7 +35,7 @@ export function ServiceListSalesordersView({
     findedSalesOrders,
     table,
     openSalesOrderModal,
-    setSelectedSalesOrder
+    setSelectedSalesOrder,
 }) {
 
     const { isMobile } = useContext(LoadingContext);

@@ -7,8 +7,8 @@ import { VitePWA } from 'vite-plugin-pwa';
 // ----------------------------------------------------------------------
 
 const PORT = 3030;
-const HOST = '10.1.10.216';
-// const HOST = 'localhost';
+// const HOST = '10.1.10.216';
+const HOST = 'localhost';
 
 export default defineConfig({
   plugins: [

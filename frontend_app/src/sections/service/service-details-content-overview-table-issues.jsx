@@ -1,16 +1,15 @@
 
+
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import ListItemText from '@mui/material/ListItemText';
-import { Box, ListItem, IconButton, Table, TableContainer, TableHead, TableCell, TableBody, TableRow, Switch, TextField, Autocomplete, Chip, InputAdornment } from '@mui/material';
 import { Add, Remove } from '@mui/icons-material';
+import ListItemText from '@mui/material/ListItemText';
+import { Box, Chip, Table, Switch, ListItem, TableRow, TableHead, TableCell, TableBody, TextField, IconButton, Autocomplete, TableContainer, InputAdornment } from '@mui/material';
 
 import { filteredSomeDescription } from 'src/utils/project-tasks-utils';
 
-
 import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
-import { useState } from 'react';
 
 
 
@@ -29,28 +28,25 @@ export function ServiceDetailsContentOverviewTableIssues({
 
     return (
         <>
-            <TableContainer ref={containerRef} sx={{ maxHeight: 500, overflow: 'auto' }}>
-                <Table sx={{ maxHeight: 500 }} stickyHeader>
+            <TableContainer ref={containerRef} sx={{ maxHeight: 500, overflow: 'auto', minWidth: '100%' }}>
+                <Table sx={{ maxHeight: 500, minWidth: '100%' }} stickyHeader>
                     <TableHead>
                         <TableRow>
-                            <TableCell width={170}>
+                            <TableCell width={270}>
                                 <Typography variant="caption" color="text.secondary">Product</Typography>
                             </TableCell>
-                            <TableCell width={30}>
+                            <TableCell width={50}>
                                 <Typography variant="caption" color="text.secondary">Service?</Typography>
                             </TableCell>
-                            <TableCell width={420}>
+                            <TableCell width={600}>
                                 <Typography variant="caption" color="text.secondary">Issue</Typography>
-                            </TableCell>
-                            <TableCell width={200}>
-                                <Typography variant="caption" color="text.secondary">Notes</Typography>
                             </TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
                         {selectedListItems?.map((product) => (
                             <TableRow key={product.line_item_id}>
-                                <TableCell width={170}>
+                                <TableCell width={270}>
                                     <ListItem key={product.line_item_id}>
                                         <ListItemText
                                             primary={product.name}
@@ -76,7 +72,7 @@ export function ServiceDetailsContentOverviewTableIssues({
                                         />
                                     </ListItem>
                                 </TableCell>
-                                <TableCell width={30}>
+                                <TableCell width={50}>
                                     <Switch
                                         checked={product.selected}
                                         onChange={(e) => {
@@ -95,7 +91,7 @@ export function ServiceDetailsContentOverviewTableIssues({
                                         inputProps={{ 'aria-label': 'secondary checkbox' }}
                                     />
                                 </TableCell>
-                                <TableCell width={420}>
+                                <TableCell width={600}>
                                     {product.selected &&
                                         product.issues.map((issue, index) => (
                                             <ListItem key={`${product.line_item_id}-${issue.id}`}>
@@ -122,7 +118,11 @@ export function ServiceDetailsContentOverviewTableIssues({
                                                                 )
                                                             );
                                                         }}
-                                                        options={loadedServiceIssues.filter((si) => !product.issues?.map((it) => it?.issue?.id).includes(si.id))}
+                                                        options={loadedServiceIssues.filter((si) => {
+                                                            if (issue.issue && si.id === issue.issue.id) return true;
+                                                            const selectedIds = product.issues?.map((it) => it?.issue?.id) || [];
+                                                            return !selectedIds.includes(si.id);
+                                                        })}
                                                         getOptionLabel={(option) => option.name}
                                                         isOptionEqualToValue={(option, value) => option.id === value.id}
                                                         renderOption={(props, i) => (
@@ -186,7 +186,7 @@ export function ServiceDetailsContentOverviewTableIssues({
                                                         variant="outlined"
                                                         size="small"
                                                         label="Qty"
-                                                        sx={{ width: 120 }}
+                                                        sx={{ width: 100 }}
                                                         value={issue.quantity}
                                                         max={product.quantity}
                                                         min={1}
@@ -229,6 +229,30 @@ export function ServiceDetailsContentOverviewTableIssues({
                                                             ),
                                                         }}
                                                     />
+                                                    <TextField
+                                                        width={200}
+                                                        variant="outlined"
+                                                        label="Notes"
+                                                        size="small"
+                                                        multiline
+                                                        minRows={1}
+                                                        value={issue.notes}
+                                                        onChange={(e) => {
+                                                            setSelectedListItems((prev) =>
+                                                                prev.map((item) =>
+                                                                    item.line_item_id === product.line_item_id
+                                                                        ? {
+                                                                            ...item, issues: item.issues.map((i) =>
+                                                                                i.id === issue.id
+                                                                                    ? { ...i, notes: e.target.value }
+                                                                                    : i
+                                                                            )
+                                                                        }
+                                                                        : item
+                                                                )
+                                                            );
+                                                        }}
+                                                    />
                                                     <Box sx={{ display: 'flex', flexDirection: 'row', gap: 0, maxWidth: 100, justifyContent: 'flex-end' }}>
                                                         {(index === product.issues.length - 1) && (
                                                             <IconButton
@@ -263,25 +287,6 @@ export function ServiceDetailsContentOverviewTableIssues({
                                                 </Box>
                                             </ListItem>
                                         ))}
-                                </TableCell>
-                                <TableCell width={200}>
-                                    {product.selected && <TextField
-                                        multiline
-                                        rows={product.issues.length + 1}
-                                        fullWidth
-                                        variant="outlined"
-                                        size="small"
-                                        value={product.notes}
-                                        onChange={(e) => {
-                                            setSelectedListItems((prev) =>
-                                                prev.map((item) =>
-                                                    item.line_item_id === product.line_item_id
-                                                        ? { ...item, notes: e.target.value }
-                                                        : item
-                                                )
-                                            );
-                                        }}
-                                    />}
                                 </TableCell>
                             </TableRow>
                         ))}

@@ -1,36 +1,34 @@
-// import dayjs from 'dayjs';
-// import React, { useMemo, useState, useContext, useCallback } from 'react';
+import dayjs from 'dayjs';
+import React, { useMemo, useState, useContext, useCallback } from 'react';
 
-// import Stack from '@mui/material/Stack';
-// import { Tooltip } from '@mui/material';
-// import Button from '@mui/material/Button';
-// import Divider from '@mui/material/Divider';
-// import MenuList from '@mui/material/MenuList';
-// import MenuItem from '@mui/material/MenuItem';
-// import Checkbox from '@mui/material/Checkbox';
-// import IconButton from '@mui/material/IconButton';
-// import Typography from '@mui/material/Typography';
-// import { lighten, useTheme } from '@mui/material/styles';
-// import TableRow, { tableRowClasses } from '@mui/material/TableRow';
-// import TableCell, { tableCellClasses } from '@mui/material/TableCell';
+import Stack from '@mui/material/Stack';
+import { Tooltip } from '@mui/material';
+import Divider from '@mui/material/Divider';
+import MenuList from '@mui/material/MenuList';
+import MenuItem from '@mui/material/MenuItem';
+import Checkbox from '@mui/material/Checkbox';
+import IconButton from '@mui/material/IconButton';
+import Typography from '@mui/material/Typography';
+import { lighten, useTheme } from '@mui/material/styles';
+import TableRow, { tableRowClasses } from '@mui/material/TableRow';
+import TableCell, { tableCellClasses } from '@mui/material/TableCell';
 
-// import { useBoolean } from 'src/hooks/use-boolean';
-// import { useDoubleClick } from 'src/hooks/use-double-click';
-// import { useCopyToClipboard } from 'src/hooks/use-copy-to-clipboard';
+import { useBoolean } from 'src/hooks/use-boolean';
+import { useDoubleClick } from 'src/hooks/use-double-click';
+import { useCopyToClipboard } from 'src/hooks/use-copy-to-clipboard';
 
-// import { fDate, fIsAfter, fDuration } from 'src/utils/format-time';
-// import { verifyPermissions, listRolesAndSubroles } from 'src/utils/check-permissions';
+import { fDate, fIsAfter, fDuration } from 'src/utils/format-time';
+import { listRolesAndSubroles } from 'src/utils/check-permissions';
 
-// import { CONFIG } from 'src/config-global';
-// import { varAlpha } from 'src/theme/styles';
+import { CONFIG } from 'src/config-global';
+import { varAlpha } from 'src/theme/styles';
 
-// import { Label } from 'src/components/label';
-// import { toast } from 'src/components/snackbar';
-// import { Iconify } from 'src/components/iconify';
-// import { ConfirmDialog } from 'src/components/custom-dialog';
-// import { usePopover, CustomPopover } from 'src/components/custom-popover';
+import { Label } from 'src/components/label';
+import { toast } from 'src/components/snackbar';
+import { Iconify } from 'src/components/iconify';
+import { usePopover, CustomPopover } from 'src/components/custom-popover';
 
-// import { LoadingContext } from 'src/auth/context/loading-context';
+import { LoadingContext } from 'src/auth/context/loading-context';
 
 // import { ProjectShareDialog } from './project-share-dialog';
 // import { ProjectFileDetails } from './project-file-details';
@@ -42,451 +40,422 @@
 
 // ----------------------------------------------------------------------
 
-// export function ServiceTableRow({
-//   row,
-//   selected,
-//   onSelectRow,
-//   onDeleteRow,
-//   onKanbanView,
-//   onViewRow,
-//   loadedUsers,
-//   loadedProjectPermissions,
-//   loadedStages,
-//   loadedStagesTask,
-//   listPermissions,
-//   setTableData,
-//   refetchProjects,
-// }) {
+export function ServiceTableRow({
+  row,
+  selected,
+  onSelectRow,
+  onDeleteRow,
+  // onKanbanView,
+  onViewRow,
+  loadedUsers,
+  // loadedProjectPermissions,
+  loadedServiceStages,
+  // loadedStagesTask,
+  listPermissions,
+  setTableData,
+  refetchServices,
+}) {
 
-//   const [rowUpdated, setRowUpdated] = useState(null);
+  const [rowUpdated, setRowUpdated] = useState(null);
 
-//   const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
+  const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
 
-//   const today = dayjs().format('YYYY-MM-DD');
+  const today = dayjs().format('YYYY-MM-DD');
 
-//   // const endDate = dayjs(row?.endDate).format('YYYY-MM-DD');
+  // const endDate = dayjs(row?.endDate).format('YYYY-MM-DD');
 
-//   // console.log('now', today);
-//   // console.log('endDate', endDate);
-//   // console.log('fIsAfter', fIsAfter(now, endDate));
+  // console.log('now', today);
+  // console.log('endDate', endDate);
+  // console.log('fIsAfter', fIsAfter(now, endDate));
 
-//   // useEffect(() => {
-//   //   if (item) {
-//   //     setRow(item);
-//   //   }
-//   // }, [item]);
+  // useEffect(() => {
+  //   if (item) {
+  //     setRow(item);
+  //   }
+  // }, [item]);
 
-//   // useEffect(() => {
-//   //   if (refetchProject) {
-//   //     refetchProject();
-//   //   } 
-//   // }, [refetchProject]);
+  // useEffect(() => {
+  //   if (refetchProject) {
+  //     refetchProject();
+  //   } 
+  // }, [refetchProject]);
 
-//   // useEffect(() => {
-//   //   if (project) {
-//   //     setRow(project);
-//   //   }
-//   // }, [project]);
+  // useEffect(() => {
+  //   if (project) {
+  //     setRow(project);
+  //   }
+  // }, [project]);
 
-//   const theme = useTheme();
+  const theme = useTheme();
 
-//   const { isMobile } = useContext(LoadingContext);
+  const { isMobile } = useContext(LoadingContext);
 
-//   const { copy } = useCopyToClipboard();
+  const { copy } = useCopyToClipboard();
 
-//   const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteEmail, setInviteEmail] = useState('');
 
-//   const favorite = useBoolean(row?.isFavorited);
+  const favorite = useBoolean(row?.isFavorited);
 
-//   const details = useBoolean();
+  const details = useBoolean();
 
-//   const share = useBoolean();
+  const share = useBoolean();
 
-//   const confirm = useBoolean();
+  const confirm = useBoolean();
 
-//   const popover = usePopover();
+  const popover = usePopover();
 
-//   const handleChangeInvite = useCallback((event) => {
-//     setInviteEmail(event.target.value);
-//   }, []);
+  const handleChangeInvite = useCallback((event) => {
+    setInviteEmail(event.target.value);
+  }, []);
 
-//   const handleClick = useDoubleClick({
-//     click: () => {
-//       details.onTrue();
-//     },
-//     doubleClick: () => console.info('DOUBLE CLICK'),
-//   });
+  const handleClick = useDoubleClick({
+    click: () => {
+      details.onTrue();
+    },
+    doubleClick: () => console.info('DOUBLE CLICK'),
+  });
 
-//   const handleCopy = useCallback(() => {
-//     toast.success('Copied!');
-//     copy(row?.url);
-//   }, [copy, row]);
+  const handleCopy = useCallback(() => {
+    toast.success('Copied!');
+    copy(row?.url);
+  }, [copy, row]);
 
-//   const defaultStyles = {
-//     borderTop: `solid 1px ${varAlpha(theme.vars.palette.grey['500Channel'], 0.16)}`,
-//     borderBottom: `solid 1px ${varAlpha(theme.vars.palette.grey['500Channel'], 0.16)}`,
-//     '&:first-of-type': {
-//       borderTopLeftRadius: 16,
-//       borderBottomLeftRadius: 16,
-//       borderLeft: `solid 1px ${varAlpha(theme.vars.palette.grey['500Channel'], 0.16)}`,
-//     },
-//     '&:last-of-type': {
-//       borderTopRightRadius: 16,
-//       borderBottomRightRadius: 16,
-//       borderRight: `solid 1px ${varAlpha(theme.vars.palette.grey['500Channel'], 0.16)}`,
-//     },
-//   };
+  const defaultStyles = {
+    borderTop: `solid 1px ${varAlpha(theme.vars.palette.grey['500Channel'], 0.16)}`,
+    borderBottom: `solid 1px ${varAlpha(theme.vars.palette.grey['500Channel'], 0.16)}`,
+    '&:first-of-type': {
+      borderTopLeftRadius: 16,
+      borderBottomLeftRadius: 16,
+      borderLeft: `solid 1px ${varAlpha(theme.vars.palette.grey['500Channel'], 0.16)}`,
+    },
+    '&:last-of-type': {
+      borderTopRightRadius: 16,
+      borderBottomRightRadius: 16,
+      borderRight: `solid 1px ${varAlpha(theme.vars.palette.grey['500Channel'], 0.16)}`,
+    },
+  };
 
-//   return (
-//     <>
-//       <TableRow
-//         selected={selected}
-//         sx={{
-//           borderRadius: 2,
-//           [`&.${tableRowClasses.selected}, &:hover`]: {
-//             backgroundColor: row?.endDate ? ((fIsAfter(today, dayjs(row?.endDate).format('YYYY-MM-DD')) && (
-//               row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
-//               row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
-//               row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
-//             )) ? lighten(theme.palette.error.lighter, 0.6) : 'background.paper' ) : 'background.paper',
-//             boxShadow: theme.customShadows.z20,
-//             transition: theme.transitions.create(['background-color', 'box-shadow'], {
-//               duration: theme.transitions.duration.shortest,
-//             }),
-//             '&:hover': { backgroundColor: row?.endDate ? ((fIsAfter(today, dayjs(row?.endDate).format('YYYY-MM-DD')) && (
-//               row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
-//               row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
-//               row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
-//             )) ? lighten(theme.palette.error.lighter, 0.6) : 'background.paper' ) : 'background.paper'
-//             , boxShadow: theme.customShadows.z20 },
-//           },
-//           [`& .${tableCellClasses.root}`]: { ...defaultStyles },
-//           ...(details.value && { [`& .${tableCellClasses.root}`]: { ...defaultStyles } }),
-//           bgcolor: row?.endDate ? ((fIsAfter(today, dayjs(row?.endDate).format('YYYY-MM-DD')) && (
-//             row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
-//             row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
-//             row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
-//           )) ? lighten(theme.palette.error.lighter, 0.7) : 'inherit' ) : 'inherit', 
-//         }}
-//       >
-//         {(verifyPermissions(
-//           listPermissions,
-//           CONFIG.permissions.system,
-//           CONFIG.permissions.moduleProjects,
-//           CONFIG.permissions.operationDelete
-//         ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) && (
-//             <TableCell  padding="checkbox">
-//               <Checkbox
-//                 checked={selected}
-//                 onDoubleClick={() => console.info('ON DOUBLE CLICK')}
-//                 onClick={onSelectRow}
-//                 inputProps={{ id: `row-checkbox-${row?.id}`, 'aria-label': `row-checkbox` }}
-//               />
-//             </TableCell>
-//           )}
-//         <TableCell
-//           // onClick={handleClick} 
-//           onClick={onViewRow}
-//           sx={{ 
-//             whiteSpace: 'nowrap', 
-//             cursor: 'pointer',
-//             fontWeight: row?.endDate ? ((fIsAfter(today, dayjs(row?.endDate).format('YYYY-MM-DD')) && (
-//               row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
-//               row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
-//               row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
-//             )) ? 'fontWeightBold' : 'inherit' ) : 'inherit',
-//           }}
-//           align='center'
-//         >
-//           {/* {fDate(row?.salesOrder.date)} */}
-//           {fDate(row?.startDate) ? fDate(row?.startDate) :
-//             <Tooltip title="No Start Date" arrow>
-//               <Iconify icon="ph:calendar-x-bold" sx={{ color: 'error.main' }} />
-//             </Tooltip>
-//           }
-//         </TableCell>
-//         <TableCell
-//           onClick={onViewRow}
-//           sx={{ 
-//             whiteSpace: 'nowrap', 
-//             cursor: 'pointer', 
-//             fontWeight: row?.endDate ?  ((fIsAfter(today, dayjs(row?.endDate).format('YYYY-MM-DD')) && (
-//               row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
-//               row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
-//               row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
-//             )) ? 'fontWeightBold' : 'inherit' ) : 'inherit',
-//           }}
-//         >
-//           {row?.endDate ? fDuration(row?.startDate, row?.endDate) :
-//             <Tooltip title="No Closing Date" arrow>
-//               <Iconify icon="material-symbols:sms-failed-outline" sx={{ color: 'error.main' }} />
-//             </Tooltip>}
-//         </TableCell>
+  return (
+    <>
+      <TableRow
+        selected={selected}
+        sx={{
+          borderRadius: 2,
+          [`&.${tableRowClasses.selected}, &:hover`]: {
+            backgroundColor: row?.endDate ? ((fIsAfter(today, dayjs(row?.endDate).format('YYYY-MM-DD')) && (
+              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
+              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
+              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
+            )) ? lighten(theme.palette.error.lighter, 0.6) : 'background.paper' ) : 'background.paper',
+            boxShadow: theme.customShadows.z20,
+            transition: theme.transitions.create(['background-color', 'box-shadow'], {
+              duration: theme.transitions.duration.shortest,
+            }),
+            '&:hover': { backgroundColor: row?.endDate ? ((fIsAfter(today, dayjs(row?.endDate).format('YYYY-MM-DD')) && (
+              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
+              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
+              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
+            )) ? lighten(theme.palette.error.lighter, 0.6) : 'background.paper' ) : 'background.paper'
+            , boxShadow: theme.customShadows.z20 },
+          },
+          [`& .${tableCellClasses.root}`]: { ...defaultStyles },
+          ...(details.value && { [`& .${tableCellClasses.root}`]: { ...defaultStyles } }),
+          bgcolor: row?.endDate ? ((fIsAfter(today, dayjs(row?.endDate).format('YYYY-MM-DD')) && (
+            row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
+            row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
+            row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
+          )) ? lighten(theme.palette.error.lighter, 0.7) : 'inherit' ) : 'inherit', 
+        }}
+      >
+        {(listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) && (
+            <TableCell  padding="checkbox">
+              <Checkbox
+                checked={selected}
+                onDoubleClick={() => console.info('ON DOUBLE CLICK')}
+                onClick={onSelectRow}
+                inputProps={{ id: `row-checkbox-${row?.id}`, 'aria-label': `row-checkbox` }}
+              />
+            </TableCell>
+          )}
+        <TableCell
+          // onClick={handleClick} 
+          onClick={onViewRow}
+          sx={{ 
+            whiteSpace: 'nowrap', 
+            cursor: 'pointer',
+            fontWeight: row?.endDate ? ((fIsAfter(today, dayjs(row?.endDate).format('YYYY-MM-DD')) && (
+              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
+              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
+              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
+            )) ? 'fontWeightBold' : 'inherit' ) : 'inherit',
+          }}
+          align='center'
+        >
+          {/* {fDate(row?.salesOrder.date)} */}
+          {fDate(row?.startDate) ? fDate(row?.startDate) :
+            <Tooltip title="No Start Date" arrow>
+              <Iconify icon="ph:calendar-x-bold" sx={{ color: 'error.main' }} />
+            </Tooltip>
+          }
+        </TableCell>
+        <TableCell
+          onClick={onViewRow}
+          sx={{ 
+            whiteSpace: 'nowrap', 
+            cursor: 'pointer', 
+            fontWeight: row?.endDate ?  ((fIsAfter(today, dayjs(row?.endDate).format('YYYY-MM-DD')) && (
+              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
+              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
+              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
+            )) ? 'fontWeightBold' : 'inherit' ) : 'inherit',
+          }}
+        >
+          {row?.endDate ? fDuration(row?.startDate, row?.endDate) :
+            <Tooltip title="No Closing Date" arrow>
+              <Iconify icon="material-symbols:sms-failed-outline" sx={{ color: 'error.main' }} />
+            </Tooltip>}
+        </TableCell>
 
-//         <TableCell
-//           // onClick={handleClick} 
-//           onClick={onViewRow}
-//           sx={{ 
-//             whiteSpace: 'nowrap', 
-//             cursor: 'pointer', 
-//             fontWeight: row?.endDate ?  ((fIsAfter(today, dayjs(row?.endDate).format('YYYY-MM-DD')) && (
-//               row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
-//               row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
-//               row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
-//             )) ? 'fontWeightBold' : 'inherit' ) : 'inherit',
-//           }}
-//         >
-//           <Stack direction="row" alignItems="center" spacing={2}>
-//             {/* <FileThumbnail file="folder" /> */}
+        <TableCell
+          // onClick={handleClick} 
+          onClick={onViewRow}
+          sx={{ 
+            whiteSpace: 'nowrap', 
+            cursor: 'pointer', 
+            fontWeight: row?.endDate ?  ((fIsAfter(today, dayjs(row?.endDate).format('YYYY-MM-DD')) && (
+              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
+              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
+              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
+            )) ? 'fontWeightBold' : 'inherit' ) : 'inherit',
+          }}
+        >
+          <Stack direction="row" alignItems="center" spacing={2}>
+            {/* <FileThumbnail file="folder" /> */}
 
-//             <Typography
-//               noWrap
-//               variant="inherit"
-//               sx={{
-//                 maxWidth: 360,
-//                 cursor: 'pointer',
-//                 ...(details.value && { fontWeight: 'fontWeightBold' }),
-//               }}
-//             >
-//               {row?.number}
-//             </Typography>
-//           </Stack>
-//         </TableCell>
+            <Typography
+              noWrap
+              variant="inherit"
+              sx={{
+                maxWidth: 360,
+                cursor: 'pointer',
+                ...(details.value && { fontWeight: 'fontWeightBold' }),
+              }}
+            >
+              {row?.number}-{row?.version}
+            </Typography>
+          </Stack>
+        </TableCell>
 
-//         {!isMobile ? (
-//           <>
-//             <TableCell
-//               onClick={onViewRow}
-//               sx={{ whiteSpace: 'nowrap', cursor: 'pointer', }}
-//               align='center'
-//             >
-//               {row?.inspectionDate ? fDate(row?.inspectionDate) :
-//                 row.hasPermission ?
-//                   <Tooltip title="No Inspection Date" arrow>
-//                     <Iconify icon="ph:calendar-x-bold" sx={{ color: 'error.main' }} />
-//                   </Tooltip> :
-//                   <Tooltip title="No Permission to Inspect" arrow>
-//                     <Iconify icon="fluent:document-none-20-regular" sx={{ color: 'default' }} />
-//                   </Tooltip>
-//               }
-//             </TableCell>
-//             <TableCell
-//               // onClick={handleClick} 
-//               onClick={onViewRow}
-//               sx={{ 
-//                 cursor: 'pointer', 
-//                 maxWidth: 200,
-//                 fontWeight: row?.endDate ?  ((fIsAfter(today, dayjs(row?.endDate).format('YYYY-MM-DD')) && (
-//                   row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
-//                   row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
-//                   row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
-//                 )) ? 'fontWeightBold' : 'inherit' ) : 'inherit',
-//               }}
-//             >
-//               {row?.name}
-//             </TableCell>
-//             <TableCell
-//               // onClick={handleClick} 
-//               onClick={onViewRow}
-//               sx={{ whiteSpace: 'nowrap', cursor: 'pointer', }}
-//             >
-//               <Label color={
-//                 row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ? 'default' :
-//                   row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ? 'secondary' :
-//                     row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1 ? 'info' :
-//                       row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.permission.toLowerCase()) !== -1 ? 'warning' :
-//                         row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.closing.toLowerCase()) !== -1 ? 'success' : 'error'
-//               }>{row?.currentStage?.name}</Label>
-//             </TableCell>
+        {!isMobile ? (
+          <>
+            <TableCell
+              // onClick={handleClick} 
+              onClick={onViewRow}
+              sx={{ 
+                cursor: 'pointer', 
+                maxWidth: 200,
+                fontWeight: row?.endDate ?  ((fIsAfter(today, dayjs(row?.endDate).format('YYYY-MM-DD')) && (
+                  row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
+                  row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
+                  row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
+                )) ? 'fontWeightBold' : 'inherit' ) : 'inherit',
+              }}
+            >
+              {row?.name}
+            </TableCell>
+            <TableCell
+              // onClick={handleClick} 
+              onClick={onViewRow}
+              sx={{ whiteSpace: 'nowrap', cursor: 'pointer', }}
+            >
+              <Label color={
+                row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ? 'default' :
+                  row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ? 'secondary' :
+                    row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1 ? 'info' :
+                      row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.permission.toLowerCase()) !== -1 ? 'warning' :
+                        row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.closing.toLowerCase()) !== -1 ? 'success' : 'error'
+              }>{row?.currentStage?.name}</Label>
+            </TableCell>
 
-//             {loadedStages.map((stage) => {
+            {loadedServiceStages.map((stage) => {
 
-//               const stageOrder = stage.order;
+              const stageOrder = stage.order;
 
-//               const stageName = stage.name;
+              const stageName = stage.name;
 
-//               const itemOrder = row?.currentStage?.order
+              const itemOrder = row?.currentStage?.order
 
-//               const hasPermission = row?.hasPermission;
+              const hasPermission = row?.hasPermission;
 
-//               const selectedTasks = row?.projectDefaultTasks?.filter(
-//                 (task) => task.project_default_task.project_stage._id === stage.id
-//               )
+              const selectedTasks = row?.serviceDefaultTasks?.filter(
+                (task) => task.service_default_task.service_stage._id === stage.id
+              )
 
-//               const sumPercentage = selectedTasks?.reduce((acc, task) => {
-//                 if (task.project_default_task.project_stage._id === stage.id) {
-//                   return acc + task.percentage;
-//                 }
-//                 return acc;
-//               }, 0);
+              const sumPercentage = selectedTasks?.reduce((acc, task) => {
+                if (task.service_default_task.service_stage._id === stage.id) {
+                  return acc + task.percentage;
+                }
+                return acc;
+              }, 0);
 
-//               const total = selectedTasks?.length;
+              const total = selectedTasks?.length;
 
-//               const percentage = total > 0 ? sumPercentage / total : 0;
+              const percentage = total > 0 ? sumPercentage / total : 0;
 
-//               return (
-//                 <TableCell
-//                   key={stage.id}
-//                   // onClick={handleClick} 
-//                   onClick={onViewRow}
-//                   sx={{ whiteSpace: 'nowrap', cursor: 'pointer', }}
-//                 >
-//                   <Stack direction="row" alignItems="center" spacing={1} sx={{
-//                     color: stageOrder > itemOrder && stageName !== CONFIG.stages.permission && !hasPermission ? 'default.main' :
-//                       stageOrder === itemOrder && stageName !== CONFIG.stages.permission && !hasPermission ? 'info.main' :
-//                         stageName === CONFIG.stages.permission && hasPermission && percentage < 100 ? 'info.main' :
-//                           stageName === CONFIG.stages.permission && !hasPermission ? 'default.main' :
-//                             stageOrder > itemOrder ? 'default.main' :
-//                               stageOrder === itemOrder ? 'info.main' : 'success.main'
-//                   }}>
-//                     {!hasPermission || stageName !== CONFIG.stages.permission ? (
-//                       <Tooltip title={
-//                         stageOrder > itemOrder ? (stageName !== CONFIG.stages.permission ? `${stageName} is ahead of current stage` : `${stageName} is not available`) :
-//                           stageOrder === itemOrder && percentage === 0 ? (stageName !== CONFIG.stages.permission ? `${stageName} is current stage` : `${stageName} is not available`) :
-//                             stageOrder === itemOrder && percentage > 0 && percentage < 50 ? (stageName !== CONFIG.stages.permission ? `${stageName} is current stage and ${percentage.toFixed(2)} % completed` : `${stageName} is not available`) :
-//                               stageOrder === itemOrder && percentage >= 50 && percentage < 100 ? (stageName !== CONFIG.stages.permission ? `${stageName} is current stage and ${percentage.toFixed(2)} % completed` : `${stageName} is not available`) :
-//                                 `${stageName} is ${percentage.toFixed(2)} % completed and past current stage`
-//                       } placement="top" arrow>
-//                         <Iconify sx={{ width: '14px' }} icon={
-//                           stageOrder > itemOrder ? (stageName !== CONFIG.stages.permission ? "jam:pie-chart-alt" : "garden:circle-full-fill-12") :
-//                             stageOrder === itemOrder && percentage === 0 ? (stageName !== CONFIG.stages.permission ? "icon-park-solid:pie" : "garden:circle-full-fill-12") :
-//                               stageOrder === itemOrder && percentage > 0 && percentage < 25 ? (stageName !== CONFIG.stages.permission ? "icon-park-solid:pie-two" : "garden:circle-full-fill-12") :
-//                                 stageOrder === itemOrder && percentage >= 25 && percentage < 50 ? (stageName !== CONFIG.stages.permission ? "icon-park-solid:pie-four" : "garden:circle-full-fill-12") :
-//                                   stageOrder === itemOrder && percentage >= 50 && percentage < 100 ? (stageName !== CONFIG.stages.permission ? "icon-park-solid:pie-six" : "garden:circle-full-fill-12") : "garden:circle-full-fill-12"
-//                           // stageOrder === itemOrder ? "mdi:circle-half-full" : "garden:circle-full-fill-12"
-//                         } />
-//                       </Tooltip>
-//                     ) : (
-//                       <Tooltip title={
-//                         !hasPermission ? `${stageName} is not available` :
-//                           percentage === 0 ? `${stageName} is not started` :
-//                             percentage > 0 && percentage < 50 ? `${stageName} is ${percentage.toFixed(2)} % completed` :
-//                               percentage >= 50 && percentage < 100 ? `${stageName} is ${percentage.toFixed(2)} % completed` :
-//                                 `${stageName} is ${percentage.toFixed(2)} % completed`
-//                       } placement="top" arrow>
-//                         <Iconify sx={{ width: '14px' }} icon={
-//                           !hasPermission ? "jam:pie-chart-alt" :
-//                             percentage === 0 ? "icon-park-solid:pie" :
-//                               percentage > 0 && percentage < 25 ? "icon-park-solid:pie-two" :
-//                                 percentage >= 25 && percentage < 50 ? "icon-park-solid:pie-four" :
-//                                   percentage >= 50 && percentage < 100 ? "icon-park-solid:pie-six" : "garden:circle-full-fill-12"
-//                           // stageOrder === itemOrder ? "mdi:circle-half-full" : "garden:circle-full-fill-12"
-//                         } />
-//                       </Tooltip>
-//                     )}
-//                   </Stack>
-//                 </TableCell>
-//               );
-//             }
-//             )}
-//           </>
-//         ) : (
-//           <TableCell>
-//             <Label color={row?.hasPermission ? 'success' : 'error'}>{row?.hasPermission ? 'Yes' : 'No'}</Label>
-//           </TableCell>
-//         )}
+              return (
+                <TableCell
+                  key={stage.id}
+                  // onClick={handleClick} 
+                  onClick={onViewRow}
+                  sx={{ whiteSpace: 'nowrap', cursor: 'pointer', }}
+                >
+                  <Stack direction="row" alignItems="center" spacing={1} sx={{
+                    color: stageOrder > itemOrder && stageName !== CONFIG.stages.permission && !hasPermission ? 'default.main' :
+                      stageOrder === itemOrder && stageName !== CONFIG.stages.permission && !hasPermission ? 'info.main' :
+                        stageName === CONFIG.stages.permission && hasPermission && percentage < 100 ? 'info.main' :
+                          stageName === CONFIG.stages.permission && !hasPermission ? 'default.main' :
+                            stageOrder > itemOrder ? 'default.main' :
+                              stageOrder === itemOrder ? 'info.main' : 'success.main'
+                  }}>
+                    {!hasPermission || stageName !== CONFIG.stages.permission ? (
+                      <Tooltip title={
+                        stageOrder > itemOrder ? (stageName !== CONFIG.stages.permission ? `${stageName} is ahead of current stage` : `${stageName} is not available`) :
+                          stageOrder === itemOrder && percentage === 0 ? (stageName !== CONFIG.stages.permission ? `${stageName} is current stage` : `${stageName} is not available`) :
+                            stageOrder === itemOrder && percentage > 0 && percentage < 50 ? (stageName !== CONFIG.stages.permission ? `${stageName} is current stage and ${percentage.toFixed(2)} % completed` : `${stageName} is not available`) :
+                              stageOrder === itemOrder && percentage >= 50 && percentage < 100 ? (stageName !== CONFIG.stages.permission ? `${stageName} is current stage and ${percentage.toFixed(2)} % completed` : `${stageName} is not available`) :
+                                `${stageName} is ${percentage.toFixed(2)} % completed and past current stage`
+                      } placement="top" arrow>
+                        <Iconify sx={{ width: '14px' }} icon={
+                          stageOrder > itemOrder ? (stageName !== CONFIG.stages.permission ? "jam:pie-chart-alt" : "garden:circle-full-fill-12") :
+                            stageOrder === itemOrder && percentage === 0 ? (stageName !== CONFIG.stages.permission ? "icon-park-solid:pie" : "garden:circle-full-fill-12") :
+                              stageOrder === itemOrder && percentage > 0 && percentage < 25 ? (stageName !== CONFIG.stages.permission ? "icon-park-solid:pie-two" : "garden:circle-full-fill-12") :
+                                stageOrder === itemOrder && percentage >= 25 && percentage < 50 ? (stageName !== CONFIG.stages.permission ? "icon-park-solid:pie-four" : "garden:circle-full-fill-12") :
+                                  stageOrder === itemOrder && percentage >= 50 && percentage < 100 ? (stageName !== CONFIG.stages.permission ? "icon-park-solid:pie-six" : "garden:circle-full-fill-12") : "garden:circle-full-fill-12"
+                          // stageOrder === itemOrder ? "mdi:circle-half-full" : "garden:circle-full-fill-12"
+                        } />
+                      </Tooltip>
+                    ) : (
+                      <Tooltip title={
+                        !hasPermission ? `${stageName} is not available` :
+                          percentage === 0 ? `${stageName} is not started` :
+                            percentage > 0 && percentage < 50 ? `${stageName} is ${percentage.toFixed(2)} % completed` :
+                              percentage >= 50 && percentage < 100 ? `${stageName} is ${percentage.toFixed(2)} % completed` :
+                                `${stageName} is ${percentage.toFixed(2)} % completed`
+                      } placement="top" arrow>
+                        <Iconify sx={{ width: '14px' }} icon={
+                          !hasPermission ? "jam:pie-chart-alt" :
+                            percentage === 0 ? "icon-park-solid:pie" :
+                              percentage > 0 && percentage < 25 ? "icon-park-solid:pie-two" :
+                                percentage >= 25 && percentage < 50 ? "icon-park-solid:pie-four" :
+                                  percentage >= 50 && percentage < 100 ? "icon-park-solid:pie-six" : "garden:circle-full-fill-12"
+                          // stageOrder === itemOrder ? "mdi:circle-half-full" : "garden:circle-full-fill-12"
+                        } />
+                      </Tooltip>
+                    )}
+                  </Stack>
+                </TableCell>
+              );
+            }
+            )}
+          </>
+        ) : (
+          <TableCell>
+            <Label color={row?.hasPermission ? 'success' : 'error'}>{row?.hasPermission ? 'Yes' : 'No'}</Label>
+          </TableCell>
+        )}
 
 
 
-//         <TableCell align="right" sx={{ px: 1, whiteSpace: 'nowrap', cursor: 'pointer', }}>
-//           {/* <Checkbox
-//             color="warning"
-//             icon={<Iconify icon="eva:star-outline" />}
-//             checkedIcon={<Iconify icon="eva:star-fill" />}
-//             checked={favorite.value}
-//             onChange={favorite.onToggle}
-//             sx={{ p: 0.75 }}
-//           /> */}
+        <TableCell align="right" sx={{ px: 1, whiteSpace: 'nowrap', cursor: 'pointer', }}>
+          {/* <Checkbox
+            color="warning"
+            icon={<Iconify icon="eva:star-outline" />}
+            checkedIcon={<Iconify icon="eva:star-fill" />}
+            checked={favorite.value}
+            onChange={favorite.onToggle}
+            sx={{ p: 0.75 }}
+          /> */}
 
-//           <IconButton color={popover.open ? 'inherit' : 'default'} onClick={popover.onOpen}>
-//             <Iconify icon="eva:more-vertical-fill" />
-//           </IconButton>
-//         </TableCell>
-//       </TableRow>
+          <IconButton color={popover.open ? 'inherit' : 'default'} onClick={popover.onOpen}>
+            <Iconify icon="eva:more-vertical-fill" />
+          </IconButton>
+        </TableCell>
+      </TableRow>
 
-//       <CustomPopover
-//         open={popover.open}
-//         anchorEl={popover.anchorEl}
-//         onClose={popover.onClose}
-//         slotProps={{ arrow: { placement: 'right-top' } }}
-//       >
-//         <MenuList>
-//           <MenuItem
-//             onClick={() => {
-//               popover.onClose();
-//               onViewRow();
-//             }}
-//           >
-//             <Iconify icon="lsicon:view-filled" />
-//             View Project
-//           </MenuItem>
+      <CustomPopover
+        open={popover.open}
+        anchorEl={popover.anchorEl}
+        onClose={popover.onClose}
+        slotProps={{ arrow: { placement: 'right-top' } }}
+      >
+        <MenuList>
+          <MenuItem
+            onClick={() => {
+              popover.onClose();
+              onViewRow();
+            }}
+          >
+            <Iconify icon="lsicon:view-filled" />
+            View Service
+          </MenuItem>
 
-//           {verifyPermissions(
-//             listPermissions,
-//             CONFIG.permissions.system,
-//             CONFIG.permissions.moduleProjects,
-//             CONFIG.permissions.operationDelete
-//           ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.superadmin) ? [
-//             <Divider key="divider" sx={{ borderStyle: 'dashed' }} />,
-//             <MenuItem
-//               key="delete"
-//               onClick={() => {
-//                 confirm.onTrue();
-//                 popover.onClose();
-//               }}
-//               sx={{ color: 'error.main' }}
-//             >
-//               <Iconify icon="solar:trash-bin-trash-bold" />
-//               Delete Project
-//             </MenuItem>
-//           ] : null}
-//         </MenuList>
-//       </CustomPopover >
+          {listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.superadmin) ? [
+            <Divider key="divider" sx={{ borderStyle: 'dashed' }} />,
+            <MenuItem
+              key="delete"
+              onClick={() => {
+                confirm.onTrue();
+                popover.onClose();
+              }}
+              sx={{ color: 'error.main' }}
+            >
+              <Iconify icon="solar:trash-bin-trash-bold" />
+              Delete Service
+            </MenuItem>
+          ] : null}
+        </MenuList>
+      </CustomPopover >
 
-//       <ProjectFileDetails
-//         item={row}
-//         favorited={favorite.value}
-//         onFavorite={favorite.onToggle}
-//         onCopyLink={handleCopy}
-//         open={details.value}
-//         onClose={details.onFalse}
-//         onDelete={onDeleteRow}
-//         loadedUsers={loadedUsers}
-//         loadedProjectPermissions={loadedProjectPermissions}
-//         loadedStages={loadedStages}
-//         loadedStagesTask={loadedStagesTask}
-//         setTableData={setTableData}
-//         refetchProjects={refetchProjects}
-//       />
+      {/* <ProjectFileDetails
+        item={row}
+        favorited={favorite.value}
+        onFavorite={favorite.onToggle}
+        onCopyLink={handleCopy}
+        open={details.value}
+        onClose={details.onFalse}
+        onDelete={onDeleteRow}
+        loadedUsers={loadedUsers}
+        loadedProjectPermissions={loadedProjectPermissions}
+        loadedStages={loadedStages}
+        loadedStagesTask={loadedStagesTask}
+        setTableData={setTableData}
+        refetchProjects={refetchProjects}
+      />
 
-//       <ProjectShareDialog
-//         open={share.value}
-//         shared={row?.shared}
-//         inviteEmail={inviteEmail}
-//         onChangeInvite={handleChangeInvite}
-//         onCopyLink={handleCopy}
-//         loadedUsers={loadedUsers}
-//         onClose={() => {
-//           share.onFalse();
-//           setInviteEmail('');
-//         }}
-//       />
+      <ProjectShareDialog
+        open={share.value}
+        shared={row?.shared}
+        inviteEmail={inviteEmail}
+        onChangeInvite={handleChangeInvite}
+        onCopyLink={handleCopy}
+        loadedUsers={loadedUsers}
+        onClose={() => {
+          share.onFalse();
+          setInviteEmail('');
+        }}
+      />
 
-//       <ConfirmDialog
-//         open={confirm.value}
-//         onClose={confirm.onFalse}
-//         title="Delete Project"
-//         content={`Are you sure want to delete project ${row.name}?`}
-//         action={
-//           <Button variant="contained" color="error" onClick={onDeleteRow}>
-//             Delete
-//           </Button>
-//         }
-//       />
-//     </>
-//   );
-// }
-
-export function ServiceTableRow() {
-  return null;
+      <ConfirmDialog
+        open={confirm.value}
+        onClose={confirm.onFalse}
+        title="Delete Project"
+        content={`Are you sure want to delete service ${row.name}?`}
+        action={
+          <Button variant="contained" color="error" onClick={onDeleteRow}>
+            Delete
+          </Button>
+        }
+      /> */}
+    </>
+  );
 }

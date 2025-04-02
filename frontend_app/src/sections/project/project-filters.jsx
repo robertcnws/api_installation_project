@@ -40,7 +40,11 @@ export function ProjectFilters({
 
   const popoverCustom = usePopover();
 
+  const popoverTypeList = usePopover();
+
   const [isCustomOpen, setIsCustomOpen] = useState(false);
+
+  const [isTypeListOpen, setIsTypeListOpen] = useState(false);
 
   const renderLabel = filters.state.type.length
     ? filters.state.type.slice(0, 2).join(',')
@@ -51,6 +55,7 @@ export function ProjectFilters({
 
 
   const createCustomFilterName = useCallback(() => {
+    const name = filters.state.list === 'in progress' ? 'In progress' : 'Finished';
     const active = [];
     if (custom.hasPermission) active.push('Need permission');
     if (custom.isPreparation?.value) active.push('In preparation stage');
@@ -61,14 +66,30 @@ export function ProjectFilters({
     if (custom.hasComments) active.push('Have comments');
     if (filters.state.startDate && filters.state.endDate) active.push(fDateRangeShortLabel(filters.state.startDate, filters.state.endDate));
     if (filters.state.name) active.push(`matches: ${filters.state.name}`);
-    return active.length > 0 ? `Installations (${active.join(', ')})` : 'All installations';
+    return active.length > 0 ? `${name} Installations (${active.join(', ')})` : `${name} installations`;
   }, [custom, filters]);
 
   const [customFilterName, setCustomFilterName] = useState(createCustomFilterName());
 
+  const [customMarginTypeList, setCustomMarginTypeList] = useState(0);
+
   useEffect(() => {
     setCustomFilterName(createCustomFilterName());
   }, [createCustomFilterName]);
+
+  const hasSomeCustomFilter = useMemo(() => Object.values(custom).some((value) => {
+    if (typeof value === 'object') {
+      return Object.values(value).some((v) => v);
+    }
+    return value;
+  }), [custom]);
+
+  const handleFilterTypeList = useCallback((typeName) => {
+    onResetPage();
+    filters.setState({
+      list: typeName,
+    });
+  }, [filters, onResetPage]);
 
   const handleFilterCustom = useCallback((fieldName) => {
     onResetPage();
@@ -212,12 +233,6 @@ export function ProjectFilters({
   const renderCustomFilters = (
     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', minWidth: 100, p: 0 }}>
       <Box
-        onClick={!isInstaller(userLogged?.data?.user_role?.name) ?
-          (e) => {
-            popoverCustom.onOpen(e);
-            setIsCustomOpen((prev) => !prev);
-          } : null
-        }
         sx={{
           display: 'flex',
           alignItems: 'center',
@@ -226,18 +241,108 @@ export function ProjectFilters({
           p: 0.5,
         }}
       >
-        <Typography variant="h6" sx={{ color: 'text.secondary', fontWeight: 'fontWeightBold' }}>
+        <Typography variant="h6" sx={{ color: 'text.secondary', fontWeight: 'fontWeightBold' }} onClick={!isInstaller(userLogged?.data?.user_role?.name) ?
+          (e) => {
+            setCustomMarginTypeList(-5);
+            popoverTypeList.onOpen(e);
+            setIsTypeListOpen((prev) => !prev);
+          } : null
+        }>
           {customFilterName}
         </Typography>
         {!isInstaller(userLogged?.data?.user_role?.name) && (
-          <Button
-            sx={{ ml: 1, color: 'default.lighter' }}
-            variant="text"
-          >
-            <Iconify icon={isCustomOpen ? 'mingcute:up-fill' : 'mingcute:down-fill'} sx={{ mr: 1 }} />
-          </Button>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: 2, ml: 1 }}>
+            <IconButton
+              sx={{
+                color: 'default.lighter',
+                '&:hover': {
+                  boxShadow: 'none',
+                  backgroundColor: 'transparent',
+                },
+              }}
+              variant="text"
+              onClick={!isInstaller(userLogged?.data?.user_role?.name) ?
+                (e) => {
+                  setCustomMarginTypeList(-32);
+                  popoverTypeList.onOpen(e);
+                  setIsTypeListOpen((prev) => !prev);
+                } : null
+              }
+            >
+              <Iconify icon={isTypeListOpen ? 'mingcute:up-fill' : 'mingcute:down-fill'} sx={{ mr: 1 }} />
+            </IconButton>
+            <IconButton
+              sx={{
+                ml: -4,
+                color: 'default.lighter',
+                '&:hover': {
+                  boxShadow: 'none',
+                  backgroundColor: 'transparent',
+                },
+              }}
+              variant="text"
+              onClick={!isInstaller(userLogged?.data?.user_role?.name) ?
+                (e) => {
+                  popoverCustom.onOpen(e);
+                  setIsCustomOpen((prev) => !prev);
+                } : null
+              }
+            >
+              <Iconify icon={isCustomOpen ? 'lsicon:filter-filled' : 'uil:filter'} sx={{ mr: 1 }} />
+            </IconButton>
+          </Box>
         )}
       </Box>
+      <CustomPopover
+        open={popoverTypeList.open}
+        anchorEl={popoverTypeList.anchorEl}
+        onClose={(e) => {
+          popoverTypeList.onClose(e);
+          setIsTypeListOpen(false);
+        }}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'left',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'left',
+        }}
+        slotProps={{ paper: { sx: { p: 0, width: 260, ml: !isMobile ? customMarginTypeList : 0, mt: 2 } } }}
+        sx={{ maxHeight: 800, overflowY: 'auto', overflowX: 'hidden' }}
+      >
+        <Stack spacing={0} sx={{ py: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', width: 500, p: 1 }}>
+            <MenuList sx={{ p: 1 }}>
+
+              <MenuItem sx={{ py: 1 }} onClick={(e) => {
+                handleFilterTypeList('in progress');
+                popoverTypeList.onClose(e);
+                setIsTypeListOpen(false);
+              }}>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <ListItemIcon>
+                    <Iconify icon="grommet-icons:in-progress" sx={{ color: 'text.disabled' }} />
+                  </ListItemIcon>
+                  <ListItemText primary="In progress installations" />
+                </Box>
+              </MenuItem>
+              <MenuItem sx={{ py: 1 }} onClick={(e) => {
+                handleFilterTypeList('finished');
+                popoverTypeList.onClose(e);
+                setIsTypeListOpen(false);
+              }}>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <ListItemIcon>
+                    <Iconify icon="octicon:tracked-by-closed-completed-16" sx={{ color: 'text.disabled' }} />
+                  </ListItemIcon>
+                  <ListItemText primary="Finished installations" />
+                </Box>
+              </MenuItem>
+            </MenuList>
+          </Box>
+        </Stack>
+      </CustomPopover>
       <CustomPopover
         open={popoverCustom.open}
         anchorEl={popoverCustom.anchorEl}
@@ -253,7 +358,7 @@ export function ProjectFilters({
           vertical: 'top',
           horizontal: 'left',
         }}
-        slotProps={{ paper: { sx: { p: 0, width: 302, ml: !isMobile ? -5 : 0 } } }}
+        slotProps={{ paper: { sx: { p: 0, width: 302, ml: !isMobile ? -35 : 0, mt: 2 } } }}
         sx={{ maxHeight: 800, overflowY: 'auto', overflowX: 'hidden' }}
       >
         <Stack spacing={0} sx={{ py: -1 }}>
@@ -293,87 +398,88 @@ export function ProjectFilters({
                 </Box>
               </MenuItem>
 
-              <MenuItem sx={{ py: 0 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', p: 0 }}>
-                  <Divider orientation="vertical" flexItem sx={{ color: 'text.disabled' }} >
-                    <ListItemText primary="Need installation permission" />
-                  </Divider>
-                </Box>
-              </MenuItem>
-
-              <MenuItem sx={{ py: 0 }} onClick={() => handleFilterCustom('hasPermission')}>
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <ListItemIcon>
-                    <CheckBox
-                      checked={filters.state.custom.hasPermission}
-                      onChange={() => handleFilterCustom('hasPermission')}
-                    />
-                  </ListItemIcon>
-                  <ListItemText primary="Need permission?" />
-                </Box>
-              </MenuItem>
-              <MenuItem sx={{ py: 0 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', py: 0 }}>
-                  <Divider orientation="vertical" flexItem sx={{ color: 'text.disabled' }} >
-                    <ListItemText primary="Stages" />
-                  </Divider>
-                </Box>
-              </MenuItem>
-              <MenuItem sx={{ py: 0 }} onClick={() => handleFilterCustom('isPreparation')}>
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <ListItemIcon>
-                    <CheckBox
-                      checked={filters.state.custom.isPreparation.value}
-                      onChange={() => handleFilterCustom('isPreparation')}
-                    />
-                  </ListItemIcon>
-                  <ListItemText primary="Preparation Stage" />
-                </Box>
-              </MenuItem>
-              <MenuItem sx={{ py: 0 }} onClick={() => handleFilterCustom('isCoordination')}>
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <ListItemIcon>
-                    <CheckBox
-                      checked={filters.state.custom.isCoordination.value}
-                      onChange={() => handleFilterCustom('isCoordination')}
-                    />
-                  </ListItemIcon>
-                  <ListItemText primary="Coordination Stage" />
-                </Box>
-              </MenuItem>
-              <MenuItem sx={{ py: 0 }} onClick={() => handleFilterCustom('isInstallation')}>
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <ListItemIcon>
-                    <CheckBox
-                      checked={filters.state.custom.isInstallation.value}
-                      onChange={() => handleFilterCustom('isInstallation')}
-                    />
-                  </ListItemIcon>
-                  <ListItemText primary="Installation Stage" />
-                </Box>
-              </MenuItem>
-              <MenuItem sx={{ py: 0 }} onClick={() => handleFilterCustom('isPermission')}>
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <ListItemIcon>
-                    <CheckBox
-                      checked={filters.state.custom.isPermission.value}
-                      onChange={() => handleFilterCustom('isPermission')}
-                    />
-                  </ListItemIcon>
-                  <ListItemText primary="Permission Stage" />
-                </Box>
-              </MenuItem>
-              <MenuItem sx={{ py: 0 }} onClick={() => handleFilterCustom('isClosing')}>
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <ListItemIcon>
-                    <CheckBox
-                      checked={filters.state.custom.isClosing.value}
-                      onChange={() => handleFilterCustom('isClosing')}
-                    />
-                  </ListItemIcon>
-                  <ListItemText primary="Closing Stage" />
-                </Box>
-              </MenuItem>
+              {filters.state.list === 'in progress' && [
+                <MenuItem key="permission-divider" sx={{ py: 0 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', py: 0 }}>
+                    <Divider orientation="vertical" flexItem sx={{ color: 'text.disabled' }}>
+                      <ListItemText primary="Need installation permission" />
+                    </Divider>
+                  </Box>
+                </MenuItem>,
+                <MenuItem key="has-permission" sx={{ py: 0 }} onClick={() => handleFilterCustom('hasPermission')}>
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <ListItemIcon>
+                      <CheckBox
+                        checked={filters.state.custom.hasPermission}
+                        onChange={() => handleFilterCustom('hasPermission')}
+                      />
+                    </ListItemIcon>
+                    <ListItemText primary="Need permission?" />
+                  </Box>
+                </MenuItem>,
+                <MenuItem key="stages-divider" sx={{ py: 0 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', py: 0 }}>
+                    <Divider orientation="vertical" flexItem sx={{ color: 'text.disabled' }}>
+                      <ListItemText primary="Stages" />
+                    </Divider>
+                  </Box>
+                </MenuItem>,
+                <MenuItem key="preparation" sx={{ py: 0 }} onClick={() => handleFilterCustom('isPreparation')}>
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <ListItemIcon>
+                      <CheckBox
+                        checked={filters.state.custom.isPreparation.value}
+                        onChange={() => handleFilterCustom('isPreparation')}
+                      />
+                    </ListItemIcon>
+                    <ListItemText primary="Preparation Stage" />
+                  </Box>
+                </MenuItem>,
+                <MenuItem key="coordination" sx={{ py: 0 }} onClick={() => handleFilterCustom('isCoordination')}>
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <ListItemIcon>
+                      <CheckBox
+                        checked={filters.state.custom.isCoordination.value}
+                        onChange={() => handleFilterCustom('isCoordination')}
+                      />
+                    </ListItemIcon>
+                    <ListItemText primary="Coordination Stage" />
+                  </Box>
+                </MenuItem>,
+                <MenuItem key="installation" sx={{ py: 0 }} onClick={() => handleFilterCustom('isInstallation')}>
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <ListItemIcon>
+                      <CheckBox
+                        checked={filters.state.custom.isInstallation.value}
+                        onChange={() => handleFilterCustom('isInstallation')}
+                      />
+                    </ListItemIcon>
+                    <ListItemText primary="Installation Stage" />
+                  </Box>
+                </MenuItem>,
+                <MenuItem key="permission" sx={{ py: 0 }} onClick={() => handleFilterCustom('isPermission')}>
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <ListItemIcon>
+                      <CheckBox
+                        checked={filters.state.custom.isPermission.value}
+                        onChange={() => handleFilterCustom('isPermission')}
+                      />
+                    </ListItemIcon>
+                    <ListItemText primary="Permission Stage" />
+                  </Box>
+                </MenuItem>,
+                <MenuItem key="closing" sx={{ py: 0 }} onClick={() => handleFilterCustom('isClosing')}>
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <ListItemIcon>
+                      <CheckBox
+                        checked={filters.state.custom.isClosing.value}
+                        onChange={() => handleFilterCustom('isClosing')}
+                      />
+                    </ListItemIcon>
+                    <ListItemText primary="Closing Stage" />
+                  </Box>
+                </MenuItem>
+              ]}
               <MenuItem sx={{ py: 0 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', p: 0 }}>
                   <Divider orientation="vertical" flexItem sx={{ color: 'text.disabled' }} >

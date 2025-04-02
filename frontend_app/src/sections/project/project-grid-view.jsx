@@ -23,6 +23,7 @@ export function ProjectGridView({
   onDeleteItem,
   onViewRow,
   onOpenConfirm,
+  onOpenConfirmAllDescriptions,
   loadedUsers,
   loadedProjectPermissions,
   loadedStages,
@@ -142,57 +143,67 @@ export function ProjectGridView({
         </Collapse> */}
 
         {!!selected?.length && (
-            <ProjectActionSelected
-              numSelected={selected.length}
-              rowCount={dataFiltered.length}
-              selected={selected}
-              onSelectAllItems={(checked) =>
-                onSelectAllItems(
-                  checked,
-                  dataFiltered.map((row) => row.id)
-                )
-              }
-              action={
-                <>
-                  <Button
-                    size="small"
-                    color="info"
-                    variant="contained"
-                    startIcon={<Iconify icon="mdi:warehouse" />}
-                    onClick={() => {
-                      setIsWarehouseStaff(true);
-                      onOpenConfirmStaff()
-                    }}
-                    sx={{ mr: 1, mb: 2 }}
-                  >
-                    Set Warehouse Staff
-                  </Button>
-                  <Button
-                    size="small"
-                    color="success"
-                    variant="contained"
-                    startIcon={<Iconify icon="fluent-emoji-high-contrast:mechanic" />}
-                    onClick={() => {
-                      setIsWarehouseStaff(false);
-                      onOpenConfirmStaff()
-                    }}
-                    sx={{ mr: 1, mb: 2 }}
-                  >
-                    Set Installer
-                  </Button>
-                  <Button
-                    size="small"
-                    color="error"
-                    variant="contained"
-                    startIcon={<Iconify icon="solar:trash-bin-trash-bold" />}
-                    onClick={onOpenConfirm}
-                    sx={{ mr: 1, mb: 2 }}
-                  >
-                    Delete
-                  </Button>
-                </>
-              }
-            />
+          <ProjectActionSelected
+            numSelected={selected.length}
+            rowCount={dataFiltered.length}
+            selected={selected}
+            onSelectAllItems={(checked) =>
+              onSelectAllItems(
+                checked,
+                dataFiltered.map((row) => row.id)
+              )
+            }
+            action={
+              <>
+                <Button
+                  size="small"
+                  color="warning"
+                  variant="contained"
+                  startIcon={<Iconify icon="tabler:file-description-filled" />}
+                  onClick={onOpenConfirmAllDescriptions}
+                  sx={{ mr: 1, mb: 2 }}
+                >
+                  Change All descriptions
+                </Button>
+                <Button
+                  size="small"
+                  color="info"
+                  variant="contained"
+                  startIcon={<Iconify icon="mdi:warehouse" />}
+                  onClick={() => {
+                    setIsWarehouseStaff(true);
+                    onOpenConfirmStaff()
+                  }}
+                  sx={{ mr: 1, mb: 2 }}
+                >
+                  Set Warehouse Staff
+                </Button>
+                <Button
+                  size="small"
+                  color="success"
+                  variant="contained"
+                  startIcon={<Iconify icon="fluent-emoji-high-contrast:mechanic" />}
+                  onClick={() => {
+                    setIsWarehouseStaff(false);
+                    onOpenConfirmStaff()
+                  }}
+                  sx={{ mr: 1, mb: 2 }}
+                >
+                  Set Installer
+                </Button>
+                <Button
+                  size="small"
+                  color="error"
+                  variant="contained"
+                  startIcon={<Iconify icon="solar:trash-bin-trash-bold" />}
+                  onClick={onOpenConfirm}
+                  sx={{ mr: 1, mb: 2 }}
+                >
+                  Delete
+                </Button>
+              </>
+            }
+          />
         )}
       </Box>
 

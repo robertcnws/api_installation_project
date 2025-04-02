@@ -19,10 +19,14 @@ from mongoengine import (
 from django.utils import timezone
 
 class Service(Document):
-    client = DynamicField(required=True)
+    number = StringField(max_length=255, required=True)
+    name = StringField(max_length=255, required=True)
+    version = IntField(default=1, null=True)
+    client = DynamicField(null=True)
     sales_order = DynamicField(null=True)
-    troubled_products = ListField(DynamicField(), null=True)
-    troubled_info = StringField(null=True)
+    reference_number = StringField(max_length=255, null=True)
+    phone = StringField(max_length=255, null=True)
+    issued_products = ListField(DynamicField(), null=True)
     user_reporter = DynamicField(null=True)
     created_time = DateTimeField(default=timezone.now, null=True)
     last_modified_time = DateTimeField(default=timezone.now, null=True)
@@ -36,18 +40,21 @@ class Service(Document):
     address = StringField(max_length=255, null=True)
     is_active = BooleanField(default=True)
     user_manager = DynamicField(null=True)
+    users_service_team = ListField(DynamicField(), default=list, null=True)
     service_comments = ListField(DynamicField(), default=list, null=True)
     service_default_tasks = ListField(DynamicField(), default=list, null=True)
     
     meta = {
         'collection': 'service',
         'indexes': [
+            'number',
+            'name',
             'client',
             'sales_order',
             'user_reporter',
             'created_time',
             'last_modified_time',
-            'troubled_products',
+            'issued_products',
             'current_stage',
             'users_assignees',
             'start_date',
@@ -83,6 +90,52 @@ class ServiceIssue(Document):
         ],
         'verbose_name': 'Service Issue',
         'verbose_name_plural': 'Service Issues'
+    }
+
+    def __str__(self):
+        return self.name
+    
+    
+class ServiceStage(Document):
+    name = StringField(max_length=255, required=True)
+    description = StringField(max_length=255, null=True)
+    is_active = BooleanField(default=True)
+    order = IntField(default=0)
+    created_time = DateTimeField(default=timezone.now, null=True)
+    last_modified_time = DateTimeField(default=timezone.now, null=True)
+    
+    meta = {
+        'collection': 'service_stage',
+        'ordering': ['order'],
+        'indexes': [
+            'name', 'order', 'created_time', 'last_modified_time', 'is_active'
+        ],
+        'verbose_name': 'Service Stage',
+        'verbose_name_plural': 'Service Stages'
+    }
+
+    def __str__(self):
+        return self.name
+    
+    
+class ServiceDefaultTask(Document):
+    name = StringField(max_length=255, required=True)
+    number = StringField(max_length=255, null=True)
+    description = StringField(max_length=255, null=True)
+    order = IntField(default=0)
+    service_stage = DynamicField(required=True)
+    service_stage_status = StringField(max_length=255, null=True)
+    created_time = DateTimeField(default=timezone.now, null=True)
+    last_modified_time = DateTimeField(default=timezone.now, null=True)
+    is_active = BooleanField(default=True)
+    has_attachments = BooleanField(default=False)
+    meta = {
+        'collection': 'service_default_task',
+        'indexes': [
+            'name', 'created_time', 'last_modified_time', 'is_active', 'service_stage', 'service_stage_status', 'number'
+        ],
+        'verbose_name': 'Service Default Task',
+        'verbose_name_plural': 'Service Default Tasks'
     }
 
     def __str__(self):

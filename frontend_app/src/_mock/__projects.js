@@ -21,6 +21,7 @@ const GET_ALL_PROJECTS = gql`
       projectDefaultTasks
       projectHistory
       projectTasks
+      referenceNumber
       salesOrder
       stageHistory
       startDate
@@ -60,6 +61,7 @@ const GET_PROJECT_BY_ID = gql`
       projectDefaultTasks
       projectHistory
       projectTasks
+      referenceNumber
       salesOrder
       stageHistory
       startDate

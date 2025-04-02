@@ -1,29 +1,21 @@
-import { parsePhoneNumber } from 'react-phone-number-input';
 import { useRef, useMemo, useState, useEffect, useContext, useCallback } from 'react';
 
-import Card from '@mui/material/Card';
+import { Box } from '@mui/material';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import ListItemText from '@mui/material/ListItemText';
-import { Box, Tooltip, ListItem, IconButton, Table, TableContainer, TableHead, TableCell, TableBody, TableRow, Switch, Select, TextField, Autocomplete, Chip, List } from '@mui/material';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
 import { fDate } from 'src/utils/format-time';
-import { filteredDescription, filteredSomeDescription } from 'src/utils/project-tasks-utils';
-import { verifyPermissions, listRolesAndSubroles } from 'src/utils/check-permissions';
 
-import { CONFIG } from 'src/config-global';
-
-import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
 
+import { LoadingContext } from 'src/auth/context/loading-context';
 import { useDataContext } from 'src/auth/context/data/data-context';
 
-import { LoadingContext } from 'src/auth/context/loading-context';
-
-import { ServiceDetailsContentOverviewModalService } from './service-details-content-overview-modal-service';
 import { ServiceDetailsContentOverviewTableIssues } from './service-details-content-overview-table-issues';
+import { ServiceDetailsContentOverviewModalService } from './service-details-content-overview-modal-service';
 
 
 
@@ -33,6 +25,8 @@ export function ServiceDetailsContentOverview({
   salesOrder,
   setSomeItemsSelected,
   setAllIssuesCompleted,
+  selectedListItems,
+  setSelectedListItems,
 }) {
 
   const {
@@ -52,17 +46,18 @@ export function ServiceDetailsContentOverview({
 
   const serviceItems = useMemo(() => items?.filter((product) => product.line_item_type !== 'goods'), [items]);
 
-  const [selectedListItems, setSelectedListItems] = useState(
-    listItems?.map((product) => ({
-      ...product,
-      selected: false,
-      issues: [],
-      notes: '',
-    }))
-  );
+  useEffect(() => {
+    setSelectedListItems(
+      listItems?.map((product) => ({
+        ...product,
+        selected: false,
+        issues: [],
+        notes: '',
+      })) || []
+    );
+  }, [listItems, setSelectedListItems]);
 
   const addIssue = (product) => {
-    console.log('product', product.issues);
     const lastIndex = product.issues.length;
     setSelectedListItems((prev) =>
       prev.map((item) =>
@@ -73,6 +68,9 @@ export function ServiceDetailsContentOverview({
               issue: null,
               quantity: 1,
               color: 'error.main',
+              notes: '',
+              created_time: new Date().toISOString(),
+              last_modified_time: new Date().toISOString(),
             }]
           }
           : item
@@ -107,26 +105,26 @@ export function ServiceDetailsContentOverview({
     }
     setSelectedListItems((prev) =>
       prev.map((item) =>
-          item.line_item_id === product.line_item_id
-              ? {
-                  ...item, issues: item.issues.map((i) =>
-                      i.id === issue.id
-                          ? { 
-                              ...i, 
-                              quantity: newQuantity
-                          }
-                          : i
-                  )
-              }
-              : item
+        item.line_item_id === product.line_item_id
+          ? {
+            ...item, issues: item.issues.map((i) =>
+              i.id === issue.id
+                ? {
+                  ...i,
+                  quantity: newQuantity
+                }
+                : i
+            )
+          }
+          : item
       )
-  );
+    );
   }
 
 
   useEffect(() => {
-    setSomeItemsSelected(selectedListItems.some((product) => product.selected));
-    setAllIssuesCompleted(selectedListItems.every(canAddIssue));
+    setSomeItemsSelected(selectedListItems?.some((product) => product.selected));
+    setAllIssuesCompleted(selectedListItems?.every(canAddIssue));
   }, [selectedListItems, setSomeItemsSelected, setAllIssuesCompleted, canAddIssue]);
 
   const openServiceItems = useBoolean(false);
@@ -142,7 +140,7 @@ export function ServiceDetailsContentOverview({
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 300 }}>
         <Typography variant="h6" color="text.secondary">
-          Project not found!
+          Service not found!
         </Typography>
       </Box>
     );
@@ -150,11 +148,11 @@ export function ServiceDetailsContentOverview({
 
   return (
     <>
-      <Card sx={{
+      <Box sx={{
         p: 3,
-        gap: 1,
+        gap: 3,
         display: 'flex',
-        flexDirection: 'column',
+        flexDirection: 'row',
         ml: isMobile ? 5 : 0,
         overflow: 'auto'
       }}>
@@ -186,6 +184,35 @@ export function ServiceDetailsContentOverview({
             />,
             hasValue: salesOrder?.date?.length > 0,
           },
+
+        ].map((item) => (
+          <Stack key={item.label} spacing={1.5} direction="row">
+            {item?.icon}
+            <Box sx={{ width: '100%', display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+              <ListItemText
+                primary={item.label}
+                secondary={item.value}
+                primaryTypographyProps={{ typography: 'body2', color: 'text.secondary', mb: 0.5 }}
+                secondaryTypographyProps={{
+                  component: 'span',
+                  color: 'text.secondary',
+                  typography: 'subtitle2',
+                }}
+              />
+            </Box>
+          </Stack>
+        ))}
+      </Box>
+      <Box sx={{
+        p: 3,
+        gap: 1,
+        display: 'flex',
+        flexDirection: 'row',
+        ml: isMobile ? 5 : 0,
+        mt: 0,
+        overflow: 'auto'
+      }}>
+        {[
           {
             label: `${items?.length} Product(s), 
               Total Qty: ${items?.reduce((total, product) => total + product.quantity, 0)}`,
@@ -213,7 +240,7 @@ export function ServiceDetailsContentOverview({
 
           },
         ].map((item) => (
-          <Stack key={item.label} spacing={1.5} direction="row">
+          <Stack key={item.label} spacing={1.5} direction="row" sx={{ minWidth: '100%' }}>
             {item?.icon}
             <Box sx={{ width: '100%', display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
               <ListItemText
@@ -225,11 +252,12 @@ export function ServiceDetailsContentOverview({
                   color: 'text.secondary',
                   typography: 'subtitle2',
                 }}
+                sx={{ width: '100%' }}
               />
             </Box>
           </Stack>
         ))}
-      </Card >
+      </Box>
       <ServiceDetailsContentOverviewModalService salesOrder={salesOrder} items={serviceItems} open={openServiceItems.value} onClose={openServiceItems.onFalse} />
     </>
   );

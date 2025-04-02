@@ -17,8 +17,6 @@ export function TrackTableRow({ row }) {
 
   const { isMobile } = useContext(LoadingContext);
 
-  console.log('row', row);
-
   return (
     <TableRow hover tabIndex={-1} sx={{ cursor: 'pointer' }}>
 

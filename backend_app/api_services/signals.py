@@ -3,6 +3,8 @@ from api_projects.data_util import serialize_datetime
 from .models import (
     Service,
     ServiceIssue,
+    ServiceStage,    
+    ServiceDefaultTask,
 )
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
@@ -23,25 +25,30 @@ def service_saved(sender, document, **kwargs):
             'type': 'created' if created else 'updated',
             "item": {
                 "id": str(document.id),
+                "number": document.number,
+                "version": document.version,
+                "name": document.name,
                 "client": document.client,
-                "sales_order": document.sales_order,
-                "troubled_products": document.troubled_products,
-                "troubled_info": document.troubled_info,
-                "user_reporter": document.user_reporter,
+                "salesOrder": document.sales_order,
+                "referenceNumber": document.reference_number,
+                "phone": document.phone,
+                "issuedProducts": document.issued_products,
+                "userReporter": document.user_reporter,
                 "createdTime": document.created_time,
                 "lastModifiedTime": document.last_modified_time,
-                "stage_history": document.stage_history,
-                "users_assignees": document.users_assignees,
-                "start_date": document.start_date,
-                "end_date": document.end_date,
-                "current_stage": document.current_stage,
-                "service_attachments": document.service_attachments,
-                "service_history": document.service_history,
+                "stageHistory": document.stage_history,
+                "usersAssignees": document.users_assignees,
+                "startDate": document.start_date,
+                "endDate": document.end_date,
+                "currentStage": document.current_stage,
+                "serviceAttachments": document.service_attachments,
+                "serviceHistory": document.service_history,
                 "address": document.address,
-                "is_active": document.is_active,
-                "user_manager": document.user_manager,
-                "service_comments": document.service_comments,
-                "service_default_tasks": document.service_default_tasks,
+                "isActive": document.is_active,
+                "userManager": document.user_manager,
+                "serviceComments": document.service_comments,
+                "serviceDefaultTasks": document.service_default_tasks,
+                "usersServiceTeam": document.users_service_team,
             }
 
         }
@@ -58,24 +65,29 @@ def service_deleted(sender, document, **kwargs):
             "item": {
                 "id": str(document.id),
                 "client": document.client,
-                "sales_order": document.sales_order,
-                "troubled_products": document.troubled_products,
-                "troubled_info": document.troubled_info,
-                "user_reporter": document.user_reporter,
+                "number": document.number,
+                "name": document.name,
+                "version": document.version,
+                "salesOrder": document.sales_order,
+                "referenceNumber": document.reference_number,
+                "phone": document.phone,
+                "issuedProducts": document.issued_products,
+                "userReporter": document.user_reporter,
                 "createdTime": document.created_time,
                 "lastModifiedTime": document.last_modified_time,
-                "stage_history": document.stage_history,
-                "users_assignees": document.users_assignees,
-                "start_date": document.start_date,
-                "end_date": document.end_date,
-                "current_stage": document.current_stage,
-                "service_attachments": document.service_attachments,
-                "service_history": document.service_history,
+                "stageHistory": document.stage_history,
+                "usersAssignees": document.users_assignees,
+                "startDate": document.start_date,
+                "endDate": document.end_date,
+                "currentStage": document.current_stage,
+                "serviceAttachments": document.service_attachments,
+                "serviceHistory": document.service_history,
                 "address": document.address,
-                "is_active": document.is_active,
-                "user_manager": document.user_manager,
-                "service_comments": document.service_comments,
-                "service_default_tasks": document.service_default_tasks,
+                "isActive": document.is_active,
+                "userManager": document.user_manager,
+                "serviceComments": document.service_comments,
+                "serviceDefaultTasks": document.service_default_tasks,
+                "usersServiceTeam": document.users_service_team,
             }
         }
     }
@@ -96,25 +108,30 @@ def service_by_id_saved(sender, document, **kwargs):
             'type': 'created' if created else 'updated',
             "item": {
                 "id": str(document.id),
+                "number": document.number,
+                "version": document.version,
+                "name": document.name,
                 "client": document.client,
-                "sales_order": document.sales_order,
-                "troubled_products": document.troubled_products,
-                "troubled_info": document.troubled_info,
-                "user_reporter": document.user_reporter,
+                "salesOrder": document.sales_order,
+                "referenceNumber": document.reference_number,
+                "phone": document.phone,
+                "issuedProducts": document.issued_products,
+                "userReporter": document.user_reporter,
                 "createdTime": document.created_time,
                 "lastModifiedTime": document.last_modified_time,
-                "stage_history": document.stage_history,
-                "users_assignees": document.users_assignees,
-                "start_date": document.start_date,
-                "end_date": document.end_date,
-                "current_stage": document.current_stage,
-                "service_attachments": document.service_attachments,
-                "service_history": document.service_history,
+                "stageHistory": document.stage_history,
+                "usersAssignees": document.users_assignees,
+                "startDate": document.start_date,
+                "endDate": document.end_date,
+                "currentStage": document.current_stage,
+                "serviceAttachments": document.service_attachments,
+                "serviceHistory": document.service_history,
                 "address": document.address,
-                "is_active": document.is_active,
-                "user_manager": document.user_manager,
-                "service_comments": document.service_comments,
-                "service_default_tasks": document.service_default_tasks,
+                "isActive": document.is_active,
+                "userManager": document.user_manager,
+                "serviceComments": document.service_comments,
+                "serviceDefaultTasks": document.service_default_tasks,
+                "usersServiceTeam": document.users_service_team,
             }
 
         }
@@ -131,25 +148,30 @@ def service_by_id_deleted(sender, document, **kwargs):
             'type': 'deleted',
             "item": {
                 "id": str(document.id),
+                "number": document.number,
+                "version": document.version,
+                "name": document.name,
                 "client": document.client,
-                "sales_order": document.sales_order,
-                "troubled_products": document.troubled_products,
-                "troubled_info": document.troubled_info,
-                "user_reporter": document.user_reporter,
+                "salesOrder": document.sales_order,
+                "referenceNumber": document.reference_number,
+                "phone": document.phone,
+                "issuedProducts": document.issued_products,
+                "userReporter": document.user_reporter,
                 "createdTime": document.created_time,
                 "lastModifiedTime": document.last_modified_time,
-                "stage_history": document.stage_history,
-                "users_assignees": document.users_assignees,
-                "start_date": document.start_date,
-                "end_date": document.end_date,
-                "current_stage": document.current_stage,
-                "service_attachments": document.service_attachments,
-                "service_history": document.service_history,
+                "stageHistory": document.stage_history,
+                "usersAssignees": document.users_assignees,
+                "startDate": document.start_date,
+                "endDate": document.end_date,
+                "currentStage": document.current_stage,
+                "serviceAttachments": document.service_attachments,
+                "serviceHistory": document.service_history,
                 "address": document.address,
-                "is_active": document.is_active,
-                "user_manager": document.user_manager,
-                "service_comments": document.service_comments,
-                "service_default_tasks": document.service_default_tasks,
+                "isActive": document.is_active,
+                "userManager": document.user_manager,
+                "serviceComments": document.service_comments,
+                "serviceDefaultTasks": document.service_default_tasks,
+                "usersServiceTeam": document.users_service_team,
             }
         }
     }
@@ -172,9 +194,9 @@ def service_issue_saved(sender, document, **kwargs):
                 "id": str(document.id),
                 "name": document.name,
                 "description": document.description,
-                "is_active": document.is_active,
-                "created_time": document.created_time,
-                "last_modified_time": document.last_modified_time,
+                "isActive": document.is_active,
+                "createdTime": document.created_time,
+                "lastModifiedTime": document.last_modified_time,
             }
 
         }
@@ -192,13 +214,109 @@ def service_issue_deleted(sender, document, **kwargs):
                 "id": str(document.id),
                 "name": document.name,
                 "description": document.description,
-                "is_active": document.is_active,
-                "created_time": document.created_time,
-                "last_modified_time": document.last_modified_time,
+                "isActive": document.is_active,
+                "createdTime": document.created_time,
+                "lastModifiedTime": document.last_modified_time,
             }
         }
     }
     async_to_sync(channel_layer.group_send)('service_issue', serialize_datetime(event))
+    
+    
+##########################################################################
+# Service Stage
+##########################################################################
+
+def service_stage_saved(sender, document, **kwargs):
+    created = kwargs.get('created', False)
+    channel_layer = get_channel_layer()
+    event = {
+        'type': 'service_stage_update',
+        'message': {
+            'type': 'created' if created else 'updated',
+            "item": {
+                "id": str(document.id),
+                "name": document.name,
+                "order": document.order,
+                "description": document.description,
+                "isActive": document.is_active,
+            }
+
+        }
+    }
+    async_to_sync(channel_layer.group_send)('service_stage', serialize_datetime(event))
+    
+
+def service_stage_deleted(sender, document, **kwargs):
+    channel_layer = get_channel_layer()
+    event = {
+        'type': 'service_stage_update',
+        'message': {
+            'type': 'deleted',
+            "item": {
+                "id": str(document.id),
+                "name": document.name,
+                "order": document.order,
+                "description": document.description,
+                "isActive": document.is_active,
+            }
+        }
+    }
+    async_to_sync(channel_layer.group_send)('service_stage', serialize_datetime(event))
+    
+    
+##########################################################################    
+# Service Default Task
+##########################################################################
+
+def service_default_task_saved(sender, document, **kwargs):
+    created = kwargs.get('created', False)
+    channel_layer = get_channel_layer()
+    event = {
+        'type': 'service_default_task_update',
+        'message': {
+            'type': 'created' if created else 'updated',
+            "item": {
+                "id": str(document.id),
+                "name": document.name,
+                "number": document.number,
+                "description": document.description,
+                "order": document.order,
+                "serviceStage": document.service_stage,
+                "serviceStageStatus": document.service_stage_status,
+                "createdTime": document.created_time,
+                "lastModifiedTime": document.last_modified_time,
+                "isActive": document.is_active,
+                "hasAttachments": document.has_attachments,
+            }
+
+        }
+    }
+    async_to_sync(channel_layer.group_send)('service_default_task', serialize_datetime(event))
+
+
+def service_default_task_deleted(sender, document, **kwargs):
+    channel_layer = get_channel_layer()
+    event = {
+        'type': 'service_default_task_update',
+        'message': {
+            'type': 'deleted',
+            "item": {
+                "id": str(document.id),
+                "name": document.name,
+                "number": document.number,
+                "description": document.description,
+                "order": document.order,
+                "serviceStage": document.service_stage,
+                "serviceStageStatus": document.service_stage_status,
+                "createdTime": document.created_time,
+                "lastModifiedTime": document.last_modified_time,
+                "isActive": document.is_active,
+                "hasAttachments": document.has_attachments,
+            }
+        }
+    }
+    async_to_sync(channel_layer.group_send)('service_default_task', serialize_datetime(event))
     
 ##########################################################################
 
@@ -208,4 +326,8 @@ signals.post_save.connect(service_by_id_saved, sender=Service)
 signals.post_delete.connect(service_by_id_deleted, sender=Service)
 signals.post_save.connect(service_issue_saved, sender=ServiceIssue)
 signals.post_delete.connect(service_issue_deleted, sender=ServiceIssue)
+signals.post_save.connect(service_stage_saved, sender=ServiceStage)
+signals.post_delete.connect(service_stage_deleted, sender=ServiceStage)
+signals.post_save.connect(service_default_task_saved, sender=ServiceDefaultTask)
+signals.post_delete.connect(service_default_task_deleted, sender=ServiceDefaultTask)
 

@@ -90,7 +90,8 @@ export function ProjectDetailsContentOverview({
           },
           {
             label: 'REF Number',
-            value: project?.salesOrder?.reference_number ? project?.salesOrder?.reference_number : 'No REF Number',
+            value: project?.salesOrder?.reference_number ? project?.salesOrder?.reference_number :
+              project?.referenceNumber ? project?.referenceNumber : 'No REF Number',
             icon: <Iconify
               icon="carbon:term-reference"
               sx={{ color: 'text.primary' }}
@@ -250,14 +251,18 @@ export function ProjectDetailsContentOverview({
                 CONFIG.permissions.moduleProjects,
                 CONFIG.permissions.operationEditReferenceNumber
               ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
-                  <Tooltip title={project?.salesOrder?.reference_number ? "Edit REF Number" : "Add REF Number"} arrow>
-                    <IconButton variant="text" color={project?.salesOrder?.reference_number ? "primary" : "warning"} size="small" sx={{
-                      ml: 1,
-                      '&:hover': {
-                        boxShadow: 'none',
-                        backgroundColor: 'transparent',
-                      },
-                    }}
+                  <Tooltip title={project?.salesOrder?.reference_number || project?.referenceNumber ? "Edit REF Number" : "Add REF Number"} arrow>
+                    <IconButton
+                      variant="text"
+                      color={project?.salesOrder?.reference_number || project?.referenceNumber ? "primary" : "warning"}
+                      size="small"
+                      sx={{
+                        ml: 1,
+                        '&:hover': {
+                          boxShadow: 'none',
+                          backgroundColor: 'transparent',
+                        },
+                      }}
                       onClick={() => setOpenDialogs({ ...openDialogs, refNumber: true })}
                     >
                       <Iconify icon="fluent:slide-text-edit-20-regular" color="primary" width={22} />
@@ -270,11 +275,11 @@ export function ProjectDetailsContentOverview({
                 CONFIG.permissions.moduleProjects,
                 CONFIG.permissions.operationEditPhoneNumber
               ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
-                  <Tooltip title={((project?.salesOrder?.customer || project?.salesOrder?.contact_person_details)?.phone || 
-                  (project?.salesOrder?.customer || project?.salesOrder?.contact_person_details)?.mobile) ? "Edit Phone Number" : "Add Phone Number"} arrow>
+                  <Tooltip title={((project?.salesOrder?.customer || project?.salesOrder?.contact_person_details)?.phone ||
+                    (project?.salesOrder?.customer || project?.salesOrder?.contact_person_details)?.mobile) ? "Edit Phone Number" : "Add Phone Number"} arrow>
                     <IconButton
                       variant="text"
-                      color={((project?.salesOrder?.customer || project?.salesOrder?.contact_person_details)?.phone || 
+                      color={((project?.salesOrder?.customer || project?.salesOrder?.contact_person_details)?.phone ||
                         (project?.salesOrder?.customer || project?.salesOrder?.contact_person_details)?.mobile) ? "primary" : "warning"}
                       size="small"
                       sx={{

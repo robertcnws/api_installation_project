@@ -53,6 +53,8 @@ const ICONS = {
   defaultGuideProduct: icon('ic-guide-product'),
   service: icon('ic-service'),
   serviceIssue: icon('ic-service-issue'),
+  serviceStage: icon('ic-service-stage'),
+  serviceTask: icon('ic-service-task'),
 };
 
 const userLogged = JSON.parse(sessionStorage.getItem('userLogged'));
@@ -87,14 +89,6 @@ export const navData = () => [
             title: 'List',
             path: paths.dashboard.project.list,
           },
-          // {
-          //   title: 'Calendar View',
-          //   path: paths.dashboard.shipment.listBySku,
-          // },
-          // {
-          //   title: 'Kanban View',
-          //   path: paths.dashboard.shipment.listBySku,
-          // },
         ],
       },
       ...(userLogged && listRolesAndSubroles(userLogged?.data.user_role.name).includes(CONFIG.roles.administrator) ? [
@@ -103,10 +97,10 @@ export const navData = () => [
           path: paths.dashboard.service.root,
           icon: ICONS.service,
           children: [
-            // {
-            //   title: 'List',
-            //   path: paths.dashboard.service.list,
-            // },
+            {
+              title: 'List',
+              path: paths.dashboard.service.list,
+            },
             {
               title: 'Create',
               path: paths.dashboard.service.new
@@ -220,6 +214,38 @@ export const navData = () => [
                 {
                   title: 'Create',
                   path: paths.dashboard.serviceIssue.new
+                },
+              ],
+            },
+            {
+              title: 'Service Stages',
+              path: paths.dashboard.serviceStage.root,
+              icon: ICONS.serviceStage,
+              open: true,
+              children: [
+                {
+                  title: 'List',
+                  path: paths.dashboard.serviceStage.root,
+                },
+                {
+                  title: 'Create',
+                  path: paths.dashboard.serviceStage.new
+                },
+              ],
+            },
+            {
+              title: 'Service Tasks',
+              path: paths.dashboard.serviceTask.root,
+              icon: ICONS.serviceTask,
+              open: true,
+              children: [
+                {
+                  title: 'List',
+                  path: paths.dashboard.serviceTask.root,
+                },
+                {
+                  title: 'Create',
+                  path: paths.dashboard.serviceTask.new
                 },
               ],
             },

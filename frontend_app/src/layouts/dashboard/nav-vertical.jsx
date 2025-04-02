@@ -53,7 +53,7 @@ export function NavVertical({ sx, data, slots, isNavMini, layoutQuery, onToggleN
       sx={{
         top: 0,
         left: 0,
-        height: 1,
+        height: 0.96,
         display: 'none',
         position: 'fixed',
         flexDirection: 'column',

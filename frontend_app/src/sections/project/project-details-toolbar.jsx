@@ -128,7 +128,7 @@ export function ProjectDetailsToolbar({
               CONFIG.permissions.operationEditUsersAssignees
             ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) && (
                 <Tooltip title='Add users to installation' arrow>
-                  <IconButton onClick={share.onTrue} color={project?.usersAssignees?.length > 0 ? 'default' : 'error'}>
+                  <IconButton onClick={share.onTrue} color={project?.usersAssignees?.length > 0 ? 'default' : 'warning'}>
                     <Iconify icon="tdesign:usergroup-add-filled" />
                   </IconButton>
                 </Tooltip>

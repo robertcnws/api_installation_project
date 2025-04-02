@@ -75,3 +75,52 @@ class ServiceIssueConsumer(AsyncWebsocketConsumer):
 
     async def service_issue_update(self, event):
         await self.send(text_data=json.dumps(event["message"]))
+        
+
+######################################################
+# SERVICE STAGE
+######################################################
+
+class ServiceStageConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        await self.channel_layer.group_add(
+            "service_stage", 
+            self.channel_name
+        )
+        await self.accept()
+
+    async def disconnect(self, close_code):
+        await self.channel_layer.group_discard(
+            "service_stage",
+            self.channel_name
+        )
+
+    async def receive(self, text_data):
+        pass
+
+    async def service_stage_update(self, event):
+        await self.send(text_data=json.dumps(event["message"]))
+        
+######################################################
+# SERVICE DEFAULT TASK
+######################################################
+
+class ServiceDefaultTaskConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        await self.channel_layer.group_add(
+            "service_default_task", 
+            self.channel_name
+        )
+        await self.accept()
+
+    async def disconnect(self, close_code):
+        await self.channel_layer.group_discard(
+            "service_default_task",
+            self.channel_name
+        )
+
+    async def receive(self, text_data):
+        pass
+
+    async def service_default_task_update(self, event):
+        await self.send(text_data=json.dumps(event["message"]))

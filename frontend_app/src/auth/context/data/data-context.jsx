@@ -17,10 +17,12 @@ import { useServicesQuery } from 'src/_mock/__services';
 import { useUserRolesQuery } from 'src/_mock/__user_roles';
 import { useStagesTaskQuery } from 'src/_mock/__stages_task';
 import { useDefaultTasksQuery } from 'src/_mock/__default_tasks';
+import { useServiceIssuesQuery } from 'src/_mock/__service_issues';
+import { useServiceStagesQuery } from 'src/_mock/__service_stages';
 import { useProjectPermissionsQuery } from 'src/_mock/__project_permissions';
+import { useServiceDefaultTasksQuery } from 'src/_mock/__service_default_tasks';
 import { useNotificationsQuery } from 'src/_mock/__projects_notifications_users';
 import { useDefaultGuideProductsQuery } from 'src/_mock/__default_guide_products';
-import { useServiceIssuesQuery } from 'src/_mock/__service_issues';
 
 const DataContext = createContext();
 export const useDataContext = () => useContext(DataContext);
@@ -42,8 +44,6 @@ export const DataProvider = ({ children }) => {
   } = useServicesQuery();
   const {
     data: serviceIssues,
-    loading: loadingServiceIssues,
-    error: errorServiceIssues,
     refetch: refetchServiceIssues
   } = useServiceIssuesQuery();
   const {
@@ -69,6 +69,14 @@ export const DataProvider = ({ children }) => {
     error: errorStages,
     refetch: refetchStages
   } = useStagesQuery();
+  const {
+    data: serviceStages,
+    refetch: refetchServiceStages
+  } = useServiceStagesQuery();
+  const {
+    data: serviceDefaultTasks,
+    refetch: refetchServiceDefaultTasks
+  } = useServiceDefaultTasksQuery();
   const {
     data: defaultGuideProducts,
     loading: loadingDefaultGuideProducts,
@@ -199,6 +207,8 @@ export const DataProvider = ({ children }) => {
   const loadedUserRoles = useMemo(() => finalUserRoles || [], [finalUserRoles]);
   const loadedServices = useMemo(() => services || [], [services]);
   const loadedServiceIssues = useMemo(() => serviceIssues || [], [serviceIssues]);
+  const loadedServiceStages = useMemo(() => serviceStages || [], [serviceStages]);
+  const loadedServiceDefaultTasks = useMemo(() => serviceDefaultTasks || [], [serviceDefaultTasks]);
 
 
   const orderedDefaultGuideProducts = useMemo(() => {
@@ -239,8 +249,6 @@ export const DataProvider = ({ children }) => {
   );
 
   const loadedTracks = useMemo(() => tracks.filter((track) => track.action.toLowerCase().indexOf('login') === -1) || [], [tracks]);
-
-  // console.log('loadedProjects', loadedProjects);
 
   const { data: permissions, error: errorPermissions, isLoading: isLoadingPermissions, refetch: refetchPermissions } = useQuery({
     queryKey: ['permissions'],
@@ -328,6 +336,10 @@ export const DataProvider = ({ children }) => {
       refetchServices,
       loadedServiceIssues,
       refetchServiceIssues,
+      loadedServiceStages,
+      refetchServiceStages,
+      loadedServiceDefaultTasks,
+      refetchServiceDefaultTasks,
       loadedProjectPermissions,
       loadedStages,
       loadedStagesTask,
@@ -375,6 +387,10 @@ export const DataProvider = ({ children }) => {
       refetchServices,
       loadedServiceIssues,
       refetchServiceIssues,
+      loadedServiceStages,
+      refetchServiceStages,
+      loadedServiceDefaultTasks,
+      refetchServiceDefaultTasks,
       loadedProjectPermissions,
       loadedStages,
       loadedStagesTask,

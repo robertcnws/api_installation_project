@@ -1,23 +1,14 @@
-from django.shortcuts import render
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from django.utils import timezone
 from api_projects.data_util import (
     transform_data_to_mongo,
-    parse_custom_date,
-    create_default_task_number,
-    create_project_number,
-    fix_order,
-    fix_order_after_edit,
-    get_current_stage_from_tasks,
-    to_aware,
     create_notification,
 )
 from .models import UserRole
 from api_authorization.models import LoginUser
 from api_projects.models import ProjectTracking, Project
-import json
 import logging
 
 logging.basicConfig(level=logging.WARNING)

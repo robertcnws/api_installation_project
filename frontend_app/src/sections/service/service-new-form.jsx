@@ -1,34 +1,34 @@
 import axios from 'axios';
 import { useMemo, useState, useCallback } from 'react';
-import { toast } from 'src/components/snackbar'
-import { useBoolean } from 'src/hooks/use-boolean';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
 import Grid from '@mui/material/Unstable_Grid2';
 import LoadingButton from '@mui/lab/LoadingButton';
-import { Scrollbar } from 'src/components/scrollbar';
-import { Button, Dialog, DialogActions, InputAdornment, Switch, TextField, Typography } from '@mui/material';
+import { Button, Dialog, Switch, TextField, Typography, DialogActions, InputAdornment } from '@mui/material';
 
+import { paths } from 'src/routes/paths';
+import { useRouter } from 'src/routes/hooks';
+
+import { useBoolean } from 'src/hooks/use-boolean';
+import { useSetState } from 'src/hooks/use-set-state';
+
+import { CONFIG } from 'src/config-global';
+
+import { toast } from 'src/components/snackbar'
+import { Iconify } from 'src/components/iconify';
+import { Scrollbar } from 'src/components/scrollbar';
 import {
   useTable,
   rowInPage,
   getComparator,
 } from 'src/components/table';
 
-import { Iconify } from 'src/components/iconify';
-import { useSetState } from 'src/hooks/use-set-state';
-
-import { useRouter } from 'src/routes/hooks';
-
-import { CONFIG } from 'src/config-global';
+import { useDataContext } from 'src/auth/context/data/data-context';
 
 import { ServiceListSalesordersView } from './service-table-salesorders';
 import { ServiceDetailsContentOverview } from './service-details-content-overview';
-
-
-
 
 // ----------------------------------------------------------------------
 
@@ -41,6 +41,10 @@ export function ServiceNewForm({ currentUser }) {
   const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
 
   const table = useTable({ defaultDense: true, defaultRowsPerPage: 5, defaultOrder: 'desc', defaultOrderBy: 'date' });
+
+  const {
+    loadedServices,
+  } = useDataContext();
 
   const [dataSearch, setDataSearch] = useState({
     companyName: '',
@@ -66,6 +70,8 @@ export function ServiceNewForm({ currentUser }) {
   const allDataEmpty = Object.values(dataSearch).every(x => (x === null || x === ''));
 
   const [salesOrders, setSalesOrders] = useState([]);
+
+  const [selectedListItems, setSelectedListItems] = useState([]);
 
   const filters = useSetState({ name: '' });
 
@@ -102,19 +108,32 @@ export function ServiceNewForm({ currentUser }) {
         params,
       });
 
-      toast.promise(promise, {
-        loading: 'Searching...',
-        success: 'Salesorder(s) found!',
-        error: 'Error to find salesorders',
-      });
+      const toastId = toast.loading('Searching...');
 
-      const response = await promise;
+      try {
+        const response = await promise;
+        const count = response.data.results.length;
+        toast.dismiss(toastId);
+        if (count === 0) {
+          toast.warning(`Warning: No salesorder(s) found!`);
+        } else {
+          const { results } = response.data;
+          const orders = results.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-      const results = response.data.results;
-
-      const finalOrders = results.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-      setSalesOrders(finalOrders);
+          const finalOrders = orders.filter((order) =>
+            !loadedServices?.some((service) => service.salesOrder.salesorder_number === order.salesorder_number)
+          );
+          if (finalOrders.length === 0) {
+            toast.warning('Warning: Salesorder already exists in services!');
+          } else {
+            toast.success(`${finalOrders.length} salesorder(s) found!`);
+          }
+          setSalesOrders(finalOrders);
+        }
+      } catch (error) {
+        toast.dismiss(toastId);
+        toast.error('Error to find salesorders');
+      }
 
       setIsSubmiting(false);
 
@@ -122,15 +141,48 @@ export function ServiceNewForm({ currentUser }) {
       setIsSubmiting(false);
       console.error(error);
     }
+  }, [dataSearch, isNotRecent, loadedServices]);
+
+
+  const handleCreateService = useCallback(async () => {
+    setIsSubmiting(true);
+
+    try {
+      const promise = axios.post(`${CONFIG.apiUrl}/services/create/service/`, {
+        salesOrder: selectedSalesOrder,
+        userReporter: userLogged?.data,
+        issuedProducts: selectedListItems.filter((item) => item.selected),
+      });
+
+      toast.promise(promise, {
+        loading: 'Creating service...',
+        success: 'Service created!',
+        error: 'Error to create service',
+      });
+
+      await promise;
+
+      setIsSubmiting(false);
+
+      openSalesOrderModal.onFalse();
+
+      router.push(paths.dashboard.service.list);
+
+    } catch (error) {
+      setIsSubmiting(false);
+      console.error(error);
+    }
   }
-    , [dataSearch, isNotRecent]);
+    , [selectedSalesOrder, selectedListItems, userLogged, openSalesOrderModal, router]);
 
   return (
     <>
       <Grid container spacing={1} sx={{ mt: -2 }}>
         <Grid xs={12} md={12}>
           <Card sx={{ p: 3 }}>
-            <Typography variant='h6' sx={{ mb: 2 }}>Search Salesorder</Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', mb: 2 }}>
+              <Typography variant='h6'>Search Salesorder</Typography>
+            </Box>
             <Box
               rowGap={3}
               columnGap={2}
@@ -306,12 +358,15 @@ export function ServiceNewForm({ currentUser }) {
             salesOrder={selectedSalesOrder}
             setSomeItemsSelected={setSomeItemsSelected}
             setAllIssuesCompleted={setAllIssuesCompleted}
+            selectedListItems={selectedListItems}
+            setSelectedListItems={setSelectedListItems}
           />
         </Scrollbar>
         <DialogActions>
           <Button
             variant="contained"
             disabled={!someItemsSelected || !allIssuesCompleted}
+            onClick={handleCreateService}
           >
             Create Service
           </Button>

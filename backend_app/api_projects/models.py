@@ -136,6 +136,7 @@ class Project(Document):
     number = StringField(max_length=255, required=True)
     description = StringField(null=True)
     sales_order = DynamicField(null=True)
+    reference_number = StringField(max_length=255, null=True)
     created_time = DateTimeField(default=timezone.now, null=True)
     last_modified_time = DateTimeField(default=timezone.now, null=True)
     stage_history = ListField(DynamicField(), default=list, null=True)

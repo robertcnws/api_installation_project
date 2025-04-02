@@ -6,6 +6,9 @@ const GET_ALL_SERVICES = gql`
   {
     allServices {
       address
+      number
+      version
+      name
       client
       createdTime
       currentStage
@@ -13,6 +16,8 @@ const GET_ALL_SERVICES = gql`
       id
       isActive
       lastModifiedTime
+      phone
+      referenceNumber
       salesOrder
       serviceAttachments
       serviceComments
@@ -20,11 +25,11 @@ const GET_ALL_SERVICES = gql`
       serviceHistory
       stageHistory
       startDate
-      troubledInfo
-      troubledProducts
+      issuedProducts
       userManager
       userReporter
       usersAssignees
+      usersServiceTeam
     }
   }
 `;
@@ -33,6 +38,9 @@ const GET_SERVICE_BY_ID = gql`
   query GetServiceById($id: String!) {
     serviceById(id: $id) {
       address
+      number
+      version
+      name
       client
       createdTime
       currentStage
@@ -40,6 +48,8 @@ const GET_SERVICE_BY_ID = gql`
       id
       isActive
       lastModifiedTime
+      phone
+      referenceNumber
       salesOrder
       serviceAttachments
       serviceComments
@@ -47,11 +57,11 @@ const GET_SERVICE_BY_ID = gql`
       serviceHistory
       stageHistory
       startDate
-      troubledInfo
-      troubledProducts
+      issuedProducts
       userManager
       userReporter
       usersAssignees
+      usersServiceTeam
     }
   }
 `;

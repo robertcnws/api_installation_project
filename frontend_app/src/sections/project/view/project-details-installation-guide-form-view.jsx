@@ -189,9 +189,6 @@ export function ProjectDetailsInstallationGuideFormView({
   };
 
   const handleProductChange = (id, field, value) => {
-    console.log('id', id);
-    console.log('field', field);
-    console.log('value', value);
     setProductsData((prev) => (
       prev.map((item) => (
         item.id === id ? { ...item, [field]: value } : item
@@ -353,7 +350,6 @@ export function ProjectDetailsInstallationGuideFormView({
 
 
   const onSubmit = handleSubmit(async (data) => {
-    console.log("Submit triggered", data);
     try {
       const formData = new FormData();
       formData.append('workScope', data.workScope);
@@ -384,7 +380,6 @@ export function ProjectDetailsInstallationGuideFormView({
   const handleCheckProduct = async (id) => {
     const product = productsData.find((p) => p.id === id);
     const maxId = productsData.reduce((max, obj) => obj.id > max.id ? obj : max, productsData[0]).id;
-    console.log('maxId', maxId);
     const newProduct = {
       ...product,
       checked: true,
@@ -392,7 +387,6 @@ export function ProjectDetailsInstallationGuideFormView({
       predefined: true,
       id: product.id ? product.id : Number(maxId) + 1,
     };
-    console.log('newProduct', newProduct);
     try {
       const promise = axios.post(`${CONFIG.apiUrl}/projects/update/project/${project?.id}/check-item-installation-guide/`, {
         product: JSON.stringify(newProduct),

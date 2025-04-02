@@ -135,250 +135,252 @@ export function OverviewAnalyticsView() {
           </Box>
         ) : (
           <DashboardContent maxWidth="xl">
-              <WelcomeTypography
-                userLogged={userLogged}
-              />
-              {!isInstaller(userLogged?.data.user_role.name) ? (
-                <Grid container spacing={1}>
-                    <Grid xs={12} sm={6} md={2.4}>
-                      <AnalyticsWidgetSummary
-                        sx={{ cursor: 'pointer' }}
-                        title={`${CONFIG.stages.preparation}`}
-                        percent={
-                          linearRegresionCalculation(
-                            projects?.filter(
-                              proj => proj.currentStage.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1
-                            ).map((proj) => proj.hasPermission)
-                          )}
-                        total={
-                          projects?.filter(
-                            proj => proj.currentStage.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1
-                          ).length
-                        }
-                        quantity={
-                          projects?.filter(
-                            proj => proj.currentStage.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1
-                          ).length
-                        }
-                        color="error"
-                        icon={
-                          <img alt="icon" src={`${CONFIG.assetsDir}/assets/icons/glass/ic-preparation-stage.svg`} />
-                        }
-                        onClick={() => { }}
-                      />
-                    </Grid>
-                    <Grid xs={12} sm={6} md={2.4}>
-                      <AnalyticsWidgetSummary
-                        sx={{ cursor: 'pointer' }}
-                        title={`${CONFIG.stages.coordination}`}
-                        percent={
-                          linearRegresionCalculation(
-                            projects?.filter(
-                              proj => proj.currentStage.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1
-                            ).map((proj) => proj.hasPermission)
-                          )}
-                        total={
-                          projects?.filter(
-                            proj => proj.currentStage.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1
-                          ).length
-                        }
-                        quantity={
-                          projects?.filter(
-                            proj => proj.currentStage.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1
-                          ).length
-                        }
-                        color="secondary"
-                        icon={
-                          <img alt="icon" src={`${CONFIG.assetsDir}/assets/icons/glass/ic-coordination-stage.svg`} />
-                        }
-                        onClick={() => { }}
-                      />
-                    </Grid>
-                    <Grid xs={12} sm={6} md={2.4}>
-                      <AnalyticsWidgetSummary
-                        sx={{ cursor: 'pointer' }}
-                        title={`${CONFIG.stages.installation}`}
-                        percent={
-                          linearRegresionCalculation(
-                            projects?.filter(
-                              proj => proj.currentStage.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
-                            ).map((proj) => proj.hasPermission)
-                          )}
-                        total={
-                          projects?.filter(
-                            proj => proj.currentStage.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
-                          ).length
-                        }
-                        quantity={
-                          projects?.filter(
-                            proj => proj.currentStage.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
-                          ).length
-                        }
-                        color="info"
-                        icon={
-                          <img alt="icon" src={`${CONFIG.assetsDir}/assets/icons/glass/ic-installation-stage.svg`} />
-                        }
-                        onClick={() => { }}
-                      />
-                    </Grid>
-                    <Grid xs={12} sm={6} md={2.4}>
-                      <AnalyticsWidgetSummary
-                        sx={{ cursor: 'pointer' }}
-                        title={`${CONFIG.stages.permission}`}
-                        percent={
-                          linearRegresionCalculation(
-                            projects?.filter(
-                              proj => proj.currentStage.name.toLowerCase().indexOf(CONFIG.stages.permission.toLowerCase()) !== -1
-                            ).map((proj) => proj.hasPermission)
-                          )}
-                        total={
-                          projects?.filter(
-                            proj => proj.currentStage.name.toLowerCase().indexOf(CONFIG.stages.permission.toLowerCase()) !== -1
-                          ).length
-                        }
-                        quantity={
-                          projects?.filter(
-                            proj => proj.currentStage.name.toLowerCase().indexOf(CONFIG.stages.permission.toLowerCase()) !== -1
-                          ).length
-                        }
-                        color="warning"
-                        icon={
-                          <img alt="icon" src={`${CONFIG.assetsDir}/assets/icons/glass/ic-permission-stage.svg`} />
-                        }
-                        onClick={() => { }}
-                      />
-                    </Grid>
-                    <Grid xs={12} sm={6} md={2.4}>
-                      <AnalyticsWidgetSummary
-                        sx={{ cursor: 'pointer' }}
-                        title={`${CONFIG.stages.closing}`}
-                        percent={
-                          linearRegresionCalculation(
-                            projects?.filter(
-                              proj => proj.currentStage.name.toLowerCase().indexOf(CONFIG.stages.closing.toLowerCase()) !== -1
-                            ).map((proj) => proj.hasPermission)
-                          )}
-                        total={
-                          projects?.filter(
-                            proj => proj.currentStage.name.toLowerCase().indexOf(CONFIG.stages.closing.toLowerCase()) !== -1
-                          ).length
-                        }
-                        quantity={
-                          projects?.filter(
-                            proj => proj.currentStage.name.toLowerCase().indexOf(CONFIG.stages.closing.toLowerCase()) !== -1
-                          ).length
-                        }
-                        color="success"
-                        icon={
-                          <img alt="icon" src={`${CONFIG.assetsDir}/assets/icons/glass/ic-closing-stage.svg`} />
-                        }
-                        onClick={() => { }}
-                      />
-                    </Grid>
-                  </Grid>
-              ) : (
-                <Grid container xs={12} spacing={1} sx={{ mb: 1 }}>
-                    <Button sx={{ cursor: 'pointer', border: '1px solid #ddd', fontSize: '11px' }} color='warning' onClick={() => {
-                      router.push(paths.dashboard.project.list)
-                    }}>
-                      <Iconify icon="icon-park-solid:install" />
-                      <Typography variant="caption">
-                        Go to Installations
-                      </Typography>
-                    </Button>
-                  </Grid>
-              )}
-              <Grid container xs={12} spacing={1}>
-
-                <Grid
-                  xs={12}
-                  md={!isInstaller(userLogged?.data.user_role.name) ? 4 : 12}
-                  lg={!isInstaller(userLogged?.data.user_role.name) ? 4 : 12}
-                >
-                  <Box
-                    sx={{
-                      mb: 1,
-                      mt: 1,
-                      p: { md: 0 },
-                      display: 'flex',
-                      gap: { xs: 3, md: 1 },
-                      borderRadius: { md: 2 },
-                      border: '0px solid grey',
-                      flexDirection: 'column',
-                      // bgcolor: { md: 'background.neutral' },
-                      minHeight: { md: '100%' },
-                    }}
-                  >
-                    <ProjectsToDoToday
-                      title="Intallations today"
-                      list={projects.filter(proj => fDate(proj.startDate) === fDate(new Date()) || fIsBetween(new Date(), proj.startDate, proj.endDate))}
-                    />
-                  </Box>
+            <WelcomeTypography
+              userLogged={userLogged}
+            />
+            {!isInstaller(userLogged?.data.user_role.name) ? (
+              <Grid container spacing={1}>
+                <Grid xs={12} sm={6} md={2.4}>
+                  <AnalyticsWidgetSummary
+                    sx={{ cursor: 'pointer' }}
+                    title={`${CONFIG.stages.preparation}`}
+                    percent={
+                      linearRegresionCalculation(
+                        projects?.filter(
+                          proj => proj.currentStage.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1
+                        ).map((proj) => proj.hasPermission)
+                      )}
+                    total={
+                      projects?.filter(
+                        proj => proj.currentStage.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1
+                      ).length
+                    }
+                    quantity={
+                      projects?.filter(
+                        proj => proj.currentStage.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1
+                      ).length
+                    }
+                    color="error"
+                    icon={
+                      <img alt="icon" src={`${CONFIG.assetsDir}/assets/icons/glass/ic-preparation-stage.svg`} />
+                    }
+                    onClick={() => { }}
+                  />
                 </Grid>
-                {!isInstaller(userLogged?.data.user_role.name) && (
-                  <>
-                    <Grid xs={12} md={4} lg={4}>
-                      <Box
-                        sx={{
-                          mb: 1,
-                          mt: 1,
-                          p: { md: 0 },
-                          display: 'flex',
-                          gap: { xs: 3, md: 1 },
-                          borderRadius: { md: 2 },
-                          border: '0px solid grey',
-                          flexDirection: 'column',
-                          // bgcolor: { md: 'background.neutral' },
-                          minHeight: { md: '100%' },
-                        }}
-                      >
-                        <ProjectsStageToday
-                          title="In installation stage"
-                          stage="Installation"
-                          list={projects.filter(proj => proj.currentStage.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1)}
-                        />
-                      </Box>
-                    </Grid>
-                    <Grid xs={12} md={4} lg={4}>
-                      <Box
-                        sx={{
-                          mb: 1,
-                          mt: 1,
-                          p: { md: 0 },
-                          display: 'flex',
-                          gap: { xs: 3, md: 1 },
-                          borderRadius: { md: 2 },
-                          border: '0px solid grey',
-                          flexDirection: 'column',
-                          // bgcolor: { md: 'background.neutral' },
-                          minHeight: { md: '100%' },
-                        }}
-                      >
-                        <ProjectsStageToday
-                          title="In closing stage"
-                          stage="Closing"
-                          list={projects.filter(proj => proj.currentStage.name.toLowerCase().indexOf(CONFIG.stages.closing.toLowerCase()) !== -1)}
-                        />
-                      </Box>
-                    </Grid>
-                  </>
-                )}
+                <Grid xs={12} sm={6} md={2.4}>
+                  <AnalyticsWidgetSummary
+                    sx={{ cursor: 'pointer' }}
+                    title={`${CONFIG.stages.coordination}`}
+                    percent={
+                      linearRegresionCalculation(
+                        projects?.filter(
+                          proj => proj.currentStage.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1
+                        ).map((proj) => proj.hasPermission)
+                      )}
+                    total={
+                      projects?.filter(
+                        proj => proj.currentStage.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1
+                      ).length
+                    }
+                    quantity={
+                      projects?.filter(
+                        proj => proj.currentStage.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1
+                      ).length
+                    }
+                    color="secondary"
+                    icon={
+                      <img alt="icon" src={`${CONFIG.assetsDir}/assets/icons/glass/ic-coordination-stage.svg`} />
+                    }
+                    onClick={() => { }}
+                  />
+                </Grid>
+                <Grid xs={12} sm={6} md={2.4}>
+                  <AnalyticsWidgetSummary
+                    sx={{ cursor: 'pointer' }}
+                    title={`${CONFIG.stages.installation}`}
+                    percent={
+                      linearRegresionCalculation(
+                        projects?.filter(
+                          proj => proj.currentStage.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
+                        ).map((proj) => proj.hasPermission)
+                      )}
+                    total={
+                      projects?.filter(
+                        proj => proj.currentStage.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
+                      ).length
+                    }
+                    quantity={
+                      projects?.filter(
+                        proj => proj.currentStage.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
+                      ).length
+                    }
+                    color="info"
+                    icon={
+                      <img alt="icon" src={`${CONFIG.assetsDir}/assets/icons/glass/ic-installation-stage.svg`} />
+                    }
+                    onClick={() => { }}
+                  />
+                </Grid>
+                <Grid xs={12} sm={6} md={2.4}>
+                  <AnalyticsWidgetSummary
+                    sx={{ cursor: 'pointer' }}
+                    title={`${CONFIG.stages.permission}`}
+                    percent={
+                      linearRegresionCalculation(
+                        projects?.filter(
+                          proj => proj.currentStage.name.toLowerCase().indexOf(CONFIG.stages.permission.toLowerCase()) !== -1
+                        ).map((proj) => proj.hasPermission)
+                      )}
+                    total={
+                      projects?.filter(
+                        proj => proj.currentStage.name.toLowerCase().indexOf(CONFIG.stages.permission.toLowerCase()) !== -1
+                      ).length
+                    }
+                    quantity={
+                      projects?.filter(
+                        proj => proj.currentStage.name.toLowerCase().indexOf(CONFIG.stages.permission.toLowerCase()) !== -1
+                      ).length
+                    }
+                    color="warning"
+                    icon={
+                      <img alt="icon" src={`${CONFIG.assetsDir}/assets/icons/glass/ic-permission-stage.svg`} />
+                    }
+                    onClick={() => { }}
+                  />
+                </Grid>
+                <Grid xs={12} sm={6} md={2.4}>
+                  <AnalyticsWidgetSummary
+                    sx={{ cursor: 'pointer' }}
+                    title={`${CONFIG.stages.closing}`}
+                    percent={
+                      linearRegresionCalculation(
+                        projects?.filter(
+                          proj => proj.currentStage.name.toLowerCase().indexOf(CONFIG.stages.closing.toLowerCase()) !== -1
+                        ).map((proj) => proj.hasPermission)
+                      )}
+                    total={
+                      projects?.filter(
+                        proj => proj.currentStage.name.toLowerCase().indexOf(CONFIG.stages.closing.toLowerCase()) !== -1
+                      ).length
+                    }
+                    quantity={
+                      projects?.filter(
+                        proj => proj.currentStage.name.toLowerCase().indexOf(CONFIG.stages.closing.toLowerCase()) !== -1
+                      ).length
+                    }
+                    color="success"
+                    icon={
+                      <img alt="icon" src={`${CONFIG.assetsDir}/assets/icons/glass/ic-closing-stage.svg`} />
+                    }
+                    onClick={() => { }}
+                  />
+                </Grid>
               </Grid>
+            ) : (
+              <Grid container xs={12} spacing={1} sx={{ mb: 1 }}>
+                <Button sx={{ cursor: 'pointer', border: '1px solid #ddd', fontSize: '11px' }} color='warning' onClick={() => {
+                  router.push(paths.dashboard.project.list)
+                }}>
+                  <Iconify icon="icon-park-solid:install" />
+                  <Typography variant="caption">
+                    Go to Installations
+                  </Typography>
+                </Button>
+              </Grid>
+            )}
+            <Grid container xs={12} spacing={1}>
 
-              <Grid container xs={12} spacing={1}>
-                <Grid xs={12} md={6} lg={6}>
-                  <Box sx={{ mt: 0, mb: 0, width: '100%' }}>
-                    <ProjectCalendarView projects={projects} isOnlyWeek={isOnlyWeek.value} />
-                  </Box>
-                </Grid>
+              <Grid
+                xs={12}
+                md={!isInstaller(userLogged?.data.user_role.name) ? 4 : 12}
+                lg={!isInstaller(userLogged?.data.user_role.name) ? 4 : 12}
+              >
+                <Box
+                  sx={{
+                    mb: 1,
+                    mt: 1,
+                    p: { md: 0 },
+                    display: 'flex',
+                    gap: { xs: 3, md: 1 },
+                    borderRadius: { md: 2 },
+                    border: '0px solid grey',
+                    flexDirection: 'column',
+                    // bgcolor: { md: 'background.neutral' },
+                    minHeight: { md: '100%' },
+                  }}
+                >
+                  <ProjectsToDoToday
+                    title="Intallations today"
+                    list={projects.filter(proj => fDate(proj.startDate) === fDate(new Date()) || fIsBetween(new Date(), proj.startDate, proj.endDate))}
+                  />
+                </Box>
+              </Grid>
+              {!isInstaller(userLogged?.data.user_role.name) && (
+                <>
+                  <Grid xs={12} md={4} lg={4}>
+                    <Box
+                      sx={{
+                        mb: 1,
+                        mt: 1,
+                        p: { md: 0 },
+                        display: 'flex',
+                        gap: { xs: 3, md: 1 },
+                        borderRadius: { md: 2 },
+                        border: '0px solid grey',
+                        flexDirection: 'column',
+                        // bgcolor: { md: 'background.neutral' },
+                        minHeight: { md: '100%' },
+                      }}
+                    >
+                      <ProjectsStageToday
+                        title="In installation stage"
+                        stage="Installation"
+                        list={projects.filter(proj => proj.currentStage.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1)}
+                      />
+                    </Box>
+                  </Grid>
+                  <Grid xs={12} md={4} lg={4}>
+                    <Box
+                      sx={{
+                        mb: 1,
+                        mt: 1,
+                        p: { md: 0 },
+                        display: 'flex',
+                        gap: { xs: 3, md: 1 },
+                        borderRadius: { md: 2 },
+                        border: '0px solid grey',
+                        flexDirection: 'column',
+                        // bgcolor: { md: 'background.neutral' },
+                        minHeight: { md: '100%' },
+                      }}
+                    >
+                      <ProjectsStageToday
+                        title="In closing stage"
+                        stage="Closing"
+                        list={projects.filter(proj => proj.currentStage.name.toLowerCase().indexOf(CONFIG.stages.closing.toLowerCase()) !== -1)}
+                      />
+                    </Box>
+                  </Grid>
+                </>
+              )}
+            </Grid>
+
+            <Grid container xs={12} spacing={1}>
+              <Grid xs={12} md={6} lg={6}>
+                <Box sx={{ mt: 0, mb: 0, width: '100%' }}>
+                  <ProjectCalendarView projects={projects} isOnlyWeek={isOnlyWeek.value} />
+                </Box>
+              </Grid>
+              {!isInstaller(userLogged?.data.user_role.name) && (
                 <Grid xs={12} md={6} lg={6}>
                   <Box sx={{ mt: 0, mb: 0, width: '100%' }}>
                     <ProjectListView projects={projects} loadingProjects={loadingProjects} />
                   </Box>
                 </Grid>
-              </Grid>
+              )}
+            </Grid>
 
-            </DashboardContent >
+          </DashboardContent >
         )}
     </>
   );

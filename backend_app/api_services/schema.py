@@ -6,6 +6,8 @@ from graphene.types.generic import GenericScalar
 from .models import (
     Service,
     ServiceIssue,
+    ServiceStage,
+    ServiceDefaultTask,
 )
 from api_authorization.models import LoginUser
 from api_projects.data_util import serialize_datetime, dynamic_field_to_json
@@ -22,6 +24,30 @@ def convert_dynamic_field(field, registry=None, executor=None):
 class ServiceIssueType(MongoengineObjectType):
     class Meta:
         model = ServiceIssue
+        
+
+class ServiceStageType(MongoengineObjectType):
+    class Meta:
+        model = ServiceStage
+        
+
+class ServiceDefaultTaskType(MongoengineObjectType):
+    class Meta:
+        model = ServiceDefaultTask
+    created_time = graphene.String()
+    last_modified_time = graphene.String()
+    service_stage = GenericScalar()
+    
+    def resolve_created_time(self, info):
+        return self.created_time.strftime('%Y-%m-%d %H:%M:%S')
+    
+    def resolve_last_modified_time(self, info):
+        return self.last_modified_time.strftime('%Y-%m-%d %H:%M:%S')
+    
+    def resolve_service_stage(self, info):
+        service_stage = self.service_stage or {}
+        service_stage = serialize_datetime(service_stage)
+        return dynamic_field_to_json(service_stage)
 
 
 class ServiceType(MongoengineObjectType):
@@ -31,7 +57,7 @@ class ServiceType(MongoengineObjectType):
     client = GenericScalar()
     sales_order = GenericScalar()
     user_reporter = GenericScalar()
-    troubled_products = GenericScalar()
+    issued_products = GenericScalar()
     stage_history = GenericScalar()
     users_assignees = GenericScalar()
     current_stage = GenericScalar()
@@ -39,6 +65,8 @@ class ServiceType(MongoengineObjectType):
     service_history = GenericScalar()
     service_comments = GenericScalar()
     service_default_tasks = GenericScalar()
+    user_manager = GenericScalar()
+    users_service_team = GenericScalar()
     
     
     def resolve_client(self, info):
@@ -56,10 +84,10 @@ class ServiceType(MongoengineObjectType):
         user_reporter = serialize_datetime(user_reporter)
         return dynamic_field_to_json(user_reporter)
     
-    def resolve_troubled_products(self, info):
-        troubled_products = self.troubled_products or []
-        troubled_products = serialize_datetime(troubled_products)
-        return dynamic_field_to_json(troubled_products)
+    def resolve_issued_products(self, info):
+        issued_products = self.issued_products or []
+        issued_products = serialize_datetime(issued_products)
+        return dynamic_field_to_json(issued_products)
     
     def resolve_stage_history(self, info):
         stage_history = self.stage_history or []
@@ -101,11 +129,18 @@ class ServiceType(MongoengineObjectType):
         user_manager = serialize_datetime(user_manager)
         return dynamic_field_to_json(user_manager)
     
+    def resolve_users_service_team(self, info):
+        users_service_team = self.users_service_team or []
+        users_service_team = serialize_datetime(users_service_team)
+        return dynamic_field_to_json(users_service_team)
+    
     
 
 class Query(graphene.ObjectType):
     all_services = graphene.List(ServiceType)
     all_service_issues = graphene.List(ServiceIssueType)
+    all_service_stages = graphene.List(ServiceStageType)
+    all_service_default_tasks = graphene.List(ServiceDefaultTaskType)
     service_by_id = graphene.Field(
         ServiceType, 
         id=graphene.String(required=True)
@@ -116,6 +151,12 @@ class Query(graphene.ObjectType):
     
     def resolve_all_service_issues(self, info):
         return ServiceIssue.objects.all()
+    
+    def resolve_all_service_stages(self, info):
+        return ServiceStage.objects.all()
+    
+    def resolve_all_service_default_tasks(self, info):
+        return ServiceDefaultTask.objects.all()
 
     def resolve_service_by_id(self, info, id):
         try:

@@ -66,9 +66,9 @@ def dynamic_field_to_json(data):
     return data
 
 
-def create_project_number(salesorder_number):
+def create_entity_number(salesorder_number, prefix='P'):
     number = salesorder_number.split('-')[1]
-    return f'P-{number}'
+    return f'{prefix}-{number}'
 
 
 def create_default_task_number(order):

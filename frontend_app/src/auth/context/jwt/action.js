@@ -56,7 +56,6 @@ export const signInWithUsernameAndPassword = async ({ username, password }) => {
       });
 
       if (loginResponse.status === 200) {
-        console.log('loginResponse', loginResponse);
         const loggedUser = {
           data: {
             ...loginResponse.data.data,

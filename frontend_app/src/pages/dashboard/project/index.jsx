@@ -6,7 +6,7 @@ import { ProjectView } from 'src/sections/project/view';
 
 // ----------------------------------------------------------------------
 
-const metadata = { title: `Project | Dashboard - ${CONFIG.appName}` };
+const metadata = { title: `Projects | Dashboard - ${CONFIG.appName}` };
 
 export default function Page() {
   return (

@@ -42,6 +42,7 @@ export function ProjectTable({
   onViewRow,
   dataFiltered,
   onOpenConfirm,
+  onOpenConfirmAllDescriptions,
   loadedUsers,
   loadedProjectPermissions,
   loadedStages,
@@ -127,6 +128,12 @@ export function ProjectTable({
                   <Iconify icon="solar:share-bold" />
                 </IconButton>
               </Tooltip> */}
+
+              <Tooltip title="Change All Descriptions" arrow>
+                <IconButton color="warning" onClick={onOpenConfirmAllDescriptions}>
+                  <Iconify icon="tabler:file-description-filled" />
+                </IconButton>
+              </Tooltip>
 
               <Tooltip title="Set Warehouse Staff" arrow>
                 <IconButton color="info" onClick={() => {

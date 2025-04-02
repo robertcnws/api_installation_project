@@ -116,6 +116,13 @@ export const paths = {
       details: (id) => `${ROOTS.DASHBOARD_CONFIG}/stage/${id}`,
       edit: (id) => `${ROOTS.DASHBOARD_CONFIG}/stage/${id}/edit`,
     },
+    serviceStage: {
+      root: `${ROOTS.DASHBOARD_CONFIG}/service-stage`,
+      list: `${ROOTS.DASHBOARD_CONFIG}/service-stage/list`,
+      new: `${ROOTS.DASHBOARD_CONFIG}/service-stage/new`,
+      details: (id) => `${ROOTS.DASHBOARD_CONFIG}/service-stage/${id}`,
+      edit: (id) => `${ROOTS.DASHBOARD_CONFIG}/service-stage/${id}/edit`,
+    },
     stageTask: {
       root: `${ROOTS.DASHBOARD_CONFIG}/task-stage`,
       list: `${ROOTS.DASHBOARD_CONFIG}/task-stage/list`,
@@ -129,6 +136,13 @@ export const paths = {
       new: `${ROOTS.DASHBOARD_CONFIG}/default-task/new`,
       details: (id) => `${ROOTS.DASHBOARD_CONFIG}/default-task/${id}`,
       edit: (id) => `${ROOTS.DASHBOARD_CONFIG}/default-task/${id}/edit`,
+    },
+    serviceTask: {
+      root: `${ROOTS.DASHBOARD_CONFIG}/service-default-task`,
+      list: `${ROOTS.DASHBOARD_CONFIG}/service-default-task/list`,
+      new: `${ROOTS.DASHBOARD_CONFIG}/service-default-task/new`,
+      details: (id) => `${ROOTS.DASHBOARD_CONFIG}/service-default-task/${id}`,
+      edit: (id) => `${ROOTS.DASHBOARD_CONFIG}/service-default-task/${id}/edit`,
     },
     serviceIssue: {
       root: `${ROOTS.DASHBOARD_CONFIG}/service-issue`,

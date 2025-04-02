@@ -6,7 +6,7 @@ import { StageCreateView } from 'src/sections/stages/view';
 
 // ----------------------------------------------------------------------
 
-const metadata = { title: `Create a new project stage | Dashboard - ${CONFIG.appName}` };
+const metadata = { title: `Create a new installation stage | Dashboard - ${CONFIG.appName}` };
 
 export default function Page() {
   return (
