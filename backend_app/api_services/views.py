@@ -883,7 +883,9 @@ def delete_issue_service(request, id, issued_product_id, issue_id):
         
         issued_product['issues'] = issues
         issued_products = [product for product in issued_products if str(product.get('line_item_id')) != issued_product_id]
-        issued_products.append(issued_product)
+        
+        if len(issues) > 0:
+            issued_products.append(issued_product)
         
         service.issued_products = issued_products
         service.save()
@@ -1282,3 +1284,49 @@ def change_service_dates(request, id):
         'message': 'Service updated successfully',
         'data': json.loads(service.to_json())
     }, status=201)
+    
+    
+#############################################
+# ADD ISSUED PRODUCT TO SERVICE
+#############################################
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def add_issued_products(request, id):
+    try:
+        service = Service.objects(id=id).first()
+        if not service:
+            return Response({'error': 'Service not found'}, status=404)
+        data = request.data
+        user_reporter = data.get('userReporter', None)
+        new_issued_products = data.get('issuedProducts', [])
+        
+        issued_products = service.issued_products if service.issued_products else []
+        issued_product_ids = [product.get('line_item_id') for product in issued_products]
+        
+        for new_issued_product in new_issued_products:
+            if new_issued_product.get('line_item_id') not in issued_product_ids:
+                issued_products.append(new_issued_product)
+        
+        service.issued_products = issued_products if issued_products else service.issued_products
+        service.save()
+        
+        tracking_info = transform_data_to_mongo(service, include_fields=['id', 'name', 'version', 'issued_products'])
+        tracking = ProjectTracking(
+            user_reporter=user_reporter,
+            action=f'add issued products to service ({tracking_info["id"]} - {tracking_info["name"]})',
+            created_time=timezone.now(),
+            managed_data={
+                'data': tracking_info
+            },
+        )
+        tracking.save()
+        if user_reporter:
+            module='services'
+            info=f'has added issued products to service {service.name}'
+            info_id=service.id
+            type='add_service_issued_products'
+            create_notification(module, info_id, info, type, user_reporter['username'])
+        return Response({'message': 'Service updated successfully'})
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)

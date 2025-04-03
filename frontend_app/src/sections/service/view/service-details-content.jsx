@@ -48,6 +48,7 @@ export function ServiceDetailsContent({
   setOpenEdit,
   openDialogs,
   setOpenDialogs,
+  openSalesOrderModal,
 }) {
 
   const theme = useTheme();
@@ -81,6 +82,8 @@ export function ServiceDetailsContent({
 
   const [isInspectionDate, setIsInspectionDate] = useState(false);
 
+  const [totalsByIssues, setTotalsByIssues] = useState({});
+
   useEffect(() => {
     if (service) {
       setTotalTasks(
@@ -99,6 +102,22 @@ export function ServiceDetailsContent({
         service?.hasPermission ? service?.serviceDefaultTasks?.filter((task) => task.status === CONFIG.taskStatus.notStarted).length :
           service?.serviceDefaultTasks?.filter((task) => task.status === CONFIG.taskStatus.notStarted && task.service_default_task.service_stage.name !== CONFIG.stages.permission).length
       );
+    }
+  }, [service]);
+
+  useEffect(() => {
+    if (service) {
+      const totals = service?.issuedProducts?.reduce((acc, product) => {
+        product?.issues?.forEach((issue) => {
+          if (acc[issue.issue.name]) {
+            acc[issue.issue.name] += issue.quantity;
+          } else {
+            acc[issue.issue.name] = issue.quantity;
+          }
+        });
+        return acc;
+      }, {});
+      setTotalsByIssues(totals);
     }
   }, [service]);
 
@@ -405,30 +424,71 @@ export function ServiceDetailsContent({
   const renderDescription = (
     <Card sx={{ p: 3, gap: 1.5, display: 'flex', flexDirection: 'column', width: '100%' }}>
       {service?.description?.split('&').map((line, index) => (
-        <Typography key={index} variant="caption" color="text.primary" sx={{ mb: 0.5, textAlign: 'justify', fontWeight: index === 0 ? 'bold' : 'normal' }}>
+        <Typography key={`typo-${index}`} variant="caption" color="text.primary" sx={{ mb: 0.5, textAlign: 'justify', fontWeight: index === 0 ? 'bold' : 'normal' }}>
           {line}
         </Typography>
       ))}
       {service?.salesOrder?.custom_fields?.map((field, index) => (
-        <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, mt: 0, mb: 0, textAlign: 'right' }} key={`box-${index}`}>
-          <Typography variant="subtitle2" color="text.primary" key={`typo-${index}`}>
-            <b>{field.label}:</b>
-          </Typography>
-          <Label
-            variant="filled"
-            sx={{
-              bgcolor: field.value.toLowerCase() === 'custom' ? 'whitesmoke' :
-                field.value.toLowerCase() === 'mixed' ? 'warning.lighter' : 'success.lighter',
-              color: field.value.toLowerCase() === 'custom' ? 'text.primary' :
-                field.value.toLowerCase() === 'mixed' ? 'warning.main' : 'success.main'
-            }}
-            key={`label-${index}`}
-          >
-            {field.value}
-          </Label>
+        field.value && field.value !== 'null' && field.value !== 'undefined' && field.value.length > 0 && (
+          <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, mt: 0, mb: 0, textAlign: 'right' }} key={`box-${index}`}>
+            <Typography variant="subtitle2" color="text.primary" key={`typo-${index}`}>
+              <b>{field.label}:</b>
+            </Typography>
+            <Label
+              variant="filled"
+              sx={{
+                bgcolor: field.value.toLowerCase() === 'stock' ? 'success.lighter' :
+                  field.value.toLowerCase() === 'mixed' ? 'warning.lighter' : 'whitesmoke',
+                color: field.value.toLowerCase() === 'stock' ? 'success.main' :
+                  field.value.toLowerCase() === 'mixed' ? 'warning.main' : 'text.primary'
+              }}
+              key={`label-${index}`}
+            >
+              {field.value}
+            </Label>
+          </Box>
+        )))}
+      <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, mt: 0, mb: 0, textAlign: 'right' }}>
+        <Typography variant="subtitle2" color="text.primary" sx={{ mt: 0.3 }}>
+          <b>Issues:</b>
+        </Typography>
+        <Box
+          variant="filled"
+          sx={{
+            bgcolor: 'whitesmoke',
+            color: 'text.primary',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 1,
+            p: 1,
+            borderRadius: 1,
+            mt: 0,
+            mb: 0,
+            textAlign: 'right'
+          }}>
+          {Object.keys(totalsByIssues || {}).length > 0 ? Object.keys(totalsByIssues || {}).map((issue, index) => (
+            <Box
+              key={`xbox-${index}`}
+              sx={{
+                display: 'flex',
+                flexDirection: 'row',
+                gap: 1,
+                mt: 0,
+                mb: 0,
+                textAlign: 'right',
+                justifyContent: 'space-between',
+              }}>
+              <Typography variant="caption" color="text.primary" sx={{ mt: 0.3 }}>
+                <b>{issue}:</b>
+              </Typography>
+              <Label variant="filled" sx={{ bgcolor: 'whitesmoke', color: 'text.primary' }}>
+                {totalsByIssues[issue]}
+              </Label>
+            </Box>
+          )) : <Label variant="filled" sx={{ bgcolor: 'whitesmoke', color: 'text.primary' }}>0</Label>}
         </Box>
-      ))}
-      <Box sx={{ display: 'flex', flexDirection: 'row', gap: 2, }}>
+      </Box>
+      <Box sx={{ display: 'flex', flexDirection: 'row', gap: 2, verticalAlign: 'bottom', mt: 0, mb: 0 }}>
         <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, mt: 0, mb: -1, textAlign: 'right' }}>
           <Typography variant="caption" color="text.primary" sx={{ mt: 0.3 }}>
             Created:
@@ -487,7 +547,23 @@ export function ServiceDetailsContent({
               <TableCell width={100}>Issue</TableCell>
               <TableCell width={50}>Qty</TableCell>
               <TableCell width={200}>Notes</TableCell>
-              <TableCell width={50}>Actions</TableCell>
+              <TableCell width={50}>
+                <Box sx={{ display: 'flex', flexDirection: 'row', gap: 0, justifyContent: 'space-between' }}>
+                  <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 1.5 }}>
+                    Actions
+                  </Typography>
+                  <Tooltip title={`Add new issued product to ${service?.name}`} arrow>
+                    <IconButton variant="outlined" color='success' onClick={openSalesOrderModal.onTrue} disabled={false} sx={{
+                      '&:hover': {
+                        boxShadow: 'none',
+                        backgroundColor: 'transparent',
+                      },
+                    }}>
+                      <Iconify icon="lets-icons:arhive-alt-small-add" sx={{ width: 30, height: 30 }} />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -561,7 +637,7 @@ export function ServiceDetailsContent({
                       key={`${product.line_item_id}-${index1}-${index2}`}
                       sx={{
                         "& > .MuiTableCell-root": {
-                          borderBottom: index2 === product.issues.length - 1 
+                          borderBottom: index2 === product.issues.length - 1
                             ? (t) => `1px solid ${t.palette.divider} !important`
                             : undefined,
                         },

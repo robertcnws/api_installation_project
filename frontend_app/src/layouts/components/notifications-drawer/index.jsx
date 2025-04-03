@@ -96,7 +96,9 @@ export function NotificationsDrawer({ sx, ...other }) {
 
   useEffect(() => {
     if (currentTab === 'all') {
-      setFilteredNotifications(notifications?.filter((notif) => notif.user.username === userLogged?.data.username));
+      setFilteredNotifications(notifications?.filter(
+        (notif) => notif.user.username === userLogged?.data.username && notif.username !== userLogged?.data.username
+      ));
     }
   }, [notifications, currentTab, userLogged]);
 
@@ -106,20 +108,33 @@ export function NotificationsDrawer({ sx, ...other }) {
       setFilteredNotifications(notifications);
     }
     else if (newValue === 'unread') {
-      setFilteredNotifications(notifications?.filter((notif) => notif.user.username === userLogged?.data.username).filter((item) => item.read === false));
+      setFilteredNotifications(
+        notifications?.filter(
+          (notif) => notif.user.username === userLogged?.data.username && notif.username !== userLogged?.data.username
+        ).filter((item) => item.read === false
+        ));
     }
     else if (newValue === 'archived') {
-      setFilteredNotifications(notifications?.filter((notif) => notif.user.username === userLogged?.data.username).filter((item) => item.read === true));
+      setFilteredNotifications(
+        notifications?.filter(
+          (notif) => notif.user.username === userLogged?.data.username && notif.username !== userLogged?.data.username
+        ).filter((item) => item.read === true));
     }
   }, [notifications, userLogged]);
 
-  const totalUnRead = notifications?.filter((notif) => notif.user.username === userLogged?.data.username).filter((item) => item.read === false).length;
+  const totalUnRead = notifications?.filter(
+    (notif) => notif.user.username === userLogged?.data.username && notif.username !== userLogged?.data.username
+  ).filter((item) => item.read === false).length;
 
-  const totalRead = notifications?.filter((notif) => notif.user.username === userLogged?.data.username).filter((item) => item.read === true).length;
+  const totalRead = notifications?.filter(
+    (notif) => notif.user.username === userLogged?.data.username && notif.username !== userLogged?.data.username
+  ).filter((item) => item.read === true).length;
 
   const handleMarkAllAsRead = useCallback(
     async () => {
-      setNotifications(notifications?.filter((notif) => notif.user.username === userLogged?.data.username).map((notification) => ({ ...notification, read: true })));
+      setNotifications(notifications?.filter(
+        (notif) => notif.user.username === userLogged?.data.username && notif.username !== userLogged?.data.username
+      ).map((notification) => ({ ...notification, read: true })));
       await axios.post(`${CONFIG.apiUrl}/projects/mark-read/notifications/`, {
         userReporter: userLogged?.data,
         notificationIds: notifications?.filter((notif) => notif.user.username === userLogged?.data.username).map((notification) => notification.id),
@@ -129,7 +144,9 @@ export function NotificationsDrawer({ sx, ...other }) {
 
   const handleDeleteNotifications = useCallback(
     async () => {
-      const selectedNotifications = notifications?.filter((notif) => notif.user.username === userLogged?.data.username);
+      const selectedNotifications = notifications?.filter(
+        (notif) => notif.user.username === userLogged?.data.username && notif.username !== userLogged?.data.username
+      );
       const deletedNotifications = currentTab === 'all' ? selectedNotifications :
         currentTab === 'unread' ? selectedNotifications.filter((item) => item.read === false) :
           selectedNotifications.filter((item) => item.read === true);
@@ -146,7 +163,12 @@ export function NotificationsDrawer({ sx, ...other }) {
     }, [notifications, userLogged, currentTab]);
 
   const TABS = [
-    { value: 'all', label: 'All', count: notifications?.filter((notif) => notif.user.username === userLogged?.data.username).length },
+    { 
+      value: 'all', 
+      label: 'All', 
+      count: notifications?.filter(
+        (notif) => notif.user.username === userLogged?.data.username && notif.username !== userLogged?.data.username).length 
+      },
     { value: 'unread', label: 'Unread', count: totalUnRead },
     { value: 'archived', label: 'Archived', count: totalRead },
   ];

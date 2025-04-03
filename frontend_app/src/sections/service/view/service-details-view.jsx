@@ -3,12 +3,13 @@ import { useMemo, useState, useEffect, useCallback } from 'react';
 
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
-import { Typography } from '@mui/material';
+import { Button, Dialog, Typography, DialogActions } from '@mui/material';
 
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
 
 import { useTabs } from 'src/hooks/use-tabs';
+import { useBoolean } from 'src/hooks/use-boolean';
 
 import { CONFIG } from 'src/config-global';
 import { DashboardContent } from 'src/layouts/dashboard';
@@ -16,6 +17,7 @@ import { useServiceByIdQuery } from 'src/_mock/__services';
 
 import { Label } from 'src/components/label';
 import { toast } from 'src/components/snackbar';
+import { Scrollbar } from 'src/components/scrollbar';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 
 import { ServiceDetailsToolbar } from 'src/sections/service/service-details-toolbar';
@@ -29,11 +31,7 @@ import { ServiceEditModalPhoneNumberView } from 'src/sections/service/service-ed
 
 import { useDataContext } from 'src/auth/context/data/data-context';
 
-
-
-
-
-
+import { ServiceDetailsContentOverview } from '../service-details-content-overview';
 
 // ----------------------------------------------------------------------
 
@@ -74,16 +72,21 @@ export function ServiceDetailsView({ serviceId }) {
     ];
 
 
-
     const [openValidationDialog, setOpenValidationDialog] = useState(false);
     const [validationMessage, setValidationMessage] = useState('');
 
-    // useEffect(() => {
-    //     if (refetchService) {
-    //         refetchService?.();
-    //     }
-    //     setItemById(fetchedService);
-    // }, [refetchService, fetchedService]);
+    const selectedSalesOrder = useMemo(() => itemById?.salesOrder || {}, [itemById]);
+
+    const openSalesOrderModal = useBoolean(false);
+
+    const [allIssuesCompleted, setAllIssuesCompleted] = useState(false);
+
+    const [someItemsSelected, setSomeItemsSelected] = useState(false);
+
+    const [selectedListItems, setSelectedListItems] = useState([]);
+
+    const [isSubmiting, setIsSubmiting] = useState(false);
+
 
     useEffect(() => {
         if (fetchedService) {
@@ -175,6 +178,34 @@ export function ServiceDetailsView({ serviceId }) {
         }, [userLogged?.data, router]);
 
 
+    const handleUpdateService = useCallback(async () => {
+        setIsSubmiting(true);
+        try {
+            const promise = axios.post(`${CONFIG.apiUrl}/services/update/service/${itemById?.id}/add-issued-products/`, {
+                salesOrder: selectedSalesOrder,
+                userReporter: userLogged?.data,
+                issuedProducts: selectedListItems.filter((i) => i.selected),
+            });
+
+            toast.promise(promise, {
+                loading: 'Updating service...',
+                success: 'Service updated!',
+                error: 'Error to update service',
+            });
+
+            await promise;
+
+            setIsSubmiting(false);
+
+            openSalesOrderModal.onFalse();
+
+        } catch (error) {
+            setIsSubmiting(false);
+            console.error(error);
+        }
+    }, [selectedSalesOrder, selectedListItems, userLogged, openSalesOrderModal, itemById?.id]);
+
+
 
     const renderTabs = (
         <Tabs value={tabs.value} onChange={tabs.onChange} sx={{ mb: { xs: 3, md: 5 } }}>
@@ -245,6 +276,7 @@ export function ServiceDetailsView({ serviceId }) {
                         setOpenEdit={setOpenEdit}
                         openDialogs={openDialogs}
                         setOpenDialogs={setOpenDialogs}
+                        openSalesOrderModal={openSalesOrderModal}
                     />
                 }
 
@@ -273,7 +305,7 @@ export function ServiceDetailsView({ serviceId }) {
                 }
 
             </DashboardContent>
-            
+
             <ServiceEditModalAddressView
                 isEdit={itemById?.address}
                 serviceId={itemById?.id}
@@ -307,6 +339,31 @@ export function ServiceDetailsView({ serviceId }) {
                     </Typography>
                 }
             />
+
+            <Dialog open={openSalesOrderModal.value} onClose={openSalesOrderModal.onFalse} fullWidth maxWidth="lg">
+                <Scrollbar style={{ height: '70%' }}>
+                    <ServiceDetailsContentOverview
+                        salesOrder={selectedSalesOrder}
+                        setSomeItemsSelected={setSomeItemsSelected}
+                        setAllIssuesCompleted={setAllIssuesCompleted}
+                        selectedListItems={selectedListItems}
+                        setSelectedListItems={setSelectedListItems}
+                        service={itemById}
+                    />
+                </Scrollbar>
+                <DialogActions>
+                    <Button
+                        variant="contained"
+                        disabled={!someItemsSelected || !allIssuesCompleted}
+                        onClick={handleUpdateService}
+                    >
+                        Update Service
+                    </Button>
+                    <Button variant="outlined" onClick={openSalesOrderModal.onFalse}>
+                        Close
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </>
     );
 }

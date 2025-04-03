@@ -26,6 +26,7 @@ urlpatterns = [
     path('update/service/<str:id>/change-user-manager/', views.change_service_manager, name='change_service_manager'),
     path('update/service/<str:id>/change-users-team/', views.change_service_team, name='change_service_team'),
     path('update/service/<str:id>/change-dates/', views.change_service_dates, name='change_service_dates'),
+    path('update/service/<str:id>/add-issued-products/', views.add_issued_products, name='add_issued_products'),
     # SERVICE DEFAULT TASKS
     path('create/default-task/', views.create_service_default_task, name='create_service_default_task'),
     path('edit/default-task/<str:id>/', views.edit_service_default_task, name='edit_service_default_task'),

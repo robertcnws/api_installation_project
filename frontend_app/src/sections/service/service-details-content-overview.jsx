@@ -27,6 +27,7 @@ export function ServiceDetailsContentOverview({
   setAllIssuesCompleted,
   selectedListItems,
   setSelectedListItems,
+  service = null,
 }) {
 
   const {
@@ -40,7 +41,13 @@ export function ServiceDetailsContentOverview({
 
   const { isMobile } = useContext(LoadingContext);
 
-  const items = useMemo(() => salesOrder?.line_items, [salesOrder]);
+  const items = useMemo(() =>
+    service ?
+      salesOrder?.line_items.filter(
+        (item) => !service?.issuedProducts.some((issuedProduct) => issuedProduct.line_item_id === item.line_item_id)
+      ) :
+      salesOrder?.line_items,
+    [salesOrder, service]);
 
   const listItems = useMemo(() => items?.filter((product) => product.line_item_type === 'goods'), [items]);
 
@@ -157,6 +164,15 @@ export function ServiceDetailsContentOverview({
         overflow: 'auto'
       }}>
         {[
+          service && {
+            label: 'Service',
+            value: service?.name,
+            icon: <Iconify
+              icon="fluent-mdl2:service-off"
+              sx={{ color: 'text.primary' }}
+            />,
+            hasValue: service?.name?.length > 0,
+          },
           {
             label: 'SO Number',
             value: salesOrder?.salesorder_number,
@@ -185,13 +201,13 @@ export function ServiceDetailsContentOverview({
             hasValue: salesOrder?.date?.length > 0,
           },
 
-        ].map((item) => (
-          <Stack key={item.label} spacing={1.5} direction="row">
+        ].map((item, index) => (
+          <Stack key={item?.label || index} spacing={1.5} direction="row">
             {item?.icon}
             <Box sx={{ width: '100%', display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
               <ListItemText
-                primary={item.label}
-                secondary={item.value}
+                primary={item?.label}
+                secondary={item?.value}
                 primaryTypographyProps={{ typography: 'body2', color: 'text.secondary', mb: 0.5 }}
                 secondaryTypographyProps={{
                   component: 'span',
@@ -239,13 +255,13 @@ export function ServiceDetailsContentOverview({
             ),
 
           },
-        ].map((item) => (
-          <Stack key={item.label} spacing={1.5} direction="row" sx={{ minWidth: '100%' }}>
+        ].map((item, index) => (
+          <Stack key={item?.label || index} spacing={1.5} direction="row" sx={{ minWidth: '100%' }}>
             {item?.icon}
             <Box sx={{ width: '100%', display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
               <ListItemText
-                primary={item.label}
-                secondary={item.value}
+                primary={item?.label}
+                secondary={item?.value}
                 primaryTypographyProps={{ typography: 'body2', color: 'text.secondary', mb: 0.5 }}
                 secondaryTypographyProps={{
                   component: 'span',
