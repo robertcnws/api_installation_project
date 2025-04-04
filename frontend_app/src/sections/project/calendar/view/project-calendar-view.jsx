@@ -50,7 +50,47 @@ export function ProjectCalendarView({ projects, isOnlyWeek }) {
     listPermissions,
   } = useDataContext();
 
-  const { events, eventsLoading } = useGetProjectEvents(projects?.filter((project) => project.startDate));
+  const installProjects = useMemo(() => projects?.filter((project) => project.startDate).map((p) => ({
+    ...p,
+    id: `${p.id}-installation`,
+    originalName: p.name,
+    name: `Installation ${p.name}`,
+    type: 'installation',
+  })), [projects]);
+
+  const inspectionProjects = useMemo(
+    () => projects?.filter((project) => project.hasPermission && project.inspectionDate).map((p) => ({
+      ...p,
+      id: `${p.id}-inspection`,
+      originalName: p.name,
+      name: `Inspection ${p.name}`,
+      type: 'inspection',
+    })), [projects]);
+
+  const finishPermissionProjects = useMemo(
+    () => projects?.filter((project) => project.hasPermission && project.finishPermissionDate).map((p) => ({
+      ...p,
+      id: `${p.id}-finishPermission`,
+      originalName: p.name,
+      name: `Finish Permission ${p.name}`,
+      type: 'finishPermission',
+    })), [projects]);
+
+  
+  const { 
+    events: installEvents, eventsLoading: installEventsLoading 
+  } = useGetProjectEvents(installProjects, 'installation');
+
+  const { 
+    events: inspectionEvents, eventsLoading: inspectionEventsLoading 
+  } = useGetProjectEvents(inspectionProjects, 'inspection');
+
+  const { 
+    events: finishPermissionEvents, eventsLoading: finishPermissionEventsLoading 
+  } = useGetProjectEvents(finishPermissionProjects, 'finishPermission');
+  
+  const events = [...installEvents, ...inspectionEvents, ...finishPermissionEvents];
+  const eventsLoading = installEventsLoading || inspectionEventsLoading || finishPermissionEventsLoading;
 
   const filters = useSetState({
     colors: [],
@@ -165,8 +205,8 @@ export function ProjectCalendarView({ projects, isOnlyWeek }) {
                   CONFIG.permissions.system,
                   CONFIG.permissions.moduleProjects,
                   CONFIG.permissions.operationEditCalendar
-                ) || 
-                listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.projectManager) ? onClickEvent : null
+                ) ||
+                  listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.projectManager) ? onClickEvent : null
               }
               aspectRatio={3}
               eventDrop={(arg) => {

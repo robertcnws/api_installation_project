@@ -22,4 +22,4 @@
 //     '#000080', '#FF0000', '#FFA500', '#FFFF00', '#008000', '#0000FF', '#800080', '#FF00FF',
 // ]
 
-export const ALL_COLORS = ['#FFA500']
+export const ALL_COLORS = ['#FFA500', '#e6194b', '#008080']

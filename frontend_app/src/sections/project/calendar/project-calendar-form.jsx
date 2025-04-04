@@ -8,6 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
+import { Typography } from '@mui/material';
 import Tooltip from '@mui/material/Tooltip';
 import IconButton from '@mui/material/IconButton';
 import LoadingButton from '@mui/lab/LoadingButton';
@@ -19,7 +20,7 @@ import { useRouter } from 'src/routes/hooks';
 import { useBoolean } from 'src/hooks/use-boolean';
 
 import { uuidv4 } from 'src/utils/uuidv4';
-import { fIsAfter } from 'src/utils/format-time';
+import { fDate, fIsAfter } from 'src/utils/format-time';
 
 import { CONFIG } from 'src/config-global';
 import { createEvent } from 'src/actions/calendar';
@@ -74,7 +75,11 @@ export function ProjectCalendarForm({ currentEvent, colorOptions, onClose }) {
 
   const values = watch();
 
-  const dateError = fIsAfter(values.start, values.end);
+  const dateError = useMemo(() =>
+    currentEvent?.type === 'installation' ? fIsAfter(values.start, values.end) :
+      currentEvent?.type === 'inspection' ? fIsAfter(currentEvent?.startDate, values.start) : fIsAfter(currentEvent?.inspectionDate, values.start),
+    [currentEvent, values.start, values.end]
+  );
 
   const handleDetails = useCallback(
     (id) => {
@@ -92,15 +97,18 @@ export function ProjectCalendarForm({ currentEvent, colorOptions, onClose }) {
       description: data?.description,
       end: data?.end,
       start: data?.start,
-      endDate: data?.end,
-      startDate: data?.start,
-      name: data?.title,
+      endDate: currentEvent.type === 'installation' ? data?.end : null,
+      startDate: currentEvent.type === 'installation' ? data?.start : null,
+      inspectionDate: currentEvent.type === 'inspection' ? data?.start : null,
+      finishPermissionDate: currentEvent.type === 'finishPermission' ? data?.start : null,
+      name: currentEvent?.originalName,
     };
 
     try {
       if (!dateError) {
         if (currentEvent?.id) {
-          await axios.post(`${CONFIG.apiUrl}/projects/update/project/${currentEvent?.id}/`, {
+          const eventId = currentEvent?.id.split('-')[0];
+          await axios.post(`${CONFIG.apiUrl}/projects/update/project/${eventId}/`, {
             ...eventData,
             userReporter: JSON.stringify(userLogged?.data),
           });
@@ -119,9 +127,10 @@ export function ProjectCalendarForm({ currentEvent, colorOptions, onClose }) {
 
   const onDelete = useCallback(async () => {
     try {
-      await axios.delete(`${CONFIG.apiUrl}/projects/delete/project/${currentEvent?.id}/`, {
-        data: { 
-          userReporter: userLogged?.data 
+      const eventId = currentEvent?.id.split('-')[0];
+      await axios.delete(`${CONFIG.apiUrl}/projects/delete/project/${eventId}/`, {
+        data: {
+          userReporter: userLogged?.data
         },
       });
       toast.success('Delete success!');
@@ -142,19 +151,35 @@ export function ProjectCalendarForm({ currentEvent, colorOptions, onClose }) {
 
             {/* <Field.Switch name="allDay" label="All day" /> */}
 
-            <Field.MobileDateTimePicker name="start" label="Start date" minDate={dayjs(currentEvent?.salesOrder?.date)} />
-
             <Field.MobileDateTimePicker
-              name="end"
-              label="End date"
+              name="start"
+              label={currentEvent?.type === 'installation' ? 'Start date' : currentEvent?.type === 'inspection' ? 'Inspection date' : 'Finish date'}
               minDate={dayjs(currentEvent?.salesOrder?.date)}
-              slotProps={{
-                textField: {
-                  error: dateError,
-                  helperText: dateError ? 'End date must be later than start date' : null,
-                },
-              }}
             />
+
+            {currentEvent?.type === 'installation' ? (
+
+              <Field.MobileDateTimePicker
+                name="end"
+                label="End date"
+                minDate={dayjs(currentEvent?.salesOrder?.date)}
+                slotProps={{
+                  textField: {
+                    error: dateError,
+                    helperText: dateError ? 'End date must be later than start date' : null,
+                  },
+                }}
+              />
+
+            ) : (
+              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                {
+                  currentEvent?.type === 'inspection' ? 'Inspection date' : 'Finish date'
+                } must be the same or after {
+                  currentEvent?.type === 'inspection' ? fDate(currentEvent?.startDate) : fDate(currentEvent?.inspectionDate)
+                } ({currentEvent?.type === 'inspection' ? 'Installation date' : 'Inspection date'})
+              </Typography>
+            )}
 
             {/* <Controller
             name="color"

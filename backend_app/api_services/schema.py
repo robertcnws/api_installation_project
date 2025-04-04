@@ -67,6 +67,7 @@ class ServiceType(MongoengineObjectType):
     service_default_tasks = GenericScalar()
     user_manager = GenericScalar()
     users_service_team = GenericScalar()
+    service_place = GenericScalar()
     
     
     def resolve_client(self, info):
@@ -133,6 +134,11 @@ class ServiceType(MongoengineObjectType):
         users_service_team = self.users_service_team or []
         users_service_team = serialize_datetime(users_service_team)
         return dynamic_field_to_json(users_service_team)
+    
+    def resolve_service_place(self, info):
+        service_place = self.service_place or {}
+        service_place = serialize_datetime(service_place)
+        return dynamic_field_to_json(service_place)
     
     
 

@@ -531,6 +531,7 @@ def update_project(request, id):
     start_date = parse_custom_date(logger, data.get('startDate')) if data.get('startDate') else project.start_date
     end_date = parse_custom_date(logger, data.get('endDate')) if data.get('endDate') else project.end_date
     inspection_date = parse_custom_date(logger, data.get('inspectionDate')) if data.get('inspectionDate') else project.inspection_date
+    finish_permission_date = parse_custom_date(logger, data.get('finishPermissionDate')) if data.get('finishPermissionDate') else project.finish_permission_date
     
     user_reporter = json.loads(data.get('userReporter', None)) if data.get('userReporter') else project.user_reporter
     
@@ -607,6 +608,7 @@ def update_project(request, id):
     project.project_default_tasks = project_default_tasks if project_default_tasks else project.project_default_tasks
     project.project_comments = project_comments if project_comments else project.project_comments
     project.inspection_date = inspection_date if inspection_date else project.inspection_date
+    project.finish_permission_date = finish_permission_date if finish_permission_date else project.finish_permission_date
         
     project.save()
     
@@ -2525,6 +2527,12 @@ def upload_files_to_project(request, id):
     data = request.data
     
     user_reporter = json.loads(data.get('userReporter', None))
+    stage = json.loads(data.get('projectStage', None))
+    if stage:
+        project_stage = ProjectStage.objects(id=stage['id']).first()
+        project_stage = transform_data_to_mongo(project_stage) if project_stage else None
+    else:
+        project_stage = project.current_stage if project.current_stage else None
     
     project_attachments = []
     files = request.FILES.getlist('projectAttachments')
@@ -2538,7 +2546,7 @@ def upload_files_to_project(request, id):
                 created_time=timezone.now(),
                 last_modified_time=timezone.now(),
                 user_upload = user_reporter,
-                current_stage = project.current_stage if project.current_stage else None
+                current_stage = project_stage if project_stage else None,
             )
             attachment.save()
             project_attachments.append(transform_data_to_mongo(attachment))
@@ -3390,26 +3398,37 @@ def change_staff_all_projects(request):
     
     
 #############################################
-# CHANGE INSTALLER PROJECT
+# REMOVE DATE PROJECT
 #############################################
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
-def remove_install_date_project(request, id):
+def remove_date_project(request, id):
     data = request.data
     user_reporter = json.loads(data.get('userReporter', None))
+    date_type = data.get('dateType', None)
+    info = ''
     try:
         project = Project.objects(id=id).first()
         if not project:
             return Response({'error': 'Project not found'}, status=404)
-        
-        project.start_date = None
-        project.end_date = None
+        if not date_type:
+            return Response({'error': 'Date type is required'}, status=400)
+        if date_type in ['startDate']:
+            info = 'start date'
+            project.start_date = None
+            project.end_date = None
+        elif date_type in ['inspectionDate']:
+            info = 'inspection date'
+            project.inspection_date = None
+        elif date_type in ['finishPermissionDate']:
+            info = 'finish permission date'
+            project.finish_permission_date = None
         project.save()
         
         tracking = ProjectTracking(
             user_reporter=user_reporter,
-            action=f'remove install date in project ({project.id} - {project.name})',
+            action=f'remove {info} in project ({project.id} - {project.name})',
             created_time=timezone.now(),
             managed_data={
                 'data': transform_data_to_mongo(project, include_fields=['id', 'name', 'number'])
@@ -3419,11 +3438,11 @@ def remove_install_date_project(request, id):
         
         if user_reporter:
             module='projects'
-            info=f'has removed install date in project {project.name}'
+            info=f'has removed {info} date in project {project.name}'
             info_id=project.id
             type='remove_install_date_project'
             create_notification(module, info_id, info, type, user_reporter['username'])
             
-        return Response({'message': 'Install date removed successfully'})
+        return Response({'message': 'Date removed successfully'})
     except Exception as e:
         return Response({'error': str(e)}, status=500)

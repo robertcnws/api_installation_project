@@ -74,8 +74,8 @@ export function ProjectDetailsContentOverview({
         display: 'flex',
         flexDirection: 'column',
         ml: isMobile && isOverview ? 5 : 0,
-        maxHeight: !isMobile ? (isOverview ? (project?.userManager?.name && !project?.hasPermission ? 696 : (project?.userManager?.name && project?.hasPermission ? 740 : 652)) : 652) : 'auto',
-        minHeight: !isMobile ? (isOverview ? (project?.userManager?.name && !project?.hasPermission ? 696 : (project?.userManager?.name && project?.hasPermission ? 740 : 652)) : 652) : 'auto',
+        maxHeight: !isMobile ? (isOverview ? (project?.userManager?.name && !project?.hasPermission ? 656 : (project?.userManager?.name && project?.hasPermission ? 740 : 622)) : 652) : 'auto',
+        minHeight: !isMobile ? (isOverview ? (project?.userManager?.name && !project?.hasPermission ? 656 : (project?.userManager?.name && project?.hasPermission ? 740 : 622)) : 652) : 'auto',
         overflow: 'auto'
       }}>
         {[

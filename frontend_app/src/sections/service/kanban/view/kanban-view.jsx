@@ -81,11 +81,15 @@ export function KanbanView({
 
   const { isMobile } = useContext(LoadingContext)
 
+  const widthPercent = useMemo(() => (100 / (loadedServiceStages.length - 1)).toFixed(0) - 0.75, [loadedServiceStages]);
+
+  console.log('widthPercent', widthPercent);
+
   const cssVars = {
     '--item-gap': '10px',
     '--item-radius': '12px',
     '--column-gap': '12px',
-    '--column-width': !isMobile ? '24.3%' : '100%',
+    '--column-width': !isMobile ? `${widthPercent}%` : '100%',
     '--column-radius': '16px',
     '--column-padding': '10px 8px 8px 8px',
   };

@@ -49,6 +49,9 @@ def service_saved(sender, document, **kwargs):
                 "serviceComments": document.service_comments,
                 "serviceDefaultTasks": document.service_default_tasks,
                 "usersServiceTeam": document.users_service_team,
+                "serviceType": document.service_type,
+                "servicePlace": document.service_place,
+                "serviceNotes": document.service_notes,
             }
 
         }
@@ -88,6 +91,9 @@ def service_deleted(sender, document, **kwargs):
                 "serviceComments": document.service_comments,
                 "serviceDefaultTasks": document.service_default_tasks,
                 "usersServiceTeam": document.users_service_team,
+                "serviceType": document.service_type,
+                "servicePlace": document.service_place,
+                "serviceNotes": document.service_notes,
             }
         }
     }
@@ -132,6 +138,9 @@ def service_by_id_saved(sender, document, **kwargs):
                 "serviceComments": document.service_comments,
                 "serviceDefaultTasks": document.service_default_tasks,
                 "usersServiceTeam": document.users_service_team,
+                "serviceType": document.service_type,
+                "servicePlace": document.service_place,
+                "serviceNotes": document.service_notes,
             }
 
         }
@@ -172,6 +181,9 @@ def service_by_id_deleted(sender, document, **kwargs):
                 "serviceComments": document.service_comments,
                 "serviceDefaultTasks": document.service_default_tasks,
                 "usersServiceTeam": document.users_service_team,
+                "serviceType": document.service_type,
+                "servicePlace": document.service_place,
+                "serviceNotes": document.service_notes,
             }
         }
     }

@@ -114,12 +114,12 @@ def fix_order_after_edit(result_set, edited_task, new_order):
     fix_order(result_set, start_order=1)
     
     
-def get_current_stage_from_tasks(tasks):
+def get_current_stage_from_tasks(tasks, module='project'):
     grupos = defaultdict(list)
     
     for task in tasks:
-        pdt = task.get("project_default_task", {})
-        stage = pdt.get("project_stage", {})
+        pdt = task.get(f"{module}_default_task", {})
+        stage = pdt.get(f"{module}_stage", {})
         key = (stage.get("order", 0), stage.get("name", ""))
         grupos[key].append(task)
         

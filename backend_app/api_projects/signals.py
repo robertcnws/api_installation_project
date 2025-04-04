@@ -183,6 +183,7 @@ def project_saved(sender, document, **kwargs):
                 "projectGuideProducts": document.project_guide_products,
                 "projectMaterialsOtherNotes": document.project_materials_other_notes,
                 "inspectionDate": document.inspection_date,
+                "finishPermissionDate": document.finish_permission_date,
             }
 
         }
@@ -229,6 +230,7 @@ def project_deleted(sender, document, **kwargs):
                 "projectGuideProducts": document.project_guide_products,
                 "projectMaterialsOtherNotes": document.project_materials_other_notes,
                 "inspectionDate": document.inspection_date,
+                "finishPermissionDate": document.finish_permission_date,
             }
         }
     }
@@ -379,6 +381,7 @@ def project_by_id_saved(sender, document, **kwargs):
                 "projectGuideProducts": document.project_guide_products,
                 "projectMaterialsOtherNotes": document.project_materials_other_notes,
                 "inspectionDate": document.inspection_date,
+                "finishPermissionDate": document.finish_permission_date,
             }
 
         }
@@ -427,6 +430,7 @@ def project_by_id_deleted(sender, document, **kwargs):
                 "projectGuideProducts": document.project_guide_products,
                 "projectMaterialsOtherNotes": document.project_materials_other_notes,
                 "inspectionDate": document.inspection_date,
+                "finishPermissionDate": document.finish_permission_date,
             }
         }
     }

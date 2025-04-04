@@ -7,7 +7,7 @@ import Avatar from '@mui/material/Avatar';
 import { useTheme } from '@mui/material/styles';
 import Grid from '@mui/material/Unstable_Grid2';
 import Typography from '@mui/material/Typography';
-import { Box, Table, Button, Tooltip, TableRow, TableBody, TableCell, TableHead, IconButton, TableContainer } from '@mui/material';
+import { Box, Chip, Table, Radio, Button, Tooltip, TableRow, ListItem, TableBody, TableCell, TableHead, TextField, IconButton, RadioGroup, Autocomplete, TableContainer, FormControlLabel } from '@mui/material';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
@@ -19,9 +19,9 @@ import { isInstaller, listRolesAndSubroles } from 'src/utils/check-permissions';
 import { CONFIG } from 'src/config-global';
 
 import { Label } from 'src/components/label';
-import { useTable } from 'src/components/table';
 import { toast } from 'src/components/snackbar';
 import { Iconify } from 'src/components/iconify';
+import { useTable, TableNoData } from 'src/components/table';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 
 import { ServiceEditModalDatesView } from 'src/sections/service/service-edit-modal-dates-view';
@@ -38,6 +38,10 @@ import { ServiceEditModalIssue } from '../service-edit-modal-issue';
 import { ServiceAddModalIssue } from '../service-add-modal-issue copy';
 
 
+const SERVICE_PLACE_OPTIONS = [
+  { id: 1, name: 'On Site' },
+  { id: 2, name: 'On Warehouse' },
+]
 
 
 // ----------------------------------------------------------------------
@@ -77,12 +81,41 @@ export function ServiceDetailsContent({
 
   const confirmDelete = useBoolean();
 
-
   const [isStartDate, setIsStartDate] = useState(false);
 
   const [isInspectionDate, setIsInspectionDate] = useState(false);
 
   const [totalsByIssues, setTotalsByIssues] = useState({});
+
+  const [selectedServicePlace, setSelectedServicePlace] = useState(null);
+
+  const [selectedServiceType, setSelectedServiceType] = useState(null);
+
+  const possibleItems = useMemo(() =>
+    service ?
+      service?.salesOrder?.line_items.filter(
+        (item) => !service?.issuedProducts?.some((issuedProduct) => issuedProduct.line_item_id === item.line_item_id)
+      ) :
+      service?.salesOrder?.line_items,
+    [service]);
+
+  const possibleLineItems = useMemo(() => possibleItems?.filter((product) => product.line_item_type === 'goods'), [possibleItems]);
+
+  useEffect(() => {
+    setSelectedServicePlace(
+      service && service.servicePlace && service.servicePlace.name
+        ? service.servicePlace
+        : null
+    );
+  }, [service]);
+
+  useEffect(() => {
+    setSelectedServiceType(
+      service && service.serviceType
+        ? service.serviceType
+        : null
+    );
+  }, [service]);
 
   useEffect(() => {
     if (service) {
@@ -121,7 +154,6 @@ export function ServiceDetailsContent({
     }
   }, [service]);
 
-  // const items = useMemo(() => service?.salesOrder?.line_items?.filter((product) => product.item_type !== 'sales_and_purchases'), [service]);
   const items = useMemo(() => service?.salesOrder?.line_items, [service]);
 
   const issuedProducts = useMemo(() =>
@@ -169,6 +201,67 @@ export function ServiceDetailsContent({
       console.error(error);
     }
   }, [service, selectedItem, selectedIssue, userLogged, refetchService, confirmDelete]);
+
+
+  const handleSetServicePlace = useCallback(async () => {
+    const formData = new FormData();
+    formData.append('userReporter', JSON.stringify(userLogged?.data));
+    formData.append('servicePlace', JSON.stringify(selectedServicePlace));
+
+    const url = `${CONFIG.apiUrl}/services/update/service/${service?.id}/set-place/`;
+
+    const promise = axios.post(url, formData);
+
+    try {
+      toast.promise(promise, {
+        loading: 'Loading...',
+        success: `Update Service (${service.name}) success!`,
+        error: `Update Service (${service.name}) error!`,
+      });
+
+      const response = await promise;
+
+      if (!response.data) {
+        return;
+      }
+
+      refetchService?.();
+
+    } catch (error) {
+      console.error(error);
+    }
+  }, [service, selectedServicePlace, userLogged, refetchService]);
+
+
+  const handleChangeServiceType = useCallback(async (value) => {
+    const formData = new FormData();
+    formData.append('userReporter', JSON.stringify(userLogged?.data));
+    formData.append('serviceType', value);
+
+    const url = `${CONFIG.apiUrl}/services/update/service/${service?.id}/change-type/`;
+
+    const promise = axios.post(url, formData);
+
+    try {
+      toast.promise(promise, {
+        loading: 'Loading...',
+        success: `Update Service (${service.name}) success!`,
+        error: `Update Service (${service.name}) error!`,
+      });
+
+      const response = await promise;
+
+      if (!response.data) {
+        return;
+      }
+
+      refetchService?.();
+
+    } catch (error) {
+      console.error(error);
+    }
+  }, [service, userLogged, refetchService]);
+
 
   const renderMainContent = (
     <Card sx={{ p: 3, gap: 1, display: 'flex', flexDirection: 'column', width: '100%' }}>
@@ -420,18 +513,298 @@ export function ServiceDetailsContent({
       </Table>
     </Card>
   );
+  //   <Card sx={{ p: 3, gap: 1, display: 'flex', flexDirection: 'column', width: '100%' }}>
+  //     <Table size="small">
+  //       <TableBody>
+  //         <TableRow>
+  //           <TableCell>
+  //             <Typography variant="subtitle2" color="text.secondary">Number:</Typography>
+  //           </TableCell>
+  //           <TableCell>
+  //             <Typography variant="subtitle2" color="text.primary"><b>{`${service?.number}-${service?.version}`}</b></Typography>
+  //           </TableCell>
+  //           <TableCell />
+  //         </TableRow>
+
+  //         {!isInstaller(userLogged?.data?.user_role?.name) && (
+
+  //           <TableRow>
+  //             <TableCell>
+  //               <Typography variant="subtitle2" color="text.secondary">Responsible:</Typography>
+  //             </TableCell>
+  //             <TableCell>
+  //               <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, justifyContent: 'space-between' }}>
+  //                 <Avatar alt={service?.userManager?.name} src={service?.userManager?.avatarUrl} sx={{ width: 24, height: 24, mr: 1 }} />
+  //                 <Typography variant="body2" color="text.primary">
+  //                   <b>{service?.userManager?.name ? service?.userManager?.name : ''}</b>
+  //                 </Typography>
+  //               </Box>
+  //             </TableCell>
+  //             <TableCell sx={{ textAlign: 'right', maxWidth: '30px' }}>
+  //               {(service?.userManager?.name &&
+  //                 (listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
+
+  //                   <IconButton variant="text" color="primary" size="small" sx={{ ml: 0, maxWidth: 10 }}
+  //                     onClick={() => setOpenDialogs({ ...openDialogs, userManager: true })}
+  //                   >
+  //                     <Iconify icon="la:user-edit" color="primary" width={22} />
+  //                   </IconButton>
+
+  //                 )}
+  //               {(!service?.userManager?.name &&
+  //                 (listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
+  //                   <IconButton variant="text" color="warning" size="small" sx={{ ml: 0, maxWidth: 10 }}
+  //                     onClick={() => setOpenDialogs({ ...openDialogs, userManager: true })}
+  //                   >
+  //                     <Iconify icon="tdesign:user-add-filled" color="warning" width={20} />
+  //                   </IconButton>
+  //                 )}
+  //             </TableCell>
+  //           </TableRow>
+
+  //         )}
+
+  //         {service?.userManager?.name && (
+
+  //           <TableRow>
+  //             <TableCell>
+  //               <Typography variant="subtitle2" color="text.secondary">Service Team:</Typography>
+  //             </TableCell>
+  //             <TableCell>
+  //               <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, justifyContent: 'space-between' }}>
+  //                 <Avatar
+  //                   alt={getServiceInstaller(service, CONFIG)?.name}
+  //                   src={getServiceInstaller(service, CONFIG)?.avatarUrl}
+  //                   sx={{ width: 24, height: 24, mr: 1 }}
+  //                 />
+  //                 <Typography variant="body2" color="text.primary">
+  //                   <b>
+  //                     {getServiceInstaller(service, CONFIG)?.name ?
+  //                       getServiceInstaller(service, CONFIG)?.name : ''}
+  //                   </b>
+  //                 </Typography>
+  //               </Box>
+  //             </TableCell>
+  //             <TableCell sx={{ textAlign: 'right', maxWidth: '30px' }}>
+  //               {(getServiceInstaller(service, CONFIG)?.name &&
+  //                 (listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
+
+  //                   <IconButton variant="text" color="primary" size="small" sx={{ ml: 0, maxWidth: 10 }}
+  //                     onClick={() => setOpenDialogs({ ...openDialogs, installationTeam: true })}
+  //                   >
+  //                     <Iconify icon="la:user-edit" color="primary" width={22} />
+  //                   </IconButton>
+
+  //                 )}
+  //               {(!getServiceInstaller(service, CONFIG)?.name &&
+  //                 (listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
+  //                   <IconButton variant="text" color="warning" size="small" sx={{ ml: 0, maxWidth: 10 }}
+  //                     onClick={() => setOpenDialogs({ ...openDialogs, installationTeam: true })}
+  //                   >
+  //                     <Iconify icon="tdesign:user-add-filled" color="warning" width={20} />
+  //                   </IconButton>
+  //                 )}
+  //             </TableCell>
+  //           </TableRow>
+
+  //         )}
+
+  //         <TableRow>
+  //           <TableCell>
+  //             <Typography variant="subtitle2" color="text.secondary">Estimated Start Date:</Typography>
+  //           </TableCell>
+  //           <TableCell>
+  //             <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, justifyContent: 'space-between' }}>
+  //               {service?.startDate ? (
+  //                 <Typography
+  //                   variant="subtitle2"
+  //                   color={
+  //                     service?.endDate
+  //                       ? (
+  //                         (fIsAfter(dayjs(new Date()), dayjs(service?.endDate).format('YYYY-MM-DD')) &&
+  //                           (
+  //                             service?.currentStage?.name.toLowerCase().includes(CONFIG.stages.preparation.toLowerCase()) ||
+  //                             service?.currentStage?.name.toLowerCase().includes(CONFIG.stages.coordination.toLowerCase()) ||
+  //                             service?.currentStage?.name.toLowerCase().includes(CONFIG.stages.installation.toLowerCase())
+  //                           )
+  //                         )
+  //                           ? 'error.main'
+  //                           : 'text.primary'
+  //                       )
+  //                       : 'text.primary'
+  //                   }
+  //                   sx={{
+  //                     fontWeight: service?.endDate ? (
+  //                       (fIsAfter(dayjs(new Date()), dayjs(service?.endDate).format('YYYY-MM-DD')) &&
+  //                         (
+  //                           service?.currentStage?.name.toLowerCase().includes(CONFIG.stages.preparation.toLowerCase()) ||
+  //                           service?.currentStage?.name.toLowerCase().includes(CONFIG.stages.coordination.toLowerCase()) ||
+  //                           service?.currentStage?.name.toLowerCase().includes(CONFIG.stages.installation.toLowerCase())
+  //                         )
+  //                       )
+  //                         ? 'bold'
+  //                         : 'normal'
+  //                     ) : 'normal'
+  //                   }}
+  //                 >
+  //                   {fDate(service?.startDate)}
+  //                 </Typography>
+  //               ) : (
+  //                 <Iconify icon="fluent-mdl2:date-time" color="warning" width={20} sx={{ ml: 0.5, mt: 0.5 }} />
+  //               )}
+
+  //             </Box>
+  //           </TableCell>
+  //           <TableCell sx={{ textAlign: 'right', maxWidth: '30px' }}>
+  //             {(service?.startDate &&
+  //               (listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
+  //                 <IconButton variant="text" color="primary" size="small" sx={{ ml: 0, maxWidth: 10 }}
+  //                   onClick={() => {
+  //                     setIsStartDate(true)
+  //                     setIsInspectionDate(false)
+  //                     setOpenDialogs({ ...openDialogs, date: true })
+  //                   }}
+  //                 >
+  //                   <Iconify icon="fluent:calendar-edit-32-regular" color="primary" width={22} />
+  //                 </IconButton>
+  //               )}
+  //             {(!service?.startDate &&
+  //               (listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
+  //                 <IconButton variant="text" color="warning" size="small" sx={{ ml: 0, maxWidth: 10 }}
+  //                   onClick={() => {
+  //                     setIsStartDate(true)
+  //                     setIsInspectionDate(false)
+  //                     setOpenDialogs({ ...openDialogs, date: true })
+  //                   }}
+  //                 >
+  //                   <Iconify icon="zondicons:date-add" color="warning" width={20} />
+  //                 </IconButton>
+  //               )}
+  //           </TableCell>
+  //         </TableRow>
+
+  //         <TableRow>
+  //           <TableCell>
+  //             <Typography variant="subtitle2" color="text.secondary">Estimated Closing Date:</Typography>
+  //           </TableCell>
+  //           <TableCell>
+  //             <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, justifyContent: 'space-between' }}>
+  //               {service?.endDate ? (
+  //                 <Typography
+  //                   variant="subtitle2"
+  //                   color={
+  //                     service?.endDate
+  //                       ? (
+  //                         (fIsAfter(dayjs(new Date()), dayjs(service?.endDate).format('YYYY-MM-DD')) &&
+  //                           (
+  //                             service?.currentStage?.name.toLowerCase().includes(CONFIG.stages.preparation.toLowerCase()) ||
+  //                             service?.currentStage?.name.toLowerCase().includes(CONFIG.stages.coordination.toLowerCase()) ||
+  //                             service?.currentStage?.name.toLowerCase().includes(CONFIG.stages.installation.toLowerCase())
+  //                           )
+  //                         )
+  //                           ? 'error.main'
+  //                           : 'text.primary'
+  //                       )
+  //                       : 'text.primary'
+  //                   }
+  //                   sx={{
+  //                     fontWeight: service?.endDate ? (
+  //                       (fIsAfter(dayjs(new Date()), dayjs(service?.endDate).format('YYYY-MM-DD')) &&
+  //                         (
+  //                           service?.currentStage?.name.toLowerCase().includes(CONFIG.stages.preparation.toLowerCase()) ||
+  //                           service?.currentStage?.name.toLowerCase().includes(CONFIG.stages.coordination.toLowerCase()) ||
+  //                           service?.currentStage?.name.toLowerCase().includes(CONFIG.stages.installation.toLowerCase())
+  //                         )
+  //                       )
+  //                         ? 'bold'
+  //                         : 'normal'
+  //                     ) : 'normal'
+  //                   }}
+  //                 >
+  //                   {fDate(service?.endDate)}
+  //                 </Typography>
+  //               ) : (
+  //                 <Iconify icon="fluent-mdl2:date-time" color="warning" width={20} sx={{ ml: 0.5, mt: 0.5 }} />
+  //               )}
+
+  //             </Box>
+  //           </TableCell>
+  //           <TableCell sx={{ textAlign: 'right', maxWidth: '30px' }}>
+  //             {(service?.endDate &&
+  //               (listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
+  //                 <IconButton variant="text" color="primary" size="small" sx={{ ml: 0, maxWidth: 10 }}
+  //                   onClick={() => {
+  //                     setIsStartDate(false)
+  //                     setIsInspectionDate(false)
+  //                     setOpenDialogs({ ...openDialogs, date: true })
+  //                   }}
+  //                 >
+  //                   <Iconify icon="fluent:calendar-edit-32-regular" color="primary" width={22} />
+  //                 </IconButton>
+  //               )}
+  //             {(!service?.endDate &&
+  //               (listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
+  //                 <IconButton variant="text" color="warning" size="small" sx={{ ml: 0, maxWidth: 10 }}
+  //                   onClick={() => {
+  //                     setIsStartDate(false)
+  //                     setIsInspectionDate(false)
+  //                     setOpenDialogs({ ...openDialogs, date: true })
+  //                   }}
+  //                 >
+  //                   <Iconify icon="zondicons:date-add" color="warning" width={20} />
+  //                 </IconButton>
+  //               )}
+  //           </TableCell>
+  //         </TableRow>
+
+  //       </TableBody>
+
+  //     </Table>
+  //   </Card>
+  // );
 
   const renderDescription = (
     <Card sx={{ p: 3, gap: 1.5, display: 'flex', flexDirection: 'column', width: '100%' }}>
       {service?.description?.split('&').map((line, index) => (
-        <Typography key={`typo-${index}`} variant="caption" color="text.primary" sx={{ mb: 0.5, textAlign: 'justify', fontWeight: index === 0 ? 'bold' : 'normal' }}>
-          {line}
-        </Typography>
+        <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, mt: 0, mb: 0 }} key={`box-${index}`}>
+          <Typography
+            key={`typo-${index}`}
+            variant="caption"
+            color="text.primary"
+            sx={{
+              mb: 0.5,
+              textAlign: 'justify',
+              fontWeight: index === 0 ? 'bold' : 'normal',
+            }}>
+            {line}
+          </Typography>
+        </Box>
       ))}
       {service?.salesOrder?.custom_fields?.map((field, index) => (
-        field.value && field.value !== 'null' && field.value !== 'undefined' && field.value.length > 0 && (
-          <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, mt: 0, mb: 0, textAlign: 'right' }} key={`box-${index}`}>
-            <Typography variant="subtitle2" color="text.primary" key={`typo-${index}`}>
+        field.label.length < 20 && field.value && field.value !== 'null' && field.value !== 'undefined' && field.value.length > 0 && (
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'row',
+              gap: 1,
+              mt: 0,
+              mb: 0,
+              textAlign: 'right',
+              justifyContent: 'flex-start'
+            }}
+            key={`box-${index}`}
+          >
+            <Typography
+              variant="subtitle2"
+              color="text.primary"
+              key={`typo-${index}`}
+              sx={{
+                maxWidth: 130,
+                width: 130,
+                minWidth: 130,
+                textAlign: 'left',
+              }}
+            >
               <b>{field.label}:</b>
             </Typography>
             <Label
@@ -440,7 +813,8 @@ export function ServiceDetailsContent({
                 bgcolor: field.value.toLowerCase() === 'stock' ? 'success.lighter' :
                   field.value.toLowerCase() === 'mixed' ? 'warning.lighter' : 'whitesmoke',
                 color: field.value.toLowerCase() === 'stock' ? 'success.main' :
-                  field.value.toLowerCase() === 'mixed' ? 'warning.main' : 'text.primary'
+                  field.value.toLowerCase() === 'mixed' ? 'warning.main' : 'text.primary',
+
               }}
               key={`label-${index}`}
             >
@@ -448,7 +822,7 @@ export function ServiceDetailsContent({
             </Label>
           </Box>
         )))}
-      <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, mt: 0, mb: 0, textAlign: 'right' }}>
+      {/* <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, mt: 0, mb: 0, textAlign: 'right' }}>
         <Typography variant="subtitle2" color="text.primary" sx={{ mt: 0.3 }}>
           <b>Issues:</b>
         </Typography>
@@ -487,8 +861,247 @@ export function ServiceDetailsContent({
             </Box>
           )) : <Label variant="filled" sx={{ bgcolor: 'whitesmoke', color: 'text.primary' }}>0</Label>}
         </Box>
+      </Box> */}
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'row',
+          gap: 1,
+          mt: 0,
+          mb: 0,
+          textAlign: 'right',
+          justifyContent: 'space-between'
+        }}
+        key='box-place'
+      >
+        <Typography
+          variant="subtitle2"
+          color="text.primary"
+          key='typo-place'
+          sx={{
+            mt: 1,
+            maxWidth: 130,
+            width: 130,
+            minWidth: 130,
+            textAlign: 'left',
+          }}
+        >
+          <b>Service Place:</b>
+        </Typography>
+        <Box
+          sx={{
+            width: '100%',
+            display: 'flex',
+            flexDirection: 'row',
+            gap: 4,
+            mt: 0,
+            mb: 0,
+            textAlign: 'right',
+            justifyContent: 'space-between'
+          }}
+        >
+          <Autocomplete
+            sx={{ width: '100%' }}
+            value={selectedServicePlace || null}
+            onChange={(e, newValue) => {
+              setSelectedServicePlace(newValue);
+            }}
+            options={SERVICE_PLACE_OPTIONS}
+            getOptionLabel={(option) => option.name || ''}
+            isOptionEqualToValue={(option, value) => option.id === value.id}
+            renderOption={(props, i) => (
+              <ListItem {...props} key={`${i.id}-option`}>
+                {i.name}
+              </ListItem>
+            )}
+            renderTags={(selected, getTagProps) =>
+              selected.map((p, i) => (
+                <Chip
+                  {...getTagProps({ i })}
+                  key={p.id}
+                  size="small"
+                  variant="soft"
+                  label={p.name}
+                />
+              ))
+            }
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                variant="outlined"
+                label="Place"
+                InputProps={{
+                  ...params.InputProps,
+                  sx: {
+                    height: '37px',
+                    '& input': {
+                      padding: '0 8px',
+                      height: '37px',
+                      lineHeight: '37px'
+                    }
+                  }
+                }}
+                InputLabelProps={{
+                  shrink: true,
+                  sx: {
+                    top: '-10px',
+                    transform: 'translate(14px, 0px) scale(0.75)'
+                  }
+                }}
+              />
+            )}
+          />
+          <Tooltip title={`Set service place to ${service?.name}`} arrow>
+            <span>
+              <IconButton
+                variant="text"
+                color="primary"
+                size="small"
+                sx={{ ml: 0, minWidth: 15 }}
+                disabled={!selectedServicePlace || selectedServicePlace?.id === service?.servicePlace?.id}
+                onClick={handleSetServicePlace}
+              >
+                <Iconify icon="gg:check-o" color="primary" width={22} />
+              </IconButton>
+            </span>
+          </Tooltip>
+        </Box>
+
       </Box>
-      <Box sx={{ display: 'flex', flexDirection: 'row', gap: 2, verticalAlign: 'bottom', mt: 0, mb: 0 }}>
+      {selectedServicePlace?.id === 1 && (
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'row',
+            gap: 1,
+            mt: 0,
+            mb: 0,
+            textAlign: 'right',
+            justifyContent: 'space-between'
+          }}
+          key='box-address'
+        >
+          <Typography
+            variant="subtitle2"
+            color="text.primary"
+            key='typo-address'
+            sx={{
+              maxWidth: 130,
+              width: 130,
+              minWidth: 130,
+              textAlign: 'left',
+            }}
+          >
+            <b>Service Address:</b>
+          </Typography>
+          <Box
+            sx={{
+              width: '100%',
+              display: 'flex',
+              flexDirection: 'row',
+              gap: 4,
+              mt: 0,
+              mb: 0,
+              textAlign: 'right',
+              justifyContent: 'space-between'
+            }}
+          >
+            <Typography
+              variant="caption"
+              color="text.primary"
+              sx={{
+                mt: 0.5,
+                width: '100%',
+                bgcolor: 'whitesmoke',
+                borderRadius: 1,
+                p: 0.5,
+              }}
+              textAlign='left'
+            >
+              {service?.address || 'No address assigned'}
+            </Typography>
+
+            {service?.servicePlace?.id === 1 && (
+
+              <Tooltip title={`Change address for service ${service?.name}`} arrow>
+                <IconButton variant="text" color={service?.address ? "primary" : "warning"} size="small" sx={{
+                  // ml: -15, 
+                  minWidth: 15,
+                  mt: -0.5,
+                  '&:hover': {
+                    boxShadow: 'none',
+                    backgroundColor: 'transparent',
+                  },
+                }}
+                  onClick={() => setOpenDialogs({ ...openDialogs, address: true })}
+                >
+                  <Iconify icon="fluent:slide-text-edit-20-regular" color="primary" width={22} />
+                </IconButton>
+              </Tooltip>
+            )}
+          </Box>
+        </Box>
+      )}
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'row',
+          gap: 1,
+          mt: 0,
+          mb: 0,
+          textAlign: 'right',
+          justifyContent: 'space-between'
+        }}
+        key='box-type'
+      >
+        <Typography
+          variant="subtitle2"
+          color="text.primary"
+          key='typo-type'
+          sx={{
+            maxWidth: 130,
+            width: 130,
+            minWidth: 130,
+            textAlign: 'left',
+          }}
+        >
+          <b>Installed By Us:</b>
+        </Typography>
+        <RadioGroup
+          name="serviceType"
+          value={selectedServiceType || 'retail'}
+          onChange={(e) => {
+            setSelectedServiceType(e.target.value);
+            handleChangeServiceType(e.target.value);
+          }}
+          sx={{
+            width: '100%'
+          }}
+        >
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: !isMobile ? 'row' : 'column',
+              justifyContent: 'flex-start',
+              // gap: !isMobile ? 5 : 1,
+              mt: -1,
+            }}
+          >
+            <FormControlLabel
+              value="installed_by_us"
+              control={<Radio />}
+              label="YES"
+            />
+            <FormControlLabel
+              value="retail"
+              control={<Radio />}
+              label="NO"
+            />
+
+          </Box>
+        </RadioGroup>
+      </Box>
+      {/* <Box sx={{ display: 'flex', flexDirection: 'row', gap: 2, verticalAlign: 'bottom', mt: 0, mb: 0 }}>
         <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, mt: 0, mb: -1, textAlign: 'right' }}>
           <Typography variant="caption" color="text.primary" sx={{ mt: 0.3 }}>
             Created:
@@ -503,6 +1116,49 @@ export function ServiceDetailsContent({
           </Typography>
           <Label variant="filled" sx={{ bgcolor: 'whitesmoke', color: 'text.primary' }}>
             {fDateTime(service?.lastModifiedTime)}
+          </Label>
+        </Box>
+      </Box> */}
+      <Box sx={{ display: 'flex', flexDirection: 'row', gap: 2, verticalAlign: 'bottom', mt: 0, mb: 0 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, mt: 0, mb: -1, textAlign: 'right' }}>
+          <Typography variant="caption" color="text.primary" sx={{ mt: 0.3 }}>
+            Notes:
+          </Typography>
+          <Label
+            variant="filled"
+            sx={{
+              bgcolor: 'whitesmoke',
+              color: service?.serviceNotes ? 'warning.main' : 'text.primary',
+              cursor: 'pointer',
+              '&:hover': {
+                bgcolor: 'text.lighter',
+                color: 'primary.main',
+              },
+            }}
+            onClick={() => {
+              setOpenDialogs({ ...openDialogs, editNotes: true });
+            }}
+          >
+            {service?.serviceNotes ? 'Edit' : 'Add'} Notes
+          </Label>
+        </Box>
+        <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, mt: 0, mb: -1, textAlign: 'right' }}>
+          <Typography variant="caption" color="text.primary" sx={{ mt: 0.3 }}>
+            Attachments:
+          </Typography>
+          <Label
+            variant="filled"
+            sx={{
+              bgcolor: 'whitesmoke',
+              color: 'text.primary',
+              cursor: 'pointer',
+              '&:hover': {
+                bgcolor: 'text.lighter',
+                color: 'primary.main',
+              },
+            }}
+          >
+            Add files
           </Label>
         </Box>
       </Box>
@@ -535,8 +1191,27 @@ export function ServiceDetailsContent({
   }), [totalNotStartedTasks, totalInProgressTasks, totalCompletedTasks, totalTasks]);
 
 
+  const dynamicHeight = useMemo(() => {
+    let height = selectedServicePlace?.id === 1 && !service?.userManager?.name ? 320 :
+      selectedServicePlace?.id === 1 && service?.userManager?.name ? 315 :
+        service?.userManager?.name ? 315 : 355
+
+    if (service?.usersServiceTeam?.length > 0) {
+      height -= 5
+    }
+    return height
+  }, [selectedServicePlace, service]);
+
+
   const renderIssuedProducts = (
-    <Card sx={{ p: 3, gap: 1, display: 'flex', flexDirection: 'column', width: '100%', minHeight: 350 }}>
+    <Card sx={{
+      p: 3,
+      gap: 1,
+      display: 'flex',
+      flexDirection: 'column',
+      width: '100%',
+      minHeight: dynamicHeight,
+    }}>
       <TableContainer
         sx={{ maxHeight: 300 }}
       >
@@ -549,145 +1224,156 @@ export function ServiceDetailsContent({
               <TableCell width={200}>Notes</TableCell>
               <TableCell width={50}>
                 <Box sx={{ display: 'flex', flexDirection: 'row', gap: 0, justifyContent: 'space-between' }}>
-                  <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 1.5 }}>
+                  <Typography
+                    variant="subtitle2"
+                    color="text.secondary"
+                    sx={{
+                      mt: (possibleLineItems?.length > 0 || issuedProducts?.length === 0) ? 1.5 : 0,
+                    }}
+                  >
                     Actions
                   </Typography>
-                  <Tooltip title={`Add new issued product to ${service?.name}`} arrow>
-                    <IconButton variant="outlined" color='success' onClick={openSalesOrderModal.onTrue} disabled={false} sx={{
-                      '&:hover': {
-                        boxShadow: 'none',
-                        backgroundColor: 'transparent',
-                      },
-                    }}>
-                      <Iconify icon="lets-icons:arhive-alt-small-add" sx={{ width: 30, height: 30 }} />
-                    </IconButton>
-                  </Tooltip>
-                </Box>
-              </TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {issuedProducts?.map((product, index1) => (
-              <React.Fragment key={index1}>
-                <TableRow key={`${product.line_item_id}-${index1}`}>
-                  <TableCell width={50} rowSpan={product?.issues?.length}>
-                    <Tooltip title={`Add new issue to ${product.name}`} arrow>
-                      <IconButton variant="outlined" color='success' onClick={() => {
-                        setSelectedItem(product);
-                        setOpenDialogs({ ...openDialogs, newIssue: true });
-                      }} disabled={false} sx={{
+                  {(possibleLineItems?.length > 0 || issuedProducts?.length === 0) && (
+                    <Tooltip title={`Add new issued product to ${service?.name}`} arrow>
+                      <IconButton variant="outlined" color='success' onClick={openSalesOrderModal.onTrue} disabled={false} sx={{
                         '&:hover': {
                           boxShadow: 'none',
                           backgroundColor: 'transparent',
                         },
                       }}>
-                        <Iconify icon="lets-icons:add-duotone" sx={{ width: 30, height: 30 }} />
+                        <Iconify icon="lets-icons:arhive-alt-small-add" sx={{ width: 30, height: 30 }} />
                       </IconButton>
                     </Tooltip>
-                  </TableCell>
-                  <TableCell width={100} rowSpan={product?.issues?.length}>
-                    {filteredDescriptionJson(product?.description)?.SKU || product?.sku}
-                  </TableCell>
-                  <TableCell width={200} rowSpan={product?.issues?.length}>{product.name}</TableCell>
-                  <TableCell width={100}>{product.issues[0].issue.name}</TableCell>
-                  <TableCell width={50}>{product.issues[0].quantity}</TableCell>
-                  <TableCell width={200}>{product.issues[0].notes}</TableCell>
-                  <TableCell width={50}>
-                    <Box sx={{ display: 'flex', flexDirection: 'row', gap: 0, justifyContent: 'space-between' }}>
-                      <Tooltip title={`Edit ${product.issues[0].issue.name} quantity`} arrow>
-                        <IconButton variant="text" color="warning" size="small" sx={{
-                          ml: 1,
+                  )}
+                </Box>
+              </TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {issuedProducts?.length > 0 ? (
+              issuedProducts?.map((product, index1) => (
+                <React.Fragment key={index1}>
+                  <TableRow key={`${product.line_item_id}-${index1}`}>
+                    <TableCell width={50} rowSpan={product?.issues?.length}>
+                      <Tooltip title={`Add new issue to ${product.name}`} arrow>
+                        <IconButton variant="outlined" color='success' onClick={() => {
+                          setSelectedItem(product);
+                          setOpenDialogs({ ...openDialogs, newIssue: true });
+                        }} disabled={false} sx={{
                           '&:hover': {
                             boxShadow: 'none',
                             backgroundColor: 'transparent',
                           },
-                        }}
-                          onClick={() => {
-                            setSelectedIssue(product.issues[0]);
-                            setSelectedItem(product);
-                            setOpenDialogs({ ...openDialogs, editIssue: true });
-                          }}
-                        >
-                          <Iconify icon="fluent:slide-text-edit-20-regular" color="warning" width={22} />
+                        }}>
+                          <Iconify icon="lets-icons:add-duotone" sx={{ width: 30, height: 30 }} />
                         </IconButton>
                       </Tooltip>
-                      <Tooltip title={`Delete ${product.issues[0].issue.name}`} arrow>
-                        <IconButton variant="text" color="error" size="small" sx={{
-                          ml: 1,
-                          '&:hover': {
-                            boxShadow: 'none',
-                            backgroundColor: 'transparent',
+                    </TableCell>
+                    <TableCell width={100} rowSpan={product?.issues?.length}>
+                      {filteredDescriptionJson(product?.description)?.SKU || product?.sku}
+                    </TableCell>
+                    <TableCell width={200} rowSpan={product?.issues?.length}>{product.name}</TableCell>
+                    <TableCell width={100}>{product.issues[0].issue.name}</TableCell>
+                    <TableCell width={50}>{product.issues[0].quantity}</TableCell>
+                    <TableCell width={200}>{product.issues[0].notes}</TableCell>
+                    <TableCell width={50}>
+                      <Box sx={{ display: 'flex', flexDirection: 'row', gap: 0, justifyContent: 'space-between' }}>
+                        <Tooltip title={`Edit ${product.issues[0].issue.name} quantity`} arrow>
+                          <IconButton variant="text" color="warning" size="small" sx={{
+                            ml: 1,
+                            '&:hover': {
+                              boxShadow: 'none',
+                              backgroundColor: 'transparent',
+                            },
+                          }}
+                            onClick={() => {
+                              setSelectedIssue(product.issues[0]);
+                              setSelectedItem(product);
+                              setOpenDialogs({ ...openDialogs, editIssue: true });
+                            }}
+                          >
+                            <Iconify icon="fluent:slide-text-edit-20-regular" color="warning" width={22} />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title={`Delete ${product.issues[0].issue.name}`} arrow>
+                          <IconButton variant="text" color="error" size="small" sx={{
+                            ml: 1,
+                            '&:hover': {
+                              boxShadow: 'none',
+                              backgroundColor: 'transparent',
+                            },
+                          }}
+                            onClick={() => {
+                              setSelectedIssue(product.issues[0]);
+                              setSelectedItem(product);
+                              confirmDelete.onTrue();
+                            }}
+                          >
+                            <Iconify icon="fluent:delete-12-filled" color="warning" width={22} />
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
+                    </TableCell>
+                  </TableRow>
+                  {product?.issues?.map((issue, index2) => (
+                    index2 > 0 && (
+                      <TableRow
+                        key={`${product.line_item_id}-${index1}-${index2}`}
+                        sx={{
+                          "& > .MuiTableCell-root": {
+                            borderBottom: index2 === product.issues.length - 1
+                              ? (t) => `1px solid ${t.palette.divider} !important`
+                              : undefined,
                           },
                         }}
-                          onClick={() => {
-                            setSelectedIssue(product.issues[0]);
-                            setSelectedItem(product);
-                            confirmDelete.onTrue();
-                          }}
-                        >
-                          <Iconify icon="fluent:delete-12-filled" color="warning" width={22} />
-                        </IconButton>
-                      </Tooltip>
-                    </Box>
-                  </TableCell>
-                </TableRow>
-                {product?.issues?.map((issue, index2) => (
-                  index2 > 0 && (
-                    <TableRow
-                      key={`${product.line_item_id}-${index1}-${index2}`}
-                      sx={{
-                        "& > .MuiTableCell-root": {
-                          borderBottom: index2 === product.issues.length - 1
-                            ? (t) => `1px solid ${t.palette.divider} !important`
-                            : undefined,
-                        },
-                      }}
-                    >
-                      <TableCell>{issue.issue.name}</TableCell>
-                      <TableCell>{issue.quantity}</TableCell>
-                      <TableCell>{issue.notes}</TableCell>
-                      <TableCell width={50}>
-                        <Box sx={{ display: 'flex', flexDirection: 'row', gap: 0, justifyContent: 'space-between' }}>
-                          <Tooltip title={`Edit ${issue.issue.name} quantity`} arrow>
-                            <IconButton variant="text" color="warning" size="small" sx={{
-                              ml: 1,
-                              '&:hover': {
-                                boxShadow: 'none',
-                                backgroundColor: 'transparent',
-                              },
-                            }}
-                              onClick={() => {
-                                setSelectedIssue(issue);
-                                setSelectedItem(product);
-                                setOpenDialogs({ ...openDialogs, editIssue: true });
+                      >
+                        <TableCell>{issue.issue.name}</TableCell>
+                        <TableCell>{issue.quantity}</TableCell>
+                        <TableCell>{issue.notes}</TableCell>
+                        <TableCell width={50}>
+                          <Box sx={{ display: 'flex', flexDirection: 'row', gap: 0, justifyContent: 'space-between' }}>
+                            <Tooltip title={`Edit ${issue.issue.name} quantity`} arrow>
+                              <IconButton variant="text" color="warning" size="small" sx={{
+                                ml: 1,
+                                '&:hover': {
+                                  boxShadow: 'none',
+                                  backgroundColor: 'transparent',
+                                },
                               }}
-                            >
-                              <Iconify icon="fluent:slide-text-edit-20-regular" color="warning" width={22} />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title={`Delete ${product.issues[0].issue.name}`} arrow>
-                            <IconButton variant="text" color="error" size="small" sx={{
-                              ml: 1,
-                              '&:hover': {
-                                boxShadow: 'none',
-                                backgroundColor: 'transparent',
-                              },
-                            }}
-                              onClick={() => {
-                                setSelectedIssue(issue);
-                                setSelectedItem(product);
-                                confirmDelete.onTrue();
+                                onClick={() => {
+                                  setSelectedIssue(issue);
+                                  setSelectedItem(product);
+                                  setOpenDialogs({ ...openDialogs, editIssue: true });
+                                }}
+                              >
+                                <Iconify icon="fluent:slide-text-edit-20-regular" color="warning" width={22} />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title={`Delete ${product.issues[0].issue.name}`} arrow>
+                              <IconButton variant="text" color="error" size="small" sx={{
+                                ml: 1,
+                                '&:hover': {
+                                  boxShadow: 'none',
+                                  backgroundColor: 'transparent',
+                                },
                               }}
-                            >
-                              <Iconify icon="fluent:delete-12-filled" color="warning" width={22} />
-                            </IconButton>
-                          </Tooltip>
-                        </Box>
-                      </TableCell>
-                    </TableRow>
-                  )))}
-              </React.Fragment>
-            ))}
+                                onClick={() => {
+                                  setSelectedIssue(issue);
+                                  setSelectedItem(product);
+                                  confirmDelete.onTrue();
+                                }}
+                              >
+                                <Iconify icon="fluent:delete-12-filled" color="warning" width={22} />
+                              </IconButton>
+                            </Tooltip>
+                          </Box>
+                        </TableCell>
+                      </TableRow>
+                    )))}
+                </React.Fragment>
+              ))) : (
+              <TableNoData notFound colSpan={7} message="No issued products found" sx={{ maxHeight: 190 }} />
+            )}
           </TableBody>
         </Table>
       </TableContainer>

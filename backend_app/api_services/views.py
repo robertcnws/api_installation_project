@@ -8,6 +8,7 @@ from api_projects.data_util import (
     create_entity_number,
     fix_order,
     fix_order_after_edit,
+    get_current_stage_from_tasks
 )
 from api_projects.models import (
     ProjectTracking,
@@ -627,6 +628,7 @@ def create_service(request):
     try:
         issued_products = data.get('issuedProducts', [])
         sales_order = data.get('salesOrder', None)
+        service_type = data.get('serviceType', None)
         stage_history = None
         users_assignees = []
         start_date = None
@@ -691,6 +693,7 @@ def create_service(request):
             created_time=timezone.now(),
             last_modified_time=timezone.now(),
             users_service_team=users_service_team,
+            service_type=service_type,
         )
         service.save()
         
@@ -1330,3 +1333,259 @@ def add_issued_products(request, id):
         return Response({'message': 'Service updated successfully'})
     except Exception as e:
         return Response({'error': str(e)}, status=500)
+    
+    
+#############################################
+# SET SERVICE PLACE
+#############################################
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def set_service_place(request, id): 
+    
+    service = Service.objects(id=id).first()
+    if not service:
+        return Response({'error': 'Service not found'}, status=404)
+            
+    data = request.data
+    
+    user_reporter = json.loads(data.get('userReporter', None)) if data.get('userReporter') else service.user_reporter
+    service_place = json.loads(data.get('servicePlace', None))
+    
+    if not service_place:
+        return Response({'error': 'Service Place not found'}, status=404)
+    
+    service.service_place = service_place if service_place else service.service_place
+    service.last_modified_time = timezone.now()
+    service.user_reporter = user_reporter if user_reporter else service.user_reporter
+        
+    service.save()
+    
+    tracking = ProjectTracking(
+        user_reporter=user_reporter,
+        action=f'set service place ({service.id} - {service.name})',
+        created_time=timezone.now(),
+        managed_data={
+            'data': transform_data_to_mongo(service, include_fields=['id', 'name', 'service_place'])
+        },
+    )
+    tracking.save()
+    
+    if user_reporter:
+        module='services'
+        info=f'has set service place in service {service.name}'
+        info_id=service.id
+        type='set_service_place'
+        create_notification(module, info_id, info, type, user_reporter['username'])
+        
+    return Response({
+        'message': 'Service updated successfully',
+        'data': json.loads(service.to_json())
+    }, status=201)
+    
+    
+#############################################
+# CHANGE SERVICE TYPE
+#############################################
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def change_service_type(request, id): 
+    
+    service = Service.objects(id=id).first()
+    if not service:
+        return Response({'error': 'Service not found'}, status=404)
+            
+    data = request.data
+    
+    user_reporter = json.loads(data.get('userReporter', None)) if data.get('userReporter') else service.user_reporter
+    service_type = data.get('serviceType', None)
+    
+    if not service_type:
+        return Response({'error': 'Service type not found'}, status=404)
+    
+    service.service_type = service_type if service_type else service.service_type
+    service.last_modified_time = timezone.now()
+    service.user_reporter = user_reporter if user_reporter else service.user_reporter
+        
+    service.save()
+    
+    tracking = ProjectTracking(
+        user_reporter=user_reporter,
+        action=f'change service type ({service.id} - {service.name})',
+        created_time=timezone.now(),
+        managed_data={
+            'data': transform_data_to_mongo(service, include_fields=['id', 'name', 'service_type'])
+        },
+    )
+    tracking.save()
+    
+    if user_reporter:
+        module='services'
+        info=f'has changed type in service {service.name}'
+        info_id=service.id
+        type='change_service_type'
+        create_notification(module, info_id, info, type, user_reporter['username'])
+        
+    return Response({
+        'message': 'Service updated successfully',
+        'data': json.loads(service.to_json())
+    }, status=201)
+
+
+#############################################
+# CHANGE STATUS SERVICE DEFAULT TASK
+#############################################
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def change_status_service_default_task(request, serviceId, id):
+    data = request.data
+    user_reporter = data.get('userReporter', None)
+    try:
+        service = Service.objects(id=serviceId).first()
+        if not service:
+            return Response({'error': 'Service not found'}, status=404)
+        
+        status = data.get('status', 'not started')
+        percentage = data.get('percentage', 0)
+        
+        all_tasks = service.service_default_tasks if service.service_default_tasks else []
+        task = next((task for task in all_tasks if str(task['service_default_task']['_id']) == id), None)
+        if not task:
+            return Response({'error': 'Service task not found'}, status=404)
+        task['status'] = status
+        task['percentage'] = percentage
+        task['user_reporter'] = user_reporter
+        task['last_modified_time'] = timezone.now()
+        
+        not_started_tasks = [t for t in all_tasks if t['status'] == 'not started' and t['service_default_task']['order'] > task['service_default_task']['order']]
+        
+        sorted_tasks = sorted(not_started_tasks, key=lambda tt: tt['service_default_task']['order'])
+        
+        def get_next_task(task, sorted_tasks):
+            return next(
+                (tt for tt in sorted_tasks if tt['service_default_task']['order'] > task['service_default_task']['order']),
+                None
+            )
+        
+        if status == 'finished':
+            next_task = get_next_task(task, sorted_tasks)
+            print('next name', next_task)
+            if next_task and next_task['status'] == 'not started':
+                less_ordered_tasks = [t for t in all_tasks if t['service_default_task']['order'] < next_task['service_default_task']['order']]
+                unfinished_tasks = [t for t in less_ordered_tasks if t['status'] != 'finished']
+                if not unfinished_tasks:
+                    next_task['status'] = 'in progress'
+                    next_task['percentage'] = 50
+                    next_task['user_reporter'] = user_reporter
+                    next_task['last_modified_time'] = timezone.now()
+                    all_tasks = [t for t in all_tasks if str(t['service_default_task']['_id']) != str(next_task['service_default_task']['_id'])]
+                    all_tasks.append(next_task)
+        
+        all_tasks = [task for task in all_tasks if str(task['service_default_task']['_id']) != id]
+        all_tasks.append(task)
+        sorted_tasks = sorted(all_tasks, key=lambda x: x['service_default_task']['order'], reverse=True)
+        
+        current_stage = get_current_stage_from_tasks(sorted_tasks, module='service')
+        
+        if not current_stage:
+            current_stage = ServiceStage.objects(name='Finished').first()
+        
+        current_stage = ServiceStage.objects(name=current_stage['name']).first() 
+        
+        if current_stage:
+            
+            if service.current_stage['name'] != current_stage.name:
+                history = service.service_history if service.service_history else []
+                current_stage = transform_data_to_mongo(current_stage)
+                history.append({
+                    'initial_stage': service.current_stage,
+                    'final_stage': current_stage,
+                    'created_time': timezone.now()
+                })
+                service.current_stage = current_stage 
+                service.service_history = history
+                
+                tracking = ProjectTracking(
+                    user_reporter=user_reporter,
+                    action=f'change stage service ({service.id} - {service.name})',
+                    created_time=timezone.now(),
+                    managed_data={
+                        'data': transform_data_to_mongo(service, include_fields=['id', 'name', 'number', 'current_stage', 'service_history'])
+                    },
+                )
+                tracking.save()
+        
+        service.service_default_tasks = sorted_tasks
+        service.save()
+        
+        tracking = ProjectTracking(
+            user_reporter=user_reporter,
+            action=f'change status default task ({task["service_default_task"]["id"]} - {task["service_default_task"]["name"]})',
+            created_time=timezone.now(),
+            managed_data={
+                'data': transform_data_to_mongo(service, include_fields=['id', 'name', 'number', 'current_stage', 'service_default_tasks'])
+            },
+        )
+        tracking.save()
+        
+        if user_reporter:
+            module='services'
+            info=f'has changed status in task {task["service_default_task"]["name"]} in service {service.name}'
+            info_id=service.id
+            type='change_status_service_default_task'
+            create_notification(module, info_id, info, type, user_reporter['username'])
+            
+        return Response({'message': 'Status in default task updated successfully'})
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+    
+    
+#############################################
+# CHANGE SERVICE NOTES
+#############################################
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def change_service_notes(request, id): 
+    
+    service = Service.objects(id=id).first()
+    if not service:
+        return Response({'error': 'Service not found'}, status=404)
+            
+    data = request.data
+    
+    user_reporter = json.loads(data.get('userReporter', None)) if data.get('userReporter') else service.user_reporter
+    service_notes = data.get('serviceNotes', None)
+    
+    if not service_notes:
+        return Response({'error': 'Service notes not found'}, status=404)
+    
+    service.service_notes = service_notes if service_notes else service.service_notes
+    service.last_modified_time = timezone.now()
+    service.user_reporter = user_reporter if user_reporter else service.user_reporter
+        
+    service.save()
+    
+    tracking = ProjectTracking(
+        user_reporter=user_reporter,
+        action=f'change service notes ({service.id} - {service.name})',
+        created_time=timezone.now(),
+        managed_data={
+            'data': transform_data_to_mongo(service, include_fields=['id', 'name', 'service_notes'])
+        },
+    )
+    tracking.save()
+    
+    if user_reporter:
+        module='services'
+        info=f'has changed notes in service {service.name}'
+        info_id=service.id
+        type='change_service_notes'
+        create_notification(module, info_id, info, type, user_reporter['username'])
+        
+    return Response({
+        'message': 'Service updated successfully',
+        'data': json.loads(service.to_json())
+    }, status=201)

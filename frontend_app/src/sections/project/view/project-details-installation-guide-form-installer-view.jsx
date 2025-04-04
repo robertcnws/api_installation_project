@@ -91,7 +91,8 @@ export function ProjectDetailsInstallationGuideFormInstallerView({
                   <TableRow>
                     <TableCell>Name</TableCell>
                     <TableCell>Quantity</TableCell>
-                    <TableCell>Cost</TableCell>
+                    <TableCell>Unit Price</TableCell>
+                    <TableCell>Total Cost</TableCell>
                     <TableCell>Notes</TableCell>
                   </TableRow>
                 </TableHead>
@@ -104,17 +105,18 @@ export function ProjectDetailsInstallationGuideFormInstallerView({
                           setOpenForm({ ...openForm, confirmation: true });
                         }
                       }>
-                        <u style={{ cursor: 'pointer'}}>{material.name}</u>
+                        <u style={{ cursor: 'pointer' }}>{material.name}</u>
                       </TableCell>
                       <TableCell>{material.quantity}</TableCell>
                       <TableCell>{fCurrency(material.cost)}</TableCell>
+                      <TableCell>{fCurrency(material.quantity * material.cost)}</TableCell>
                       <TableCell>{material.notes}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
                 <TableFooter>
                   <TableRow>
-                    <TableCell colSpan={2}>
+                    <TableCell colSpan={3}>
                       <Typography variant="h6">
                         Total
                       </Typography>
@@ -152,7 +154,7 @@ export function ProjectDetailsInstallationGuideFormInstallerView({
   const MaterialSchema = zod.object({
     name: zod.string().min(1, { message: 'Name is required!' }),
     quantity: zod.number().min(1, { message: 'Quantity is required!' }),
-    cost: zod.number().min(1, { message: 'Cost is required!' }),
+    cost: zod.number().min(1, { message: 'Price is required!' }),
     notes: zod.string().optional(),
   });
 
@@ -443,7 +445,10 @@ export function ProjectDetailsInstallationGuideFormInstallerView({
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <Field.Text type="text" label="Name" name="name" sx={{ mt: 1 }} />
               <Field.Text type="number" label="Quantity" name="quantity" />
-              <Field.Text type="number" label="Cost" name="cost" />
+              <Field.Text type="number" label="Price" name="cost" />
+              <Label color="default" variant="outlined">
+                Total Cost: <b> {fCurrency(watch('quantity') * watch('cost'))}</b>
+              </Label>
               <Field.Text multiline rows={3} type="text" label="Notes" name="notes" />
             </Box>
           </DialogContent>

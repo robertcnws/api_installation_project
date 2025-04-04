@@ -42,18 +42,14 @@ export function useGetEvents() {
 
 // ----------------------------------------------------------------------
 
-export function useGetProjectEvents(projects = []) {
+export function useGetProjectEvents(projects = [], type = 'installation') {
   const colorMappingRef = useRef({});
-  const usedColorsRef = useRef(new Set());
-  
+  // const usedColorsRef = useRef(new Set());
+
   const getAvailableColor = useCallback(() => {
-    const available = ALL_COLORS.find(color => !usedColorsRef.current.has(color));
-    if (available) {
-      usedColorsRef.current.add(available);
-      return available;
-    }
-    return ALL_COLORS[Math.floor(Math.random() * ALL_COLORS.length)];
-  }, []);
+    const index = type === 'installation' ? 2 : type === 'inspection' ? 1 : 0;
+    return ALL_COLORS[index];
+  }, [type]);
 
   const memoizedValue = useMemo(() => {
     const events = projects.map((project) => {
@@ -61,22 +57,27 @@ export function useGetProjectEvents(projects = []) {
         colorMappingRef.current[project.id] = getAvailableColor();
       }
       const color = colorMappingRef.current[project.id];
-      
+
       return {
         ...project,
         id: project.id,
         title: project.name,
-        start: project.startDate,
-        end: project.endDate ? project.endDate : '9999-12-31',
+        start: type === 'installation' ?
+          project.startDate : type === 'inspection' ?
+            project.inspectionDate : project.finishPermissionDate,
+        end: type === 'inspection' ?
+          project.inspectionDate : type === 'finishPermission' ?
+            project.finishPermissionDate : project.endDate ?
+              project.endDate : '9999-12-31',
         textColor: color,
       };
     });
 
     return {
       events,
-      eventsEmpty: projects.length === 0,
+      eventsLoading: type === 'installation' ? projects.length === 0 : false,
     };
-  }, [projects, getAvailableColor]);
+  }, [projects, getAvailableColor, type]);
 
   return memoizedValue;
 }

@@ -32,6 +32,7 @@ export function ProjectEditModalDatesView({
     isEdit,
     isStartDate,
     isInspectionDate,
+    isFinishPermissionDate,
     project,
     open,
     onClose,
@@ -82,7 +83,7 @@ export function ProjectEditModalDatesView({
 
     const handleDateChange = useCallback(
         (date) => {
-            if (!isInspectionDate) {
+            if (!isInspectionDate && !isFinishPermissionDate) {
                 const currentStage = project?.currentStage;
                 if (currentStage?.name === CONFIG.stages.preparation && totalPercentageProjectStage(project, CONFIG.stages.preparation, CONFIG) < 50) {
                     const today = dayjs().format('YYYY-MM-DD');
@@ -107,7 +108,7 @@ export function ProjectEditModalDatesView({
                 setConfirmValidInstallMessage(null);
             }
         },
-        [project, confirmValidInstallDate, isStartDate, isInspectionDate]
+        [project, confirmValidInstallDate, isStartDate, isInspectionDate, isFinishPermissionDate]
     );
 
     const ProjectDialogSchema = zod.object({
@@ -122,6 +123,7 @@ export function ProjectEditModalDatesView({
             userReporter: userLogged?.data,
             startDate: project?.startDate || null,
             endDate: project?.endDate ? dayjs(project?.endDate).toISOString() : null,
+            finishPermissionDate: project?.finishPermissionDate ? dayjs(project?.finishPermissionDate).toISOString() : null,
             inspectionDate: project?.inspectionDate ? dayjs(project?.inspectionDate).toISOString() : null,
         }),
         [project, userLogged]
@@ -150,12 +152,33 @@ export function ProjectEditModalDatesView({
                 startDate: project.startDate || null,
                 endDate: project.endDate || null,
                 inspectionDate: project.inspectionDate || null,
+                finishPermissionDate: project.finishPermissionDate || null,
             });
-            setSelectedDate(isStartDate ? dayjs(project?.startDate) : isInspectionDate ? dayjs(project?.inspectionDate) : dayjs(project?.endDate));
+            setSelectedDate(
+                isStartDate ? dayjs(project?.startDate) :
+                    isInspectionDate ? dayjs(project?.inspectionDate) :
+                        isFinishPermissionDate ? dayjs(project?.finishPermissionDate) : dayjs(project?.endDate));
             setDaysToInstall(diffDays);
             setFormChanged(false);
         }
-    }, [project, userLogged?.data, reset, diffDays, isStartDate, isInspectionDate]);
+    }, [project, userLogged?.data, reset, diffDays, isStartDate, isInspectionDate, isFinishPermissionDate]);
+
+
+    const minDate = useMemo(() => {
+        if (isStartDate || isInspectionDate) {
+            if (project?.startDate) {
+                return dayjs(project?.startDate);
+            }
+            return dayjs(project?.salesOrder?.date);
+        }
+        if (isFinishPermissionDate) {
+            if (project?.inspectionDate) {
+                return dayjs(project?.inspectionDate);
+            }
+            return dayjs(project?.salesOrder?.date);
+        }
+        return dayjs(project?.salesOrder?.date);
+    }, [isStartDate, isInspectionDate, isFinishPermissionDate, project]);
 
 
     const onSubmit = handleSubmit(async (data) => {
@@ -176,6 +199,10 @@ export function ProjectEditModalDatesView({
 
         if (isInspectionDate) {
             formData.append('inspectionDate', fDate(selectedDate));
+        }
+
+        if (isFinishPermissionDate) {
+            formData.append('finishPermissionDate', fDate(selectedDate));
         }
 
 
@@ -208,14 +235,20 @@ export function ProjectEditModalDatesView({
     });
 
 
-    const handleRemoveInstallDate = useCallback(
-        async() => {
+    const handleRemoveDate = useCallback(
+        async () => {
             setIsRemovingDate(true);
             const formData = new FormData();
             formData.append('userReporter', JSON.stringify(userLogged?.data));
 
+            formData.append('dateType',
+                isStartDate ? 'startDate' :
+                    isInspectionDate ? 'inspectionDate' :
+                        isFinishPermissionDate ? 'finishPermissionDate' : 'endDate'
+            );
 
-            const promise = axios.post(`${CONFIG.apiUrl}/projects/update/project/${project.id}/revove-install-date/`, formData, {
+
+            const promise = axios.post(`${CONFIG.apiUrl}/projects/update/project/${project.id}/remove-date/`, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
@@ -233,7 +266,7 @@ export function ProjectEditModalDatesView({
                 if (!response.data) {
                     return;
                 }
-                
+
                 setIsRemovingDate(false);
 
                 onClose();
@@ -241,7 +274,7 @@ export function ProjectEditModalDatesView({
             } catch (error) {
                 console.error(error);
             }
-        }, [onClose, project, userLogged]);
+        }, [onClose, project, userLogged, isStartDate, isInspectionDate, isFinishPermissionDate]);
 
     const renderMainInfo = (
         <Stack spacing={1.5}>
@@ -254,13 +287,13 @@ export function ProjectEditModalDatesView({
                                 <Box sx={{ width: '100%', color: 'text.secondary', mt: -0.8 }}>
                                     <DatePicker
                                         label={
-                                            isStartDate ? 'Install Date' : isInspectionDate ? 'Inspection Date' : 'Closing Date'
+                                            isStartDate ? 'Install Date' :
+                                                isInspectionDate ? 'Inspection Date' :
+                                                    isFinishPermissionDate ? 'Finish Date' : 'Closing Date'
                                         }
                                         value={selectedDate}
                                         onChange={handleDateChange}
-                                        minDate={
-                                            isStartDate || isInspectionDate ? dayjs(project?.salesOrder?.date) : project?.startDate ? dayjs(project?.startDate) : dayjs(project?.salesOrder?.date)
-                                        }
+                                        minDate={minDate}
                                         maxDate={
                                             isStartDate ? dayjs(project?.endDate) : null
                                         }
@@ -301,7 +334,7 @@ export function ProjectEditModalDatesView({
                                             min={1}
                                             label="Duration days"
                                             sx={{ width: '30%', mt: 1 }}
-                                            value={daysToInstall}
+                                            value={project?.endDate ? daysToInstall + 1 : daysToInstall}
                                             onChange={handleDaysChange}
                                         />
 
@@ -324,7 +357,6 @@ export function ProjectEditModalDatesView({
                     </Grid>
                     <Stack direction="row" sx={{ typography: 'caption', textTransform: 'capitalize' }}>
                         <Box component="span" sx={{ width: 80, color: 'text.secondary', mr: 2 }} />
-
                     </Stack>
                 </>
             )}
@@ -334,7 +366,13 @@ export function ProjectEditModalDatesView({
 
     const renderProject = (
         <Dialog fullWidth maxWidth="xs" open={open} onClose={onClose}>
-            <DialogTitle>{isEdit ? 'Update' : 'Add'} {isStartDate ? 'Install' : isInspectionDate ? 'Inspection' : 'Closing'} date to Project {project?.name} </DialogTitle>
+            <DialogTitle>
+                {isEdit ? 'Update' : 'Add'} {
+                    isStartDate ? 'Install' :
+                        isInspectionDate ? 'Inspection' :
+                            isFinishPermissionDate ? 'Finish' : 'Closing'
+                } date to Project {project?.name}
+            </DialogTitle>
 
             <Form methods={methods} onSubmit={onSubmit}>
 
@@ -361,11 +399,13 @@ export function ProjectEditModalDatesView({
                         type="button"
                         variant="contained"
                         loading={isRemovingDate}
-                        onClick={handleRemoveInstallDate}
+                        onClick={handleRemoveDate}
                         color='error'
                         disabled={!project?.startDate}
                     >
-                        Remove install date
+                        Remove {isStartDate ?
+                            'install' : isInspectionDate ?
+                                'inspection' : isFinishPermissionDate ? 'finish' : 'closing'} date
                     </LoadingButton>
                     <Button variant="outlined" onClick={onClose}>
                         Cancel

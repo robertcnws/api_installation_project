@@ -774,7 +774,8 @@ export function ProjectDetailsInstallationGuideFormView({
                             <TableCell>Name</TableCell>
                             <TableCell>Qty</TableCell>
                             {/* <TableCell>Ticket #</TableCell> */}
-                            <TableCell>Cost</TableCell>
+                            <TableCell>Unit Price</TableCell>
+                            <TableCell>Total Cost</TableCell>
                             {/* <TableCell>Store</TableCell> */}
                             <TableCell align="right">
                               <Box sx={{
@@ -865,13 +866,16 @@ export function ProjectDetailsInstallationGuideFormView({
                                   type="number"
                                   min="0"
                                   value={product.cost || ''}
-                                  placeholder="Cost"
+                                  placeholder="Unit price"
                                   sx={{ width: 100 }}
                                   InputProps={{
                                     sx: { height: '30px' }
                                   }}
                                   onChange={(e) => handleMaterialChange(product.id, 'cost', Math.max(0, e.target.value))}
                                 />
+                              </TableCell>
+                              <TableCell sx={{ width: 100 }}>
+                                {fCurrency(product.cost * product.quantity)}
                               </TableCell>
                               {/* <TableCell sx={{ width: 100 }}>
                                 <TextField
@@ -940,18 +944,22 @@ export function ProjectDetailsInstallationGuideFormView({
                                   sx={{ width: 200 }}
                                   onChange={(e) => handleMaterialChange(product.id, 'ticket', e.target.value)}
                                 /><br /> */}
-                                <Typography variant="h6">Cost:</Typography>
+                                <Typography variant="h6">Unit Price:</Typography>
                                 <TextField
                                   type="number"
                                   min="0"
                                   value={product.cost || ''}
-                                  placeholder="Cost"
+                                  placeholder="Unit price"
                                   sx={{ width: 200 }}
                                   InputProps={{
                                     sx: { height: '30px' }
                                   }}
                                   onChange={(e) => handleMaterialChange(product.id, 'cost', Math.max(0, e.target.value))}
                                 /><br />
+                                <Typography variant="h6">Total Cost:</Typography>
+                                <Label color="success" sx={{ bgcolor: 'transparent', justifyContent: 'flex-start' }}>
+                                  {fCurrency(product.cost * product.quantity)}
+                                </Label><br />
                                 {/* <Typography variant="h6">Store:</Typography>
                                 <TextField
                                   value={product.store}
@@ -1009,7 +1017,7 @@ export function ProjectDetailsInstallationGuideFormView({
                     </TableBody>
                     <TableFooter sx={{ bgcolor: 'grey.300' }}>
                       <TableRow>
-                        <TableCell colSpan={!isMobile ? 4 : 0} align="left" sx={{ fontSize: '15px' }}><b>TOTAL Cost:</b></TableCell>
+                        <TableCell colSpan={!isMobile ? 5 : 0} align="left" sx={{ fontSize: '15px' }}><b>TOTAL Cost:</b></TableCell>
                         <TableCell sx={{ fontSize: '15px' }} align="right"><b>{fCurrency(totalCost)}</b></TableCell>
                         {/* <TableCell colSpan={!isMobile ? 2 : 0} align="left" sx={{ fontSize: '15px' }} /> */}
                       </TableRow>

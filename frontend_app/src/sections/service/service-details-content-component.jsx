@@ -75,8 +75,8 @@ export function ServiceDetailsContentComponent({
         display: 'flex',
         flexDirection: 'column',
         ml: isMobile && isOverview ? 5 : 0,
-        maxHeight: !isMobile ? (isOverview ? (service?.userManager?.name && !service?.hasPermission ? 696 : (service?.userManager?.name && service?.hasPermission ? 740 : 652)) : 652) : 'auto',
-        minHeight: !isMobile ? (isOverview ? (service?.userManager?.name && !service?.hasPermission ? 696 : (service?.userManager?.name && service?.hasPermission ? 740 : 652)) : 652) : 'auto',
+        maxHeight: !isMobile ? 662 : 'auto',
+        minHeight: !isMobile ? 662 : 'auto',
         overflow: 'auto'
       }}>
         {[
@@ -108,7 +108,7 @@ export function ServiceDetailsContentComponent({
             />,
             hasValue: service?.salesOrder?.customer_name?.length > 0,
           },
-          {
+          ...(!isOverview && service?.servicePlace?.name?.toLowerCase().indexOf('on site') !== -1) ? [{
             label: 'Address',
             value: service?.address,
             icon: <Iconify
@@ -116,7 +116,7 @@ export function ServiceDetailsContentComponent({
               sx={{ color: 'text.primary' }}
             />,
             hasValue: service?.address?.length > 0,
-          },
+          }] : [],
           {
             label: 'Phone Number',
             value: (service?.salesOrder?.customer || service?.salesOrder?.contact_person_details)?.phone ||
@@ -150,12 +150,12 @@ export function ServiceDetailsContentComponent({
                 {listItems?.map((product) => (
                   <ListItem key={product.line_item_id}>
                     <ListItemText
-                      primary={`${product.name} ${issuedProducts.find((i) => i.line_item_id === product.line_item_id) ? '(Issued)' : ''}`}
+                      primary={`${product.name} ${issuedProducts?.find((i) => i.line_item_id === product.line_item_id) ? '(Issued)' : ''}`}
                       secondary={
                         <Stack direction="column" spacing={1}>
                           <Typography
                             variant="caption"
-                            color={issuedProducts.find((i) => i.line_item_id === product.line_item_id) ? 'error' : 'text.secondary'}
+                            color={issuedProducts?.find((i) => i.line_item_id === product.line_item_id) ? 'error' : 'text.secondary'}
                             sx={{ mb: 1, whiteSpace: 'pre-line' }}
                           >
                             {`Qty: ${product.quantity}\n${filteredDescription(product.description)}`}
@@ -164,11 +164,11 @@ export function ServiceDetailsContentComponent({
                       }
                       primaryTypographyProps={{
                         variant: 'subtitle2',
-                        color: issuedProducts.find((i) => i.line_item_id === product.line_item_id) ? 'error' : 'text.secondary',
+                        color: issuedProducts?.find((i) => i.line_item_id === product.line_item_id) ? 'error' : 'text.secondary',
                       }}
                       secondaryTypographyProps={{
                         variant: 'caption',
-                        color: issuedProducts.find((i) => i.line_item_id === product.line_item_id) ? 'error' : 'text.secondary',
+                        color: issuedProducts?.find((i) => i.line_item_id === product.line_item_id) ? 'error' : 'text.secondary',
                       }}
                     />
                   </ListItem>
@@ -219,7 +219,7 @@ export function ServiceDetailsContentComponent({
                   typography: 'subtitle2',
                 }}
               />
-              {(item.label === 'Address' &&
+              {(item.label === 'Address' && service?.servicePlace?.name?.toLowerCase().indexOf('on site') !== -1 &&
                 (listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
                   <Tooltip title={service?.address ? "Edit Address" : "Add Address"} arrow>
                     <IconButton variant="text" color={service?.address ? "primary" : "warning"} size="small" sx={{

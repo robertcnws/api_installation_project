@@ -73,6 +73,8 @@ export function ServiceNewForm({ currentUser }) {
 
   const [selectedListItems, setSelectedListItems] = useState([]);
 
+  const [serviceType, setServiceType] = useState(null);
+
   const filters = useSetState({ name: '' });
 
   const dataFiltered = applyFilter({
@@ -152,6 +154,7 @@ export function ServiceNewForm({ currentUser }) {
         salesOrder: selectedSalesOrder,
         userReporter: userLogged?.data,
         issuedProducts: selectedListItems.filter((item) => item.selected),
+        serviceType,
       });
 
       toast.promise(promise, {
@@ -172,8 +175,7 @@ export function ServiceNewForm({ currentUser }) {
       setIsSubmiting(false);
       console.error(error);
     }
-  }
-    , [selectedSalesOrder, selectedListItems, userLogged, openSalesOrderModal, router]);
+  }, [selectedSalesOrder, selectedListItems, userLogged, openSalesOrderModal, router, serviceType]);
 
   return (
     <>
@@ -360,6 +362,8 @@ export function ServiceNewForm({ currentUser }) {
             setAllIssuesCompleted={setAllIssuesCompleted}
             selectedListItems={selectedListItems}
             setSelectedListItems={setSelectedListItems}
+            serviceType={serviceType}
+            setServiceType={setServiceType}
           />
         </Scrollbar>
         <DialogActions>

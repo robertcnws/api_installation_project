@@ -7,10 +7,10 @@ import Avatar from '@mui/material/Avatar';
 import { useTheme } from '@mui/material/styles';
 import Grid from '@mui/material/Unstable_Grid2';
 import Typography from '@mui/material/Typography';
-import { Box, Table, Switch, TableRow, TableBody, TableCell, IconButton } from '@mui/material';
+import { Box, Table, Switch, TableRow, TableBody, TableCell, IconButton, Tooltip } from '@mui/material';
 
-import { fDate, fIsAfter, fDateTime } from 'src/utils/format-time';
 import { getProjectInstaller } from 'src/utils/project-tasks-utils';
+import { fDate, fIsAfter, fDateTime, fDuration } from 'src/utils/format-time';
 import { isInstaller, verifyPermissions, listRolesAndSubroles } from 'src/utils/check-permissions';
 
 import { CONFIG } from 'src/config-global';
@@ -73,6 +73,8 @@ export function ProjectDetailsContent({
   const [isStartDate, setIsStartDate] = useState(false);
 
   const [isInspectionDate, setIsInspectionDate] = useState(false);
+
+  const [isFinishPermissionDate, setIsFinishPermissionDate] = useState(false);
 
   useEffect(() => {
     if (project) {
@@ -287,7 +289,7 @@ export function ProjectDetailsContent({
                       ) : 'normal'
                     }}
                   >
-                    {fDate(project?.startDate)}
+                    {fDate(project?.startDate)} <b>({fDuration(project?.startDate, project?.endDate)})</b>
                   </Typography>
                 ) : (
                   <Iconify icon="fluent-mdl2:date-time" color="warning" width={20} sx={{ ml: 0.5, mt: 0.5 }} />
@@ -306,6 +308,7 @@ export function ProjectDetailsContent({
                     onClick={() => {
                       setIsStartDate(true)
                       setIsInspectionDate(false)
+                      setIsFinishPermissionDate(false)
                       setOpenDialogs({ ...openDialogs, date: true })
                     }}
                   >
@@ -322,6 +325,7 @@ export function ProjectDetailsContent({
                     onClick={() => {
                       setIsStartDate(true)
                       setIsInspectionDate(false)
+                      setIsFinishPermissionDate(false)
                       setOpenDialogs({ ...openDialogs, date: true })
                     }}
                   >
@@ -331,7 +335,7 @@ export function ProjectDetailsContent({
             </TableCell>
           </TableRow>
 
-          <TableRow>
+          {/* <TableRow>
             <TableCell>
               <Typography variant="subtitle2" color="text.secondary">Estimated Closing Date:</Typography>
             </TableCell>
@@ -411,7 +415,7 @@ export function ProjectDetailsContent({
                   </IconButton>
                 )}
             </TableCell>
-          </TableRow>
+          </TableRow> */}
 
 
 
@@ -445,57 +449,114 @@ export function ProjectDetailsContent({
           </TableRow>
 
           {project?.hasPermission && (
-            <TableRow>
-              <TableCell>
-                <Typography variant="subtitle2" color="text.secondary">Inspection Date:</Typography>
-              </TableCell>
-              <TableCell>
-                <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, justifyContent: 'space-between' }}>
-                  {project?.inspectionDate ? (
-                    <Typography variant="subtitle2" color="text.primary">
-                      {fDate(project?.inspectionDate)}
-                    </Typography>
-                  ) : (
-                    <Iconify icon="fluent-mdl2:date-time" color="warning" width={20} sx={{ ml: 0.5, mt: 0.5 }} />
-                  )}
+            <>
+              <TableRow>
+                <TableCell>
+                  <Typography variant="subtitle2" color="text.secondary">Inspection Date:</Typography>
+                </TableCell>
+                <TableCell>
+                  <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, justifyContent: 'space-between' }}>
+                    {project?.inspectionDate ? (
+                      <Typography variant="subtitle2" color="text.primary">
+                        {fDate(project?.inspectionDate)}
+                      </Typography>
+                    ) : (
+                      <Iconify icon="fluent-mdl2:date-time" color="warning" width={20} sx={{ ml: 0.5, mt: 0.5 }} />
+                    )}
 
-                </Box>
-              </TableCell>
-              <TableCell sx={{ textAlign: 'right', maxWidth: '30px' }}>
-                {(project?.inspectionDate && (verifyPermissions(
-                  listPermissions,
-                  CONFIG.permissions.system,
-                  CONFIG.permissions.moduleProjects,
-                  CONFIG.permissions.operationEditHasPermission
-                ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
-                    <IconButton variant="text" color="primary" size="small" sx={{ ml: 0, maxWidth: 10 }}
-                      onClick={() => {
-                        setIsStartDate(false)
-                        setIsInspectionDate(true)
-                        setOpenDialogs({ ...openDialogs, date: true })
-                      }}
-                    >
-                      <Iconify icon="fluent:calendar-edit-32-regular" color="primary" width={22} />
-                    </IconButton>
-                  )}
-                {(!project?.inspectionDate && (verifyPermissions(
-                  listPermissions,
-                  CONFIG.permissions.system,
-                  CONFIG.permissions.moduleProjects,
-                  CONFIG.permissions.operationEditHasPermission
-                ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
-                    <IconButton variant="text" color="warning" size="small" sx={{ ml: 0, maxWidth: 10 }}
-                      onClick={() => {
-                        setIsStartDate(false)
-                        setIsInspectionDate(true)
-                        setOpenDialogs({ ...openDialogs, date: true })
-                      }}
-                    >
-                      <Iconify icon="zondicons:date-add" color="warning" width={20} />
-                    </IconButton>
-                  )}
-              </TableCell>
-            </TableRow>
+                  </Box>
+                </TableCell>
+                <TableCell sx={{ textAlign: 'right', maxWidth: '30px' }}>
+                  {(project?.inspectionDate && (verifyPermissions(
+                    listPermissions,
+                    CONFIG.permissions.system,
+                    CONFIG.permissions.moduleProjects,
+                    CONFIG.permissions.operationEditHasPermission
+                  ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
+                      <IconButton variant="text" color="primary" size="small" sx={{ ml: 0, maxWidth: 10 }}
+                        onClick={() => {
+                          setIsStartDate(false)
+                          setIsInspectionDate(true)
+                          setIsFinishPermissionDate(false)
+                          setOpenDialogs({ ...openDialogs, date: true })
+                        }}
+                      >
+                        <Iconify icon="fluent:calendar-edit-32-regular" color="primary" width={22} />
+                      </IconButton>
+                    )}
+                  {(!project?.inspectionDate && (verifyPermissions(
+                    listPermissions,
+                    CONFIG.permissions.system,
+                    CONFIG.permissions.moduleProjects,
+                    CONFIG.permissions.operationEditHasPermission
+                  ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
+                      <IconButton variant="text" color="warning" size="small" sx={{ ml: 0, maxWidth: 10 }}
+                        onClick={() => {
+                          setIsStartDate(false)
+                          setIsInspectionDate(true)
+                          setIsFinishPermissionDate(false)
+                          setOpenDialogs({ ...openDialogs, date: true })
+                        }}
+                      >
+                        <Iconify icon="zondicons:date-add" color="warning" width={20} />
+                      </IconButton>
+                    )}
+                </TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell>
+                  <Typography variant="subtitle2" color="text.secondary">Finish Date:</Typography>
+                </TableCell>
+                <TableCell>
+                  <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, justifyContent: 'space-between' }}>
+                    {project?.finishPermissionDate ? (
+                      <Typography variant="subtitle2" color="text.primary">
+                        {fDate(project?.finishPermissionDate)}
+                      </Typography>
+                    ) : (
+                      <>
+                        <Iconify icon="fluent-mdl2:date-time" color="warning" width={20} sx={{ ml: 0.5, mt: 0.5 }} />
+                        {project?.inspectionDate === null && (
+                          <Typography variant="caption" color="text.primary">
+                            [Need Inspection Date]
+                          </Typography>
+                        )}
+                      </>
+                    )}
+
+                  </Box>
+                </TableCell>
+                <TableCell sx={{ textAlign: 'right', maxWidth: '30px' }}>
+                  {(project?.finishPermissionDate &&
+                    (listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
+                      <IconButton variant="text" color="primary" size="small" sx={{ ml: 0, maxWidth: 10 }}
+                        onClick={() => {
+                          setIsStartDate(false)
+                          setIsInspectionDate(false)
+                          setIsFinishPermissionDate(true)
+                          setOpenDialogs({ ...openDialogs, date: true })
+                        }}
+                      >
+                        <Iconify icon="fluent:calendar-edit-32-regular" color="primary" width={22} />
+                      </IconButton>
+                    )}
+                  {(!project?.finishPermissionDate &&
+                    (listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
+                      <IconButton variant="text" color="warning" size="small" sx={{ ml: 0, maxWidth: 10 }}
+                        onClick={() => {
+                          setIsStartDate(false)
+                          setIsInspectionDate(false)
+                          setIsFinishPermissionDate(true)
+                          setOpenDialogs({ ...openDialogs, date: true })
+                        }}
+                        disabled={!project?.inspectionDate}
+                      >
+                        <Iconify icon="zondicons:date-add" color="warning" width={20} />
+                      </IconButton>
+                    )}
+                </TableCell>
+              </TableRow>
+            </>
           )}
 
         </TableBody>
@@ -507,9 +568,28 @@ export function ProjectDetailsContent({
   const renderDescription = (
     <Card sx={{ p: 3, gap: 1.5, display: 'flex', flexDirection: 'column', width: '100%' }}>
       {project?.description?.split('&').map((line, index) => (
-        <Typography key={index} variant="caption" color="text.primary" sx={{ mb: 0.5, textAlign: 'justify', fontWeight: index === 0 ? 'bold' : 'normal' }}>
-          {line}
-        </Typography>
+        <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, mt: 0, mb: 0 }} key={`box-${index}`}>
+          <Typography key={index} variant="caption" color="text.primary" sx={{ mb: 0.5, textAlign: 'justify', fontWeight: index === 0 ? 'bold' : 'normal' }}>
+            {line}
+          </Typography>
+          {index === 0 && project?.description && (
+            <Tooltip title={`Change description for project ${project?.name}`} arrow>
+              <IconButton variant="text" color={project?.description ? "primary" : "warning"} size="small" sx={{
+                // ml: -15, 
+                minWidth: 15,
+                mt: -1,
+                '&:hover': {
+                  boxShadow: 'none',
+                  backgroundColor: 'transparent',
+                },
+              }}
+                onClick={() => setOpenDialogs({ ...openDialogs, address: true })}
+              >
+                <Iconify icon="fluent:slide-text-edit-20-regular" color="primary" width={22} />
+              </IconButton>
+            </Tooltip>
+          )}
+        </Box>
       ))}
       {project?.salesOrder?.custom_fields?.map((field, index) => (
         <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, mt: 0, mb: 0, textAlign: 'right' }} key={`box-${index}`}>
@@ -705,9 +785,14 @@ export function ProjectDetailsContent({
         onClose={() => setOpenDialogs({ ...openDialogs, installationTeam: false })}
       />
       <ProjectEditModalDatesView
-        isEdit={isStartDate ? project?.startDate : isInspectionDate ? project?.inspectionDate : project?.endDate}
+        isEdit={
+          isStartDate ? project?.startDate :
+            isInspectionDate ? project?.inspectionDate :
+              isFinishPermissionDate ? project?.finishPermissionDate : project?.endDate
+        }
         isStartDate={isStartDate}
         isInspectionDate={isInspectionDate}
+        isFinishPermissionDate={isFinishPermissionDate}
         project={project}
         refetchProject={refetchProject}
         open={openDialogs.date}

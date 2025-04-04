@@ -32,6 +32,7 @@ import { ServiceEditModalPhoneNumberView } from 'src/sections/service/service-ed
 import { useDataContext } from 'src/auth/context/data/data-context';
 
 import { ServiceDetailsContentOverview } from '../service-details-content-overview';
+import { ServiceEditModalNotesView } from '../service-edit-modal-notes-view';
 
 // ----------------------------------------------------------------------
 
@@ -54,6 +55,8 @@ export function ServiceDetailsView({ serviceId }) {
         installationTeam: false,
         newIssue: false,
         editIssue: false,
+        editNotes: false,
+        editAttachments: false,
     });
 
     const item = useMemo(() => loadedServices?.find((service) => service.id === serviceId), [loadedServices, serviceId]);
@@ -86,6 +89,8 @@ export function ServiceDetailsView({ serviceId }) {
     const [selectedListItems, setSelectedListItems] = useState([]);
 
     const [isSubmiting, setIsSubmiting] = useState(false);
+
+    const [serviceType, setServiceType] = useState(itemById?.serviceType);
 
 
     useEffect(() => {
@@ -325,6 +330,12 @@ export function ServiceDetailsView({ serviceId }) {
                 onClose={() => setOpenDialogs({ ...openDialogs, refNumber: false })}
             />
 
+            <ServiceEditModalNotesView
+                service={itemById}
+                open={openDialogs.editNotes}
+                onClose={() => setOpenDialogs({ ...openDialogs, editNotes: false })}
+            />
+
             <ConfirmDialog
                 open={openValidationDialog}
                 onClose={() => {
@@ -349,6 +360,8 @@ export function ServiceDetailsView({ serviceId }) {
                         selectedListItems={selectedListItems}
                         setSelectedListItems={setSelectedListItems}
                         service={itemById}
+                        serviceType={serviceType}
+                        setServiceType={setServiceType}
                     />
                 </Scrollbar>
                 <DialogActions>

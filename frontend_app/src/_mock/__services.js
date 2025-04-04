@@ -30,6 +30,9 @@ const GET_ALL_SERVICES = gql`
       userReporter
       usersAssignees
       usersServiceTeam
+      serviceType
+      servicePlace
+      serviceNotes
     }
   }
 `;
@@ -62,6 +65,9 @@ const GET_SERVICE_BY_ID = gql`
       userReporter
       usersAssignees
       usersServiceTeam
+      serviceType
+      servicePlace
+      serviceNotes
     }
   }
 `;

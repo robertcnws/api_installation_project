@@ -129,7 +129,7 @@ export function ProjectEditAttachments({
     refetchProject?.();
   };
 
-  const handleAddFiles = async () => {
+  const handleAddFiles = async (stageId = null) => {
     if (newFiles.length === 0) return;
     try {
       const formData = new FormData();
@@ -152,6 +152,13 @@ export function ProjectEditAttachments({
         formData.append('projectAttachments', file);
       });
       formData.append('userReporter', JSON.stringify(userLogged?.data));
+
+      if (stageId) {
+        const stage = loadedStages.find((s) => s.id === stageId);
+        if (stage) {
+          formData.append('projectStage', JSON.stringify(stage));
+        }
+      }
 
       await axios.post(`${CONFIG.apiUrl}/projects/upload/project/${id}/file/`, formData, {
         headers: {
@@ -208,7 +215,7 @@ export function ProjectEditAttachments({
                               color="primary"
                               variant="outlined"
                               disabled={!isAddFilesEnabled}
-                              onClick={handleAddFiles}
+                              onClick={() => handleAddFiles(project?.currentStage?.id)}
                             >
                               <Iconify icon="material-symbols:attach-file-add" />
                               Add File(s)
@@ -224,36 +231,6 @@ export function ProjectEditAttachments({
                       files={mappedDisplayFiles.find((mappedFile) => mappedFile.stageId === project?.currentStage?.id)?.files || []}
                       onRemove={handleClickRemoveFile}
                       onDownload={handleDownloadFile}
-                      // slotProps={{
-                      //   thumbnail: {
-                      //     sx: {
-                      //       width: 64,
-                      //       height: 64,
-                      //       cursor: 'pointer',
-                      //       position: 'relative',
-                      //       transition: 'background-color 0.3s ease',
-                      //       '&:hover': {
-                      //         bgcolor: 'rgba(0, 0, 0, 0.1)',
-                      //         opacity: 0.5,
-                      //       },
-                      //       '&::after': {
-                      //         content: '""',
-                      //         position: 'absolute',
-                      //         bottom: 4,
-                      //         right: 12,
-                      //         width: 40,
-                      //         height: 40,
-                      //         backgroundImage: 'url(/assets/icons/apps/ic-download-1.svg)',
-                      //         backgroundSize: 'contain',
-                      //         backgroundRepeat: 'no-repeat',
-                      //         display: 'none',
-                      //       },
-                      //       '&:hover::after': {
-                      //         display: 'block',
-                      //       },
-                      //     },
-                      //   }
-                      // }}
                       lastNode={
                         (verifyPermissions(
                           listPermissions,
@@ -326,37 +303,46 @@ export function ProjectEditAttachments({
                       files={mappedFile.files}
                       onRemove={handleClickRemoveFile}
                       onDownload={handleDownloadFile}
-                      // slotProps={{
-                      //   thumbnail: {
-                      //     sx: {
-                      //       width: 75,
-                      //       height: 75,
-                      //       cursor: 'pointer',
-                      //       position: 'relative',
-                      //       transition: 'background-color 0.3s ease',
-                      //       '&:hover': {
-                      //         bgcolor: 'rgba(0, 0, 0, 0.1)',
-                      //         opacity: 0.5,
-                      //       },
-                      //       '&::after': {
-                      //         content: '""',
-                      //         position: 'absolute',
-                      //         bottom: 4,
-                      //         right: 17,
-                      //         width: 40,
-                      //         height: 40,
-                      //         backgroundImage: 'url(/assets/icons/apps/ic-download-1.svg)',
-                      //         backgroundSize: 'contain',
-                      //         backgroundRepeat: 'no-repeat',
-                      //         display: 'none',
-                      //       },
-                      //       '&:hover::after': {
-                      //         display: 'block',
-                      //       },
-                      //     },
-                      //   }
-                      // }}
-                      lastNode={null}
+                      lastNode={
+                        (verifyPermissions(
+                          listPermissions,
+                          CONFIG.permissions.system,
+                          CONFIG.permissions.moduleProjects,
+                          CONFIG.permissions.operationUploadFile
+                        ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) ? (
+                          <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                            <UploadBox onDrop={(files) => {
+                              if (files && files.length) {
+                                const uniqueFiles = files.filter((file) =>
+                                  !displayFiles.some((existingFile) => existingFile.name === file.name)
+                                );
+                                if (uniqueFiles.length > 0) {
+                                  const filesToAdd = uniqueFiles.map((file) => ({
+                                    ...file,
+                                    fileUrl: URL.createObjectURL(file),
+                                    name: file.name,
+                                    isNew: true,
+                                  }));
+                                  setNewFiles((prev) => [...prev, ...filesToAdd]);
+                                }
+                                else {
+                                  toast.error('File already exists');
+                                }
+                              }
+                            }} />
+                            <Button
+                              color="primary"
+                              variant="outlined"
+                              disabled={!isAddFilesEnabled}
+                              onClick={() => handleAddFiles(mappedFile.stageId)}
+                              sx={{ p: 0, mt: 1 }}
+                            >
+                              <Iconify icon="material-symbols:attach-file-add" />
+                              Add
+                            </Button>
+                          </Box>
+                        ) : null
+                      }
                     />
                   </Box>
                 </Paper>

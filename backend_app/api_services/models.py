@@ -43,6 +43,9 @@ class Service(Document):
     users_service_team = ListField(DynamicField(), default=list, null=True)
     service_comments = ListField(DynamicField(), default=list, null=True)
     service_default_tasks = ListField(DynamicField(), default=list, null=True)
+    service_type = StringField(max_length=255, null=True)
+    service_place = DynamicField(null=True)
+    service_notes = StringField(null=True)
     
     meta = {
         'collection': 'service',

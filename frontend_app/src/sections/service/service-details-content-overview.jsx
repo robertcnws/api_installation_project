@@ -1,9 +1,9 @@
 import { useRef, useMemo, useState, useEffect, useContext, useCallback } from 'react';
 
-import { Box } from '@mui/material';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import ListItemText from '@mui/material/ListItemText';
+import { Box, Radio, RadioGroup, FormControlLabel } from '@mui/material';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
@@ -28,6 +28,8 @@ export function ServiceDetailsContentOverview({
   selectedListItems,
   setSelectedListItems,
   service = null,
+  serviceType,
+  setServiceType,
 }) {
 
   const {
@@ -52,6 +54,17 @@ export function ServiceDetailsContentOverview({
   const listItems = useMemo(() => items?.filter((product) => product.line_item_type === 'goods'), [items]);
 
   const serviceItems = useMemo(() => items?.filter((product) => product.line_item_type !== 'goods'), [items]);
+
+  const [localServiceType, setLocalServiceType] = useState(service?.serviceType || 'retail');
+
+  useEffect(() => {
+    setLocalServiceType(service ? service.serviceType : 'retail');
+  }, [service]);
+
+  const handleServiceTypeChange = (e) => {
+    setLocalServiceType(e.target.value);
+    setServiceType(e.target.value);
+  };
 
   useEffect(() => {
     setSelectedListItems(
@@ -128,7 +141,6 @@ export function ServiceDetailsContentOverview({
     );
   }
 
-
   useEffect(() => {
     setSomeItemsSelected(selectedListItems?.some((product) => product.selected));
     setAllIssuesCompleted(selectedListItems?.every(canAddIssue));
@@ -200,21 +212,49 @@ export function ServiceDetailsContentOverview({
             />,
             hasValue: salesOrder?.date?.length > 0,
           },
+          {
+            label: 'Installed By Us',
+            value: <RadioGroup
+              name="serviceType"
+              value={localServiceType}
+              onChange={handleServiceTypeChange}
+            >
+              <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'flex-start', gap: 2, mt: -1 }}>
+                <FormControlLabel
+                  value="installed_by_us"
+                  control={<Radio />}
+                  label="YES"
+                />
+                <FormControlLabel
+                  value="retail"
+                  control={<Radio />}
+                  label="NO"
+                />
+              </Box>
+            </RadioGroup>,
+            icon: <Iconify
+              icon="fluent-mdl2:c-r-m-services"
+              sx={{ color: 'text.primary' }}
+            />,
+            hasValue: localServiceType?.length > 0,
+          },
 
         ].map((item, index) => (
           <Stack key={item?.label || index} spacing={1.5} direction="row">
             {item?.icon}
             <Box sx={{ width: '100%', display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-              <ListItemText
-                primary={item?.label}
-                secondary={item?.value}
-                primaryTypographyProps={{ typography: 'body2', color: 'text.secondary', mb: 0.5 }}
-                secondaryTypographyProps={{
-                  component: 'span',
-                  color: 'text.secondary',
-                  typography: 'subtitle2',
-                }}
-              />
+              {item?.hasValue && (
+                <ListItemText
+                  primary={item?.label}
+                  secondary={item?.value}
+                  primaryTypographyProps={{ typography: 'body2', color: 'text.secondary', mb: 0.5 }}
+                  secondaryTypographyProps={{
+                    component: 'span',
+                    color: 'text.secondary',
+                    typography: 'subtitle2',
+                  }}
+                />
+              )}
             </Box>
           </Stack>
         ))}
@@ -259,17 +299,19 @@ export function ServiceDetailsContentOverview({
           <Stack key={item?.label || index} spacing={1.5} direction="row" sx={{ minWidth: '100%' }}>
             {item?.icon}
             <Box sx={{ width: '100%', display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-              <ListItemText
-                primary={item?.label}
-                secondary={item?.value}
-                primaryTypographyProps={{ typography: 'body2', color: 'text.secondary', mb: 0.5 }}
-                secondaryTypographyProps={{
-                  component: 'span',
-                  color: 'text.secondary',
-                  typography: 'subtitle2',
-                }}
-                sx={{ width: '100%' }}
-              />
+              {item?.value && (
+                <ListItemText
+                  primary={item?.label}
+                  secondary={item?.value}
+                  primaryTypographyProps={{ typography: 'body2', color: 'text.secondary', mb: 0.5 }}
+                  secondaryTypographyProps={{
+                    component: 'span',
+                    color: 'text.secondary',
+                    typography: 'subtitle2',
+                  }}
+                  sx={{ width: '100%' }}
+                />
+              )}
             </Box>
           </Stack>
         ))}

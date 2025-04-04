@@ -84,31 +84,46 @@ export function KanbanColumnToolBar({
           disabled
         />
 
-        <Label
-          color={
-            percentage === 0
-              ? 'default'
-              : percentage > 0 && percentage < 100
-                ? 'warning'
-                : 'success'
-          }
-          variant="soft"
-          sx={{ typography: 'caption', fontSize: '10px', maxWidth: 100, minWidth: 100 }}
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'right',
+            justifyContent: 'flex-end',
+            flexGrow: 10,
+          }}
         >
-          {percentage === 100 ? (
-            <>
-              Finished <strong> ({percentage.toFixed(2)} %)</strong>
-            </>
-          ) : percentage > 0 && percentage < 100 ? (
-            <>
-              In Progress <strong> ({percentage.toFixed(2)} %)</strong>
-            </>
-          ) : (
-            <>
-              Not Started <strong> ({percentage.toFixed(2)} %)</strong>
-            </>
-          )}
-        </Label>
+          <Label
+            color={
+              percentage === 0
+                ? 'default'
+                : percentage > 0 && percentage < 100
+                  ? 'warning'
+                  : 'success'
+            }
+            variant="soft"
+            sx={{
+              typography: 'caption',
+              fontSize: '10px',
+              maxWidth: 100,
+              minWidth: 100,
+            }}
+          >
+            {percentage === 100 ? (
+              <>
+                Finished <strong> ({percentage.toFixed(2)} %)</strong>
+              </>
+            ) : percentage > 0 && percentage < 100 ? (
+              <>
+                In Progress <strong> ({percentage.toFixed(2)} %)</strong>
+              </>
+            ) : (
+              <>
+                Not Started <strong> ({percentage.toFixed(2)} %)</strong>
+              </>
+            )}
+          </Label>
+        </Box>
 
       </Stack>
 
