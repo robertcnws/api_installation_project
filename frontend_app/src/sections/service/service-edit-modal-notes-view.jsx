@@ -10,16 +10,12 @@ import { LoadingButton } from '@mui/lab';
 import Button from '@mui/material/Button';
 import { Dialog, DialogTitle, DialogActions } from '@mui/material';
 
-import { useRouter } from 'src/routes/hooks';
-
 import { CONFIG } from 'src/config-global';
-import { useServiceByIdQuery } from 'src/_mock/__services';
 
 import { toast } from 'src/components/snackbar';
-import { Form, Field, schemaHelper } from 'src/components/hook-form';
+import { Form, Field } from 'src/components/hook-form';
 
 import { LoadingContext } from 'src/auth/context/loading-context';
-import { useDataContext } from 'src/auth/context/data/data-context';
 
 
 // ----------------------------------------------------------------------

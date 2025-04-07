@@ -27,15 +27,18 @@ export const generateInstallationGuideFormReport = ({ currentProject, userLogged
     doc.setFontSize(14);
     doc.text("INSTALLATION ORDER GUIDE", 105, 25, null, null, "center");
 
-
+    const customerName = currentProject?.salesOrder?.customer?.customer_name || currentProject?.salesOrder?.customer_name || "";
+    const customerEmail = currentProject?.salesOrder?.customer?.email || "";
+    const customerPhone = currentProject?.salesOrder?.customer?.phone || currentProject?.salesOrder?.customer?.mobile || "";
     // Project Details
     doc.setFontSize(12);
     const salesOrderDetails = [
         [{ content: "SO #:", styles: { fontStyle: 'bold' } }, currentProject?.salesOrder.salesorder_number || ""],
         [{ content: "DATE:", styles: { fontStyle: 'bold' } }, fDate(currentProject?.salesOrder.date) || ""],
-        [{ content: "CUSTOMER:", styles: { fontStyle: 'bold' } }, currentProject?.salesOrder.customer.customer_name || ""],
-        [{ content: "PHONE:", styles: { fontStyle: 'bold' } }, currentProject?.salesOrder.customer.phone || ""],
-        [{ content: "EMAIL:", styles: { fontStyle: 'bold' } }, currentProject?.salesOrder.customer.email || ""],
+        [{ content: "CUSTOMER:", styles: { fontStyle: 'bold' } }, customerName],
+        [{ content: "PHONE:", styles: { fontStyle: 'bold' } }, customerPhone],
+        [{ content: "EMAIL:", styles: { fontStyle: 'bold' } }, customerEmail],
+
     ];
 
     doc.autoTable({

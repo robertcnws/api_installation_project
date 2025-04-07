@@ -83,8 +83,6 @@ export function KanbanView({
 
   const widthPercent = useMemo(() => (100 / (loadedServiceStages.length - 1)).toFixed(0) - 0.75, [loadedServiceStages]);
 
-  console.log('widthPercent', widthPercent);
-
   const cssVars = {
     '--item-gap': '10px',
     '--item-radius': '12px',

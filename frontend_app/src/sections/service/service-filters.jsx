@@ -40,7 +40,11 @@ export function ServiceFilters({
 
   const popoverCustom = usePopover();
 
+  const popoverTypeList = usePopover();
+
   const [isCustomOpen, setIsCustomOpen] = useState(false);
+
+  const [isTypeListOpen, setIsTypeListOpen] = useState(false);
 
   const renderLabel = filters.state.type.length
     ? filters.state.type.slice(0, 2).join(',')
@@ -51,39 +55,33 @@ export function ServiceFilters({
 
 
   const createCustomFilterName = useCallback(() => {
+    const name = filters.state.list === 'in progress' ? 'In progress' : 'Finished';
     const active = [];
-    if (custom.hasPermission) active.push('Need permission');
-    if (custom.isPreparation?.value) active.push('In preparation stage');
-    if (custom.isCoordination?.value) active.push('In coordination stage');
-    if (custom.isInstallation?.value) active.push('In service stage');
-    if (custom.isPermission?.value) active.push('In permission stage');
-    if (custom.isClosing?.value) active.push('In closing stage');
     if (custom.hasComments) active.push('Have comments');
     if (filters.state.startDate && filters.state.endDate) active.push(fDateRangeShortLabel(filters.state.startDate, filters.state.endDate));
     if (filters.state.name) active.push(`matches: ${filters.state.name}`);
-    return active.length > 0 ? `Installations (${active.join(', ')})` : 'All services';
+    return active.length > 0 ? `${name} Services (${active.join(', ')})` : `${name} services`;
   }, [custom, filters]);
 
   const [customFilterName, setCustomFilterName] = useState(createCustomFilterName());
+
+  const [customMarginTypeList, setCustomMarginTypeList] = useState(0);
 
   useEffect(() => {
     setCustomFilterName(createCustomFilterName());
   }, [createCustomFilterName]);
 
+  const handleFilterTypeList = useCallback((typeName) => {
+    onResetPage();
+    filters.setState({
+      list: typeName,
+    });
+  }, [filters, onResetPage]);
+
   const handleFilterCustom = useCallback((fieldName) => {
     onResetPage();
-    if (fieldName === 'hasPermission') {
-      const hasPermission = !filters.state.custom.hasPermission;
-      filters.setState({
-        custom: {
-          ...filters.state.custom,
-          hasPermission,
-        },
-      });
-    } else if (fieldName === 'isPreparation' ||
-      fieldName === 'isCoordination' ||
-      fieldName === 'isInstallation' ||
-      fieldName === 'isPermission' ||
+    if (fieldName === 'isPreparation' ||
+      fieldName === 'isRepair' ||
       fieldName === 'isClosing') {
       const value = !filters.state.custom[fieldName].value;
       const name = fieldName.substring(2).toLowerCase();
@@ -212,12 +210,6 @@ export function ServiceFilters({
   const renderCustomFilters = (
     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', minWidth: 100, p: 0 }}>
       <Box
-        onClick={!isInstaller(userLogged?.data?.user_role?.name) ?
-          (e) => {
-            popoverCustom.onOpen(e);
-            setIsCustomOpen((prev) => !prev);
-          } : null
-        }
         sx={{
           display: 'flex',
           alignItems: 'center',
@@ -226,18 +218,108 @@ export function ServiceFilters({
           p: 0.5,
         }}
       >
-        <Typography variant="h6" sx={{ color: 'text.secondary', fontWeight: 'fontWeightBold' }}>
+        <Typography variant="h6" sx={{ color: 'text.secondary', fontWeight: 'fontWeightBold' }} onClick={!isInstaller(userLogged?.data?.user_role?.name) ?
+          (e) => {
+            setCustomMarginTypeList(-5);
+            popoverTypeList.onOpen(e);
+            setIsTypeListOpen((prev) => !prev);
+          } : null
+        }>
           {customFilterName}
         </Typography>
         {!isInstaller(userLogged?.data?.user_role?.name) && (
-          <Button
-            sx={{ ml: 1, color: 'default.lighter' }}
-            variant="text"
-          >
-            <Iconify icon={isCustomOpen ? 'mingcute:up-fill' : 'mingcute:down-fill'} sx={{ mr: 1 }} />
-          </Button>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: 2, ml: 1 }}>
+            <IconButton
+              sx={{
+                color: 'default.lighter',
+                '&:hover': {
+                  boxShadow: 'none',
+                  backgroundColor: 'transparent',
+                },
+              }}
+              variant="text"
+              onClick={!isInstaller(userLogged?.data?.user_role?.name) ?
+                (e) => {
+                  setCustomMarginTypeList(-32);
+                  popoverTypeList.onOpen(e);
+                  setIsTypeListOpen((prev) => !prev);
+                } : null
+              }
+            >
+              <Iconify icon={isTypeListOpen ? 'mingcute:up-fill' : 'mingcute:down-fill'} sx={{ mr: 1 }} />
+            </IconButton>
+            <IconButton
+              sx={{
+                ml: -4,
+                color: 'default.lighter',
+                '&:hover': {
+                  boxShadow: 'none',
+                  backgroundColor: 'transparent',
+                },
+              }}
+              variant="text"
+              onClick={!isInstaller(userLogged?.data?.user_role?.name) ?
+                (e) => {
+                  popoverCustom.onOpen(e);
+                  setIsCustomOpen((prev) => !prev);
+                } : null
+              }
+            >
+              <Iconify icon={isCustomOpen ? 'lsicon:filter-filled' : 'uil:filter'} sx={{ mr: 1 }} />
+            </IconButton>
+          </Box>
         )}
       </Box>
+      <CustomPopover
+        open={popoverTypeList.open}
+        anchorEl={popoverTypeList.anchorEl}
+        onClose={(e) => {
+          popoverTypeList.onClose(e);
+          setIsTypeListOpen(false);
+        }}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'left',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'left',
+        }}
+        slotProps={{ paper: { sx: { p: 0, width: 260, ml: !isMobile ? customMarginTypeList : 0, mt: 2 } } }}
+        sx={{ maxHeight: 800, overflowY: 'auto', overflowX: 'hidden' }}
+      >
+        <Stack spacing={0} sx={{ py: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', width: 500, p: 1 }}>
+            <MenuList sx={{ p: 1 }}>
+
+              <MenuItem sx={{ py: 1 }} onClick={(e) => {
+                handleFilterTypeList('in progress');
+                popoverTypeList.onClose(e);
+                setIsTypeListOpen(false);
+              }}>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <ListItemIcon>
+                    <Iconify icon="grommet-icons:in-progress" sx={{ color: 'text.disabled' }} />
+                  </ListItemIcon>
+                  <ListItemText primary="In progress services" />
+                </Box>
+              </MenuItem>
+              <MenuItem sx={{ py: 1 }} onClick={(e) => {
+                handleFilterTypeList('finished');
+                popoverTypeList.onClose(e);
+                setIsTypeListOpen(false);
+              }}>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <ListItemIcon>
+                    <Iconify icon="octicon:tracked-by-closed-completed-16" sx={{ color: 'text.disabled' }} />
+                  </ListItemIcon>
+                  <ListItemText primary="Finished services" />
+                </Box>
+              </MenuItem>
+            </MenuList>
+          </Box>
+        </Stack>
+      </CustomPopover>
       <CustomPopover
         open={popoverCustom.open}
         anchorEl={popoverCustom.anchorEl}
@@ -293,33 +375,16 @@ export function ServiceFilters({
                 </Box>
               </MenuItem>
 
-              <MenuItem sx={{ py: 0 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', p: 0 }}>
-                  <Divider orientation="vertical" flexItem sx={{ color: 'text.disabled' }} >
-                    <ListItemText primary="Need service permission" />
-                  </Divider>
-                </Box>
-              </MenuItem>
-
-              <MenuItem sx={{ py: 0 }} onClick={() => handleFilterCustom('hasPermission')}>
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <ListItemIcon>
-                    <CheckBox
-                      checked={filters.state.custom.hasPermission}
-                      onChange={() => handleFilterCustom('hasPermission')}
-                    />
-                  </ListItemIcon>
-                  <ListItemText primary="Need permission?" />
-                </Box>
-              </MenuItem>
-              <MenuItem sx={{ py: 0 }}>
+              {filters.state.list === 'in progress' && [
+              
+              <MenuItem key="stages-divider" sx={{ py: 0 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', py: 0 }}>
                   <Divider orientation="vertical" flexItem sx={{ color: 'text.disabled' }} >
                     <ListItemText primary="Stages" />
                   </Divider>
                 </Box>
-              </MenuItem>
-              <MenuItem sx={{ py: 0 }} onClick={() => handleFilterCustom('isPreparation')}>
+              </MenuItem>,
+              <MenuItem key="stages-preparation" sx={{ py: 0 }} onClick={() => handleFilterCustom('isPreparation')}>
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
                   <ListItemIcon>
                     <CheckBox
@@ -329,41 +394,19 @@ export function ServiceFilters({
                   </ListItemIcon>
                   <ListItemText primary="Preparation Stage" />
                 </Box>
-              </MenuItem>
-              <MenuItem sx={{ py: 0 }} onClick={() => handleFilterCustom('isCoordination')}>
+              </MenuItem>,
+              <MenuItem key="stages-repair" sx={{ py: 0 }} onClick={() => handleFilterCustom('isRepair')}>
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
                   <ListItemIcon>
                     <CheckBox
-                      checked={filters.state.custom.isCoordination.value}
-                      onChange={() => handleFilterCustom('isCoordination')}
+                      checked={filters.state.custom.isRepair.value}
+                      onChange={() => handleFilterCustom('isRepair')}
                     />
                   </ListItemIcon>
-                  <ListItemText primary="Coordination Stage" />
+                  <ListItemText primary="Repair Stage" />
                 </Box>
-              </MenuItem>
-              <MenuItem sx={{ py: 0 }} onClick={() => handleFilterCustom('isInstallation')}>
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <ListItemIcon>
-                    <CheckBox
-                      checked={filters.state.custom.isInstallation.value}
-                      onChange={() => handleFilterCustom('isInstallation')}
-                    />
-                  </ListItemIcon>
-                  <ListItemText primary="Installation Stage" />
-                </Box>
-              </MenuItem>
-              <MenuItem sx={{ py: 0 }} onClick={() => handleFilterCustom('isPermission')}>
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <ListItemIcon>
-                    <CheckBox
-                      checked={filters.state.custom.isPermission.value}
-                      onChange={() => handleFilterCustom('isPermission')}
-                    />
-                  </ListItemIcon>
-                  <ListItemText primary="Permission Stage" />
-                </Box>
-              </MenuItem>
-              <MenuItem sx={{ py: 0 }} onClick={() => handleFilterCustom('isClosing')}>
+              </MenuItem>,
+              <MenuItem key="stages-closing" sx={{ py: 0 }} onClick={() => handleFilterCustom('isClosing')}>
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
                   <ListItemIcon>
                     <CheckBox
@@ -373,7 +416,8 @@ export function ServiceFilters({
                   </ListItemIcon>
                   <ListItemText primary="Closing Stage" />
                 </Box>
-              </MenuItem>
+              </MenuItem>,
+              ]}
               <MenuItem sx={{ py: 0 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', p: 0 }}>
                   <Divider orientation="vertical" flexItem sx={{ color: 'text.disabled' }} >
@@ -381,6 +425,7 @@ export function ServiceFilters({
                   </Divider>
                 </Box>
               </MenuItem>
+              
               <MenuItem sx={{ py: 0 }} onClick={() => handleFilterCustom('hasComments')}>
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
                   <ListItemIcon>

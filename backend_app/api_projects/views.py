@@ -991,6 +991,9 @@ def change_project_installation_guide_form(request, id):
     
     project_guide_products = json.loads(data.get('projectGuideProducts', [])) if data.get('projectGuideProducts') else project.project_guide_products
     
+    deleted_products = [p for p in project.project_guide_products if not p.get('deleted', False)]
+    
+    project_guide_products.extend(deleted_products)
     
     project.work_scope = work_scope
     project.project_materials_other_notes = other_notes
@@ -3444,5 +3447,100 @@ def remove_date_project(request, id):
             create_notification(module, info_id, info, type, user_reporter['username'])
             
         return Response({'message': 'Date removed successfully'})
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+    
+    
+#############################################
+# CHANGE DESCRIPTION PROJECT
+#############################################
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def change_description_project(request, id):
+    data = request.data
+    user_reporter = json.loads(data.get('userReporter', None))
+    try:
+        project = Project.objects(id=id).first()
+        if not project:
+            return Response({'error': 'Project not found'}, status=404)
+        
+        description = data.get('description', None)
+        work_scope = data.get('description', None)
+            
+        project.description = description
+        project.work_scope = work_scope
+        project.last_modified_time = timezone.now()
+        project.user_reporter = user_reporter if user_reporter else project.user_reporter
+        project.save()
+            
+        tracking_info = transform_data_to_mongo(project, include_fields=['id', 'name', 'number', 'description'])
+            
+        tracking = ProjectTracking(
+            user_reporter=user_reporter,
+            action=f'chnge description project ({tracking_info["id"]} - {tracking_info["name"]})',
+            created_time=timezone.now(),
+            managed_data={
+                'data': tracking_info
+            },
+        )
+        tracking.save()
+        if user_reporter:
+            module='projects'
+            info=f'has changed description in project {project.name}'
+            info_id=project.id
+            type='change_description_project'
+            create_notification(module, info_id, info, type, user_reporter['username'])
+        return Response({'message': 'Project updated successfully'})
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+    
+    
+#############################################
+# REMOVE PROJECT GUIDE PRODUCT
+#############################################
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def remove_guide_product_project(request, projectId, id):
+    data = request.data
+    user_reporter = json.loads(data.get('userReporter', None))
+    try:
+        project = Project.objects(id=projectId).first()
+        if not project:
+            return Response({'error': 'Project not found'}, status=404)
+        
+        guide_products = project.project_guide_products if project.project_guide_products else []
+        
+        if guide_products:
+            product = next((product for product in guide_products if str(product['id']) == id), None)
+            if product:
+                product['deleted'] = True
+                guide_products = [p for p in guide_products if str(p['id']) != id]
+                guide_products.append(product)
+                guide_products = sorted(guide_products, key=lambda x: x['id'], reverse=False)
+                            
+            
+                project.project_guide_products = guide_products
+                project.save()
+                    
+                tracking_info = transform_data_to_mongo(project, include_fields=['id', 'name', 'number', 'project_guide_products'])
+                    
+                tracking = ProjectTracking(
+                    user_reporter=user_reporter,
+                    action=f'remove project guide product ({tracking_info["id"]} - {tracking_info["name"]})',
+                    created_time=timezone.now(),
+                    managed_data={
+                        'data': tracking_info
+                    },
+                )
+                tracking.save()
+                if user_reporter:
+                    module='projects'
+                    info=f'has removed guide product in project {project.name}'
+                    info_id=project.id
+                    type='remove_guide_product_project'
+                    create_notification(module, info_id, info, type, user_reporter['username'])
+                return Response({'message': 'Project updated successfully'})
     except Exception as e:
         return Response({'error': str(e)}, status=500)

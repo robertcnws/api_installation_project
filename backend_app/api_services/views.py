@@ -2,13 +2,21 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from django.utils import timezone
+from django.conf import settings
 from api_projects.data_util import (
     transform_data_to_mongo,
     create_notification,
     create_entity_number,
     fix_order,
     fix_order_after_edit,
-    get_current_stage_from_tasks
+    get_current_stage_from_tasks,
+    to_aware,
+)
+from api_projects.s3_utils import (
+    upload_attachment_to_s3, 
+    generate_default_file_url,
+    delete_attachment_from_s3,
+    backup_mongo_to_s3,
 )
 from api_projects.models import (
     ProjectTracking,
@@ -19,6 +27,7 @@ from .models import (
     Service,
     ServiceStage,
     ServiceDefaultTask,
+    ServiceAttachment,
 )
 import json
 
@@ -1214,6 +1223,51 @@ def change_service_team(request, id):
     service.users_service_team = users_service_team if users_service_team else service.users_service_team
     service.last_modified_time = timezone.now()
     service.user_reporter = user_reporter if user_reporter else service.user_reporter
+    
+    all_tasks = service.service_default_tasks if service.service_default_tasks else []
+        
+    for task in all_tasks:
+            if isinstance(task.get('service_default_task', {}).get('service_stage', {}), dict):
+                if task.get('service_default_task', {}).get('service_stage', {}).get('name', '') == settings.SERVICE_REPAIR_STAGE:
+                    name = task.get('service_default_task', {}).get('name', '').lower()
+                    if settings.TASK_SERVICE_UPLOAD_REPAIR.lower() in name:
+                        if users_service_team:
+                            task['users_assignees'] = users_service_team
+                            task['user_reporter'] = user_reporter
+                            task['last_modified_time'] = timezone.now()
+                            
+    for task in all_tasks:
+            name = task.get('service_default_task', {}).get('name', '').lower()
+            if settings.TASK_SERVICE_ASSIGN_CREW.lower() in name:
+                if users_service_team:
+                    task['status'] = 'finished'
+                    task['percentage'] = 100
+                    task['user_reporter'] = user_reporter
+                    task['last_modified_time'] = timezone.now()
+                    
+                    not_started_tasks = [t for t in all_tasks if t['status'] == 'not started' and t['service_default_task']['order'] > task['service_default_task']['order']]
+                    
+                    sorted_tasks = sorted(not_started_tasks, key=lambda tt: tt['service_default_task']['order'])
+                    
+                    def get_next_task(task, sorted_tasks):
+                        return next(
+                            (tt for tt in sorted_tasks if tt['service_default_task']['order'] > task['service_default_task']['order']),
+                            None
+                        )
+                                
+                    next_task = get_next_task(task, sorted_tasks)
+                    
+                    if next_task:
+                        next_task['status'] = 'in progress'
+                        next_task['percentage'] = 50
+                        next_task['user_reporter'] = user_reporter
+                        next_task['last_modified_time'] = timezone.now()
+                        all_tasks = [t for t in all_tasks if str(t['service_default_task']['_id']) != str(next_task['service_default_task']['_id'])]
+                        all_tasks.append(next_task)
+                           
+    sorted_tasks = sorted(all_tasks, key=lambda x: x['service_default_task']['order'], reverse=True)
+        
+    service.service_default_tasks = sorted_tasks
         
     service.save()
     
@@ -1263,6 +1317,41 @@ def change_service_dates(request, id):
     service.end_date = end_date if end_date else service.end_date
     service.last_modified_time = timezone.now()
     service.user_reporter = user_reporter if user_reporter else service.user_reporter
+    
+    if start_date:
+        all_tasks = service.service_default_tasks if service.service_default_tasks else []
+                                
+        for task in all_tasks:
+                name = task.get('service_default_task', {}).get('name', '').lower()
+                if settings.TASK_SERVICE_SCHEDULE_DATE.lower() in name:
+                        task['status'] = 'finished'
+                        task['percentage'] = 100
+                        task['user_reporter'] = user_reporter
+                        task['last_modified_time'] = timezone.now()
+                        
+                        not_started_tasks = [t for t in all_tasks if t['status'] == 'not started' and t['service_default_task']['order'] > task['service_default_task']['order']]
+                        
+                        sorted_tasks = sorted(not_started_tasks, key=lambda tt: tt['service_default_task']['order'])
+                        
+                        def get_next_task(task, sorted_tasks):
+                            return next(
+                                (tt for tt in sorted_tasks if tt['service_default_task']['order'] > task['service_default_task']['order']),
+                                None
+                            )
+                                    
+                        next_task = get_next_task(task, sorted_tasks)
+                        
+                        if next_task:
+                            next_task['status'] = 'in progress'
+                            next_task['percentage'] = 50
+                            next_task['user_reporter'] = user_reporter
+                            next_task['last_modified_time'] = timezone.now()
+                            all_tasks = [t for t in all_tasks if str(t['service_default_task']['_id']) != str(next_task['service_default_task']['_id'])]
+                            all_tasks.append(next_task)
+                            
+        sorted_tasks = sorted(all_tasks, key=lambda x: x['service_default_task']['order'], reverse=True)
+            
+        service.service_default_tasks = sorted_tasks
         
     service.save()
     
@@ -1589,3 +1678,194 @@ def change_service_notes(request, id):
         'message': 'Service updated successfully',
         'data': json.loads(service.to_json())
     }, status=201)
+    
+    
+#############################################
+# DELETE SERVICE FILE
+#############################################
+
+@api_view(['DELETE'])
+@permission_classes([AllowAny])
+def delete_service_file(request, id, folder, file):
+    data = request.data
+    user_reporter = data.get('userReporter', None)
+    attachment_type = data.get('attachmentType', None)
+    try: 
+        obj = Service.objects(id=id).first()
+        attachments = obj.service_attachments if obj.service_attachments else []
+        attachments = [attachment for attachment in attachments if attachment['file'] !=  folder + '/' + file]
+        attachments = sorted(attachments, key=lambda x: to_aware(x['created_time']), reverse=True)
+        obj.service_attachments = attachments
+        
+        if len(obj.service_attachments) == 0:
+        
+            all_tasks = obj.service_default_tasks if obj.service_default_tasks else []
+            
+            target_task = settings.TASK_SERVICE_UPLOAD_ISSUES.lower() if attachment_type == 'issued' else settings.TASK_SERVICE_UPLOAD_REPAIR.lower()
+                                    
+            for task in all_tasks:
+                name = task.get('service_default_task', {}).get('name', '').lower()
+                if target_task in name:
+                    task['status'] = 'not started'
+                    task['percentage'] = 0
+                    task['user_reporter'] = user_reporter
+                    task['last_modified_time'] = timezone.now()
+                                
+            sorted_tasks = sorted(all_tasks, key=lambda x: x['service_default_task']['order'], reverse=True)
+                
+            obj.service_default_tasks = sorted_tasks
+        
+        obj.save()
+        
+        attachment = ServiceAttachment.objects(file=folder + '/' + file).first()
+        attachment.service = transform_data_to_mongo(obj, include_fields=['id', 'name', 'number'])
+        if not attachment:
+            return Response({'error': 'Attachment not found'}, status=404)
+        delete_attachment_from_s3(attachment.file)
+        tracking_info = transform_data_to_mongo(attachment)
+        attachment.delete()
+        tracking = ProjectTracking(
+            user_reporter=user_reporter,
+            action=f'delete service ({obj.id} - {obj.name}) file attachment',
+            created_time=timezone.now(),
+            managed_data={
+                'data': tracking_info
+            },
+        )
+        tracking.save()
+        
+        if user_reporter:
+            module='services'
+            info=f'has deleted file attachment in service {obj.name}'
+            info_id=obj.id
+            type='delete_service_file'
+            create_notification(module, info_id, info, type, user_reporter['username'])
+            
+        return Response({'message': 'Service file deleted successfully'})
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+    
+    
+#############################################
+# UPLOAD FILES TO SERVICE
+#############################################
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def upload_files_to_service(request, id): 
+    
+    service = Service.objects(id=id).first()
+    if not service:
+        return Response({'error': 'Service not found'}, status=404)
+    
+    last_attachments = service.service_attachments if service.service_attachments else []
+            
+    data = request.data
+    
+    user_reporter = json.loads(data.get('userReporter', None))
+    attachment_type = data.get('attachmentType', None)
+    
+    service_attachments = []
+    files = request.FILES.getlist('serviceAttachments')
+    
+    for file_obj in files:
+        key = upload_attachment_to_s3(file_obj, settings.AWS_S3_FOLDER_SERVICES)
+        if key:
+            attachment = ServiceAttachment(
+                name=file_obj.name,
+                file=key,
+                created_time=timezone.now(),
+                last_modified_time=timezone.now(),
+                user_upload=user_reporter,
+                attachment_type=attachment_type if attachment_type else 'file',
+            )
+            attachment.save()
+            service_attachments.append(transform_data_to_mongo(attachment))
+            
+    last_attachments.extend(service_attachments)
+            
+    last_attachments = sorted(last_attachments, key=lambda x: x['name'], reverse=True)
+    
+    service.last_modified_time = timezone.now()
+    service.user_reporter = user_reporter if user_reporter else service.user_reporter
+    service.service_attachments = last_attachments if last_attachments else service.service_attachments
+    
+    if len(service.service_attachments) > 0:
+        
+            all_tasks = service.service_default_tasks if service.service_default_tasks else []
+            
+            target_task = settings.TASK_SERVICE_UPLOAD_ISSUES.lower() if attachment_type == 'issued' else settings.TASK_SERVICE_UPLOAD_REPAIR.lower()
+                                    
+            for task in all_tasks:
+                name = task.get('service_default_task', {}).get('name', '').lower()
+                if target_task in name:
+                    task['status'] = 'finished'
+                    task['percentage'] = 100
+                    task['user_reporter'] = user_reporter
+                    task['last_modified_time'] = timezone.now()
+                            
+                    not_started_tasks = [t for t in all_tasks if t['status'] == 'not started' and t['service_default_task']['order'] > task['service_default_task']['order']]
+                            
+                    sorted_tasks = sorted(not_started_tasks, key=lambda tt: tt['service_default_task']['order'])
+                            
+                    def get_next_task(task, sorted_tasks):
+                        return next(
+                            (tt for tt in sorted_tasks if tt['service_default_task']['order'] > task['service_default_task']['order']),
+                            None
+                        )
+                                        
+                    next_task = get_next_task(task, sorted_tasks)
+                            
+                    if next_task:
+                        next_task['status'] = 'in progress'
+                        next_task['percentage'] = 50
+                        next_task['user_reporter'] = user_reporter
+                        next_task['last_modified_time'] = timezone.now()
+                        all_tasks = [t for t in all_tasks if str(t['service_default_task']['_id']) != str(next_task['service_default_task']['_id'])]
+                        all_tasks.append(next_task)
+                                
+            sorted_tasks = sorted(all_tasks, key=lambda x: x['service_default_task']['order'], reverse=True)
+                
+            service.service_default_tasks = sorted_tasks
+        
+    service.save()
+    
+    tracking = ProjectTracking(
+        user_reporter=user_reporter,
+        action=f'upload files to service ({service.id} - {service.name})',
+        created_time=timezone.now(),
+        managed_data={
+            'data': transform_data_to_mongo(service, include_fields=['id', 'name', 'number', 'service_attachments'])
+        },
+    )
+    tracking.save()
+    
+    if user_reporter:
+        module='services'
+        info=f'has uploaded file attachments to service {service.name}'
+        info_id=service.id
+        type='upload_files_to_service'
+        create_notification(module, info_id, info, type, user_reporter['username'])
+        
+    return Response({
+        'message': 'Uploaded files to service successfully',
+        'data': json.loads(service.to_json())
+    }, status=201)
+    
+    
+#############################################
+# GET FILE URL
+#############################################
+    
+    
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_default_file_url(request):
+    object_key = request.query_params.get('key')
+    if not object_key:
+        return Response({'error': 'A key was not sended'}, status=400)
+    try:
+        url = generate_default_file_url(object_key)
+        return Response({'url': url})
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)

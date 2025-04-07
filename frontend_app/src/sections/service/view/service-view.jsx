@@ -125,6 +125,7 @@ export function ServiceView() {
   }, []);
 
   const filters = useSetState({
+    list: 'in progress',
     name: '',
     type: [],
     startDate: null,
@@ -135,16 +136,8 @@ export function ServiceView() {
         name: 'preparation',
         value: false,
       },
-      isCoordination: {
-        name: 'coordination',
-        value: false,
-      },
-      isInstallation: {
-        name: 'installation',
-        value: false,
-      },
-      isPermission: {
-        name: 'permission',
+      isRepair: {
+        name: 'repair',
         value: false,
       },
       isClosing: {
@@ -172,10 +165,10 @@ export function ServiceView() {
     (!!filters.state.startDate && !!filters.state.endDate) ||
     filters.state.custom.hasPermission ||
     filters.state.custom.isPreparation?.value ||
-    // filters.state.custom.isCoordination?.value ||
+    filters.state.custom.isRepair?.value ||
     // filters.state.custom.isInstallation?.value ||
     // filters.state.custom.isPermission?.value ||
-    // filters.state.custom.isClosing?.value ||
+    filters.state.custom.isClosing?.value ||
     filters.state.custom.hasComments;
 
   const notFound = (!dataFiltered.length && canReset) || !dataFiltered.length;
@@ -419,7 +412,7 @@ export function ServiceView() {
 }
 
 function applyFilter({ inputData, comparator, filters, dateError }) {
-  const { name, type, startDate, endDate, custom } = filters;
+  const { list, name, type, startDate, endDate, custom } = filters;
 
   const stabilizedThis = inputData.map((el, index) => [el, index]);
 
@@ -430,6 +423,15 @@ function applyFilter({ inputData, comparator, filters, dateError }) {
   });
 
   inputData = stabilizedThis.map((el) => el[0]);
+
+  if (list) {
+      if (list === 'in progress') {
+        inputData = inputData.filter((file) => file.currentStage.name.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) === -1);
+      }
+      else if (list === 'finished') {
+        inputData = inputData.filter((file) => file.currentStage.name.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) !== -1);
+      }
+    }
 
   if (name) {
     inputData = inputData.filter(
@@ -483,22 +485,14 @@ function applyFilter({ inputData, comparator, filters, dateError }) {
     }
   }
 
-
-
-  if (custom.isPreparation.value || custom.isCoordination.value || custom.isInstallation.value || custom.isPermission.value || custom.isClosing.value) {
+  if (custom.isPreparation.value || custom.isRepair.value || custom.isClosing.value) {
     inputData = inputData.filter(file => {
       const { currentStage } = file;
       if (currentStage && currentStage.name) {
         if (custom.isPreparation.value && currentStage.name.toLowerCase().indexOf(custom.isPreparation.name.toLowerCase()) !== -1) {
           return true;
         }
-        if (custom.isCoordination.value && currentStage.name.toLowerCase().indexOf(custom.isCoordination.name.toLowerCase()) !== -1) {
-          return true;
-        }
-        if (custom.isInstallation.value && currentStage.name.toLowerCase().indexOf(custom.isInstallation.name.toLowerCase()) !== -1) {
-          return true;
-        }
-        if (custom.isPermission.value && currentStage.name.toLowerCase().indexOf(custom.isPermission.name.toLowerCase()) !== -1) {
+        if (custom.isRepair.value && currentStage.name.toLowerCase().indexOf(custom.isRepair.name.toLowerCase()) !== -1) {
           return true;
         }
         if (custom.isClosing.value && currentStage.name.toLowerCase().indexOf(custom.isClosing.name.toLowerCase()) !== -1) {

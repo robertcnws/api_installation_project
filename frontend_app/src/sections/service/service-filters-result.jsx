@@ -32,12 +32,7 @@ export function ServiceFiltersResult({ filters, onResetPage, totalResults, sx })
   const handleRemoveCustom = useCallback(
     (customType) => {
       onResetPage();
-      if (customType === 'hasPermission') {
-        filters.setState((prevState) => ({
-          custom: { ...prevState.custom, hasPermission: false }
-        }));
-      }
-      else if (customType === 'hasComments') {
+      if (customType === 'hasComments') {
         filters.setState((prevState) => ({
           custom: { ...prevState.custom, hasComments: false }
         }));
@@ -47,26 +42,16 @@ export function ServiceFiltersResult({ filters, onResetPage, totalResults, sx })
           custom: { ...prevState.custom, isPreparation: { value: false, name: 'preparation' } }
         }));
       }
-      // else if (customType === 'isCoordination') {
-      //   filters.setState((prevState) => ({
-      //     custom: { ...prevState.custom, isCoordination: { value: false, name: 'coordination' } }
-      //   }));
-      // }
-      // else if (customType === 'isPermission') {
-      //   filters.setState((prevState) => ({
-      //     custom: { ...prevState.custom, isPermission: { value: false, name: 'permission' } }
-      //   }));
-      // }
-      // else if (customType === 'isInstallation') {
-      //   filters.setState((prevState) => ({
-      //     custom: { ...prevState.custom, isInstallation: { value: false, name: 'installation' } }
-      //   }));
-      // }
-      // else if (customType === 'isClosing') {
-      //   filters.setState((prevState) => ({
-      //     custom: { ...prevState.custom, isClosing: { value: false, name: 'closing' } }
-      //   }));
-      // }
+      else if (customType === 'isRepair') {
+        filters.setState((prevState) => ({
+          custom: { ...prevState.custom, isRepair: { value: false, name: 'repair' } }
+        }));
+      }
+      else if (customType === 'isClosing') {
+        filters.setState((prevState) => ({
+          custom: { ...prevState.custom, isClosing: { value: false, name: 'closing' } }
+        }));
+      }
     }, [filters, onResetPage]);
 
 
@@ -101,32 +86,20 @@ export function ServiceFiltersResult({ filters, onResetPage, totalResults, sx })
         />
       </FiltersBlock>
 
-      <FiltersBlock label="Need Permission:" isShow={Boolean(filters.state.custom.hasPermission)}>
-        <Chip {...chipProps} label='Yes' onDelete={() => handleRemoveCustom('hasPermission')} />
-      </FiltersBlock>
-
       <FiltersBlock label="Has Comment(s):" isShow={Boolean(filters.state.custom.hasComments)}>
         <Chip {...chipProps} label='Yes' onDelete={() => handleRemoveCustom('hasComments')} />
       </FiltersBlock>
 
       <FiltersBlock label="Stage(s):" isShow={
         Boolean(filters.state.custom.isPreparation.value || 
-          filters.state.custom.isCoordination.value || 
-          filters.state.custom.isPermission.value ||
-          filters.state.custom.isInstallation.value ||
+          filters.state.custom.isRepair.value || 
           filters.state.custom.isClosing.value)
       }>
         {filters.state.custom.isPreparation.value && (
           <Chip {...chipProps} label='Preparation' onDelete={() => handleRemoveCustom('isPreparation')} />
         )}
-        {filters.state.custom.isCoordination.value && (
-          <Chip {...chipProps} label='Coordination' onDelete={() => handleRemoveCustom('isCoordination')} />
-        )}
-        {filters.state.custom.isInstallation.value && (
-          <Chip {...chipProps} label='Installation' onDelete={() => handleRemoveCustom('isInstallation')} />
-        )}
-        {filters.state.custom.isPermission.value && (
-          <Chip {...chipProps} label='Permission' onDelete={() => handleRemoveCustom('isPermission')} />
+        {filters.state.custom.isRepair.value && (
+          <Chip {...chipProps} label='Repair' onDelete={() => handleRemoveCustom('isRepair')} />
         )}
         {filters.state.custom.isClosing.value && (
           <Chip {...chipProps} label='Closing' onDelete={() => handleRemoveCustom('isClosing')} />

@@ -58,7 +58,7 @@ export function ServiceDetailsContentOverview({
   const [localServiceType, setLocalServiceType] = useState(service?.serviceType || 'retail');
 
   useEffect(() => {
-    setLocalServiceType(service ? service.serviceType : 'retail');
+    setLocalServiceType(service ? service?.serviceType : 'retail');
   }, [service]);
 
   const handleServiceTypeChange = (e) => {
@@ -216,7 +216,7 @@ export function ServiceDetailsContentOverview({
             label: 'Installed By Us',
             value: <RadioGroup
               name="serviceType"
-              value={localServiceType}
+              value={localServiceType || 'retail'}
               onChange={handleServiceTypeChange}
             >
               <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'flex-start', gap: 2, mt: -1 }}>
@@ -236,7 +236,7 @@ export function ServiceDetailsContentOverview({
               icon="fluent-mdl2:c-r-m-services"
               sx={{ color: 'text.primary' }}
             />,
-            hasValue: localServiceType?.length > 0,
+            hasValue: true,
           },
 
         ].map((item, index) => (

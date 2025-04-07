@@ -124,6 +124,7 @@ export function KanbanDetailsTaskAttachments({
         const link = document.createElement('a');
         link.href = file.fileUrl;
         link.download = file.name;
+        link.target = '_blank';
 
         document.body.appendChild(link);
         link.click();

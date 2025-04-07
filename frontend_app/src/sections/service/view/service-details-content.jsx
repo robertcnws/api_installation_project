@@ -11,7 +11,7 @@ import { Box, Chip, Table, Radio, Button, Tooltip, TableRow, ListItem, TableBody
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
-import { fDate, fIsAfter, fDateTime } from 'src/utils/format-time';
+import { fDate, fIsAfter } from 'src/utils/format-time';
 import { getServiceInstaller } from 'src/utils/service-tasks-utils';
 import { filteredDescriptionJson } from 'src/utils/project-tasks-utils';
 import { isInstaller, listRolesAndSubroles } from 'src/utils/check-permissions';
@@ -434,7 +434,7 @@ export function ServiceDetailsContent({
             </TableCell>
           </TableRow>
 
-          <TableRow>
+          {/* <TableRow>
             <TableCell>
               <Typography variant="subtitle2" color="text.secondary">Estimated Closing Date:</Typography>
             </TableCell>
@@ -506,7 +506,7 @@ export function ServiceDetailsContent({
                   </IconButton>
                 )}
             </TableCell>
-          </TableRow>
+          </TableRow> */}
 
         </TableBody>
 
@@ -1128,11 +1128,11 @@ export function ServiceDetailsContent({
             variant="filled"
             sx={{
               bgcolor: 'whitesmoke',
-              color: service?.serviceNotes ? 'warning.main' : 'text.primary',
+              color: service?.serviceNotes ? 'success.main' : 'warning.main',
               cursor: 'pointer',
               '&:hover': {
                 bgcolor: 'text.lighter',
-                color: 'primary.main',
+                color: service?.serviceNotes ? 'success.main' : 'warning.main',
               },
             }}
             onClick={() => {
@@ -1150,15 +1150,18 @@ export function ServiceDetailsContent({
             variant="filled"
             sx={{
               bgcolor: 'whitesmoke',
-              color: 'text.primary',
+              color: service?.serviceAttachments?.length > 0 ? 'success.main' : 'warning.main',
               cursor: 'pointer',
               '&:hover': {
                 bgcolor: 'text.lighter',
-                color: 'primary.main',
+                color: service?.serviceAttachments?.length > 0 ? 'success.main' : 'warning.main',
               },
             }}
+            onClick={() => {
+              setOpenDialogs({ ...openDialogs, editAttachments: true });
+            }}
           >
-            Add files
+            {service?.serviceAttachments?.length > 0 ? 'Edit' : 'Add'} Files
           </Label>
         </Box>
       </Box>
@@ -1192,9 +1195,9 @@ export function ServiceDetailsContent({
 
 
   const dynamicHeight = useMemo(() => {
-    let height = selectedServicePlace?.id === 1 && !service?.userManager?.name ? 320 :
-      selectedServicePlace?.id === 1 && service?.userManager?.name ? 315 :
-        service?.userManager?.name ? 315 : 355
+    let height = selectedServicePlace?.id === 1 && !service?.userManager?.name ? 340 :
+      selectedServicePlace?.id === 1 && service?.userManager?.name ? 335 :
+        service?.userManager?.name ? 355 : 375
 
     if (service?.usersServiceTeam?.length > 0) {
       height -= 5

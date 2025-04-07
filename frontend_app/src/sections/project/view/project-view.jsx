@@ -553,8 +553,6 @@ function applyFilter({ inputData, comparator, filters, dateError }) {
     }
   }
 
-
-
   if (custom.isPreparation.value || custom.isCoordination.value || custom.isInstallation.value || custom.isPermission.value || custom.isClosing.value) {
     inputData = inputData.filter(file => {
       const { currentStage } = file;

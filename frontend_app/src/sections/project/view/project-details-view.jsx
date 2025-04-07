@@ -33,6 +33,7 @@ import { ProjectEditModalAddressView } from './project-edit-modal-address-view';
 import { ProjectDetailsAttachmentView } from './project-details-attachment-view';
 import { ProjectDetailsReleaseFormView } from './project-details-release-form-view';
 import { ProjectEditModalRefNumberView } from './project-edit-modal-ref-number-view';
+import { ProjectEditModalDescriptionView } from './project-edit-modal-description-view';
 import { ProjectEditModalPhoneNumberView } from './project-edit-modal-phone-number-view';
 import { ProjectDetailsReleaseFormInstallerView } from './project-details-release-form-installer-view';
 import { ProjectDetailsInstallationGuideFormView } from './project-details-installation-guide-form-view';
@@ -67,6 +68,7 @@ export function ProjectDetailsView({ projectId }) {
         phoneNumber: false,
         refNumber: false,
         installationTeam: false,
+        description: false,
     });
 
     const item = useMemo(() => loadedProjects?.find((project) => project.id === projectId), [loadedProjects, projectId]);
@@ -399,6 +401,11 @@ export function ProjectDetailsView({ projectId }) {
                 projectId={itemById?.id}
                 open={openDialogs.refNumber}
                 onClose={() => setOpenDialogs({ ...openDialogs, refNumber: false })}
+            />
+            <ProjectEditModalDescriptionView
+                project={itemById}
+                open={openDialogs.description}
+                onClose={() => setOpenDialogs({ ...openDialogs, description: false })}
             />
 
             <ConfirmDialog

@@ -50,7 +50,18 @@ export function ProjectEditAttachments({
   const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
 
   useEffect(() => {
-    const attachments = project.projectAttachments || [];
+    const tasks = project?.projectDefaultTasks
+    const taskAttachments = tasks?.map((task) =>
+      task?.project_task_attachments.map((attachment) => ({
+        ...attachment,
+        current_stage: attachment?.due_project_stage,
+        task_id: task?.project_default_task?.id,
+      }))).flat();
+
+    const projectAttachments = project.projectAttachments || [];
+
+    const attachments = [...projectAttachments, ...taskAttachments] || [];
+
     if (!attachments.length) {
       setInitialFiles([]);
       return;
@@ -106,7 +117,10 @@ export function ProjectEditAttachments({
     const isLocalFile = fileToRemove instanceof File;
     if (!fileToRemove.isNew && !isLocalFile) {
       try {
-        await axios.delete(`${CONFIG.apiUrl}/projects/delete/file/${id}/project/${fileToRemove.file}/`, {
+        const url = fileToRemove.file.indexOf('tasks/') !== -1
+          ? `${CONFIG.apiUrl}/projects/delete/file/${id}/project/${fileToRemove.task_id}/task/${fileToRemove.file}/`
+          : `${CONFIG.apiUrl}/projects/delete/file/${id}/project/${fileToRemove.file}/`;
+        await axios.delete(url, {
           data: {
             userReporter: userLogged?.data,
           },
@@ -180,6 +194,7 @@ export function ProjectEditAttachments({
     const link = document.createElement('a');
     link.href = file.fileUrl;
     link.download = file.name;
+    link.target = '_blank';
 
     document.body.appendChild(link);
     link.click();

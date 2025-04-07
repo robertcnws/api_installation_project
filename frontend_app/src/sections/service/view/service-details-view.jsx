@@ -31,8 +31,9 @@ import { ServiceEditModalPhoneNumberView } from 'src/sections/service/service-ed
 
 import { useDataContext } from 'src/auth/context/data/data-context';
 
-import { ServiceDetailsContentOverview } from '../service-details-content-overview';
 import { ServiceEditModalNotesView } from '../service-edit-modal-notes-view';
+import { ServiceDetailsContentOverview } from '../service-details-content-overview';
+import { ServiceEditModalAttachmentsView } from '../service-edit-modal-attachments-view';
 
 // ----------------------------------------------------------------------
 
@@ -334,6 +335,12 @@ export function ServiceDetailsView({ serviceId }) {
                 service={itemById}
                 open={openDialogs.editNotes}
                 onClose={() => setOpenDialogs({ ...openDialogs, editNotes: false })}
+            />
+
+            <ServiceEditModalAttachmentsView
+                service={itemById}
+                open={openDialogs.editAttachments}
+                onClose={() => setOpenDialogs({ ...openDialogs, editAttachments: false })}
             />
 
             <ConfirmDialog

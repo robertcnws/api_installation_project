@@ -97,21 +97,30 @@ export function ProjectDetailsInstallationGuideFormView({
         isNew: false,
         checked: item?.checked || false,
       }));
+
+      console.log('project?.projectGuideProducts', project?.projectGuideProducts);
+      
       const lastItems = items.map((item) => {
         const product = project?.projectGuideProducts?.find((p) => p.id === item.id);
+
         const finalItem = {
           ...item,
           name: product?.name || item.name,
           price: product?.price || (item.name.toLowerCase().includes('mullion') ? 0 : item.price),
           quantity: product?.quantity || item.quantity,
           notes: product?.notes || '',
-          checked: product?.checked,
+          checked: product?.checked || false,
+          deleted: product?.deleted || false,
         }
         return finalItem;
       });
       const newItems = project?.projectGuideProducts?.filter((item) => !lastItems.some((i) => i.id === item.id)) || [];
 
-      const finalItems = [...lastItems, ...newItems];
+      const joinedItems = [...lastItems, ...newItems];
+
+      console.log('joinedItems', joinedItems);
+
+      const finalItems = joinedItems.filter((item) => !item.deleted);
 
       setProductsData(combineByName(finalItems.sort((a, b) => a.id - b.id)));
     }
@@ -139,7 +148,11 @@ export function ProjectDetailsInstallationGuideFormView({
     socket.onmessage = (event) => {
       const message = JSON.parse(event.data);
       if (message.type === 'created' || message.type === 'updated') {
-        setProductsData((prevData) => project?.id === message.item.id ? combineByName(message.item.projectGuideProducts) : prevData);
+        setProductsData(
+          (prevData) => project?.id === message.item.id ?
+            combineByName(message.item.projectGuideProducts).filter((item) => !item.deleted) :
+            prevData
+        );
         setMaterials((prevData) => project?.id === message.item.id ? message.item.projectMaterials : prevData);
       }
       else if (message.type === 'deleted') {
@@ -184,9 +197,29 @@ export function ProjectDetailsInstallationGuideFormView({
     ]);
   };
 
-  const handleRemoveProduct = (id) => {
-    setProductsData((prev) => prev.filter((item) => item.id !== id));
-  };
+  const handleRemoveProduct = useCallback(async (id) => {
+    const product = project?.projectGuideProducts?.find((p) => p.id === id);
+    if (product) {
+      try {
+        const formData = new FormData();
+        formData.append('userReporter', JSON.stringify(userLogged?.data));
+
+        const promise = axios.post(`${CONFIG.apiUrl}/projects/remove/project/${project?.id}/guide-product/${id}/`, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+
+        await promise;
+
+      } catch (error) {
+        console.error(error);
+      }
+    }
+    else {
+      setProductsData((prev) => prev.filter((item) => item.id !== id));
+    }
+  }, [userLogged, project]);
 
   const handleProductChange = (id, field, value) => {
     setProductsData((prev) => (
@@ -261,7 +294,7 @@ export function ProjectDetailsInstallationGuideFormView({
   const defaultValues = useMemo(() => ({
     workScope: project?.workScope || '',
     otherNotes: project?.projectMaterialsOtherNotes || '',
-    projectGuideProducts: combineByName(project?.projectGuideProducts) || [],
+    projectGuideProducts: combineByName(project?.projectGuideProducts || []),
     projectMaterials: project?.projectMaterials || [],
   }), [project]);
 
@@ -393,7 +426,7 @@ export function ProjectDetailsInstallationGuideFormView({
         userReporter: JSON.stringify(userLogged?.data),
       });
       await promise;
-      setProductsData((prev) => prev.map((p) => (p.id === id ? newProduct : p)));
+      setProductsData((prev) => prev.map((p) => (p.id === id ? newProduct : p)).filter((p) => !p.deleted));
     }
     catch (error) {
       console.error(error);
@@ -409,7 +442,24 @@ export function ProjectDetailsInstallationGuideFormView({
       {/* )} */}
       {[
         {
-          label: 'Work Scope & Description',
+          label: (
+            <Stack spacing={1} direction="row">
+              <Typography variant='subtitle2'>Work Scope & Description</Typography>
+              <IconButton variant="text" color={project?.description ? "primary" : "warning"} size="small" sx={{
+                // ml: -15, 
+                minWidth: 15,
+                mt: -1,
+                '&:hover': {
+                  boxShadow: 'none',
+                  backgroundColor: 'transparent',
+                },
+              }}
+                onClick={() => setOpenDialogs({ ...openDialogs, description: true })}
+              >
+                <Iconify icon="fluent:slide-text-edit-20-regular" color="primary" width={22} />
+              </IconButton>
+            </Stack>
+          ),
           value: (
             <>
               <Stack spacing={1} direction="column">
@@ -424,7 +474,7 @@ export function ProjectDetailsInstallationGuideFormView({
         {
           label: (
             <Stack spacing={1} direction="row">
-              <Typography>Items:</Typography>
+              <Typography variant='subtitle2'>Items</Typography>
               {project?.projectGuideProducts?.length === 0 && (
                 <Label color="error">This info has not been saved yet...</Label>
               )}
@@ -761,7 +811,14 @@ export function ProjectDetailsInstallationGuideFormView({
           icon: <Iconify icon="qlementine-icons:items-tree-16" />,
         },
         {
-          label: 'Materials:',
+          label: (
+            <Stack spacing={1} direction="row">
+              <Typography variant='subtitle2'>Materials</Typography>
+              {project?.projectMaterials?.length === 0 && (
+                <Label color="error">This info has not been saved yet...</Label>
+              )}
+            </Stack>
+          ),
           value: (
             <>
               <Stack spacing={1} direction="column">
@@ -785,7 +842,7 @@ export function ProjectDetailsInstallationGuideFormView({
                               }}>
                                 <Typography sx={{ mt: materials.length !== 0 ? 0.4 : 1.5 }} variant='subtitle2'>Notes</Typography>
                                 {materials.length === 0 && (
-                                  <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'flex-end', mr: -29 }}>
+                                  <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'flex-end', mr: -19 }}>
                                     <IconButton variant="outlined" color='success' onClick={handleAddMaterial} disabled={!canAddMaterial} sx={{
                                       '&:hover': {
                                         boxShadow: 'none',
@@ -1032,7 +1089,11 @@ export function ProjectDetailsInstallationGuideFormView({
           icon: <Iconify icon="devicon-plain:angularmaterial" />,
         },
         {
-          label: 'Other notes',
+          label: (
+            <Stack spacing={1} direction="row">
+              <Typography variant='subtitle2'>Other Notes</Typography>
+            </Stack>
+          ),
           value: (
             <Stack spacing={1} direction="column">
               <Field.Text multiline rows={2} name="otherNotes" placeholder="Write your other notes here..." />
@@ -1067,7 +1128,8 @@ export function ProjectDetailsInstallationGuideFormView({
           type="submit"
           variant="contained"
           loading={isSubmitting}
-          disabled={!isFormValid || !isCustomDirty || !allProductsChecked}
+          // disabled={!isFormValid || !isCustomDirty || !allProductsChecked || productsData.length === 0 || materials.length === 0}
+          disabled={!isFormValid || !isCustomDirty || productsData.length === 0 || materials.length === 0}
         >
           Save
         </LoadingButton>

@@ -14,6 +14,8 @@ urlpatterns = [
     path('delete/service-issue/<str:id>/', views.delete_service_issue, name='delete_service_issue'),
     path('delete/service-issues/', views.delete_service_issues, name='delete_service_issues'),
     # SERVICE
+    path('delete/file/<str:id>/service/<str:folder>/<str:file>/', views.delete_service_file, name='delete_service_file'),
+    path('upload/service/<str:id>/file/', views.upload_files_to_service, name='upload_files_to_service'),
     path('create/service/', views.create_service, name='create_service'),
     path('delete/service/<str:id>/', views.delete_service, name='delete_service'),
     path('delete/services/', views.delete_services, name='delete_services'),
@@ -41,5 +43,7 @@ urlpatterns = [
     path('edit/stage/<str:id>/', views.edit_service_stage, name='edit_service_stage'),
     path('delete/stage/<str:id>/', views.delete_service_stage, name='delete_service_stage'),
     path('delete/stages/', views.delete_service_stages, name='delete_service_stages'),
+    # GET FILE URL FROM AWS S3
+    path('get-file-url/', views.get_default_file_url, name='get_file_url'),
     
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

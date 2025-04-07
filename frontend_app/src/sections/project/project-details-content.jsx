@@ -7,7 +7,7 @@ import Avatar from '@mui/material/Avatar';
 import { useTheme } from '@mui/material/styles';
 import Grid from '@mui/material/Unstable_Grid2';
 import Typography from '@mui/material/Typography';
-import { Box, Table, Switch, TableRow, TableBody, TableCell, IconButton, Tooltip } from '@mui/material';
+import { Box, Table, Switch, Tooltip, TableRow, TableBody, TableCell, IconButton } from '@mui/material';
 
 import { getProjectInstaller } from 'src/utils/project-tasks-utils';
 import { fDate, fIsAfter, fDateTime, fDuration } from 'src/utils/format-time';
@@ -572,23 +572,25 @@ export function ProjectDetailsContent({
           <Typography key={index} variant="caption" color="text.primary" sx={{ mb: 0.5, textAlign: 'justify', fontWeight: index === 0 ? 'bold' : 'normal' }}>
             {line}
           </Typography>
-          {index === 0 && project?.description && (
-            <Tooltip title={`Change description for project ${project?.name}`} arrow>
-              <IconButton variant="text" color={project?.description ? "primary" : "warning"} size="small" sx={{
-                // ml: -15, 
-                minWidth: 15,
-                mt: -1,
-                '&:hover': {
-                  boxShadow: 'none',
-                  backgroundColor: 'transparent',
-                },
-              }}
-                onClick={() => setOpenDialogs({ ...openDialogs, address: true })}
-              >
-                <Iconify icon="fluent:slide-text-edit-20-regular" color="primary" width={22} />
-              </IconButton>
-            </Tooltip>
-          )}
+          {(index === 0 &&
+            project?.description &&
+            listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) && (
+              <Tooltip title={`Change description for project ${project?.name}`} arrow>
+                <IconButton variant="text" color={project?.description ? "primary" : "warning"} size="small" sx={{
+                  // ml: -15, 
+                  minWidth: 15,
+                  mt: -1,
+                  '&:hover': {
+                    boxShadow: 'none',
+                    backgroundColor: 'transparent',
+                  },
+                }}
+                  onClick={() => setOpenDialogs({ ...openDialogs, description: true })}
+                >
+                  <Iconify icon="fluent:slide-text-edit-20-regular" color="primary" width={22} />
+                </IconButton>
+              </Tooltip>
+            )}
         </Box>
       ))}
       {project?.salesOrder?.custom_fields?.map((field, index) => (

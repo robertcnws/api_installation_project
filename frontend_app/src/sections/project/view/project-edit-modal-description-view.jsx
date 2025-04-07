@@ -10,15 +10,12 @@ import { LoadingButton } from '@mui/lab';
 import Button from '@mui/material/Button';
 import { Dialog, DialogTitle, DialogActions } from '@mui/material';
 
-import { useRouter } from 'src/routes/hooks';
-
 import { CONFIG } from 'src/config-global';
 
 import { toast } from 'src/components/snackbar';
-import { Form, Field, schemaHelper } from 'src/components/hook-form';
+import { Form, Field } from 'src/components/hook-form';
 
 import { LoadingContext } from 'src/auth/context/loading-context';
-import { useDataContext } from 'src/auth/context/data/data-context';
 
 
 // ----------------------------------------------------------------------
@@ -120,7 +117,7 @@ export function ProjectEditModalDescriptionView({
 
     const renderService = (
         <Dialog fullWidth maxWidth="md" open={open} onClose={onClose}>
-                <DialogTitle>{project?.description ? 'Update' : 'Add'} Notes to Service {project?.name} </DialogTitle>
+                <DialogTitle>{project?.description ? 'Update' : 'Add'} Description to project {project?.name} </DialogTitle>
 
                 <Form methods={methods} onSubmit={onSubmit}>
 
@@ -135,7 +132,7 @@ export function ProjectEditModalDescriptionView({
                             <Box sx={{ width: '100%', color: 'text.secondary', mt: !isMobile ? 0 : 2, ml: !isMobile ? 2 : 0 }}>
                                 <Field.Text
                                     name="description"
-                                    label="Notes"
+                                    label="Work Scope & Description"
                                     control={control}
                                     fullWidth
                                     multiline
