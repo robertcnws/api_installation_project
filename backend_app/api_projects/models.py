@@ -165,6 +165,8 @@ class Project(Document):
     project_materials_other_notes = StringField(null=True)
     inspection_date = DateTimeField(null=True)
     finish_permission_date = DateTimeField(null=True)
+    is_part_days = BooleanField(default=False)
+    
     meta = {
         'collection': 'project',
         'indexes': [
@@ -452,3 +454,26 @@ class ProjectDefaultGuideProduct(Document):
 
     def __str__(self):
         return self.name
+    
+    
+class ProjectReminder(Document):
+    user_reporter = DynamicField(required=True)
+    project = DynamicField(required=True)
+    project_default_task = DynamicField(null=True)
+    notes = StringField(null=True)
+    date = DateTimeField(null=True)
+    created_time = DateTimeField(default=timezone.now, null=True)
+    last_modified_time = DateTimeField(default=timezone.now, null=True)
+    is_active = BooleanField(default=True)
+    
+    meta = {
+        'collection': 'project_remainder',
+        'indexes': [
+            'user_reporter', 'project', 'created_time', 'last_modified_time', 'is_active', 'project_default_task'
+        ],
+        'verbose_name': 'Project Remainder',
+        'verbose_name_plural': 'Project Reminders'
+    }
+
+    def __str__(self):
+        return self.project.name

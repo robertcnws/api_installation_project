@@ -19,6 +19,7 @@ import { CONFIG } from 'src/config-global';
 import { toast } from 'src/components/snackbar'
 import { Iconify } from 'src/components/iconify';
 import { Scrollbar } from 'src/components/scrollbar';
+import { ConfirmDialog } from 'src/components/custom-dialog';
 import {
   useTable,
   rowInPage,
@@ -29,6 +30,7 @@ import { useDataContext } from 'src/auth/context/data/data-context';
 
 import { ServiceListSalesordersView } from './service-table-salesorders';
 import { ServiceDetailsContentOverview } from './service-details-content-overview';
+
 
 // ----------------------------------------------------------------------
 
@@ -74,6 +76,13 @@ export function ServiceNewForm({ currentUser }) {
   const [selectedListItems, setSelectedListItems] = useState([]);
 
   const [serviceType, setServiceType] = useState(null);
+
+  const [serviceFiles, setServiceFiles] = useState([]);
+
+  const [serviceNotes, setServiceNotes] = useState(null);
+
+  const [fileToRemove, setFileToRemove] = useState(null);
+  const confirm = useBoolean();
 
   const filters = useSetState({ name: '' });
 
@@ -149,12 +158,37 @@ export function ServiceNewForm({ currentUser }) {
   const handleCreateService = useCallback(async () => {
     setIsSubmiting(true);
 
+    const formData = new FormData();
+
+    const filePromises = serviceFiles.map(async (file) => {
+      if (file instanceof File) {
+        return file;
+      }
+      if (file.fileUrl) {
+        const response = await fetch(file.fileUrl);
+        const blob = await response.blob();
+        return new File([blob], file.name, { type: blob.type });
+      }
+      return null;
+    });
+
+    const filesToUpload = (await Promise.all(filePromises)).filter((f) => f !== null);
+
+    filesToUpload.forEach((file) => {
+      formData.append('serviceAttachments', file);
+    });
+
+    formData.append('notes', serviceNotes || '');
+    formData.append('serviceType', serviceType || '');
+    formData.append('salesOrder', JSON.stringify(selectedSalesOrder) || '');
+    formData.append('userReporter', JSON.stringify(userLogged?.data) || '');
+    formData.append('issuedProducts', JSON.stringify(selectedListItems.filter((item) => item.selected)) || '');
+
     try {
-      const promise = axios.post(`${CONFIG.apiUrl}/services/create/service/`, {
-        salesOrder: selectedSalesOrder,
-        userReporter: userLogged?.data,
-        issuedProducts: selectedListItems.filter((item) => item.selected),
-        serviceType,
+      const promise = axios.post(`${CONFIG.apiUrl}/services/create/service/`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
       });
 
       toast.promise(promise, {
@@ -167,6 +201,9 @@ export function ServiceNewForm({ currentUser }) {
 
       setIsSubmiting(false);
 
+      setServiceFiles([]);
+      setServiceNotes(null);
+
       openSalesOrderModal.onFalse();
 
       router.push(paths.dashboard.service.list);
@@ -175,7 +212,37 @@ export function ServiceNewForm({ currentUser }) {
       setIsSubmiting(false);
       console.error(error);
     }
-  }, [selectedSalesOrder, selectedListItems, userLogged, openSalesOrderModal, router, serviceType]);
+  }, [selectedSalesOrder, selectedListItems, userLogged, openSalesOrderModal, router, serviceType, serviceFiles, serviceNotes]);
+
+
+  const handleDownloadFile = (file) => {
+    if (!file || !file.fileUrl) return;
+
+    const link = document.createElement('a');
+    link.href = file.fileUrl;
+    link.download = file.name;
+    link.target = '_blank';
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleClickRemoveFile = (file) => {
+    setFileToRemove(file);
+    confirm.onTrue();
+  };
+
+  const handleConfirmRemove = async () => {
+    if (!fileToRemove) return;
+    let updatedNew = [];
+
+    updatedNew = serviceFiles.filter((f) => f.name !== fileToRemove.name);
+    setServiceFiles(updatedNew);
+
+    confirm.onFalse();
+    setFileToRemove(null);
+  };
 
   return (
     <>
@@ -362,8 +429,13 @@ export function ServiceNewForm({ currentUser }) {
             setAllIssuesCompleted={setAllIssuesCompleted}
             selectedListItems={selectedListItems}
             setSelectedListItems={setSelectedListItems}
-            serviceType={serviceType}
             setServiceType={setServiceType}
+            serviceFiles={serviceFiles}
+            setServiceFiles={setServiceFiles}
+            serviceNotes={serviceNotes}
+            setServiceNotes={setServiceNotes}
+            handleDownloadFile={handleDownloadFile}
+            handleClickRemoveFile={handleClickRemoveFile}
           />
         </Scrollbar>
         <DialogActions>
@@ -379,6 +451,29 @@ export function ServiceNewForm({ currentUser }) {
           </Button>
         </DialogActions>
       </Dialog>
+      <ConfirmDialog
+        open={confirm.value}
+        onClose={() => {
+          confirm.onFalse();
+          setFileToRemove(null);
+        }}
+        title="Remove File"
+        content={
+          <>
+            {fileToRemove && (
+              <>
+                Are you sure you want to delete the file{' '}
+                <strong>{fileToRemove.name}</strong> from the service{' '}?
+              </>
+            )}
+          </>
+        }
+        action={
+          <Button variant="contained" color="error" onClick={handleConfirmRemove}>
+            Remove
+          </Button>
+        }
+      />
     </>
   );
 }

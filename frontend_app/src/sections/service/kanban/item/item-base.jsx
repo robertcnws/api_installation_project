@@ -80,8 +80,8 @@ const ItemBase = forwardRef(({
   const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
 
   const tasksBeforeNoMatter = useMemo(() => [
-      CONFIG.tasks.orderIsReadyToPickUp.toLowerCase(), CONFIG.tasks.pickUpOrder.toLowerCase()
-    ], []);
+    CONFIG.tasks.orderIsReadyToPickUp.toLowerCase(), CONFIG.tasks.pickUpOrder.toLowerCase()
+  ], []);
 
   const initialTasks = useMemo(() => availableTasks(service, service?.serviceDefaultTasks, CONFIG), [service]);
 
@@ -92,6 +92,14 @@ const ItemBase = forwardRef(({
   const possibleTasks = useMemo(() => initialTasks.concat(extraTasks), [initialTasks, extraTasks]);
 
   const isAvailableTask = useMemo(() => possibleTasks?.some((t) => t.service_default_task.id === task.service_default_task.id), [possibleTasks, task]);
+
+  const attachedTasks = useMemo(() => service?.serviceDefaultTasks?.filter((t) => t.service_default_task?.has_attachments) || [], [service]);
+  const maxOrderAttachedTask = useMemo(() => attachedTasks?.reduce((max, t) => {
+    const order = t?.service_default_task?.order || 0;
+    return order > max ? order : max;
+  }, 0) || 0, [attachedTasks]);
+  const attachType = useMemo(() => task?.service_default_task?.order === maxOrderAttachedTask ? 'repair' : 'issued', [task, maxOrderAttachedTask]);
+  const attachments = useMemo(() => service?.serviceAttachments?.filter((a) => a.attachment_type === attachType) || [], [service, attachType]);
 
   useEffect(() => {
     if (!stateProps?.dragOverlay) {
@@ -167,7 +175,7 @@ const ItemBase = forwardRef(({
                         },
                       }}
                       // disabled={!task || task.status !== CONFIG.taskStatus.notStarted || task?.users_assignees?.length === 0}
-                      disabled={!task || task.status !== CONFIG.taskStatus.notStarted }
+                      disabled={!task || task.status !== CONFIG.taskStatus.notStarted}
                       onClick={() => handleManageTask('start')}
                     >
                       <Iconify icon="vaadin:start-cog" sx={{ width: 15, height: 15 }} /> Start
@@ -228,7 +236,7 @@ const ItemBase = forwardRef(({
                       },
                     }}
                     disabled={
-                      !task 
+                      !task
                       // || task?.users_assignees?.length === 0
                     }
                     onClick={() => handleManageTask('rollback')}
@@ -318,7 +326,7 @@ const ItemBase = forwardRef(({
           <>
             <Iconify width={16} icon="eva:attach-2-fill" sx={{ mr: 0.25 }} />
             <Box component="span">
-              {task?.service_task_attachments?.length} Attachment(s)
+              {attachments?.length} Attachment(s)
             </Box>
           </>
         )}

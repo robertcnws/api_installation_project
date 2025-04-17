@@ -22,6 +22,7 @@ import { ProjectCalendarView } from 'src/sections/project/calendar/view';
 import { useDataContext } from 'src/auth/context/data/data-context';
 
 import { ProjectListView } from './product/view';
+import { AnalyticsNews } from '../analytics-news';
 import { WelcomeTypography } from '../welcome-typography';
 import { ProjectsToDoToday } from '../projects-to-do-today';
 import { ProjectsStageToday } from '../projects-stage-today';
@@ -52,13 +53,23 @@ export function OverviewAnalyticsView() {
 
   const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
 
+  const [availableReminders, setAvailableReminders] = useState([]);
+
   const {
     loadedProjects,
     refetchProjects,
     loadingProjects,
+    loadedProjectReminders,
   } = useDataContext();
 
   const [projects, setProjects] = useState([]);
+
+  const handleOpenTaskRemainder = (reminder) => {
+    localStorage.setItem('projectId', reminder.project.id);
+    localStorage.setItem('projectReminderTab', 'tasks');
+    localStorage.setItem('projectReminderTaskId', reminder.projectDefaultTask.project_default_task.id);
+    router.push(paths.dashboard.project.details(reminder.project.id));
+  };
 
   useEffect(() => {
     if (refetchProjects) {
@@ -102,6 +113,51 @@ export function OverviewAnalyticsView() {
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (loadedProjectReminders) {
+      setAvailableReminders(loadedProjectReminders?.filter(
+        (reminder) => fDate(reminder?.date) === fDate(new Date())
+      ) || []);
+    }
+  }, [loadedProjectReminders]);
+
+
+  useEffect(() => {
+    const socket = new WebSocket(`wss://${CONFIG.apiHost}/api/projects/ws/project-reminders/`);
+    socket.onerror = (errorEvent) => {
+      console.dir(errorEvent);
+      console.error('WebSocket error (toString):', errorEvent.toString());
+    };
+    socket.onmessage = (event) => {
+      const message = JSON.parse(event.data);
+      if (message.type === 'created' || message.type === 'updated') {
+        setAvailableReminders((prevData) => {
+          if (prevData?.id === message.item.id &&
+            message.item.userReporter.id === userLogged?.data.id &&
+            fDate(message.item.date) === fDate(new Date())
+          ) {
+            return message.item;
+          }
+          return prevData;
+        });
+      }
+      else if (message.type === 'deleted') {
+        setAvailableReminders((prevData) => {
+          if (prevData?.id === message.item.id) {
+            return null;
+          }
+          return prevData;
+        });
+      }
+    };
+    return () => {
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.close();
+      }
+    };
+  }, [userLogged]);
+
 
   return (
     <>
@@ -339,28 +395,54 @@ export function OverviewAnalyticsView() {
                       />
                     </Box>
                   </Grid>
-                  <Grid xs={12} md={4} lg={4}>
-                    <Box
-                      sx={{
-                        mb: 1,
-                        mt: 1,
-                        p: { md: 0 },
-                        display: 'flex',
-                        gap: { xs: 3, md: 1 },
-                        borderRadius: { md: 2 },
-                        border: '0px solid grey',
-                        flexDirection: 'column',
-                        // bgcolor: { md: 'background.neutral' },
-                        minHeight: { md: '100%' },
-                      }}
-                    >
-                      <ProjectsStageToday
-                        title="In closing stage"
-                        stage="Closing"
-                        list={projects.filter(proj => proj.currentStage.name.toLowerCase().indexOf(CONFIG.stages.closing.toLowerCase()) !== -1)}
-                      />
-                    </Box>
-                  </Grid>
+                  {availableReminders?.length > 0 ? (
+                    <Grid xs={12} md={4} lg={4}>
+                      <Box
+                        sx={{
+                          mb: 1,
+                          mt: 1,
+                          p: { md: 0 },
+                          display: 'flex',
+                          gap: { xs: 3, md: 1 },
+                          borderRadius: { md: 2 },
+                          border: '0px solid grey',
+                          flexDirection: 'column',
+                          // bgcolor: { md: 'background.neutral' },
+                          minHeight: { md: '100%' },
+                        }}
+                      >
+                        <AnalyticsNews
+                          title="Reminders"
+                          subheader="Reminders for today"
+                          list={availableReminders}
+                          onClick={handleOpenTaskRemainder}
+                        />
+                      </Box>
+                    </Grid>
+                  ) : (
+                    <Grid xs={12} md={4} lg={4}>
+                      <Box
+                        sx={{
+                          mb: 1,
+                          mt: 1,
+                          p: { md: 0 },
+                          display: 'flex',
+                          gap: { xs: 3, md: 1 },
+                          borderRadius: { md: 2 },
+                          border: '0px solid grey',
+                          flexDirection: 'column',
+                          // bgcolor: { md: 'background.neutral' },
+                          minHeight: { md: '100%' },
+                        }}
+                      >
+                        <ProjectsStageToday
+                          title="In closing stage"
+                          stage="Closing"
+                          list={projects.filter(proj => proj.currentStage.name.toLowerCase().indexOf(CONFIG.stages.closing.toLowerCase()) !== -1)}
+                        />
+                      </Box>
+                    </Grid>
+                  )}
                 </>
               )}
             </Grid>

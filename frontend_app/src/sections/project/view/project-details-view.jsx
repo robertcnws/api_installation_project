@@ -59,6 +59,7 @@ export function ProjectDetailsView({ projectId }) {
         loadedProjects,
         listPermissions,
         loadedDefaultGuideProducts,
+        loadedTracks,
     } = useDataContext();
 
     const [openDialogs, setOpenDialogs] = useState({
@@ -79,12 +80,17 @@ export function ProjectDetailsView({ projectId }) {
 
     const [itemById, setItemById] = useState(fetchedProject);
 
-    const taskFinishInstallation = useMemo(() => 
+    const taskFinishInstallation = useMemo(() =>
         itemById?.projectDefaultTasks?.find(
             (t) => t.project_default_task?.name.trim().toLowerCase().includes(CONFIG.tasks.finishInstallation.trim().toLowerCase())
         ),
         [itemById]
     );
+
+    // const listSelectedTracks = useMemo(() => loadedTracks?.filter((track) => track.action.includes(itemById?.id)), [loadedTracks, itemById]);
+
+    const [listSelectedTracks, setListSelectedTracks] = useState([]);
+
 
     const DETAILS_TABS = [
         { label: 'Overview', value: 'overview' },
@@ -96,9 +102,9 @@ export function ProjectDetailsView({ projectId }) {
             !isWarehouseStaff(userLogged?.data?.user_role?.name)) ? [
             { label: 'Attachments', value: 'attachments' },
         ] : [],
-        ...((listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.installer) || 
+        ...((listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.installer) ||
             listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.warehouseStaff)) &&
-            taskFinishInstallation?.status.toLowerCase().indexOf(CONFIG.taskStatus.finished.toLowerCase()) !== -1 ) ? [
+            taskFinishInstallation?.status.toLowerCase().indexOf(CONFIG.taskStatus.finished.toLowerCase()) !== -1) ? [
             { label: 'Release Form', value: 'releaseForm' },
         ] : [],
         ...listRolesAndSubroles(userLogged?.data?.user_role?.name)
@@ -108,10 +114,10 @@ export function ProjectDetailsView({ projectId }) {
         ...listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.financialStaff) ? [
             { label: 'Financial', value: 'financial' },
         ] : [],
-        { label: 'Comments', value: 'comments' },
+        { label: 'Comments & History', value: 'comments' },
     ];
 
-    
+
 
     const [openValidationDialog, setOpenValidationDialog] = useState(false);
     const [validationMessage, setValidationMessage] = useState('');
@@ -128,6 +134,12 @@ export function ProjectDetailsView({ projectId }) {
             setItemById(fetchedProject);
         }
     }, [fetchedProject]);
+
+    useEffect(() => {
+        if (loadedTracks) {
+            setListSelectedTracks(loadedTracks);
+        }
+    }, [loadedTracks]);
 
     useEffect(() => {
         const socket = new WebSocket(`wss://${CONFIG.apiHost}/api/projects/ws/project/${projectId}/`);
@@ -162,6 +174,47 @@ export function ProjectDetailsView({ projectId }) {
         };
     }, [projectId]);
 
+
+    useEffect(() => {
+        const socket = new WebSocket(`wss://${CONFIG.apiHost}/api/projects/ws/tracks/`);
+        socket.onerror = (errorEvent) => {
+            console.dir(errorEvent);
+            console.error('WebSocket error (toString):', errorEvent.toString());
+        };
+        socket.onmessage = (event) => {
+            const message = JSON.parse(event.data);
+            // console.log("WebSocket message:", message);
+            if (message.type === 'created' || message.type === 'updated') {
+                setListSelectedTracks((prevData) => {
+                    if (prevData?.some((track) => track.id === message.item.id)) {
+                        return prevData.map((track) => {
+                            if (track.id === message.item.id) {
+                                return message.item;
+                            }
+                            return track;
+                        });
+                    }
+                    return [...prevData, message.item];
+                }
+                );
+            }
+            else if (message.type === 'deleted') {
+                setListSelectedTracks((prevData) => {
+                    if (prevData?.some((track) => track.id === message.item.id)) {
+                        return prevData.filter((track) => track.id !== message.item.id);
+                    }
+                    return prevData;
+                }
+                );
+            }
+        };
+        return () => {
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.close();
+            }
+        };
+    }, [projectId]);
+
     const qtyProjectAttachments = useMemo(
         () => itemById?.projectAttachments?.length || 0,
         [itemById]
@@ -176,7 +229,15 @@ export function ProjectDetailsView({ projectId }) {
 
     const totalAttachments = useMemo(() => qtyProjectAttachments + qtyTaskAttachments, [qtyProjectAttachments, qtyTaskAttachments]);
 
-    const totalComments = useMemo(() => itemById?.projectComments?.length || 0, [itemById]);
+    const [selectedComments, setSelectedComments] = useState(false);
+
+    const totalComments = useMemo(() => {
+        const tComments = itemById?.projectComments?.length || 0
+        const tListSelectedTracks = !selectedComments ? (listSelectedTracks.filter(
+            (track) => track.action.includes(itemById?.id) && !track.action.includes('comment')
+        )?.length || 0) : 0;
+        return tComments + tListSelectedTracks;
+    }, [itemById, listSelectedTracks, selectedComments]);
 
     const totalTasks = useMemo(() => (
         itemById?.hasPermission ?
@@ -195,7 +256,14 @@ export function ProjectDetailsView({ projectId }) {
 
     const [openEditTask, setOpenEditTask] = useState(false);
 
-    const tabs = useTabs('overview');
+    const currentTab = useMemo(() => {
+        if (itemById?.userManager?.username) {
+            return localStorage.getItem('projectReminderTab') || 'overview';
+        }
+        return 'overview';
+    }, [itemById]);
+
+    const tabs = useTabs(currentTab);
 
     const onDelete = useCallback(
         async (id) => {
@@ -226,24 +294,24 @@ export function ProjectDetailsView({ projectId }) {
                         (tab.value === 'tasks' || tab.value === 'attachments' || tab.value === 'comments') ? (
                             !isInstaller(userLogged?.data?.user_role?.name) ? (
                                 ((tab.value === 'tasks' && totalTasks > 0) ||
-                                (tab.value === 'attachments' && totalAttachments > 0) ||
-                                (tab.value === 'comments' && totalComments > 0))
-                                ? (
-                                    <Label variant="filled" color="primary">
-                                        {tab.value === 'tasks' ? totalTasks :
-                                            tab.value === 'attachments' ? totalAttachments : totalComments}
-                                    </Label>
-                                ) : (
-                                    ''
-                                )) : (
+                                    (tab.value === 'attachments' && totalAttachments > 0) ||
+                                    (tab.value === 'comments' && totalComments > 0))
+                                    ? (
+                                        <Label variant="filled" color="primary">
+                                            {tab.value === 'tasks' ? totalTasks :
+                                                tab.value === 'attachments' ? totalAttachments : totalComments}
+                                        </Label>
+                                    ) : (
+                                        ''
+                                    )) : (
                                 tab.value === 'comments' ? (
                                     (tab.value === 'comments' && totalComments > 0) ? (
-                                    <Label variant="filled" color="primary">
-                                        {totalComments}
-                                    </Label>
-                                ) : (
-                                    ''
-                                )) : (
+                                        <Label variant="filled" color="primary">
+                                            {totalComments}
+                                        </Label>
+                                    ) : (
+                                        ''
+                                    )) : (
                                     ''
                                 )
                             )
@@ -277,7 +345,8 @@ export function ProjectDetailsView({ projectId }) {
                 <ProjectDetailsToolbar
                     project={itemById}
                     backLink={
-                        localStorage.getItem('backFromProjectDetails') === 'analytics' ? paths.dashboard.general.analytics : paths.dashboard.project.list
+                        localStorage.getItem('backFromProjectDetails') === 'analytics' ? paths.dashboard.general.analytics : 
+                        localStorage.getItem('backFromProjectDetails') === 'calendarDashboard' ? paths.dashboard.general.calendar : paths.dashboard.project.list
                     }
                     editLink={paths.dashboard.project.edit(`${itemById?.id}`)}
                     openEdit={tabs.value === 'overview' ? openEdit : tabs.value === 'tasks' ? openEditTask : null}
@@ -378,6 +447,9 @@ export function ProjectDetailsView({ projectId }) {
                         project={itemById}
                         refetchProject={refetchProject}
                         listPermissions={listPermissions}
+                        listSelectedTracks={listSelectedTracks.filter((track) => track.action.includes(itemById?.id))}
+                        selectedComments={selectedComments}
+                        setSelectedComments={setSelectedComments}
                     />
                 }
 

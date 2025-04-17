@@ -515,7 +515,7 @@ export function KanbanDetails({
             setNewFiles={setNewFiles}
             id={service?.id}
             name={service?.name}
-            type='tasks'
+            type='services'
           />
         </Box>
       )}

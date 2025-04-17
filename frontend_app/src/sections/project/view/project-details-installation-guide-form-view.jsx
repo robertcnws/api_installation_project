@@ -99,7 +99,7 @@ export function ProjectDetailsInstallationGuideFormView({
       }));
 
       console.log('project?.projectGuideProducts', project?.projectGuideProducts);
-      
+
       const lastItems = items.map((item) => {
         const product = project?.projectGuideProducts?.find((p) => p.id === item.id);
 
@@ -198,28 +198,23 @@ export function ProjectDetailsInstallationGuideFormView({
   };
 
   const handleRemoveProduct = useCallback(async (id) => {
-    const product = project?.projectGuideProducts?.find((p) => p.id === id);
-    if (product) {
-      try {
-        const formData = new FormData();
-        formData.append('userReporter', JSON.stringify(userLogged?.data));
+    try {
+      const formData = new FormData();
+      formData.append('userReporter', JSON.stringify(userLogged?.data));
+      formData.append('product', JSON.stringify(productsData.find((p) => p.id === id)));
 
-        const promise = axios.post(`${CONFIG.apiUrl}/projects/remove/project/${project?.id}/guide-product/${id}/`, formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        });
+      const promise = axios.post(`${CONFIG.apiUrl}/projects/remove/project/${project?.id}/guide-product/${id}/`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
 
-        await promise;
+      await promise;
 
-      } catch (error) {
-        console.error(error);
-      }
+    } catch (error) {
+      console.error(error);
     }
-    else {
-      setProductsData((prev) => prev.filter((item) => item.id !== id));
-    }
-  }, [userLogged, project]);
+  }, [userLogged, project, productsData]);
 
   const handleProductChange = (id, field, value) => {
     setProductsData((prev) => (
@@ -754,7 +749,8 @@ export function ProjectDetailsInstallationGuideFormView({
                                   <IconButton
                                     variant="outlined"
                                     color='default'
-                                    onClick={() => handleCheckProduct(product.id)} sx={{
+                                    onClick={() => handleCheckProduct(product.id)} 
+                                    sx={{
                                       '&:hover': {
                                         boxShadow: 'none',
                                         backgroundColor: 'transparent',

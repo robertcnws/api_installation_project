@@ -39,6 +39,7 @@ const GET_ALL_PROJECTS = gql`
       projectMaterialsOtherNotes
       inspectionDate
       finishPermissionDate
+      isPartDays
     }
   }
 `;
@@ -80,6 +81,7 @@ const GET_PROJECT_BY_ID = gql`
       projectMaterialsOtherNotes
       inspectionDate
       finishPermissionDate
+      isPartDays
     }
   }
 `;

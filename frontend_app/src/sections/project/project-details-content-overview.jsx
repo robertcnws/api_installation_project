@@ -56,6 +56,25 @@ export function ProjectDetailsContentOverview({
     }
   }, []);
 
+  const dynamicHeight = useMemo(() => {
+    let initialHeight = 622; 
+    if (isMobile) {
+      return 'auto';
+    }
+    if (isOverview) {
+      if (project?.userManager?.name){
+        initialHeight += 34 
+      }
+      if (project?.hasPermission){
+        initialHeight += 70 
+      }
+      if (project?.startDate){
+        initialHeight += 30 
+      }
+    }
+    return initialHeight;
+  }, [isMobile, isOverview, project]);
+
   if (project === null) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 300 }}>
@@ -74,8 +93,8 @@ export function ProjectDetailsContentOverview({
         display: 'flex',
         flexDirection: 'column',
         ml: isMobile && isOverview ? 5 : 0,
-        maxHeight: !isMobile ? (isOverview ? (project?.userManager?.name && !project?.hasPermission ? 656 : (project?.userManager?.name && project?.hasPermission ? 740 : 622)) : 652) : 'auto',
-        minHeight: !isMobile ? (isOverview ? (project?.userManager?.name && !project?.hasPermission ? 656 : (project?.userManager?.name && project?.hasPermission ? 740 : 622)) : 652) : 'auto',
+        maxHeight: dynamicHeight,
+        minHeight: dynamicHeight,
         overflow: 'auto'
       }}>
         {[

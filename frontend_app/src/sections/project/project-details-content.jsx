@@ -289,7 +289,10 @@ export function ProjectDetailsContent({
                       ) : 'normal'
                     }}
                   >
-                    {fDate(project?.startDate)} <b>({fDuration(project?.startDate, project?.endDate)})</b>
+                    {fDate(project?.startDate)} <b>({fDuration(project?.startDate, project?.endDate)})</b> <br />
+                    <Label variant="filled" sx={{ bgcolor: 'whitesmoke', color: 'text.primary' }}>
+                      {project?.isPartDays ? 'Part Days' : 'Full Days'}
+                    </Label>
                   </Typography>
                 ) : (
                   <Iconify icon="fluent-mdl2:date-time" color="warning" width={20} sx={{ ml: 0.5, mt: 0.5 }} />
@@ -516,11 +519,11 @@ export function ProjectDetailsContent({
                     ) : (
                       <>
                         <Iconify icon="fluent-mdl2:date-time" color="warning" width={20} sx={{ ml: 0.5, mt: 0.5 }} />
-                        {project?.inspectionDate === null && (
+                        {/* {project?.inspectionDate === null && (
                           <Typography variant="caption" color="text.primary">
                             [Need Inspection Date]
                           </Typography>
-                        )}
+                        )} */}
                       </>
                     )}
 
@@ -549,7 +552,7 @@ export function ProjectDetailsContent({
                           setIsFinishPermissionDate(true)
                           setOpenDialogs({ ...openDialogs, date: true })
                         }}
-                        disabled={!project?.inspectionDate}
+                      // disabled={!project?.inspectionDate}
                       >
                         <Iconify icon="zondicons:date-add" color="warning" width={20} />
                       </IconButton>

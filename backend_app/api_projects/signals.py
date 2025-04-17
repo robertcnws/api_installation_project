@@ -8,10 +8,61 @@ from .models import (
     ProjectNotificationUser,
     ProjectTracking,
     ProjectDefaultGuideProduct,
+    ProjectReminder,
 )
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 import json
+
+
+##########################################################################
+# ProjectReminder
+##########################################################################
+
+def project_reminder_saved(sender, document, **kwargs):
+    created = kwargs.get('created', False)
+    channel_layer = get_channel_layer()
+    event = {
+        'type': 'project_reminder_update',
+        'message': {
+            'type': 'created' if created else 'updated',
+            "item": {
+                "id": str(document.id),
+                "project": document.project,
+                "projectDefaultTask": document.project_default_task,
+                "userReporter": document.user_reporter,
+                "notes": document.notes,
+                "date": document.date,
+                "createdTime": document.created_time,
+                "lastModifiedTime": document.last_modified_time,
+                "isActive": document.is_active,
+            }
+
+        }
+    }
+    async_to_sync(channel_layer.group_send)('project_reminder', serialize_datetime(event))
+    
+
+def project_reminder_deleted(sender, document, **kwargs):
+    channel_layer = get_channel_layer()
+    event = {
+        'type': 'project_reminder_update',
+        'message': {
+            'type': 'deleted',
+            "item": {
+                "id": str(document.id),
+                "project": document.project,
+                "projectDefaultTask": document.project_default_task,
+                "userReporter": document.user_reporter,
+                "notes": document.notes,
+                "date": document.date,
+                "createdTime": document.created_time,
+                "lastModifiedTime": document.last_modified_time,
+                "isActive": document.is_active,
+            }
+        }
+    }
+    async_to_sync(channel_layer.group_send)('project_reminder', serialize_datetime(event))
 
 
 ##########################################################################
@@ -184,6 +235,7 @@ def project_saved(sender, document, **kwargs):
                 "projectMaterialsOtherNotes": document.project_materials_other_notes,
                 "inspectionDate": document.inspection_date,
                 "finishPermissionDate": document.finish_permission_date,
+                "isPartDays": document.is_part_days,
             }
 
         }
@@ -231,6 +283,7 @@ def project_deleted(sender, document, **kwargs):
                 "projectMaterialsOtherNotes": document.project_materials_other_notes,
                 "inspectionDate": document.inspection_date,
                 "finishPermissionDate": document.finish_permission_date,
+                "isPartDays": document.is_part_days,
             }
         }
     }
@@ -382,6 +435,7 @@ def project_by_id_saved(sender, document, **kwargs):
                 "projectMaterialsOtherNotes": document.project_materials_other_notes,
                 "inspectionDate": document.inspection_date,
                 "finishPermissionDate": document.finish_permission_date,
+                "isPartDays": document.is_part_days,
             }
 
         }
@@ -431,6 +485,7 @@ def project_by_id_deleted(sender, document, **kwargs):
                 "projectMaterialsOtherNotes": document.project_materials_other_notes,
                 "inspectionDate": document.inspection_date,
                 "finishPermissionDate": document.finish_permission_date,
+                "isPartDays": document.is_part_days,
             }
         }
     }
@@ -498,3 +553,5 @@ signals.post_save.connect(project_tracking_saved, sender=ProjectTracking)
 signals.post_delete.connect(project_tracking_deleted, sender=ProjectTracking)
 signals.post_save.connect(project_default_guide_product_saved, sender=ProjectDefaultGuideProduct)
 signals.post_delete.connect(project_default_guide_product_deleted, sender=ProjectDefaultGuideProduct)
+signals.post_save.connect(project_reminder_saved, sender=ProjectReminder)
+signals.post_delete.connect(project_reminder_deleted, sender=ProjectReminder)

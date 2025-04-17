@@ -2,12 +2,10 @@ import { memo, useMemo, useEffect, forwardRef } from 'react';
 
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
-import Avatar from '@mui/material/Avatar';
 import { IconButton } from '@mui/material';
 import ListItem from '@mui/material/ListItem';
-import { styled } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
-import AvatarGroup, { avatarGroupClasses } from '@mui/material/AvatarGroup';
+import { alpha, styled, useTheme } from '@mui/material/styles';
 
 import { isInstaller, listRolesAndSubroles } from 'src/utils/check-permissions';
 import { availableTasks, previousTasksInStatus } from 'src/utils/project-tasks-utils';
@@ -17,8 +15,10 @@ import { varAlpha, stylesMode } from 'src/theme/styles';
 
 import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
+import AnimatedIcon from 'src/components/animate/animated-icon';
 
 import { kanbanClasses } from '../classes';
+
 
 
 
@@ -73,15 +73,18 @@ const ItemBase = forwardRef(({
   stateProps,
   onClick,
   handleManageTask,
+  availableReminders,
   sx,
   ...other
 }, ref) => {
 
+  const theme = useTheme();
+
   const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
 
   const tasksBeforeNoMatter = useMemo(() => [
-      CONFIG.tasks.orderIsReadyToPickUp.toLowerCase(), CONFIG.tasks.pickUpOrder.toLowerCase()
-    ], []);
+    CONFIG.tasks.orderIsReadyToPickUp.toLowerCase(), CONFIG.tasks.pickUpOrder.toLowerCase()
+  ], []);
 
   const initialTasks = useMemo(() => availableTasks(project, project?.projectDefaultTasks, CONFIG), [project]);
 
@@ -167,7 +170,7 @@ const ItemBase = forwardRef(({
                         },
                       }}
                       // disabled={!task || task.status !== CONFIG.taskStatus.notStarted || task?.users_assignees?.length === 0}
-                      disabled={!task || task.status !== CONFIG.taskStatus.notStarted }
+                      disabled={!task || task.status !== CONFIG.taskStatus.notStarted}
                       onClick={() => handleManageTask('start')}
                     >
                       <Iconify icon="vaadin:start-cog" sx={{ width: 15, height: 15 }} /> Start
@@ -228,7 +231,7 @@ const ItemBase = forwardRef(({
                       },
                     }}
                     disabled={
-                      !task 
+                      !task
                       // || task?.users_assignees?.length === 0
                     }
                     onClick={() => handleManageTask('rollback')}
@@ -325,11 +328,7 @@ const ItemBase = forwardRef(({
 
       </Stack>
 
-      <AvatarGroup sx={{ [`& .${avatarGroupClasses.avatar}`]: { width: 24, height: 24 } }}>
-        {task?.assignee?.map((user) => (
-          <Avatar key={user.id} alt={user.name} src={user.avatarUrl} />
-        ))}
-      </AvatarGroup>
+
     </Stack>
   );
 
@@ -357,7 +356,12 @@ const ItemBase = forwardRef(({
         {...other}
       >
 
-        <Box sx={{ px: 2, py: 1, position: 'relative' }}>
+        <Box sx={{
+          px: 2,
+          py: 1,
+          position: 'relative',
+          bgcolor: availableReminders?.length > 0 ? alpha(theme.palette.error.main, 0.06) : 'background.paper',
+        }}>
 
           <Box sx={{ position: 'absolute', top: 0, right: 0, zIndex: 999, display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
             {(task && isAvailableTask) && (
@@ -367,11 +371,26 @@ const ItemBase = forwardRef(({
 
           {renderPriority}
 
-          <Typography variant="subtitle2" sx={{ mb: 2, width: '70%' }} onClick={onClick}>
+          <Typography
+            variant="subtitle2"
+            sx={{
+              mb: 2,
+              width: '70%',
+              fontStyle: availableReminders?.length > 0 ? 'italic' : 'normal',
+            }}
+            onClick={onClick}
+          >
             {task.name}
           </Typography>
 
-          {renderInfo}
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, flexDirection: 'row', gap: 1, justifyContent: 'space-between' }}>
+            {renderInfo}
+            {availableReminders?.length > 0 && (
+              <Box sx={{ mr: -5}}>
+                <AnimatedIcon icon='uil:bell' color='error' />
+              </Box>
+            )}
+          </Box>
         </Box>
 
       </StyledItem>

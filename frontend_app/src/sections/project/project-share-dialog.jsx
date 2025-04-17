@@ -85,10 +85,10 @@ const hasChanges = useMemo(() => JSON.stringify(usersAssignees) !== JSON.stringi
 
   useEffect(() => {
     if (!open) {
-      reset(defaultValues);
+      reset({ usersAssignees: projectData?.usersAssignees || [] });
     }
     // reset(defaultValues);
-  }, [defaultValues, reset, open]);
+  }, [reset, open, projectData?.usersAssignees]);
 
 
   const addUsers = async (users) => {

@@ -29,12 +29,15 @@ export function MultiFilePreview({
   className,
   listPermissions,
   isProject = true,
+  isService = false,
+  moduleType,
   ...other
 }) {
 
   const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
 
-  const module = isProject ? CONFIG.permissions.moduleProjects : CONFIG.permissions.moduleTasks;
+  const module = isProject ? CONFIG.permissions.moduleProjects :
+    isService ? CONFIG.permissions.moduleServices : CONFIG.permissions.moduleTasks;
 
   const renderFirstNode = firstNode && (
     <Box
@@ -95,7 +98,9 @@ export function MultiFilePreview({
                     CONFIG.permissions.system,
                     module,
                     CONFIG.permissions.operationRemoveFile
-                  ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) ?
+                  ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)
+                    || (moduleType && moduleType === 'issued' && listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.serviceStaff))
+                  ) ?
                     () => onRemove?.(file) : null
                 }
                 onDownload={
@@ -104,7 +109,9 @@ export function MultiFilePreview({
                     CONFIG.permissions.system,
                     module,
                     CONFIG.permissions.operationDownloadFile
-                  ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) ?
+                  ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)
+                    || (moduleType && moduleType === 'issued' && listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.serviceStaff))
+                  ) ?
                     () => onDownload?.(file) : null
                 }
                 sx={{
@@ -151,7 +158,8 @@ export function MultiFilePreview({
               CONFIG.permissions.system,
               module,
               CONFIG.permissions.operationRemoveFile
-            ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
+            ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)
+              || (moduleType && moduleType === 'issued' && listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.serviceStaff)))) && (
                 <IconButton size="small" onClick={() => onRemove(file)}>
                   <Iconify icon="mingcute:close-line" width={16} />
                 </IconButton>
@@ -161,7 +169,9 @@ export function MultiFilePreview({
               CONFIG.permissions.system,
               module,
               CONFIG.permissions.operationDownloadFile
-            ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
+            ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)
+              || (moduleType && moduleType === 'issued' && listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.serviceStaff))
+            )) && (
                 <IconButton size="small" onClick={() => onDownload(file)}>
                   <Iconify icon="ic:outline-cloud-download" width={16} />
                 </IconButton>

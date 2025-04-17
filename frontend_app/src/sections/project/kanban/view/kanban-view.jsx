@@ -25,6 +25,7 @@ import { Box, Alert, LinearProgress } from '@mui/material';
 import FormControlLabel from '@mui/material/FormControlLabel';
 
 import { isInstaller } from 'src/utils/check-permissions';
+import { getProjectInstaller } from 'src/utils/project-tasks-utils';
 
 import { CONFIG } from 'src/config-global';
 import { moveColumn } from 'src/actions/kanban';
@@ -43,6 +44,7 @@ import { KanbanTaskItem } from '../item/kanban-task-item';
 import { KanbanColumnSkeleton } from '../components/kanban-skeleton';
 import { KanbanDragOverlay } from '../components/kanban-drag-overlay';
 
+
 // ----------------------------------------------------------------------
 
 const PLACEHOLDER_ID = 'placeholder';
@@ -55,6 +57,7 @@ export function KanbanView({
   tasks,
   hasPermission,
   listPermissions,
+  projectReminders,
 }) {
 
   const { loadedStages } = useDataContext();
@@ -65,15 +68,18 @@ export function KanbanView({
 
   const [hasInstallDate, setHasInstallDate] = useState(false);
 
+  const [installer, setInstaller] = useState(null);
+
   useEffect(() => {
     if (project) {
       setHasInstallDate(project.startDate !== null);
+      setInstaller(getProjectInstaller(project, CONFIG));
     }
   }, [project]);
 
   useEffect(() => {
     if (loadedStages) {
-      const actionStages = hasInstallDate ?
+      const actionStages = hasInstallDate && installer ?
         loadedStages.filter((stage) => stage.name.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) === -1) :
         loadedStages.filter((stage) => stage.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
           stage.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
@@ -86,7 +92,7 @@ export function KanbanView({
         setStages(actionStages.filter((stage) => stage.name !== CONFIG.stages.permission));
       }
     }
-  }, [loadedStages, hasPermission, userLogged, hasInstallDate]);
+  }, [loadedStages, hasPermission, userLogged, hasInstallDate, installer]);
 
   const { isMobile } = useContext(LoadingContext)
 
@@ -429,15 +435,25 @@ export function KanbanView({
                         columnId={column.id}
                         disabled={isSortingContainer}
                         listPermissions={listPermissions}
+                        projectReminders={projectReminders}
                       />
                     ))}
                   </SortableContext>
                 </KanbanColumn>
               ))}
-              {!hasInstallDate && (
-                <Alert severity="error" sx={{ width: '100%', mt: 1 }}>
-                  You must define the installation date of the project to see other tasks.
-                </Alert>
+              {(!hasInstallDate || !installer) && (
+                <>
+                  {!hasInstallDate && (
+                    <Alert severity="error" sx={{ width: '100%', mt: 1 }}>
+                      You must define the INSTALLATION DATE of the project to see other tasks.
+                    </Alert>
+                  )}
+                  {!installer && (
+                    <Alert severity="error" sx={{ width: '100%', mt: 1 }}>
+                      You must assign an INSTALLER to the project to see other tasks.
+                    </Alert>
+                  )}
+                </>
               )}
 
               {/* <KanbanColumnAdd id={PLACEHOLDER_ID} /> */}

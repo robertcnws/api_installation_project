@@ -129,7 +129,7 @@ export function ServiceEditModalIssue({
                         type='number'
                         variant="outlined"
                         label="Qty"
-                        value={serviceData?.quantity}
+                        value={serviceData?.quantity || 1}
                         max={item?.quantity}
                         min={1}
                         onChange={(e) => {
@@ -170,7 +170,7 @@ export function ServiceEditModalIssue({
                         label="Notes"
                         multiline
                         minRows={1}
-                        value={serviceData?.notes}
+                        value={serviceData?.notes || ''}
                         onChange={(e) => {
                             setServiceData((prev) => ({
                                 ...prev,

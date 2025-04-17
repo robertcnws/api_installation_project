@@ -147,11 +147,11 @@ export function fIsBetween(inputDate, startDate, endDate) {
 
 /** output: boolean
  */
-export function fIsAfter(startDate, endDate) {
+export function fIsAfter(startDate, endDate, tz = dayjs.tz.guess()) {
   if (startDate === null) {
-    startDate = dayjs(endDate).subtract(1, 'day');
+    startDate = dayjs.tz(endDate, tz).subtract(1, 'day');
   }
-  return dayjs(startDate).isAfter(endDate);
+  return dayjs.tz(startDate, tz).isAfter(dayjs.tz(endDate, tz));
 }
 
 // ----------------------------------------------------------------------
@@ -278,4 +278,20 @@ export function fSub({
     .format();
 
   return result;
+}
+
+// ----------------------------------------------------------------------
+
+export function getDatesBetween(startDate, endDate, format = 'YYYY-MM-DD') {
+  const dates = [];
+  let current = dayjs(startDate);
+  const last = dayjs(endDate);
+
+  // console.log(current, last);
+  
+  while (current.isBefore(last, 'day') || current.isSame(last, 'day')) {
+    dates.push(current.format(format));
+    current = current.add(1, 'day');
+  }
+  return dates;
 }

@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { toast } from 'sonner';
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 
 import { Box, Grid, Paper, Button, Divider } from '@mui/material';
 
@@ -30,11 +30,13 @@ export function ProjectEditAttachments({
 
   const displayFiles = useMemo(() => [...initialFiles, ...newFiles], [initialFiles, newFiles]);
 
+  const [currentUploadStageId, setCurrentUploadStageId] = useState(null);
+
   const mappedDisplayFiles = useMemo(() => {
     if (!loadedStages || !project || !project.currentStage) return [];
     return loadedStages?.map((stage) => {
       const filesForStage = displayFiles.filter((file) =>
-        file.isNew ? project.currentStage.id === stage.id : file.current_stage && file.current_stage.id === stage.id
+        file.isNew ? file?.stageId === stage.id : file?.current_stage && file?.current_stage?.id === stage.id
       );
       return {
         stageName: stage.name,
@@ -48,6 +50,10 @@ export function ProjectEditAttachments({
   const [fileToRemove, setFileToRemove] = useState(null);
   const confirm = useBoolean();
   const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
+
+  const someNewFileFromAnotherStage = useCallback((stageId) =>
+    newFiles.some((file) => file.stageId !== stageId && file.isNew), [newFiles]
+  );
 
   useEffect(() => {
     const tasks = project?.projectDefaultTasks
@@ -148,7 +154,9 @@ export function ProjectEditAttachments({
     try {
       const formData = new FormData();
 
-      const filePromises = newFiles.map(async (file) => {
+      const actualStageId = stageId || project?.currentStage?.id;
+
+      const filePromises = newFiles.filter((f) => f.stageId === actualStageId).map(async (file) => {
         if (file instanceof File) {
           return file;
         }
@@ -201,7 +209,7 @@ export function ProjectEditAttachments({
     document.body.removeChild(link);
   };
 
-  const isAddFilesEnabled = newFiles.length > 0;
+  const isAddFilesEnabled = (stageId) => newFiles.filter((f) => f.stageId === stageId).length > 0;
 
   return (
     <>
@@ -219,17 +227,19 @@ export function ProjectEditAttachments({
                       <Box sx={{ mb: 1, typography: 'overline' }}>
                         <b>{project?.currentStage?.name}</b>
                       </Box>
-                      {(verifyPermissions(
+                      {((verifyPermissions(
                         listPermissions,
                         CONFIG.permissions.system,
                         CONFIG.permissions.moduleProjects,
                         CONFIG.permissions.operationUploadFile
-                      ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) && (
+                      ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) &&
+                        !someNewFileFromAnotherStage(project?.currentStage?.id)
+                      ) && (
                           <Box sx={{ mb: 1 }}>
                             <Button
                               color="primary"
                               variant="outlined"
-                              disabled={!isAddFilesEnabled}
+                              disabled={!isAddFilesEnabled(project?.currentStage?.id)}
                               onClick={() => handleAddFiles(project?.currentStage?.id)}
                             >
                               <Iconify icon="material-symbols:attach-file-add" />
@@ -243,16 +253,19 @@ export function ProjectEditAttachments({
                     <MultiFilePreview
                       key={project?.currentStage?.id}
                       thumbnail
-                      files={mappedDisplayFiles.find((mappedFile) => mappedFile.stageId === project?.currentStage?.id)?.files || []}
+                      files={mappedDisplayFiles.find(
+                        (mappedFile) => mappedFile.stageId === project?.currentStage?.id)?.files || []
+                      }
                       onRemove={handleClickRemoveFile}
                       onDownload={handleDownloadFile}
                       lastNode={
-                        (verifyPermissions(
+                        ((verifyPermissions(
                           listPermissions,
                           CONFIG.permissions.system,
                           CONFIG.permissions.moduleProjects,
                           CONFIG.permissions.operationUploadFile
-                        ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) ? (
+                        ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) &&
+                          !someNewFileFromAnotherStage(project?.currentStage?.id)) ? (
                           <UploadBox onDrop={(files) => {
                             if (files && files.length) {
                               const uniqueFiles = files.filter((file) =>
@@ -264,6 +277,7 @@ export function ProjectEditAttachments({
                                   fileUrl: URL.createObjectURL(file),
                                   name: file.name,
                                   isNew: true,
+                                  stageId: project?.currentStage?.id,
                                 }));
                                 setNewFiles((prev) => [...prev, ...filesToAdd]);
                               }
@@ -315,16 +329,18 @@ export function ProjectEditAttachments({
                     <MultiFilePreview
                       key={mappedFile.stageId}
                       thumbnail
+                      // files={[...mappedFile.files, ...newFiles.filter((f) => f.stageId === mappedFile.stageId)]}
                       files={mappedFile.files}
                       onRemove={handleClickRemoveFile}
                       onDownload={handleDownloadFile}
                       lastNode={
-                        (verifyPermissions(
+                        ((verifyPermissions(
                           listPermissions,
                           CONFIG.permissions.system,
                           CONFIG.permissions.moduleProjects,
                           CONFIG.permissions.operationUploadFile
-                        ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) ? (
+                        ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) &&
+                          !someNewFileFromAnotherStage(mappedFile.stageId)) ? (
                           <Box sx={{ display: 'flex', flexDirection: 'column' }}>
                             <UploadBox onDrop={(files) => {
                               if (files && files.length) {
@@ -337,6 +353,7 @@ export function ProjectEditAttachments({
                                     fileUrl: URL.createObjectURL(file),
                                     name: file.name,
                                     isNew: true,
+                                    stageId: mappedFile.stageId,
                                   }));
                                   setNewFiles((prev) => [...prev, ...filesToAdd]);
                                 }
@@ -345,16 +362,18 @@ export function ProjectEditAttachments({
                                 }
                               }
                             }} />
-                            <Button
-                              color="primary"
-                              variant="outlined"
-                              disabled={!isAddFilesEnabled}
-                              onClick={() => handleAddFiles(mappedFile.stageId)}
-                              sx={{ p: 0, mt: 1 }}
-                            >
-                              <Iconify icon="material-symbols:attach-file-add" />
-                              Add
-                            </Button>
+                            {!someNewFileFromAnotherStage(mappedFile.stageId) && (
+                              <Button
+                                color="primary"
+                                variant="outlined"
+                                disabled={!isAddFilesEnabled(mappedFile.stageId)}
+                                onClick={() => handleAddFiles(mappedFile.stageId)}
+                                sx={{ p: 0, mt: 1 }}
+                              >
+                                <Iconify icon="material-symbols:attach-file-add" />
+                                Add
+                              </Button>
+                            )}
                           </Box>
                         ) : null
                       }

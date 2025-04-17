@@ -31,8 +31,11 @@ export function useCalendar() {
     setSelectEventId('');
   }, []);
 
-  const onInitialView = useCallback(() => {
-    if (calendarEl) {
+  const onInitialView = useCallback((forceView = null) => {
+    if (forceView) {
+      setView(forceView);
+    }
+    else if (calendarEl) {
       const calendarApi = calendarEl.getApi();
 
       const newView = smUp ? 'dayGridMonth' : 'listWeek';
@@ -47,6 +50,9 @@ export function useCalendar() {
         const calendarApi = calendarEl.getApi();
 
         calendarApi.changeView(newView);
+        setView(newView);
+      }
+      else {
         setView(newView);
       }
     },
@@ -69,14 +75,20 @@ export function useCalendar() {
       calendarApi.prev();
       setDate(calendarApi.getDate());
     }
+    else {
+      setDate(new Date());
+    }
   }, [calendarEl]);
 
   const onDateNext = useCallback(() => {
     if (calendarEl) {
-      const calendarApi = calendarEl.getApi();
+      const calendarApi = calendarEl?.getApi();
 
-      calendarApi.next();
-      setDate(calendarApi.getDate());
+      calendarApi?.next();
+      setDate(calendarApi?.getDate());
+    }
+    else {
+      setDate(new Date());
     }
   }, [calendarEl]);
 

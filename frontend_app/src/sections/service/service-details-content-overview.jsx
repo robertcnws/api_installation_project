@@ -3,19 +3,26 @@ import { useRef, useMemo, useState, useEffect, useContext, useCallback } from 'r
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import ListItemText from '@mui/material/ListItemText';
-import { Box, Radio, RadioGroup, FormControlLabel } from '@mui/material';
+import { Box, Radio, TextField, RadioGroup, FormControlLabel } from '@mui/material';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
 import { fDate } from 'src/utils/format-time';
+import { listRolesAndSubroles } from 'src/utils/check-permissions';
 
+import { CONFIG } from 'src/config-global';
+
+import { toast } from 'src/components/snackbar';
 import { Iconify } from 'src/components/iconify';
+import { UploadBox, MultiFilePreview } from 'src/components/upload';
 
 import { LoadingContext } from 'src/auth/context/loading-context';
 import { useDataContext } from 'src/auth/context/data/data-context';
 
 import { ServiceDetailsContentOverviewTableIssues } from './service-details-content-overview-table-issues';
 import { ServiceDetailsContentOverviewModalService } from './service-details-content-overview-modal-service';
+import { ServiceDetailsContentOverviewTableIssuesMobile } from './service-details-content-overview-table-issues-mobile';
+
 
 
 
@@ -28,8 +35,13 @@ export function ServiceDetailsContentOverview({
   selectedListItems,
   setSelectedListItems,
   service = null,
-  serviceType,
   setServiceType,
+  serviceFiles,
+  setServiceFiles,
+  serviceNotes,
+  setServiceNotes,
+  handleClickRemoveFile,
+  handleDownloadFile,
 }) {
 
   const {
@@ -59,7 +71,8 @@ export function ServiceDetailsContentOverview({
 
   useEffect(() => {
     setLocalServiceType(service ? service?.serviceType : 'retail');
-  }, [service]);
+    setServiceType(service ? service?.serviceType : 'retail');
+  }, [service, setServiceType]);
 
   const handleServiceTypeChange = (e) => {
     setLocalServiceType(e.target.value);
@@ -171,8 +184,8 @@ export function ServiceDetailsContentOverview({
         p: 3,
         gap: 3,
         display: 'flex',
-        flexDirection: 'row',
-        ml: isMobile ? 5 : 0,
+        flexDirection: !isMobile ? 'row' : 'column',
+        ml: 0,
         overflow: 'auto'
       }}>
         {[
@@ -259,12 +272,76 @@ export function ServiceDetailsContentOverview({
           </Stack>
         ))}
       </Box>
+      {!service && (
+        <Box sx={{
+          p: 3,
+          gap: 1,
+          display: 'flex',
+          flexDirection: !isMobile ? 'row' : 'column',
+          ml: !isMobile ? 2 : 0,
+          mt: 0,
+          overflow: 'auto',
+          justifyContent: 'flex-start',
+        }}>
+          <TextField
+            name="notes"
+            label="Notes"
+            value={serviceNotes || ''}
+            onChange={(e) => setServiceNotes(e.target.value)}
+            multiline
+            rows={2}
+            sx={{
+              minWidth: !isMobile ? serviceFiles.length === 0 ? 1040 : 1040 - (serviceFiles.length * 80) : '100%',
+            }}
+          />
+          <MultiFilePreview
+            key='preview-issued-attachments'
+            thumbnail
+            files={serviceFiles || []}
+            onRemove={handleClickRemoveFile}
+            onDownload={handleDownloadFile}
+            sx={{ width: '100%', maxWidth: 500 }}
+            isService
+            isProject={false}
+            moduleType="issued"
+            lastNode={
+              (listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.serviceStaff)) ? (
+                <Box sx={{ width: '100%', maxWidth: 100, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+                  <UploadBox onDrop={(files) => {
+                    if (files && files.length) {
+                      const uniqueFiles = files.filter((file) =>
+                        !serviceFiles.some((existingFile) => existingFile.name === file.name)
+                      );
+                      if (uniqueFiles.length > 0) {
+                        const filesToAdd = uniqueFiles.map((file) => ({
+                          ...file,
+                          fileUrl: URL.createObjectURL(file),
+                          name: file.name,
+                          isNew: true,
+                          attachment_type: 'issued',
+                        }));
+                        setServiceFiles((prev) => [...prev, ...filesToAdd]);
+                      }
+                      else {
+                        toast.error('File already exists');
+                      }
+                    }
+                  }} />
+                  <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
+                    Issued files
+                  </Typography>
+                </Box>
+              ) : null
+            }
+          />
+        </Box>
+      )}
       <Box sx={{
         p: 3,
         gap: 1,
         display: 'flex',
         flexDirection: 'row',
-        ml: isMobile ? 5 : 0,
+        ml: 0,
         mt: 0,
         overflow: 'auto'
       }}>
@@ -278,8 +355,21 @@ export function ServiceDetailsContentOverview({
             />,
             hasValue: items?.length > 0,
             value: (
-              !isMobile && (
+              !isMobile ? (
                 <ServiceDetailsContentOverviewTableIssues
+                  serviceItems={serviceItems}
+                  selectedListItems={selectedListItems}
+                  setSelectedListItems={setSelectedListItems}
+                  containerRef={containerRef}
+                  loadedServiceIssues={loadedServiceIssues}
+                  openServiceItems={openServiceItems}
+                  addIssue={addIssue}
+                  removeIssue={removeIssue}
+                  canAddIssue={canAddIssue}
+                  changeQuantity={changeQuantity}
+                />
+              ) : (
+                <ServiceDetailsContentOverviewTableIssuesMobile
                   serviceItems={serviceItems}
                   selectedListItems={selectedListItems}
                   setSelectedListItems={setSelectedListItems}

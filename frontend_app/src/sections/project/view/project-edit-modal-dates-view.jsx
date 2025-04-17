@@ -10,12 +10,13 @@ import Stack from '@mui/material/Stack';
 import { LoadingButton } from '@mui/lab';
 import Button from '@mui/material/Button';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { Grid, Dialog, TextField, IconButton, DialogTitle, DialogActions } from '@mui/material';
+import { Grid, Dialog, Switch, TextField, IconButton, Typography, DialogTitle, DialogActions } from '@mui/material';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
-import { fDate, fIsSame } from 'src/utils/format-time';
-import { totalPercentageProjectStage } from 'src/utils/project-tasks-utils';
+import { getServiceInstaller } from 'src/utils/service-tasks-utils';
+import { fDate, fIsSame, getDatesBetween } from 'src/utils/format-time';
+import { getProjectInstaller, totalPercentageProjectStage } from 'src/utils/project-tasks-utils';
 
 import { CONFIG } from 'src/config-global';
 
@@ -24,7 +25,7 @@ import { Form } from 'src/components/hook-form';
 import { Iconify } from 'src/components/iconify';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 
-
+import { useDataContext } from 'src/auth/context/data/data-context';
 
 // ----------------------------------------------------------------------
 
@@ -40,16 +41,51 @@ export function ProjectEditModalDatesView({
 
     const [diffDays, setDiffDays] = useState(1);
 
+    const {
+        loadedProjects,
+        loadedServices,
+    } = useDataContext();
+
+    const busyDays = useMemo(() => {
+        const installer = getProjectInstaller(project, CONFIG);
+        if (!installer) return [];
+
+        const installerProjects = loadedProjects?.filter(
+            (p) => getProjectInstaller(p, CONFIG)?.id === installer.id
+        ) || [];
+        const installerServices = loadedServices?.filter(
+            (s) => getServiceInstaller(s, CONFIG)?.id === installer.id
+        ) || [];
+
+        const occupiedDays = [];
+
+        installerProjects.forEach((p) => {
+            if (!p.isPartDays) {
+                getDatesBetween(p.startDate, p.endDate)
+                    .forEach((date) => occupiedDays.push(date));
+            }
+        });
+
+        installerServices.forEach((s) => {
+            if (!s.isPartDays) {
+                getDatesBetween(s.startDate, s.endDate)
+                    .forEach((date) => occupiedDays.push(date));
+            }
+        });
+        const finalDays = occupiedDays.filter((date) => fDate(date) !== fDate(project?.startDate));
+
+        return Array.from(new Set(finalDays));
+
+    }, [loadedProjects, loadedServices, project]);
+
+    // console.log('busyDays', busyDays);
+
     useEffect(() => {
         if (project?.endDate) {
             const diff = dayjs(project?.endDate).diff(dayjs(project?.startDate), 'day');
             setDiffDays(diff);
         }
     }, [project?.endDate, project?.startDate]);
-
-    // const diffDays = useMemo(
-    //     () => project?.endDate ? dayjs(project?.endDate).diff(dayjs(project?.startDate), 'day') : 1, [project?.endDate, project?.startDate]
-    // );
 
     const [daysToInstall, setDaysToInstall] = useState(1);
 
@@ -76,7 +112,7 @@ export function ProjectEditModalDatesView({
     const handleDaysChange = (e) => {
         const days = parseInt(e.target.value, 10) || 1;
         setDaysToInstall(days);
-        const newEndDate = dayjs(project?.startDate).add(days, 'day');
+        const newEndDate = dayjs(project?.startDate).add(days - 1, 'day');
         setEndDate(newEndDate);
         setFormChanged(!Number.isNaN(days) && days > 0);
     };
@@ -164,19 +200,34 @@ export function ProjectEditModalDatesView({
     }, [project, userLogged?.data, reset, diffDays, isStartDate, isInspectionDate, isFinishPermissionDate]);
 
 
+    const [isPartDays, setIsPartDays] = useState(false);
+
+    useEffect(() => {
+        if (project) {
+            setIsPartDays(project.isPartDays);
+        }
+    }, [project]);
+
+    const handleSwitch = (event) => {
+        const newVal = event.target.checked;
+        setIsPartDays(newVal);
+        setFormChanged(newVal !== project.isPartDays);
+    }
+
+
     const minDate = useMemo(() => {
-        if (isStartDate || isInspectionDate) {
+        if (isStartDate || isInspectionDate || isFinishPermissionDate) {
             if (project?.startDate) {
                 return dayjs(project?.startDate);
             }
             return dayjs(project?.salesOrder?.date);
         }
-        if (isFinishPermissionDate) {
-            if (project?.inspectionDate) {
-                return dayjs(project?.inspectionDate);
-            }
-            return dayjs(project?.salesOrder?.date);
-        }
+        // if (isFinishPermissionDate) {
+        //     if (project?.inspectionDate) {
+        //         return dayjs(project?.inspectionDate);
+        //     }
+        //     return dayjs(project?.salesOrder?.date);
+        // }
         return dayjs(project?.salesOrder?.date);
     }, [isStartDate, isInspectionDate, isFinishPermissionDate, project]);
 
@@ -192,9 +243,10 @@ export function ProjectEditModalDatesView({
                 formData.append('endDate', fDate(endDate));
             }
             else {
-                const newEndDate = dayjs(selectedDate).add(daysToInstall, 'day');
+                const newEndDate = dayjs(selectedDate).add(daysToInstall - 1, 'day');
                 formData.append('endDate', fDate(newEndDate));
             }
+            formData.append('isPartDays', isPartDays ? 'true' : 'false');
         }
 
         if (isInspectionDate) {
@@ -297,61 +349,88 @@ export function ProjectEditModalDatesView({
                                         maxDate={
                                             isStartDate ? dayjs(project?.endDate) : null
                                         }
-                                        inputFormat="yyyy-MM-dd"
+                                        shouldDisableDate={isStartDate ? (date) => {
+                                            if (date.isBefore(minDate, 'day')) return true;
+                                            if (busyDays.some(disabledDate => date.isSame(disabledDate, 'day'))) {
+                                                return true;
+                                            }
+                                            return false;
+                                        } : null}
+                                        inputFormat="YYYY-MM-DD"
                                         sx={{ width: '100%' }}
                                     />
                                 </Box>
                             </Stack>
                             {isStartDate && (
-                                <Stack direction="row" sx={{ typography: 'caption', textTransform: 'capitalize' }}>
-                                    <Box sx={{
-                                        display: 'flex',
-                                        justifyContent: 'flex-start',
-                                        flexDirection: 'row',
-                                        width: '100%',
-                                        color: 'text.secondary',
-                                        mt: 1,
-                                        gap: 0.5
-                                    }}>
-                                        <IconButton
-                                            sx={{ width: 50, height: 50, mt: 1 }}
-                                            onClick={() => {
-                                                if (daysToInstall > 1) {
-                                                    const newDays = daysToInstall - 1;
+                                <>
+                                    <Stack direction="row" sx={{ typography: 'caption', textTransform: 'capitalize' }}>
+                                        <Box sx={{
+                                            display: 'flex',
+                                            justifyContent: 'flex-start',
+                                            flexDirection: 'row',
+                                            width: '100%',
+                                            color: 'text.secondary',
+                                            mt: 1,
+                                            gap: 0.5
+                                        }}>
+                                            <IconButton
+                                                sx={{ width: 50, height: 50, mt: 1 }}
+                                                onClick={() => {
+                                                    if (daysToInstall > 0) {
+                                                        const newDays = daysToInstall - 1;
+                                                        setDaysToInstall(newDays);
+                                                        const newEndDate = dayjs(project?.startDate).add(newDays, 'day');
+                                                        setEndDate(newEndDate);
+                                                        setFormChanged(true);
+                                                    }
+                                                }}
+                                                disabled={daysToInstall < 1}
+                                            >
+                                                <Iconify icon="mdi:minus-box-outline" sx={{ width: 30, height: 30 }} />
+                                            </IconButton>
+
+                                            <TextField
+                                                type="number"
+                                                min={1}
+                                                label="Duration days"
+                                                sx={{ width: '30%', mt: 1 }}
+                                                value={daysToInstall + 1}
+                                                onChange={handleDaysChange}
+                                            />
+
+                                            <IconButton
+                                                sx={{ width: 50, height: 50, mt: 1 }}
+                                                onClick={() => {
+                                                    const newDays = daysToInstall + 1;
                                                     setDaysToInstall(newDays);
                                                     const newEndDate = dayjs(project?.startDate).add(newDays, 'day');
                                                     setEndDate(newEndDate);
                                                     setFormChanged(true);
-                                                }
-                                            }}
-                                            disabled={daysToInstall <= 1}
-                                        >
-                                            <Iconify icon="mdi:minus-box-outline" sx={{ width: 30, height: 30 }} />
-                                        </IconButton>
-
-                                        <TextField
-                                            type="number"
-                                            min={1}
-                                            label="Duration days"
-                                            sx={{ width: '30%', mt: 1 }}
-                                            value={project?.endDate ? daysToInstall + 1 : daysToInstall}
-                                            onChange={handleDaysChange}
-                                        />
-
-                                        <IconButton
-                                            sx={{ width: 50, height: 50, mt: 1 }}
-                                            onClick={() => {
-                                                const newDays = daysToInstall + 1;
-                                                setDaysToInstall(newDays);
-                                                const newEndDate = dayjs(project?.startDate).add(newDays, 'day');
-                                                setEndDate(newEndDate);
-                                                setFormChanged(true);
-                                            }}
-                                        >
-                                            <Iconify icon="mdi:plus-box-outline" sx={{ width: 30, height: 30 }} />
-                                        </IconButton>
-                                    </Box>
-                                </Stack>
+                                                }}
+                                            >
+                                                <Iconify icon="mdi:plus-box-outline" sx={{ width: 30, height: 30 }} />
+                                            </IconButton>
+                                        </Box>
+                                    </Stack>
+                                    <Stack direction="row" sx={{ typography: 'caption', textTransform: 'capitalize', mt: 1 }}>
+                                        <Box
+                                            sx={{
+                                                display: 'flex',
+                                                flexDirection: 'row',
+                                                gap: 1,
+                                                justifyContent: 'space-between',
+                                                p: 0,
+                                                width: '45%'
+                                            }}>
+                                            <Typography variant="subtitle2" color="text.secondary"><b>Is Part Days?</b></Typography>
+                                            <Switch
+                                                checked={!!(project && isPartDays)}
+                                                onChange={(e) => handleSwitch(e)}
+                                                sx={{ maxWidth: 56, mt: -1 }}
+                                            />
+                                        </Box>
+                                    </Stack>
+                                </>
                             )}
                         </Grid>
                     </Grid>

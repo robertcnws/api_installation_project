@@ -186,7 +186,10 @@ export function ProjectTableRow({
           )}
         <TableCell
           // onClick={handleClick} 
-          onClick={onViewRow}
+          onClick={() => {
+            localStorage.removeItem('projectReminderTab');
+            onViewRow();
+          }}
           sx={{ 
             whiteSpace: 'nowrap', 
             cursor: 'pointer',
@@ -206,7 +209,10 @@ export function ProjectTableRow({
           }
         </TableCell>
         <TableCell
-          onClick={onViewRow}
+          onClick={() => {
+            localStorage.removeItem('projectReminderTab');
+            onViewRow();
+          }}
           sx={{ 
             whiteSpace: 'nowrap', 
             cursor: 'pointer', 
@@ -225,7 +231,10 @@ export function ProjectTableRow({
 
         <TableCell
           // onClick={handleClick} 
-          onClick={onViewRow}
+          onClick={() => {
+            localStorage.removeItem('projectReminderTab');
+            onViewRow();
+          }}
           sx={{ 
             whiteSpace: 'nowrap', 
             cursor: 'pointer', 
@@ -256,7 +265,10 @@ export function ProjectTableRow({
         {!isMobile ? (
           <>
             <TableCell
-              onClick={onViewRow}
+              onClick={() => {
+                localStorage.removeItem('projectReminderTab');
+                onViewRow();
+              }}
               sx={{ whiteSpace: 'nowrap', cursor: 'pointer', }}
               align='center'
             >
@@ -272,7 +284,10 @@ export function ProjectTableRow({
             </TableCell>
             <TableCell
               // onClick={handleClick} 
-              onClick={onViewRow}
+              onClick={() => {
+                localStorage.removeItem('projectReminderTab');
+                onViewRow();
+              }}
               sx={{ 
                 cursor: 'pointer', 
                 maxWidth: 200,
@@ -287,7 +302,10 @@ export function ProjectTableRow({
             </TableCell>
             <TableCell
               // onClick={handleClick} 
-              onClick={onViewRow}
+              onClick={() => {
+                localStorage.removeItem('projectReminderTab');
+                onViewRow();
+              }}
               sx={{ whiteSpace: 'nowrap', cursor: 'pointer', }}
             >
               <Label color={
@@ -328,7 +346,10 @@ export function ProjectTableRow({
                 <TableCell
                   key={stage.id}
                   // onClick={handleClick} 
-                  onClick={onViewRow}
+                  onClick={() => {
+                    localStorage.removeItem('projectReminderTab');
+                    onViewRow();
+                  }}
                   sx={{ whiteSpace: 'nowrap', cursor: 'pointer', }}
                 >
                   <Stack direction="row" alignItems="center" spacing={1} sx={{
@@ -414,6 +435,7 @@ export function ProjectTableRow({
           <MenuItem
             onClick={() => {
               popover.onClose();
+              localStorage.removeItem('projectReminderTab');
               onViewRow();
             }}
           >

@@ -46,6 +46,8 @@ urlpatterns = [
     path('add/project/<str:projectId>/task/<str:id>/users/', views.add_project_task_users_assignees, name='add_project_task_users_assignees'),
     path('update/project/<str:projectId>/task/<str:id>/change-status/', views.change_status_project_default_task, name='change_status_project_default_task'),
     path('update/project/<str:projectId>/task/<str:id>/change-priority/', views.change_priority_project_default_task, name='change_priority_project_default_task'),
+    path('manage/project-reminder/<str:projectId>/task/<str:taskId>/', views.manage_project_reminder, name='manage_project_reminder'),
+    path('quit/project-reminder/<str:id>/', views.quit_project_reminder, name='quit_project_reminder'),
     # PROJECT DEFAULT TASKS
     path('create/default-task/', views.create_default_task, name='create_default_task'),
     path('edit/default-task/<str:id>/', views.edit_default_task, name='edit_default_task'),

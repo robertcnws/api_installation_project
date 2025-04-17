@@ -6,7 +6,7 @@ import { Box, Grid, Button } from '@mui/material';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
-import { verifyPermissions, listRolesAndSubroles } from 'src/utils/check-permissions';
+import { listRolesAndSubroles } from 'src/utils/check-permissions';
 
 import { CONFIG } from 'src/config-global';
 
@@ -16,8 +16,8 @@ import { UploadBox, MultiFilePreview } from 'src/components/upload';
 import { LoadingContext } from 'src/auth/context/loading-context';
 
 export function KanbanDetailsTaskAttachments({
-    project,
-    refetchProject,
+    service,
+    refetchService,
     task,
     newFiles,
     setNewFiles,
@@ -32,13 +32,21 @@ export function KanbanDetailsTaskAttachments({
     const [fileToRemove, setFileToRemove] = useState(null);
     const confirm = useBoolean();
     const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
+    const [attachmentType, setAttachmentType] = useState('issued');
 
     useEffect(() => {
-        const attachments = task?.project_task_attachments || [];
+        const attachedTasks = service?.serviceDefaultTasks?.filter((t) => t.service_default_task?.has_attachments) || [];
+        const maxOrderAttachedTask = attachedTasks?.reduce((max, t) => {
+            const order = t?.service_default_task?.order || 0;
+            return order > max ? order : max;
+        }, 0) || 0;
+        const attachType = task?.service_default_task?.order === maxOrderAttachedTask ? 'repair' : 'issued';
+        const attachments = service?.serviceAttachments?.filter((a) => a.attachment_type === attachType) || [];
         if (!attachments.length) {
             setInitialFiles([]);
             return;
         }
+        setAttachmentType(attachType);
         const loadFiles = async () => {
             const loaded = await Promise.all(
                 attachments.map(async (attachment) => {
@@ -48,6 +56,7 @@ export function KanbanDetailsTaskAttachments({
                             fileUrl: URL.createObjectURL(attachment),
                             name: attachment.name,
                             isNew: true,
+                            attachment_type: attachType,
                         };
                     }
                     if (!attachment.file) {
@@ -55,7 +64,7 @@ export function KanbanDetailsTaskAttachments({
                     }
                     try {
                         const response = await fetch(
-                            `${CONFIG.apiUrl}/projects/get-file-url/?key=${encodeURIComponent(attachment.file)}`
+                            `${CONFIG.apiUrl}/services/get-file-url/?key=${encodeURIComponent(attachment.file)}`
                         );
                         if (!response.ok) {
                             console.error('Error fetching URL', response.statusText);
@@ -76,7 +85,7 @@ export function KanbanDetailsTaskAttachments({
             setInitialFiles(loaded);
         };
         loadFiles();
-    }, [task?.project_task_attachments]);
+    }, [task, service]);
 
     const handleClickRemoveFile = (file) => {
         setFileToRemove(file);
@@ -91,10 +100,10 @@ export function KanbanDetailsTaskAttachments({
             const isLocalFile = fileToRemove instanceof File;
             if (!fileToRemove.isNew && !isLocalFile) {
                 try {
-                    const taskId = task?.project_default_task.id;
-                    await axios.delete(`${CONFIG.apiUrl}/projects/delete/file/${id}/project/${taskId}/task/${fileToRemove.file}/`, {
+                    await axios.delete(`${CONFIG.apiUrl}/services/delete/file/${service?.id}/service/${fileToRemove.file}/`, {
                         data: {
                             userReporter: userLogged?.data,
+                            attachmentType: fileToRemove.attachment_type,
                         },
                     });
                     updatedInitial = initialFiles.filter((f) => f.file !== fileToRemove.file);
@@ -112,9 +121,9 @@ export function KanbanDetailsTaskAttachments({
 
             confirm.onFalse();
             setFileToRemove(null);
-            await refetchProject?.();
+            await refetchService?.();
 
-        }, [fileToRemove, initialFiles, newFiles, setNewFiles, id, userLogged, refetchProject, task, confirm]);
+        }, [service, initialFiles, newFiles, fileToRemove, refetchService, userLogged, confirm, setFileToRemove, setNewFiles]);
 
 
 
@@ -136,63 +145,23 @@ export function KanbanDetailsTaskAttachments({
     return (
         <>
             <Box sx={{ maxHeight: 550, minHeight: !isMobile ? 400 : 0, overflow: 'auto' }}>
-                {project?.currentStage && (
+                {service?.currentStage && (
                     <Box
-                        key={project?.currentStage?.id}
+                        key={service?.currentStage?.id}
                         sx={{ mb: 3, display: 'flex', gap: 3 }}
                     >
                         <Grid container spacing={2}>
                             <Grid item xs={12} sm={12}>
                                 <MultiFilePreview
-                                    key={project?.currentStage?.id}
+                                    key={service?.currentStage?.id}
                                     thumbnail
                                     files={displayFiles || []}
                                     onRemove={handleClickRemoveFile}
                                     onDownload={handleDownloadFile}
                                     listPermissions={listPermissions}
                                     isProject={false}
-                                    // slotProps={{
-                                    //     thumbnail: (verifyPermissions(
-                                    //         listPermissions,
-                                    //         CONFIG.permissions.system,
-                                    //         CONFIG.permissions.moduleTasks,
-                                    //         CONFIG.permissions.operationDownloadFile
-                                    //     ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) ? {
-                                    //         sx: {
-                                    //             width: 75,
-                                    //             height: 75,
-                                    //             cursor: 'pointer',
-                                    //             position: 'relative',
-                                    //             transition: 'background-color 0.3s ease',
-                                    //             '&:hover': {
-                                    //                 bgcolor: 'rgba(0, 0, 0, 0.1)',
-                                    //                 opacity: 0.5,
-                                    //             },
-                                    //             '&::after': {
-                                    //                 content: '""',
-                                    //                 position: 'absolute',
-                                    //                 bottom: 4,
-                                    //                 right: 16,
-                                    //                 width: 40,
-                                    //                 height: 40,
-                                    //                 backgroundImage: 'url(/assets/icons/apps/ic-download-1.svg)',
-                                    //                 backgroundSize: 'contain',
-                                    //                 backgroundRepeat: 'no-repeat',
-                                    //                 display: 'none',
-                                    //             },
-                                    //             '&:hover::after': {
-                                    //                 display: 'block',
-                                    //             },
-                                    //         },
-                                    //     } : null,
-                                    // }}
                                     lastNode={
-                                        (verifyPermissions(
-                                            listPermissions,
-                                            CONFIG.permissions.system,
-                                            CONFIG.permissions.moduleTasks,
-                                            CONFIG.permissions.operationUploadFile
-                                        ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) ? (
+                                        (listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) ? (
                                             <UploadBox sx={{ ml: displayFiles.length === 0 ? 2 : 0, width: 75, height: 75 }} onDrop={(files) => {
                                                 if (files && files.length) {
                                                     const uniqueFiles = files.filter((file) =>
@@ -204,6 +173,7 @@ export function KanbanDetailsTaskAttachments({
                                                             fileUrl: URL.createObjectURL(file),
                                                             name: file.name,
                                                             isNew: true,
+                                                            attachment_type: attachmentType,
                                                         }));
                                                         setNewFiles((prev) => [...prev, ...filesToAdd]);
                                                     }
@@ -235,7 +205,7 @@ export function KanbanDetailsTaskAttachments({
                                 Are you sure you want to delete the file{' '}
                                 <strong>{fileToRemove.name}</strong> from{' '}
                                 <strong>
-                                    {type} ({task.project_default_task.name}) in {name}
+                                    {type} ({task.service_default_task.name}) in {name}
                                 </strong>
                                 ?
                             </>

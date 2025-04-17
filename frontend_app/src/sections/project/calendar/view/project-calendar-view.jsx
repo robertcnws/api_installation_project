@@ -23,6 +23,8 @@ import { DashboardContent } from 'src/layouts/dashboard';
 import { CALENDAR_COLOR_OPTIONS } from 'src/_mock/_calendar';
 import { updateEvent, useGetProjectEvents } from 'src/actions/calendar';
 
+import { Iconify } from 'src/components/iconify';
+
 import { useDataContext } from 'src/auth/context/data/data-context';
 
 import { StyledCalendar } from '../styles';
@@ -32,6 +34,7 @@ import { ProjectCalendarForm } from '../project-calendar-form';
 import { ProjectCalendarToolbar } from '../project-calendar-toolbar';
 import { ProjectCalendarFilters } from '../project-calendar-filters';
 import { ProjectCalendarFiltersResult } from '../project-calendar-filters-result';
+
 
 
 
@@ -54,8 +57,10 @@ export function ProjectCalendarView({ projects, isOnlyWeek }) {
     ...p,
     id: `${p.id}-installation`,
     originalName: p.name,
-    name: `Installation ${p.name}`,
+    title: `Installation ${p.name}`,
     type: 'installation',
+    namedType: 'installation',
+    icon: 'fluent-emoji-high-contrast:man-mechanic',
   })), [projects]);
 
   const inspectionProjects = useMemo(
@@ -63,8 +68,10 @@ export function ProjectCalendarView({ projects, isOnlyWeek }) {
       ...p,
       id: `${p.id}-inspection`,
       originalName: p.name,
-      name: `Inspection ${p.name}`,
+      title: `Inspection ${p.name}`,
       type: 'inspection',
+      namedType: 'inspection',
+      icon: 'icon-park-outline:inspection',
     })), [projects]);
 
   const finishPermissionProjects = useMemo(
@@ -72,23 +79,25 @@ export function ProjectCalendarView({ projects, isOnlyWeek }) {
       ...p,
       id: `${p.id}-finishPermission`,
       originalName: p.name,
-      name: `Finish Permission ${p.name}`,
+      title: `Finish Permission ${p.name}`,
       type: 'finishPermission',
+      namedType: 'finish permission',
+      icon: 'ep:finished',
     })), [projects]);
 
-  
-  const { 
-    events: installEvents, eventsLoading: installEventsLoading 
+
+  const {
+    events: installEvents, eventsLoading: installEventsLoading
   } = useGetProjectEvents(installProjects, 'installation');
 
-  const { 
-    events: inspectionEvents, eventsLoading: inspectionEventsLoading 
+  const {
+    events: inspectionEvents, eventsLoading: inspectionEventsLoading
   } = useGetProjectEvents(inspectionProjects, 'inspection');
 
-  const { 
-    events: finishPermissionEvents, eventsLoading: finishPermissionEventsLoading 
+  const {
+    events: finishPermissionEvents, eventsLoading: finishPermissionEventsLoading
   } = useGetProjectEvents(finishPermissionProjects, 'finishPermission');
-  
+
   const events = [...installEvents, ...inspectionEvents, ...finishPermissionEvents];
   const eventsLoading = installEventsLoading || inspectionEventsLoading || finishPermissionEventsLoading;
 
@@ -99,6 +108,33 @@ export function ProjectCalendarView({ projects, isOnlyWeek }) {
   });
 
   const dateError = fIsAfter(filters.state.startDate, filters.state.endDate);
+
+  const renderEventContent = (eventInfo) => {
+    const customTitle = eventInfo.event._def.extendedProps.customTitle || eventInfo.event._def.extendedProps.name;
+    const iconClass = eventInfo.event._def.extendedProps.icon;
+
+    return (
+      <div style={{ display: 'flex', alignItems: 'center' }}>
+        {iconClass && (
+          <Iconify
+            icon={iconClass}
+            sx={{ mr: 1 }}
+          />
+        )}
+        <span
+          style={{
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            display: 'block',
+            maxWidth: '100%'
+          }}
+        >
+          {customTitle}
+        </span>
+      </div>
+    );
+  }
 
   const {
     calendarRef,
@@ -129,7 +165,10 @@ export function ProjectCalendarView({ projects, isOnlyWeek }) {
   const currentEvent = useEvent(events, selectEventId, selectedRange, openForm);
 
   useEffect(() => {
-    onInitialView(isOnlyWeek ? 'listWeek' : null);
+    const newView = isOnlyWeek ? 'listWeek' : null;
+    Promise.resolve().then(() => {
+      onInitialView(newView);
+    });
   }, [onInitialView, isOnlyWeek]);
 
   const canReset =
@@ -197,6 +236,7 @@ export function ProjectCalendarView({ projects, isOnlyWeek }) {
               dayMaxEventRows={5}
               eventDisplay="block"
               events={dataFiltered}
+              eventContent={renderEventContent}
               headerToolbar={false}
               select={onSelectRange}
               eventClick={
@@ -246,7 +286,7 @@ export function ProjectCalendarView({ projects, isOnlyWeek }) {
         }}
       >
         <DialogTitle sx={{ minHeight: 76 }}>
-          {openForm && <> {currentEvent?.id ? 'Edit' : 'Add'} installation event</>}
+          {openForm && <> {currentEvent?.id ? 'Edit' : 'Add'} {currentEvent?.namedType} event</>}
         </DialogTitle>
 
         <ProjectCalendarForm

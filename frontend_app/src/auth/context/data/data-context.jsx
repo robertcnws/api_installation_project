@@ -19,6 +19,7 @@ import { useStagesTaskQuery } from 'src/_mock/__stages_task';
 import { useDefaultTasksQuery } from 'src/_mock/__default_tasks';
 import { useServiceIssuesQuery } from 'src/_mock/__service_issues';
 import { useServiceStagesQuery } from 'src/_mock/__service_stages';
+import { useProjectRemindersQuery } from 'src/_mock/__project_reminders';
 import { useProjectPermissionsQuery } from 'src/_mock/__project_permissions';
 import { useServiceDefaultTasksQuery } from 'src/_mock/__service_default_tasks';
 import { useNotificationsQuery } from 'src/_mock/__projects_notifications_users';
@@ -30,6 +31,10 @@ export const useDataContext = () => useContext(DataContext);
 export const DataProvider = ({ children }) => {
   const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
 
+  const {
+    data: projectReminders,
+    refetch: refetchProjectReminders
+  } = useProjectRemindersQuery(userLogged?.data.username);
   const {
     data: projects,
     loading: loadingProjects,
@@ -157,10 +162,14 @@ export const DataProvider = ({ children }) => {
     if (userLogged?.data.user_role.name.toLowerCase().indexOf(CONFIG.roles.installer.toLowerCase()) !== -1) {
       finalProjects = sortedProjects.filter((project) =>
       (
-        project.currentStage.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1 ||
+        (
+          project.currentStage.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1 &&
+          project.usersAssignees.some((user) => user.username === userLogged?.data.username)
+        ) ||
         (
           project.currentStage.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 &&
-          totalPercentageProjectStage(project, CONFIG.stages.coordination, CONFIG) >= 50
+          totalPercentageProjectStage(project, CONFIG.stages.coordination, CONFIG) >= 50 && 
+          project.usersAssignees.some((user) => user.username === userLogged?.data.username)
         )
       )
       );
@@ -200,15 +209,41 @@ export const DataProvider = ({ children }) => {
     return userRoles;
   }, [userRoles, userLogged]);
 
+
+  const typedServices = useMemo(() => services.map((service) => ({
+    ...service,
+    userReporter: _avatarUsers.find((user) => user.username === service.userReporter.username),
+    usersAssignees: service.usersAssignees.map((user) => ({
+      ...user,
+      avatarUrl: user.avatarUrl || user.avatar_url || _avatarUsers.find((u) => u.username === user.username)?.avatarUrl,
+    })),
+  })), [services, _avatarUsers]);
+
+
+  const sortedServices = useMemo(() => typedServices?.sort((a, b) => {
+    if (a.startDate && b.startDate) {
+      return dayjs(a.startDate).diff(dayjs(b.startDate));
+    }
+    if (!a.startDate && b.startDate) {
+      return 1;
+    }
+    if (a.startDate && !b.startDate) {
+      return -1;
+    }
+    return 0;
+  }), [typedServices]);
+  
+
   const loadedNotifications = useMemo(() => notifications || null, [notifications]);
   const loadedProjects = useMemo(() => finalProjects || [], [finalProjects]);
   const loadedUsers = useMemo(() => finalUsers || [], [finalUsers]);
   const loadedProjectPermissions = useMemo(() => projectPermissions || [], [projectPermissions]);
   const loadedUserRoles = useMemo(() => finalUserRoles || [], [finalUserRoles]);
-  const loadedServices = useMemo(() => services || [], [services]);
+  const loadedServices = useMemo(() => sortedServices || [], [sortedServices]);
   const loadedServiceIssues = useMemo(() => serviceIssues || [], [serviceIssues]);
   const loadedServiceStages = useMemo(() => serviceStages || [], [serviceStages]);
   const loadedServiceDefaultTasks = useMemo(() => serviceDefaultTasks || [], [serviceDefaultTasks]);
+  const loadedProjectReminders = useMemo(() => projectReminders || [], [projectReminders]);
 
 
   const orderedDefaultGuideProducts = useMemo(() => {
@@ -370,6 +405,8 @@ export const DataProvider = ({ children }) => {
       setLoadedPermissions,
       setLoadedSalesOrders,
       listPermissions,
+      loadedProjectReminders,
+      refetchProjectReminders,
     }),
     [
       loadedPermissions,
@@ -419,6 +456,8 @@ export const DataProvider = ({ children }) => {
       loadingDefaultTasks,
       refetchDefaultTasks,
       listPermissions,
+      loadedProjectReminders,
+      refetchProjectReminders,
     ]
   );
 

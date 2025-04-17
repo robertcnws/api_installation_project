@@ -246,7 +246,7 @@ export function ServiceTableRow({
           </Stack>
         </TableCell>
 
-        {!isMobile ? (
+        {!isMobile && (
           <>
             <TableCell
               // onClick={handleClick} 
@@ -358,10 +358,6 @@ export function ServiceTableRow({
             }
             )}
           </>
-        ) : (
-          <TableCell>
-            <Label color={row?.hasPermission ? 'success' : 'error'}>{row?.hasPermission ? 'Yes' : 'No'}</Label>
-          </TableCell>
         )}
 
 

@@ -1,10 +1,12 @@
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, parser_classes
+from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from django.utils import timezone
 from django.conf import settings
 from api_projects.data_util import (
     transform_data_to_mongo,
+    transform_dict_to_camelcase,
     create_notification,
     create_entity_number,
     fix_order,
@@ -21,6 +23,9 @@ from api_projects.s3_utils import (
 from api_projects.models import (
     ProjectTracking,
 )
+from api_authorization.models import (
+    LoginUser,
+)
 
 from .models import (
     ServiceIssue,
@@ -28,6 +33,11 @@ from .models import (
     ServiceStage,
     ServiceDefaultTask,
     ServiceAttachment,
+    ServiceTaskComment,
+)
+
+from .utils import (
+    updated_tasks,
 )
 import json
 
@@ -631,22 +641,36 @@ def delete_service_default_tasks(request):
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
+@parser_classes([MultiPartParser, FormParser])
 def create_service(request):
+    files = request.FILES.getlist('serviceAttachments')
     data = request.data
-    user_reporter = data.get('userReporter', None)
+    user_reporter = json.loads(data.get('userReporter', None))
+    role = user_reporter.get('user_role', None) if user_reporter else None
+    responsible = None
+    
+    if role and role.get('name') == 'superadmin':
+        responsible = LoginUser.objects(user_role__name='administrator').first()
+        responsible = transform_data_to_mongo(responsible)
+    elif role and role.get('name') == 'administrator':
+        responsible = transform_dict_to_camelcase(user_reporter)
+    
+    if responsible:
+        responsible['name'] = f'{responsible["firstName"]} {responsible["lastName"]}'
+    
     try:
-        issued_products = data.get('issuedProducts', [])
-        sales_order = data.get('salesOrder', None)
+        issued_products = json.loads(data.get('issuedProducts', []))
+        sales_order = json.loads(data.get('salesOrder', None))
         service_type = data.get('serviceType', None)
+        service_notes = data.get('notes', None)
         stage_history = None
         users_assignees = []
         start_date = None
         end_date = None
         # current_stage = None
-        service_attachments = []
         service_history = []
         address = None
-        user_manager = None
+        user_manager = responsible
         service_comments = []
         service_default_tasks = []
         users_service_team = []
@@ -678,6 +702,25 @@ def create_service(request):
                 'service_task_attachments': [],
             }
             service_default_tasks.append(info)
+            
+        service_attachments = []
+        
+        for file_obj in files:
+            key = upload_attachment_to_s3(file_obj, settings.AWS_S3_FOLDER_SERVICES)
+            if key:
+                # Ejemplo: url = f"https://{settings.AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com/{key}"
+                attachment = ServiceAttachment(
+                    name=file_obj.name,
+                    file=key,
+                    created_time=timezone.now(),
+                    last_modified_time=timezone.now(),
+                    user_upload = user_reporter,
+                    attachment_type = file_obj.attachment_type if hasattr(file_obj, 'attachment_type') else 'issued',
+                )
+                attachment.save()
+                service_attachments.append(transform_data_to_mongo(attachment))
+                
+        service_attachments = sorted(service_attachments, key=lambda x: x['name'], reverse=True)
         
         
         service = Service(
@@ -703,8 +746,56 @@ def create_service(request):
             last_modified_time=timezone.now(),
             users_service_team=users_service_team,
             service_type=service_type,
+            created_by=user_reporter,
+            service_notes=service_notes,
         )
+        
         service.save()
+        
+        sorted_tasks = updated_tasks(service, user_reporter)
+                
+        service.service_default_tasks = sorted_tasks
+        
+        service.save()
+        
+        all_tasks = service.service_default_tasks if service.service_default_tasks else []
+        
+        if len(service.service_attachments) > 0:
+            
+            target_task = settings.TASK_SERVICE_UPLOAD_ISSUES.lower()
+            
+            files_task = None
+                                    
+            for task in all_tasks:
+                name = task.get('service_default_task', {}).get('name', '').lower()
+                if target_task in name:
+                    files_task = task
+                    break
+            
+            if files_task:
+                files_task['status'] = 'finished'
+                files_task['percentage'] = 100
+                files_task['user_reporter'] = user_reporter
+                files_task['last_modified_time'] = timezone.now()
+                all_tasks = [t for t in all_tasks if str(t['service_default_task']['_id']) != str(files_task['service_default_task']['_id'])]
+                all_tasks.append(files_task)
+                    
+                         
+                    # next_task = get_next_task(task, sorted_tasks)
+                            
+                    # if next_task:
+                    #     next_task['status'] = 'in progress'
+                    #     next_task['percentage'] = 50
+                    #     next_task['user_reporter'] = user_reporter
+                    #     next_task['last_modified_time'] = timezone.now()
+                    #     all_tasks = [t for t in all_tasks if str(t['service_default_task']['_id']) != str(next_task['service_default_task']['_id'])]
+                    #     all_tasks.append(next_task)
+                                
+            sorted_tasks = sorted(all_tasks, key=lambda x: x['service_default_task']['order'], reverse=True)
+                
+            service.service_default_tasks = sorted_tasks
+        
+            service.save()
         
         tracking_info = transform_data_to_mongo(service)
         tracking = ProjectTracking(
@@ -726,6 +817,62 @@ def create_service(request):
     except Exception as e:
         return Response({'error': str(e)}, status=500)
     
+    
+#############################################
+# UPDATE SERVICE
+#############################################
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def update_service(request, id):
+    data = request.data
+    user_reporter = json.loads(data.get('userReporter', None))
+    
+    service = Service.objects(id=id).first()
+    if not service:
+        return Response({'error': 'Service not found'}, status=404)
+    
+    start_date = data.get('startDate', None)
+    end_date = data.get('endDate', None)
+    notes = data.get('notes', None)
+    name = data.get('name', data.get('title', None))
+    try:
+        start_date = start_date if start_date else None
+        end_date = end_date if end_date else None
+        name = name if name else None
+        notes = notes if notes else None
+        
+        service.start_date = start_date
+        service.end_date = end_date
+        service.service_notes = notes
+        service.name = name
+        
+        sorted_tasks = updated_tasks(service, user_reporter)
+                
+        service.service_default_tasks = sorted_tasks
+        
+        service.save()
+        
+        tracking_info = transform_data_to_mongo(service, include_fields=['id', 'name', 'version', 'start_date', 'end_date', 'notes'])
+        tracking = ProjectTracking(
+            user_reporter=user_reporter,
+            action=f'update service ({tracking_info["id"]} - {tracking_info["name"]})',
+            created_time=timezone.now(),
+            managed_data={
+                'data': tracking_info
+            },
+        )
+        tracking.save()
+        if user_reporter:
+            module='services'
+            info=f'has updated service {service.name}'
+            info_id=service.id
+            type='update_service'
+            create_notification(module, info_id, info, type, user_reporter['username'])
+        return Response({'message': 'Service updated successfully'})
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+    
 
 #############################################
 # DELETE SERVICE
@@ -740,6 +887,10 @@ def delete_service(request, id):
         service = Service.objects(id=id).first()
         if not service:
             return Response({'error': 'Service not found'}, status=404)
+        attachments = service.service_attachments if service.service_attachments else []
+        ServiceAttachment.objects(id__in=[attachment['_id'] for attachment in attachments]).delete()
+        for attachment in attachments:
+            delete_attachment_from_s3(attachment['file'])
         tracking_info = transform_data_to_mongo(service)
         service.delete()
         tracking = ProjectTracking(
@@ -775,6 +926,11 @@ def delete_services(request):
         services = Service.objects(id__in=ids).all()
         if not services:
             return Response({'error': 'Services not found'}, status=404)
+        for service in services:
+            attachments = service.service_attachments if service.service_attachments else []
+            ServiceAttachment.objects(id__in=[attachment['_id'] for attachment in attachments]).delete()
+            for attachment in attachments:
+                delete_attachment_from_s3(attachment['file'])
         tracking_info = [transform_data_to_mongo(service) for service in services]
         Service.objects(id__in=ids).delete()
         tracking = ProjectTracking(
@@ -842,6 +998,10 @@ def add_new_issue_service(request, id, issued_product_id):
         issued_products = [product for product in issued_products if str(product.get('line_item_id')) != issued_product_id]
         issued_products.append(issued_product)
         
+        sorted_tasks = updated_tasks(service, user_reporter)
+                
+        service.service_default_tasks = sorted_tasks
+        
         service.issued_products = issued_products
         service.save()
         
@@ -898,6 +1058,10 @@ def delete_issue_service(request, id, issued_product_id, issue_id):
         
         if len(issues) > 0:
             issued_products.append(issued_product)
+            
+        sorted_tasks = updated_tasks(service, user_reporter)
+                
+        service.service_default_tasks = sorted_tasks
         
         service.issued_products = issued_products
         service.save()
@@ -965,6 +1129,11 @@ def edit_issue_service(request, id, issued_product_id, issue_id):
         issued_products = [product for product in issued_products if str(product.get('line_item_id')) != issued_product_id]
         issued_products.append(issued_product)
         
+        
+        sorted_tasks = updated_tasks(service, user_reporter)
+                
+        service.service_default_tasks = sorted_tasks
+        
         service.issued_products = issued_products
         service.save()
         
@@ -1025,6 +1194,11 @@ def change_service_phone_number(request, id):
             'mobile': phone_number,
         }
         
+    
+    sorted_tasks = updated_tasks(service, user_reporter)
+                
+    service.service_default_tasks = sorted_tasks
+        
     service.phone = phone_number if phone_number else ''
     service.sales_order = sales_order
     service.last_modified_time = timezone.now()
@@ -1078,6 +1252,10 @@ def change_service_reference_number(request, id):
     service.reference_number = ref_number if ref_number else '000000'
     service.last_modified_time = timezone.now()
     service.user_reporter = user_reporter if user_reporter else service.user_reporter
+    
+    sorted_tasks = updated_tasks(service, user_reporter)
+                
+    service.service_default_tasks = sorted_tasks
         
     service.save()
     
@@ -1123,6 +1301,10 @@ def change_service_address(request, id):
     service.address = data.get('address', service.address) if data.get('address') else service.address
     service.last_modified_time = timezone.now()
     service.user_reporter = user_reporter if user_reporter else service.user_reporter
+    
+    sorted_tasks = updated_tasks(service, user_reporter)
+                
+    service.service_default_tasks = sorted_tasks
         
     service.save()
     
@@ -1172,6 +1354,10 @@ def change_service_manager(request, id):
     service.user_manager = user_manager if user_manager else service.user_manager
     service.last_modified_time = timezone.now()
     service.user_reporter = user_reporter if user_reporter else service.user_reporter
+    
+    sorted_tasks = updated_tasks(service, user_reporter)
+                
+    service.service_default_tasks = sorted_tasks
         
     service.save()
     
@@ -1310,13 +1496,27 @@ def change_service_dates(request, id):
     
     user_reporter = json.loads(data.get('userReporter', None)) if data.get('userReporter') else service.user_reporter
     
-    start_date = data.get('startDate', None)
-    end_date = data.get('endDate', None)
+    include_fields = ['id', 'name', 'version']
+    
+    if data.get('startDate', None):
+        start_date = data.get('startDate', None)
+        include_fields.append('start_date')
+    
+    if data.get('endDate', None):
+        end_date = data.get('endDate', None)
+        include_fields.append('end_date')
+    
+    is_part_days_str = data.get('isPartDays', '')
+    if is_part_days_str:
+        is_part_days = True if is_part_days_str.lower() == 'true' else False
+        if data.get('isPartDays') and is_part_days != service.is_part_days:
+            include_fields.append('is_part_days')
     
     service.start_date = start_date if start_date else service.start_date
     service.end_date = end_date if end_date else service.end_date
     service.last_modified_time = timezone.now()
     service.user_reporter = user_reporter if user_reporter else service.user_reporter
+    service.is_part_days = is_part_days if is_part_days_str else service.is_part_days
     
     if start_date:
         all_tasks = service.service_default_tasks if service.service_default_tasks else []
@@ -1360,7 +1560,7 @@ def change_service_dates(request, id):
         action=f'change service dates ({service.id} - {service.name})',
         created_time=timezone.now(),
         managed_data={
-            'data': transform_data_to_mongo(service, include_fields=['id', 'name', 'start_date', 'end_date'])
+            'data': transform_data_to_mongo(service, include_fields=include_fields)
         },
     )
     tracking.save()
@@ -1401,6 +1601,11 @@ def add_issued_products(request, id):
                 issued_products.append(new_issued_product)
         
         service.issued_products = issued_products if issued_products else service.issued_products
+        
+        sorted_tasks = updated_tasks(service, user_reporter)
+                
+        service.service_default_tasks = sorted_tasks
+        
         service.save()
         
         tracking_info = transform_data_to_mongo(service, include_fields=['id', 'name', 'version', 'issued_products'])
@@ -1447,6 +1652,10 @@ def set_service_place(request, id):
     service.service_place = service_place if service_place else service.service_place
     service.last_modified_time = timezone.now()
     service.user_reporter = user_reporter if user_reporter else service.user_reporter
+    
+    sorted_tasks = updated_tasks(service, user_reporter)
+                
+    service.service_default_tasks = sorted_tasks
         
     service.save()
     
@@ -1496,6 +1705,10 @@ def change_service_type(request, id):
     service.service_type = service_type if service_type else service.service_type
     service.last_modified_time = timezone.now()
     service.user_reporter = user_reporter if user_reporter else service.user_reporter
+    
+    sorted_tasks = updated_tasks(service, user_reporter)
+                
+    service.service_default_tasks = sorted_tasks
         
     service.save()
     
@@ -1548,7 +1761,12 @@ def change_status_service_default_task(request, serviceId, id):
         task['user_reporter'] = user_reporter
         task['last_modified_time'] = timezone.now()
         
-        not_started_tasks = [t for t in all_tasks if t['status'] == 'not started' and t['service_default_task']['order'] > task['service_default_task']['order']]
+        not_started_tasks = [
+            t for t in all_tasks if \
+            t['status'] == 'not started' and \
+            t['service_default_task']['is_active'] == True and \
+            t['service_default_task']['order'] > task['service_default_task']['order']
+        ]
         
         sorted_tasks = sorted(not_started_tasks, key=lambda tt: tt['service_default_task']['order'])
         
@@ -1560,7 +1778,7 @@ def change_status_service_default_task(request, serviceId, id):
         
         if status == 'finished':
             next_task = get_next_task(task, sorted_tasks)
-            print('next name', next_task)
+            
             if next_task and next_task['status'] == 'not started':
                 less_ordered_tasks = [t for t in all_tasks if t['service_default_task']['order'] < next_task['service_default_task']['order']]
                 unfinished_tasks = [t for t in less_ordered_tasks if t['status'] != 'finished']
@@ -1654,6 +1872,10 @@ def change_service_notes(request, id):
     service.service_notes = service_notes if service_notes else service.service_notes
     service.last_modified_time = timezone.now()
     service.user_reporter = user_reporter if user_reporter else service.user_reporter
+    
+    sorted_tasks = updated_tasks(service, user_reporter)
+                
+    service.service_default_tasks = sorted_tasks
         
     service.save()
     
@@ -1792,41 +2014,49 @@ def upload_files_to_service(request, id):
     
     if len(service.service_attachments) > 0:
         
-            all_tasks = service.service_default_tasks if service.service_default_tasks else []
+        all_tasks = service.service_default_tasks if service.service_default_tasks else []
             
-            target_task = settings.TASK_SERVICE_UPLOAD_ISSUES.lower() if attachment_type == 'issued' else settings.TASK_SERVICE_UPLOAD_REPAIR.lower()
+        target_task = settings.TASK_SERVICE_UPLOAD_ISSUES.lower() if attachment_type == 'issued' else settings.TASK_SERVICE_UPLOAD_REPAIR.lower()
+            
+        files_task = None
                                     
-            for task in all_tasks:
-                name = task.get('service_default_task', {}).get('name', '').lower()
-                if target_task in name:
-                    task['status'] = 'finished'
-                    task['percentage'] = 100
-                    task['user_reporter'] = user_reporter
-                    task['last_modified_time'] = timezone.now()
+        for task in all_tasks:
+            name = task.get('service_default_task', {}).get('name', '').lower()
+            if target_task in name:
+                files_task = task
+                break
+            
+        if files_task:
+            files_task['status'] = 'finished'
+            files_task['percentage'] = 100
+            files_task['user_reporter'] = user_reporter
+            files_task['last_modified_time'] = timezone.now()
+            all_tasks = [t for t in all_tasks if str(t['service_default_task']['_id']) != str(files_task['service_default_task']['_id'])]
+            all_tasks.append(files_task)
                             
-                    not_started_tasks = [t for t in all_tasks if t['status'] == 'not started' and t['service_default_task']['order'] > task['service_default_task']['order']]
+            not_started_tasks = [t for t in all_tasks if t['status'] == 'not started' and t['service_default_task']['order'] > files_task['service_default_task']['order']]
                             
-                    sorted_tasks = sorted(not_started_tasks, key=lambda tt: tt['service_default_task']['order'])
+            sorted_tasks = sorted(not_started_tasks, key=lambda tt: tt['service_default_task']['order'])
                             
-                    def get_next_task(task, sorted_tasks):
-                        return next(
-                            (tt for tt in sorted_tasks if tt['service_default_task']['order'] > task['service_default_task']['order']),
-                            None
-                        )
+            def get_next_task(task, sorted_tasks):
+                return next(
+                    (tt for tt in sorted_tasks if tt['service_default_task']['order'] > task['service_default_task']['order']),
+                    None
+                )
                                         
-                    next_task = get_next_task(task, sorted_tasks)
+            next_task = get_next_task(task, sorted_tasks)
                             
-                    if next_task:
-                        next_task['status'] = 'in progress'
-                        next_task['percentage'] = 50
-                        next_task['user_reporter'] = user_reporter
-                        next_task['last_modified_time'] = timezone.now()
-                        all_tasks = [t for t in all_tasks if str(t['service_default_task']['_id']) != str(next_task['service_default_task']['_id'])]
-                        all_tasks.append(next_task)
+            if next_task:
+                next_task['status'] = 'in progress'
+                next_task['percentage'] = 50
+                next_task['user_reporter'] = user_reporter
+                next_task['last_modified_time'] = timezone.now()
+                all_tasks = [t for t in all_tasks if str(t['service_default_task']['_id']) != str(next_task['service_default_task']['_id'])]
+                all_tasks.append(next_task)
                                 
-            sorted_tasks = sorted(all_tasks, key=lambda x: x['service_default_task']['order'], reverse=True)
+        sorted_tasks = sorted(all_tasks, key=lambda x: x['service_default_task']['order'], reverse=True)
                 
-            service.service_default_tasks = sorted_tasks
+        service.service_default_tasks = sorted_tasks
         
     service.save()
     
@@ -1867,5 +2097,479 @@ def get_default_file_url(request):
     try:
         url = generate_default_file_url(object_key)
         return Response({'url': url})
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+
+
+#############################################
+# CREATE SERVICE COMMENT
+#############################################
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def create_service_comment(request, id): 
+    
+    service = Service.objects(id=id).first()
+    if not service:
+        return Response({'error': 'Project not found'}, status=404)
+    
+    last_comments = service.service_comments if service.service_comments else []
+            
+    data = request.data
+    
+    user_reporter = data.get('userReporter', None)
+    
+    text_comment = data.get('comment', None)
+    
+    task_id = data.get('taskId', None)
+    
+    task = None
+    
+    if task_id:
+        task = next((task for task in service.service_default_tasks if str(task['service_default_task']['_id']) == task_id), None)
+        if not task:
+            return Response({'error': 'Task not found'}, status=404)
+    
+    if not text_comment:
+        return Response({'error': 'Comment is required'}, status=400)
+    
+    new_comment = ServiceTaskComment(
+        comment=text_comment,
+        created_time=timezone.now(),
+        last_modified_time=timezone.now(),
+        user_reporter=user_reporter,
+        service=transform_data_to_mongo(service, include_fields=['id', 'name', 'number', 'current_stage']),
+        service_default_task=task if task else None,
+        service_default_task_comment_attachments=[]
+    )
+    
+    new_comment.save()
+    
+    last_comments.append(transform_data_to_mongo(new_comment))
+    sorted_comments = sorted(last_comments, key=lambda x: to_aware(x['created_time']), reverse=True)
+    
+    
+    service.last_modified_time = timezone.now()
+    service.service_comments = sorted_comments
+        
+    service.save()
+    
+    tracking = ProjectTracking(
+        user_reporter=user_reporter,
+        action=f'create comment in service ({service.id} - {service.name})',
+        created_time=timezone.now(),
+        managed_data={
+            'data': transform_data_to_mongo(service, include_fields=['id', 'name', 'number', 'current_stage', 'service_comments'])
+        },
+    )
+    tracking.save()
+    
+    if user_reporter:
+        module='services'
+        info=f'has created comment in service {service.name}'
+        info_id=service.id
+        type='create_service_comment'
+        create_notification(module, info_id, info, type, user_reporter['username'])
+        
+    return Response({
+        'message': 'Comment in service created successfully',
+        'data': json.loads(service.to_json())
+    }, status=201)
+    
+    
+#############################################
+# EDIT SERVICE COMMENT
+#############################################
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def edit_service_comment(request, id, serviceId): 
+    
+    service = Service.objects(id=serviceId).first()
+    if not service:
+        return Response({'error': 'Project not found'}, status=404)
+    
+    last_comments = service.service_comments if service.service_comments else []
+    last_comments = [comment for comment in last_comments if str(comment['id']) != id]
+            
+    data = request.data
+    
+    user_reporter = data.get('userReporter', None)
+    
+    text_comment = data.get('comment', None)
+    
+    task_id = data.get('taskId', None)
+    
+    task = None
+    
+    if task_id:
+        task = next((task for task in service.service_default_tasks if str(task['service_default_task']['_id']) == task_id), None)
+        if not task:
+            return Response({'error': 'Task not found'}, status=404)
+    
+    if not text_comment:
+        return Response({'error': 'Comment is required'}, status=400)
+    
+    existing_comment = ServiceTaskComment.objects(id=id).first()
+    
+    if existing_comment:
+        existing_comment.comment = text_comment
+        existing_comment.last_modified_time = timezone.now()
+        existing_comment.user_reporter = user_reporter
+        existing_comment.service = transform_data_to_mongo(service, include_fields=['id', 'name', 'number', 'current_stage'])
+        existing_comment.service_default_task = task if task else None
+        existing_comment.save()
+    else:
+        existing_comment = ServiceTaskComment(
+            comment=text_comment,
+            created_time=timezone.now(),
+            last_modified_time=timezone.now(),
+            user_reporter=user_reporter,
+            service=transform_data_to_mongo(service, include_fields=['id', 'name', 'number', 'current_stage']),
+            service_default_task=task if task else None,
+            service_default_task_comment_attachments=[]
+        )
+        existing_comment.save()
+    
+    last_comments.append(transform_data_to_mongo(existing_comment))
+    sorted_comments = sorted(last_comments, key=lambda x: to_aware(x['created_time']), reverse=True)
+    
+    service.last_modified_time = timezone.now()
+    service.service_comments = sorted_comments
+        
+    service.save()
+    
+    tracking = ProjectTracking(
+        user_reporter=user_reporter,
+        action=f'edit comment ({existing_comment.id}) in service ({service.id} - {service.name})',
+        created_time=timezone.now(),
+        managed_data={
+            'data': transform_data_to_mongo(service, include_fields=['id', 'name', 'number', 'current_stage', 'service_comments'])
+        },
+    )
+    tracking.save()
+    
+    if user_reporter:
+        module='services'
+        info=f'has updated comment in service {service.name}'
+        info_id=service.id
+        type='update_service_comment'
+        create_notification(module, info_id, info, type, user_reporter['username'])
+        
+    return Response({
+        'message': 'Comment in service edited successfully',
+        'data': json.loads(service.to_json())
+    }, status=201)
+    
+    
+#############################################
+# DELETE SERVICE COMMENT
+#############################################
+
+@api_view(['DELETE'])
+@permission_classes([AllowAny])
+def delete_service_comment(request, id, serviceId): 
+    
+    service = Service.objects(id=serviceId).first()
+    if not service:
+        return Response({'error': 'Project not found'}, status=404)
+    
+    last_comments = service.service_comments if service.service_comments else []
+    
+    last_comments = [comment for comment in last_comments if str(comment['id']) != str(id)]
+    last_comments = last_comments if last_comments else []
+            
+    data = request.data
+    
+    user_reporter = data.get('userReporter', None)
+    
+    existing_comment = ServiceTaskComment.objects(id=id).first()
+    
+    if existing_comment:
+        existing_comment.delete()
+    
+    sorted_comments = sorted(last_comments, key=lambda x: to_aware(x['created_time']), reverse=True)
+    
+    service.last_modified_time = timezone.now()
+    service.service_comments = sorted_comments
+        
+    service.save()
+    
+    tracking = ProjectTracking(
+        user_reporter=user_reporter,
+        action=f'delete comment in service ({service.id} - {service.name})',
+        created_time=timezone.now(),
+        managed_data={
+            'data': transform_data_to_mongo(service, include_fields=['id', 'name', 'number', 'current_stage', 'service_comments'])
+        },
+    )
+    tracking.save()
+    
+    if user_reporter:
+        module='services'
+        info=f'has deleted comment in service {service.name}'
+        info_id=service.id
+        type='delete_service_comment'
+        create_notification(module, info_id, info, type, user_reporter['username'])
+        
+    return Response({
+        'message': 'Comment in service deleted successfully',
+        'data': json.loads(service.to_json())
+    }, status=201)
+    
+
+#############################################
+# CHANGE SERVICE PROPERTIES
+#############################################
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def change_service_properties(request, id): 
+    
+    service = Service.objects(id=id).first()
+    if not service:
+        return Response({'error': 'Service not found'}, status=404)
+            
+    data = request.data
+    
+    has_to_pay_str = data.get('hasToPay', 'false')
+    if 'hasToPay' in data:
+        if isinstance(has_to_pay_str, bool):
+            has_to_pay = has_to_pay_str
+        else:
+            has_to_pay = True if has_to_pay_str.lower() == 'true' else False
+    
+    paid_str = data.get('paid', 'false')
+    if 'paid' in data:
+        if isinstance(paid_str, bool):
+            paid = paid_str
+        else:
+            paid = True if paid_str.lower() == 'true' else False
+        
+    by_factory_str = data.get('byFactory', 'false')
+    if 'byFactory' in data:
+        if isinstance(by_factory_str, bool):
+            by_factory = by_factory_str
+        else:
+            by_factory = True if by_factory_str.lower() == 'true' else False
+        
+    repired_str = data.get('repaired', 'false')
+    if 'repaired' in data:
+        if isinstance(repired_str, bool):
+            repaired = repired_str
+        else:
+            repaired = True if repired_str.lower() == 'true' else False
+    
+    user_reporter = json.loads(data.get('userReporter', None)) if data.get('userReporter') else service.user_reporter
+    
+    service.last_modified_time = timezone.now()
+    service.user_reporter = user_reporter if user_reporter else service.user_reporter
+    
+    include_fields = ['id', 'name']
+    properties = []
+    tasks = service.service_default_tasks if service.service_default_tasks else []
+    task_3 = next((task for task in tasks if task['service_default_task']['order'] == 3), None)
+    task_4 = next((task for task in tasks if task['service_default_task']['order'] == 4), None)
+    
+    after_tasks = [
+        t for t in tasks if t['service_default_task']['order'] > task_4['service_default_task']['order'] and\
+        (t['service_default_task']['service_stage']['name'].lower() == 'repair' or\
+        t['service_default_task']['service_stage']['name'].lower() == 'preparation')
+    ]
+    closing_tasks = [task for task in tasks if task['service_default_task']['service_stage']['name'].lower() == 'closing']
+    first_closing_task = min(closing_tasks, key=lambda x: x['service_default_task']['order']) if closing_tasks else None    
+    
+    if 'hasToPay' in data:
+        task_3['user_reporter'] = user_reporter
+        task_3['last_modified_time'] = timezone.now()
+        service.has_to_pay = has_to_pay
+        include_fields.append('has_to_pay')
+        properties.append('has to pay')
+        if not has_to_pay:
+            service.paid = False
+            include_fields.append('paid')
+            properties.append('paid')
+            if task_3:
+                task_3['status'] = 'not started'
+                task_3['percentage'] = 0
+        elif task_3:
+            task_3['status'] = 'in progress'
+            task_3['percentage'] = 50
+        
+    if 'paid' in data:
+        task_3['user_reporter'] = user_reporter
+        task_3['last_modified_time'] = timezone.now()
+        service.paid = paid
+        include_fields.append('paid')
+        properties.append('paid')
+        if not paid:
+            if task_3:
+                task_3['status'] = 'in progress'
+                task_3['percentage'] = 50
+        elif task_3:
+            task_3['status'] = 'finished'
+            task_3['percentage'] = 100
+        
+    if 'byFactory' in data:
+        task_4['user_reporter'] = user_reporter
+        task_4['last_modified_time'] = timezone.now()
+        service.by_factory = by_factory
+        include_fields.append('by_factory')
+        properties.append('by factory')
+        if not by_factory:
+            service.repaired = False
+            include_fields.append('repaired')
+            properties.append('repaired')
+            
+            if task_4:
+                task_4['status'] = 'not started'
+                task_4['percentage'] = 0
+                task_4['service_default_task']['is_active'] = False
+                if after_tasks:
+                    for task in after_tasks:
+                        task['status'] = 'not started'
+                        task['percentage'] = 0
+                    tasks = [t for t in tasks if str(t['service_default_task']['_id']) not in [str(task['service_default_task']['_id']) for task in after_tasks]]
+                    tasks.extend(after_tasks)
+                if closing_tasks:
+                    for task in closing_tasks:
+                        task['status'] = 'not started'
+                        task['percentage'] = 0
+                    tasks = [t for t in tasks if str(t['service_default_task']['_id']) not in [str(task['service_default_task']['_id']) for task in closing_tasks]]
+                    tasks.extend(closing_tasks)
+                
+        elif task_4:
+            task_4['status'] = 'in progress'
+            task_4['percentage'] = 50
+            task_4['service_default_task']['is_active'] = True
+        
+    if 'repaired' in data:
+        task_4['user_reporter'] = user_reporter
+        task_4['last_modified_time'] = timezone.now()
+        service.repaired = repaired
+        include_fields.append('repaired')
+        properties.append('repaired')
+        
+        if not repaired:
+            if task_4:
+                task_4['status'] = 'in progress'
+                task_4['percentage'] = 50
+                if after_tasks:
+                    for task in after_tasks:
+                        task['status'] = 'not started'
+                        task['percentage'] = 0
+                    tasks = [t for t in tasks if str(t['service_default_task']['_id']) not in [str(task['service_default_task']['_id']) for task in after_tasks]]
+                    tasks.extend(after_tasks)
+                if closing_tasks:
+                    for task in closing_tasks:
+                        task['status'] = 'not started'
+                        task['percentage'] = 0
+                    tasks = [t for t in tasks if str(t['service_default_task']['_id']) not in [str(task['service_default_task']['_id']) for task in closing_tasks]]
+                    tasks.extend(closing_tasks)
+                    
+        elif task_4:
+            task_4['status'] = 'finished'
+            task_4['percentage'] = 100
+            for task in after_tasks:
+                task['status'] = 'finished'
+                task['percentage'] = 100
+            if first_closing_task:
+                first_closing_task['status'] = 'in progress'
+                first_closing_task['percentage'] = 50
+                tasks = [task for task in tasks if str(task['service_default_task']['_id']) != str(first_closing_task['service_default_task']['_id'])]
+                tasks.append(first_closing_task)
+        
+        
+    tasks = [task for task in tasks if str(task['service_default_task']['_id']) != str(task_3['service_default_task']['_id'])]
+    tasks.append(task_3)
+                
+    tasks = [task for task in tasks if str(task['service_default_task']['_id']) != str(task_4['service_default_task']['_id'])]
+    tasks.append(task_4)
+                
+    sorted_tasks = sorted(tasks, key=lambda x: x['service_default_task']['order'], reverse=True)
+                
+    service.service_default_tasks = sorted_tasks
+        
+    service.save()
+    
+    tracking = ProjectTracking(
+        user_reporter=user_reporter,
+        action=f'change service properties ({service.id} - {service.name}) - {", ".join(properties)}',
+        created_time=timezone.now(),
+        managed_data={
+            'data': transform_data_to_mongo(service, include_fields=include_fields)
+        },
+    )
+    tracking.save()
+    
+    if user_reporter:
+        module='services'
+        info=f'has changed service properties {service.name} ({", ".join(properties)})'
+        info_id=service.id
+        type='change_service_properties'
+        create_notification(module, info_id, info, type, user_reporter['username'])
+        
+    return Response({
+        'message': 'Service updated successfully',
+        'data': json.loads(service.to_json())
+    }, status=201)
+    
+    
+#############################################
+# REMOVE DATE SERVICE
+#############################################
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def remove_date_service(request, id):
+    data = request.data
+    user_reporter = json.loads(data.get('userReporter', None))
+    date_type = data.get('dateType', None)
+    info = ''
+    try:
+        service = Service.objects(id=id).first()
+        if not service:
+            return Response({'error': 'Service not found'}, status=404)
+        if not date_type:
+            return Response({'error': 'Date type is required'}, status=400)
+        if date_type in ['startDate']:
+            info = 'start date'
+            service.start_date = None
+            service.end_date = None
+            
+            all_tasks = service.service_default_tasks if service.service_default_tasks else []
+            
+            date_task = next((task for task in all_tasks if 'date' in task['service_default_task']['name'].lower()), None)
+            
+            if date_task:
+                date_task['status'] = 'not started'
+                date_task['percentage'] = 0
+                date_task['user_reporter'] = user_reporter
+                date_task['last_modified_time'] = timezone.now()
+                all_tasks = [t for t in all_tasks if str(t['service_default_task']['_id']) != str(date_task['service_default_task']['_id'])]
+                all_tasks.append(date_task)
+                sorted_tasks = sorted(all_tasks, key=lambda x: x['service_default_task']['order'], reverse=True)
+                service.service_default_tasks = sorted_tasks
+                
+        service.save()
+        
+        tracking = ProjectTracking(
+            user_reporter=user_reporter,
+            action=f'remove {info} in service ({service.id} - {service.name})',
+            created_time=timezone.now(),
+            managed_data={
+                'data': transform_data_to_mongo(service, include_fields=['id', 'name', 'number'])
+            },
+        )
+        tracking.save()
+        
+        if user_reporter:
+            module='services'
+            info=f'has removed {info} date in service {service.name}'
+            info_id=service.id
+            type='remove_install_date_service'
+            create_notification(module, info_id, info, type, user_reporter['username'])
+            
+        return Response({'message': 'Date removed successfully'})
     except Exception as e:
         return Response({'error': str(e)}, status=500)

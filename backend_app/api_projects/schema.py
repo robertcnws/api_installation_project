@@ -16,6 +16,7 @@ from .models import (
     ProjectTracking,
     ProjectDefaultTask,
     ProjectDefaultGuideProduct,
+    ProjectReminder,
 )
 from api_authorization.models import LoginUser
 from .data_util import serialize_datetime, dynamic_field_to_json
@@ -47,6 +48,31 @@ class ProjectTaskStageType(MongoengineObjectType):
 class ProjectRoleType(MongoengineObjectType):
     class Meta:
         model = ProjectRole
+        
+
+class ProjectRemainder(MongoengineObjectType):
+    class Meta:
+        model = ProjectReminder
+        
+    project = GenericScalar()
+    project_default_task = GenericScalar()
+    user_reporter = GenericScalar()
+    
+    def resolve_project(self, info):
+        project = self.project or {}
+        project = serialize_datetime(project)
+        return dynamic_field_to_json(project)
+    
+    def resolve_project_default_task(self, info):
+        project_default_task = self.project_default_task or {}
+        project_default_task = serialize_datetime(project_default_task)
+        return dynamic_field_to_json(project_default_task)
+    
+    def resolve_user_reporter(self, info):
+        user_reporter = self.user_reporter or {}
+        user_reporter = serialize_datetime(user_reporter)
+        return dynamic_field_to_json(user_reporter)
+    
 
 class ProjectType(MongoengineObjectType):
     class Meta:
@@ -214,6 +240,10 @@ class Query(graphene.ObjectType):
     all_project_notifications = graphene.List(ProjectNotificationType)
     all_project_tracking = graphene.List(ProjectTrackingType)
     all_project_default_tasks = graphene.List(ProjectDefaultTaskType)
+    all_project_reminders = graphene.List(
+        ProjectRemainder, 
+        username=graphene.String(required=False)
+    )
     all_project_notification_users = graphene.Field(
         ProjectNotificationUsersPaginated,
         username=graphene.String(required=False),
@@ -229,6 +259,18 @@ class Query(graphene.ObjectType):
         ProjectUserType, 
         username=graphene.String(required=True), 
     )
+    
+    def resolve_all_project_reminders(self, info, username=None):
+        if username:
+            try:
+                user = LoginUser.objects.get(username=username)
+                if not user:
+                    return []
+                return list(ProjectReminder.objects(is_active=True, user_reporter__username=username))
+            except Exception:
+                return []
+        else:
+            return list(ProjectReminder.objects(is_active=True))
     
     def resolve_all_project_permissions(self, info):
         return list(ProjectPermissions.objects(is_active=True))

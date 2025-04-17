@@ -21,6 +21,7 @@ from .models import (
     ProjectNotification,
     ProjectNotificationUser,
     ProjectDefaultGuideProduct,
+    ProjectReminder,
 )
 from .s3_utils import (
     upload_attachment_to_s3, 
@@ -520,22 +521,55 @@ def update_project(request, id):
             
     data = request.data
     
+    include_fields = ['id', 'name', 'number']
+    
     has_permission_str = data.get('hasPermission', 'false') if data.get('hasPermission') else None
+    if data.get('hasPermission'):
+        include_fields.append('has_permission')
+        
     if has_permission_str:
         has_permission = True if has_permission_str.lower() == 'true' else False
     
     user_manager = json.loads(data.get('userManager', None)) if data.get('userManager') else project.user_manager
+    if data.get('userManager'):
+        include_fields.append('user_manager')
+        
     project_default_tasks = json.loads(data.get('projectDefaultTasks', [])) if data.get('projectDefaultTasks') else project.project_default_tasks
+    if data.get('projectDefaultTasks'):
+        include_fields.append('project_default_tasks')
+    
     project_comments = json.loads(data.get('projectComments', [])) if data.get('projectComments') else project.project_comments
+    if data.get('projectComments'):
+        include_fields.append('project_comments')
 
     start_date = parse_custom_date(logger, data.get('startDate')) if data.get('startDate') else project.start_date
+    if data.get('startDate'):
+        include_fields.append('start_date')
+        
     end_date = parse_custom_date(logger, data.get('endDate')) if data.get('endDate') else project.end_date
+    if data.get('endDate'):
+        include_fields.append('start_date')
+    
     inspection_date = parse_custom_date(logger, data.get('inspectionDate')) if data.get('inspectionDate') else project.inspection_date
+    if data.get('inspectionDate'):
+        include_fields.append('inspection_date')
+    
     finish_permission_date = parse_custom_date(logger, data.get('finishPermissionDate')) if data.get('finishPermissionDate') else project.finish_permission_date
+    if data.get('finishPermissionDate'):
+        include_fields.append('finish_permission_date')
+        
+    
+    is_part_days_str = data.get('isPartDays', '')
+    if is_part_days_str:
+        is_part_days = True if is_part_days_str.lower() == 'true' else False
+        if data.get('isPartDays') and is_part_days != project.is_part_days:
+            include_fields.append('is_part_days')
     
     user_reporter = json.loads(data.get('userReporter', None)) if data.get('userReporter') else project.user_reporter
     
     users_assignees = json.loads(data.get('usersAssignees', [])) if data.get('usersAssignees') else project.users_assignees
+    if data.get('usersAssignees'):
+        include_fields.append('users_assignees')
     
     if user_manager:
         if user_manager.get('id') not in [user.get('id') for user in users_assignees]:
@@ -546,6 +580,8 @@ def update_project(request, id):
                 task['users_assignees'].append(user_manager)
     
     current_stage = json.loads(data.get('currentStage', {})) if data.get('currentStage') else project.current_stage
+    if data.get('currentStage'):
+        include_fields.append('current_stage')
     
     last_stage_id = last_stage['_id'] if '_id' in last_stage else last_stage['id']
     current_stage_id = current_stage['_id'] if '_id' in current_stage else current_stage['id']
@@ -561,6 +597,7 @@ def update_project(request, id):
     
     project_attachments = []
     files = request.FILES.getlist('projectAttachments')
+    
     
     for file_obj in files:
         key = upload_attachment_to_s3(file_obj)
@@ -578,6 +615,9 @@ def update_project(request, id):
     last_attachments.extend(project_attachments)
             
     last_attachments = sorted(last_attachments, key=lambda x: x['name'], reverse=True)
+    
+    if files:
+        include_fields.append('project_attachments')
     
     if start_date or inspection_date:
         all_tasks = project.project_default_tasks if project.project_default_tasks else []
@@ -609,6 +649,7 @@ def update_project(request, id):
     project.project_comments = project_comments if project_comments else project.project_comments
     project.inspection_date = inspection_date if inspection_date else project.inspection_date
     project.finish_permission_date = finish_permission_date if finish_permission_date else project.finish_permission_date
+    project.is_part_days = is_part_days if is_part_days_str else project.is_part_days
         
     project.save()
     
@@ -617,7 +658,7 @@ def update_project(request, id):
         action=f'update project ({project.id} - {project.name})',
         created_time=timezone.now(),
         managed_data={
-            'data': transform_data_to_mongo(project)
+            'data': transform_data_to_mongo(project, include_fields=include_fields)
         },
     )
     tracking.save()
@@ -815,7 +856,7 @@ def change_project_reference_number(request, id):
         action=f'change project reference number ({project.id} - {project.name})',
         created_time=timezone.now(),
         managed_data={
-            'data': transform_data_to_mongo(project, include_fields=['id', 'name', 'sales_order'])
+            'data': transform_data_to_mongo(project, include_fields=['id', 'name', 'reference_number', 'sales_order'])
         },
     )
     tracking.save()
@@ -991,7 +1032,7 @@ def change_project_installation_guide_form(request, id):
     
     project_guide_products = json.loads(data.get('projectGuideProducts', [])) if data.get('projectGuideProducts') else project.project_guide_products
     
-    deleted_products = [p for p in project.project_guide_products if not p.get('deleted', False)]
+    deleted_products = [p for p in project.project_guide_products if p.get('deleted', False) == True]
     
     project_guide_products.extend(deleted_products)
     
@@ -3505,6 +3546,7 @@ def change_description_project(request, id):
 def remove_guide_product_project(request, projectId, id):
     data = request.data
     user_reporter = json.loads(data.get('userReporter', None))
+    default_product = json.loads(data.get('product', None))
     try:
         project = Project.objects(id=projectId).first()
         if not project:
@@ -3518,29 +3560,162 @@ def remove_guide_product_project(request, projectId, id):
                 product['deleted'] = True
                 guide_products = [p for p in guide_products if str(p['id']) != id]
                 guide_products.append(product)
-                guide_products = sorted(guide_products, key=lambda x: x['id'], reverse=False)
-                            
+            else:
+                default_product['deleted'] = True
+                guide_products.append(default_product)
+            guide_products = sorted(guide_products, key=lambda x: x['id'], reverse=False)            
             
-                project.project_guide_products = guide_products
-                project.save()
+            project.project_guide_products = guide_products
+            project.save()
                     
-                tracking_info = transform_data_to_mongo(project, include_fields=['id', 'name', 'number', 'project_guide_products'])
+            tracking_info = transform_data_to_mongo(project, include_fields=['id', 'name', 'number', 'project_guide_products'])
                     
-                tracking = ProjectTracking(
-                    user_reporter=user_reporter,
-                    action=f'remove project guide product ({tracking_info["id"]} - {tracking_info["name"]})',
-                    created_time=timezone.now(),
-                    managed_data={
-                        'data': tracking_info
-                    },
-                )
-                tracking.save()
-                if user_reporter:
-                    module='projects'
-                    info=f'has removed guide product in project {project.name}'
-                    info_id=project.id
-                    type='remove_guide_product_project'
-                    create_notification(module, info_id, info, type, user_reporter['username'])
-                return Response({'message': 'Project updated successfully'})
+            tracking = ProjectTracking(
+                user_reporter=user_reporter,
+                action=f'remove project guide product ({tracking_info["id"]} - {tracking_info["name"]})',
+                created_time=timezone.now(),
+                managed_data={
+                    'data': tracking_info
+                },
+            )
+            tracking.save()
+            if user_reporter:
+                module='projects'
+                info=f'has removed guide product in project {project.name}'
+                info_id=project.id
+                type='remove_guide_product_project'
+                create_notification(module, info_id, info, type, user_reporter['username'])
+            return Response({'message': 'Project updated successfully'})
     except Exception as e:
         return Response({'error': str(e)}, status=500)
+    
+
+#############################################
+# CREATE PROJECT REMAINDER
+#############################################
+
+def delete_old_reminders():
+    cutoff = timezone.now() - timezone.timedelta(days=1)
+    reminders = ProjectReminder.objects(date__lt=cutoff).all()
+    for reminder in reminders:
+        reminder.is_active = False
+        reminder.save()
+    return True
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def manage_project_reminder(request, projectId, taskId): 
+    
+    project = Project.objects(id=projectId).first()
+    if not project:
+        return Response({'error': 'Project not found'}, status=404)
+    
+    tasks = project.project_default_tasks if project.project_default_tasks else []
+    task = next((task for task in tasks if str(task['project_default_task']['_id']) == taskId), None)
+    if not task:
+        return Response({'error': 'Task not found'}, status=404)
+            
+    data = request.data
+    
+    user_reporter = json.loads(data.get('userReporter', None))
+    
+    notes = data.get('notes', None)
+    
+    date = data.get('date', None)
+    
+    reminder_id = data.get('reminderId', None)
+    
+    if reminder_id:
+        reminder = ProjectReminder.objects(id=reminder_id).first()
+        if not reminder:
+            return Response({'error': 'Reminder not found'}, status=404)
+        reminder.notes = notes
+        reminder.date = date
+        reminder.last_modified_time=timezone.now()
+        
+    else:
+        reminder = ProjectReminder(
+            notes=notes,
+            date=date,
+            created_time=timezone.now(),
+            last_modified_time=timezone.now(),
+            user_reporter=user_reporter,
+            project=transform_data_to_mongo(project, include_fields=['id', 'name', 'number']),
+            project_default_task=task if task else None,
+            is_active=True, 
+        )
+    
+    reminder.save()
+    
+    action = 'update' if reminder_id else 'create'
+    
+    tracking = ProjectTracking(
+        user_reporter=user_reporter,
+        action=f'{action} new reminder ({project.id} - {project.name} in task {task["project_default_task"]["name"]})',
+        created_time=timezone.now(),
+        managed_data={
+            'data': transform_data_to_mongo(reminder, include_fields=['id', 'notes', 'project_default_task', 'project', 'is_active', 'date'])
+        },
+    )
+    tracking.save()
+    
+    if user_reporter:
+        module='projects'
+        info=f'has {action}d reminder in project {project.name} and task {task["project_default_task"]["name"]}'
+        info_id=project.id
+        type='{action}_project_reminder'
+        create_notification(module, info_id, info, type, user_reporter['username'])
+        
+    return Response({
+        'message': f'Projet reminder {action}d successfully',
+        'data': json.loads(project.to_json())
+    }, status=201)
+    
+    
+#############################################
+# QUIT PROJECT REMAINDER
+#############################################
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def quit_project_reminder(request, id): 
+    
+    reminder = ProjectReminder.objects(id=id).first()
+    if not reminder:
+        return Response({'error': 'Reminder not found'}, status=404)
+            
+    data = request.data
+    
+    user_reporter = json.loads(data.get('userReporter', None))
+    
+    reminder.is_active = False
+    reminder.last_modified_time = timezone.now()
+    
+    reminder.save()
+    
+    tracking = ProjectTracking(
+        user_reporter=user_reporter,
+        action=f'quit reminder in task {reminder.project_default_task["project_default_task"]["name"]}',
+        created_time=timezone.now(),
+        managed_data={
+            'data': transform_data_to_mongo(reminder, include_fields=['id', 'notes', 'project_default_task', 'project', 'is_active', 'date'])
+        },
+    )
+    tracking.save()
+    
+    if user_reporter:
+        module='projects'
+        info=f'has quit reminder in task {reminder.project_default_task["project_default_task"]["name"]}'
+        info_id=reminder.id
+        type='quit_project_reminder'
+        create_notification(module, info_id, info, type, user_reporter['username'])
+        
+    return Response({
+        'message': 'Projet reminder quited successfully',
+        'data': json.loads(reminder.to_json())
+    }, status=201)
+    
+    
+

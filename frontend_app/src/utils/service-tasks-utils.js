@@ -1,5 +1,6 @@
 export const availableTasks = (service, serviceTasks, CONFIG) => {
-    const tasks = serviceTasks?.map((t) => ({
+    const initialTasks = serviceTasks?.filter((t) => t.service_default_task?.is_active);
+    const tasks = initialTasks?.map((t) => ({
         ...t,
         number: `T-${String(t.service_default_task.order).padStart(3, "0")}`,
     }));

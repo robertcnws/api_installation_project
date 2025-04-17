@@ -133,12 +133,13 @@ export function ProjectDetailsToolbar({
                   </IconButton>
                 </Tooltip>
               )}
-            {(verifyPermissions(
-              listPermissions,
-              CONFIG.permissions.system,
-              CONFIG.permissions.moduleProjects,
-              CONFIG.permissions.operationUpdate
-            ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) && (
+            {(type === 'project' &&
+              (verifyPermissions(
+                listPermissions,
+                CONFIG.permissions.system,
+                CONFIG.permissions.moduleProjects,
+                CONFIG.permissions.operationUpdate
+              ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
                 <Tooltip title={`Edit ${type === 'project' ? 'installation' : type}`} arrow>
                   <IconButton onClick={() => setOpenEdit(true)}>
                     <Iconify icon="solar:pen-bold" />
@@ -165,6 +166,7 @@ export function ProjectDetailsToolbar({
             href={backLink}
             startIcon={<Iconify icon="mingcute:close-fill" />}
             sx={{ ml: 0, borderRadius: 10, maxWidth: 1 }}
+            onClick={localStorage.getItem('projectReminderTab') ? () => localStorage.removeItem('projectReminderTab') : null}
           />
         </Tooltip>
 

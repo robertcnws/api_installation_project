@@ -4,6 +4,8 @@ import { useMemo, useState, useEffect, useCallback } from 'react';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
+import { fDate } from 'src/utils/format-time';
+
 import { CONFIG } from 'src/config-global';
 import { deleteTask, updateTask } from 'src/actions/kanban';
 
@@ -15,16 +17,18 @@ import { KanbanDetails } from '../details/kanban-details';
 
 
 
+
 // ----------------------------------------------------------------------
 
-export function KanbanTaskItem({ 
-  project, 
-  refetchProject, 
-  task, 
-  disabled, 
-  columnId, 
+export function KanbanTaskItem({
+  project,
+  refetchProject,
+  task,
+  disabled,
+  columnId,
   listPermissions,
-  sx 
+  projectReminders,
+  sx
 }) {
   const openDetails = useBoolean();
 
@@ -33,6 +37,16 @@ export function KanbanTaskItem({
   });
 
   const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
+
+  const availableReminders = useMemo(() =>
+    projectReminders?.filter(
+      (reminder) =>
+        reminder?.projectDefaultTask?.project_default_task?.id === task.id &&
+        fDate(reminder?.date) === fDate(new Date()) &&
+        reminder?.project?.id === project?.id
+    ) || [],
+    [projectReminders, task, project]
+  );
 
   const mounted = useMountStatus();
 
@@ -94,6 +108,7 @@ export function KanbanTaskItem({
         task={task}
         onClick={openDetails.onTrue}
         handleManageTask={handleManageTask}
+        availableReminders={availableReminders}
         stateProps={{
           transform,
           listeners,
@@ -114,6 +129,7 @@ export function KanbanTaskItem({
         onUpdateTask={handleUpdateTask}
         onDeleteTask={handleDeleteTask}
         listPermissions={listPermissions}
+        projectReminders={projectReminders}
       />
     </>
   );

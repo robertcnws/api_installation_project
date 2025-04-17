@@ -150,16 +150,13 @@ export function ServiceDetailsView({ serviceId }) {
     const totalComments = useMemo(() => itemById?.serviceComments?.length || 0, [itemById]);
 
     const totalTasks = useMemo(() => (
-        itemById?.hasPermission ?
-            itemById?.serviceDefaultTasks?.length :
-            itemById?.serviceDefaultTasks?.filter((task) => task.service_default_task.service_stage.name !== CONFIG.stages.permission)?.length
+        itemById?.serviceDefaultTasks?.filter((task) => task.service_default_task.is_active)?.length
             || 0), [itemById]
     );
 
 
     const tasks = useMemo(() =>
-        itemById?.hasPermission ? itemById?.serviceDefaultTasks :
-            itemById?.serviceDefaultTasks?.filter((task) => task.service_default_task.service_stage.name !== CONFIG.stages.permission) || [], [itemById]
+        itemById?.serviceDefaultTasks?.filter((task) => task.service_default_task.is_active) || [], [itemById]
     );
 
     const [openEdit, setOpenEdit] = useState(false);
@@ -210,6 +207,29 @@ export function ServiceDetailsView({ serviceId }) {
             console.error(error);
         }
     }, [selectedSalesOrder, selectedListItems, userLogged, openSalesOrderModal, itemById?.id]);
+
+
+    const handleChangeProperties = useCallback(async(property, value) => {
+        try {
+            const promise = axios.post(`${CONFIG.apiUrl}/services/update/service/${itemById?.id}/change-properties/`, {
+                [property]: value,
+                userReporter: JSON.stringify(userLogged?.data),
+            });
+
+            toast.promise(promise, {
+                loading: 'Updating service...',
+                success: 'Service updated!',
+                error: 'Error to update service',
+            });
+
+            await promise;
+
+        } catch (error) {
+            setIsSubmiting(false);
+            console.error(error);
+        }
+    }, [itemById?.id, userLogged?.data]);
+
 
 
 
@@ -265,7 +285,8 @@ export function ServiceDetailsView({ serviceId }) {
                 <ServiceDetailsToolbar
                     service={itemById}
                     backLink={
-                        localStorage.getItem('backFromServiceDetails') === 'analytics' ? paths.dashboard.general.analytics : paths.dashboard.service.list
+                        localStorage.getItem('backFromServiceDetails') === 'analytics' ? paths.dashboard.general.analytics : 
+                        localStorage.getItem('backFromProjectDetails') === 'calendarDashboard' ? paths.dashboard.general.calendar : paths.dashboard.service.list
                     }
                     editLink={paths.dashboard.service.edit(`${itemById?.id}`)}
                     openEdit={tabs.value === 'overview' ? openEdit : tabs.value === 'tasks' ? openEditTask : null}
@@ -283,6 +304,7 @@ export function ServiceDetailsView({ serviceId }) {
                         openDialogs={openDialogs}
                         setOpenDialogs={setOpenDialogs}
                         openSalesOrderModal={openSalesOrderModal}
+                        handleChangeProperties={handleChangeProperties}
                     />
                 }
 

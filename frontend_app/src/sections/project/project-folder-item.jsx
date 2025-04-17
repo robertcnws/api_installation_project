@@ -134,7 +134,10 @@ export function ProjectFolderItem({
           src={`${CONFIG.assetsDir}/assets/icons/files/ic-folder.svg`}
           sx={{ width: 1, height: 1 }}
           onClick={
-            isInstaller(userLogged?.data?.user_role?.name) ? onViewRow : null
+            isInstaller(userLogged?.data?.user_role?.name) ? () => {
+              localStorage.removeItem('projectReminderTab');
+              onViewRow();
+            } : null
           }
         />
       )}
@@ -143,7 +146,10 @@ export function ProjectFolderItem({
   const renderText = (
     <ListItemText
       // onClick={details.onTrue}
-      onClick={onViewRow}
+      onClick={() => {
+        localStorage.removeItem('projectReminderTab');
+        onViewRow();
+      }}
       primary={folder.name}
       secondary={
         <>
@@ -245,6 +251,7 @@ export function ProjectFolderItem({
             onClick={() => {
               popover.onClose();
               // details.onTrue();
+              localStorage.removeItem('projectReminderTab');
               onViewRow();
             }}
           >

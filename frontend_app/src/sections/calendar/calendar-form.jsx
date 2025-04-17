@@ -1,26 +1,38 @@
+import axios from 'axios';
+import dayjs from 'dayjs';
 import { z as zod } from 'zod';
-import { useCallback } from 'react';
+import { useForm } from 'react-hook-form';
+import { useMemo, useCallback } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm, Controller } from 'react-hook-form';
 
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import Tooltip from '@mui/material/Tooltip';
 import IconButton from '@mui/material/IconButton';
+import { Avatar, Typography } from '@mui/material';
 import LoadingButton from '@mui/lab/LoadingButton';
 import DialogActions from '@mui/material/DialogActions';
 
+import { paths } from 'src/routes/paths';
+import { useRouter } from 'src/routes/hooks';
+
+import { useBoolean } from 'src/hooks/use-boolean';
+
 import { uuidv4 } from 'src/utils/uuidv4';
-import { fIsAfter } from 'src/utils/format-time';
+import { fDate, fIsAfter } from 'src/utils/format-time';
+import { getProjectInstaller } from 'src/utils/project-tasks-utils';
+import { getServiceInstaller } from 'src/utils/service-tasks-utils';
 
-import { createEvent, updateEvent, deleteEvent } from 'src/actions/calendar';
+import { CONFIG } from 'src/config-global';
+import { createEvent } from 'src/actions/calendar';
 
+import { Label } from 'src/components/label';
 import { toast } from 'src/components/snackbar';
 import { Iconify } from 'src/components/iconify';
 import { Scrollbar } from 'src/components/scrollbar';
 import { Form, Field } from 'src/components/hook-form';
-import { ColorPicker } from 'src/components/color-utils';
+import { ConfirmDialog } from 'src/components/custom-dialog';
 
 // ----------------------------------------------------------------------
 
@@ -30,10 +42,7 @@ export const EventSchema = zod.object({
     .min(1, { message: 'Title is required!' })
     .max(100, { message: 'Title must be less than 100 characters' }),
   description: zod
-    .string()
-    .min(1, { message: 'Description is required!' })
-    .min(50, { message: 'Description must be at least 50 characters' }),
-  // Not required
+    .string().optional(),
   color: zod.string(),
   allDay: zod.boolean(),
   start: zod.union([zod.string(), zod.number()]),
@@ -43,6 +52,13 @@ export const EventSchema = zod.object({
 // ----------------------------------------------------------------------
 
 export function CalendarForm({ currentEvent, colorOptions, onClose }) {
+
+  const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
+
+  const router = useRouter();
+
+  const confirmDelete = useBoolean();
+
   const methods = useForm({
     mode: 'all',
     resolver: zodResolver(EventSchema),
@@ -59,23 +75,52 @@ export function CalendarForm({ currentEvent, colorOptions, onClose }) {
 
   const values = watch();
 
-  const dateError = fIsAfter(values.start, values.end);
+  const dateError = useMemo(() =>
+    currentEvent?.type === 'installation' || currentEvent?.type === 'service' ? fIsAfter(values.start, values.end) :
+      currentEvent?.type === 'inspection' ? fIsAfter(currentEvent?.startDate, values.start) : fIsAfter(currentEvent?.inspectionDate, values.start),
+    [currentEvent, values.start, values.end]
+  );
+
+  const handleDetails = useCallback(
+    (id) => {
+      const fieldId = currentEvent?.type === 'service' ? 'serviceId' : 'projectId';
+      localStorage.setItem(fieldId, id);
+      localStorage.setItem('backFromProjectDetails', 'calendarDashboard');
+      if (currentEvent?.type !== 'service') {
+        router.push(paths.dashboard.project.details(id));
+      }
+      else {
+        router.push(paths.dashboard.service.details(id));
+      }
+
+    }, [router, currentEvent?.type]);
 
   const onSubmit = handleSubmit(async (data) => {
     const eventData = {
       id: currentEvent?.id ? currentEvent?.id : uuidv4(),
-      color: data?.color,
-      title: data?.title,
-      allDay: data?.allDay,
+      // color: data?.color,
+      title: data?.name,
+      // allDay: data?.allDay,
       description: data?.description,
+      notes: data?.description,
       end: data?.end,
       start: data?.start,
+      endDate: currentEvent.type === 'installation' || currentEvent.type === 'service' ? data?.end : null,
+      startDate: currentEvent.type === 'installation' || currentEvent.type === 'service' ? data?.start : null,
+      inspectionDate: currentEvent.type === 'inspection' ? data?.start : null,
+      finishPermissionDate: currentEvent.type === 'finishPermission' ? data?.start : null,
+      name: currentEvent?.originalName,
     };
 
     try {
       if (!dateError) {
         if (currentEvent?.id) {
-          await updateEvent(eventData);
+          const eventId = currentEvent?.id.split('-')[0];
+          const module = currentEvent?.type === 'service' ? 'service' : 'project';
+          await axios.post(`${CONFIG.apiUrl}/${module}s/update/${module}/${eventId}/`, {
+            ...eventData,
+            userReporter: JSON.stringify(userLogged?.data),
+          });
           toast.success('Update success!');
         } else {
           await createEvent(eventData);
@@ -91,38 +136,96 @@ export function CalendarForm({ currentEvent, colorOptions, onClose }) {
 
   const onDelete = useCallback(async () => {
     try {
-      await deleteEvent(`${currentEvent?.id}`);
+      const eventId = currentEvent?.id.split('-')[0];
+      const module = currentEvent?.type === 'service' ? 'service' : 'project';
+      await axios.delete(`${CONFIG.apiUrl}/${module}s/delete/${module}/${eventId}/`, {
+        data: {
+          userReporter: userLogged?.data
+        },
+      });
       toast.success('Delete success!');
       onClose();
     } catch (error) {
       console.error(error);
     }
-  }, [currentEvent?.id, onClose]);
+  }, [currentEvent, onClose, userLogged?.data]);
 
   return (
-    <Form methods={methods} onSubmit={onSubmit}>
-      <Scrollbar sx={{ p: 3, bgcolor: 'background.neutral' }}>
-        <Stack spacing={3}>
-          <Field.Text name="title" label="Title" />
+    <>
+      <Form methods={methods} onSubmit={onSubmit}>
+        <Scrollbar sx={{ p: 3, bgcolor: 'background.neutral' }}>
+          <Stack spacing={3}>
+            <Field.Text name="title" label="Title" />
 
-          <Field.Text name="description" label="Description" multiline rows={3} />
+            <Field.Text
+              name='description'
+              label={currentEvent?.type !== 'service' ? 'Description' : 'Notes'}
+              multiline rows={3}
+            />
 
-          <Field.Switch name="allDay" label="All day" />
+            {/* <Field.Switch name="allDay" label="All day" /> */}
 
-          <Field.MobileDateTimePicker name="start" label="Start date" />
+            <Field.MobileDateTimePicker
+              name="start"
+              label={
+                currentEvent?.type === 'installation' || currentEvent?.type === 'service' ? 'Start date' :
+                  currentEvent?.type === 'inspection' ? 'Inspection date' : 'Finish date'
+              }
+              minDate={dayjs(currentEvent?.salesOrder?.date)}
+            />
 
-          <Field.MobileDateTimePicker
-            name="end"
-            label="End date"
-            slotProps={{
-              textField: {
-                error: dateError,
-                helperText: dateError ? 'End date must be later than start date' : null,
-              },
-            }}
-          />
+            {(currentEvent?.type === 'installation' || currentEvent?.type === 'service') ? (
+              <>
+                <Field.MobileDateTimePicker
+                  name="end"
+                  label="End date"
+                  minDate={dayjs(currentEvent?.salesOrder?.date)}
+                  slotProps={{
+                    textField: {
+                      error: dateError,
+                      helperText: dateError ? 'End date must be later than start date' : null,
+                    },
+                  }}
+                />
+                {(currentEvent?.type !== 'service' && getProjectInstaller(currentEvent, CONFIG)?.name) && (
+                  <Box sx={{ display: 'flex', mb: 1, p: 1, justifyContent: 'flex-start' }}>
+                    <Typography variant="caption" sx={{ color: 'text.secondary', mr: 1, mt: 1.5 }}>
+                      Installer:
+                    </Typography>
+                    <Label sx={{ display: 'flex', minHeight: 40 }}>
+                      <Avatar
+                        src={getProjectInstaller(currentEvent, CONFIG).avatarUrl || getProjectInstaller(currentEvent, CONFIG).avatar_url}
+                        sx={{ width: 24, height: 24, mr: 1 }} />
+                      {getProjectInstaller(currentEvent, CONFIG).name}
+                    </Label>
+                  </Box>
+                )}
+                {(currentEvent?.type === 'service' && getServiceInstaller(currentEvent, CONFIG)?.name) && (
+                  <Box sx={{ display: 'flex', mb: 1, p: 1, justifyContent: 'flex-start' }}>
+                    <Typography variant="caption" sx={{ color: 'text.secondary', mr: 1, mt: 1.5 }}>
+                      Service Crew:
+                    </Typography>
+                    <Label sx={{ display: 'flex', minHeight: 40 }}>
+                      <Avatar
+                        src={getServiceInstaller(currentEvent, CONFIG).avatarUrl || getServiceInstaller(currentEvent, CONFIG).avatar_url}
+                        sx={{ width: 24, height: 24, mr: 1 }} />
+                      {getServiceInstaller(currentEvent, CONFIG).name}
+                    </Label>
+                  </Box>
+                )}
+              </>
 
-          <Controller
+            ) : (
+              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                {
+                  currentEvent?.type === 'inspection' ? 'Inspection date' : 'Finish date'
+                } must be the same or after {
+                  currentEvent?.type === 'inspection' ? fDate(currentEvent?.startDate) : fDate(currentEvent?.inspectionDate)
+                } ({currentEvent?.type === 'inspection' ? 'Installation date' : 'Inspection date'})
+              </Typography>
+            )}
+
+            {/* <Controller
             name="color"
             control={control}
             render={({ field }) => (
@@ -132,34 +235,64 @@ export function CalendarForm({ currentEvent, colorOptions, onClose }) {
                 colors={colorOptions}
               />
             )}
-          />
-        </Stack>
-      </Scrollbar>
+          /> */}
+          </Stack>
+        </Scrollbar>
 
-      <DialogActions sx={{ flexShrink: 0 }}>
-        {!!currentEvent?.id && (
-          <Tooltip title="Delete event">
-            <IconButton onClick={onDelete}>
-              <Iconify icon="solar:trash-bin-trash-bold" />
-            </IconButton>
-          </Tooltip>
-        )}
+        <DialogActions sx={{ flexShrink: 0 }}>
+          {!!currentEvent?.id && (
+            <Tooltip title="Delete event">
+              <IconButton onClick={confirmDelete.onTrue} color="error">
+                <Iconify icon="solar:trash-bin-trash-bold" />
+              </IconButton>
+            </Tooltip>
+          )}
 
-        <Box sx={{ flexGrow: 1 }} />
+          <Box sx={{ flexGrow: 1 }} />
 
-        <Button variant="outlined" color="inherit" onClick={onClose}>
-          Cancel
-        </Button>
+          <LoadingButton
+            type="submit"
+            variant="contained"
+            loading={isSubmitting}
+            disabled={dateError}
+          >
+            Save changes
+          </LoadingButton>
 
-        <LoadingButton
-          type="submit"
-          variant="contained"
-          loading={isSubmitting}
-          disabled={dateError}
-        >
-          Save changes
-        </LoadingButton>
-      </DialogActions>
-    </Form>
+          <Button
+            variant="contained"
+            color="info"
+            onClick={() => handleDetails(currentEvent?.id.split('-')[0])}
+          >
+            View Details
+          </Button>
+
+          <Button variant="outlined" color="inherit" onClick={onClose}>
+            Cancel
+          </Button>
+
+
+        </DialogActions>
+      </Form>
+      <ConfirmDialog
+        open={confirmDelete.value}
+        onClose={confirmDelete.onFalse}
+        title="Delete"
+        content={
+          <>
+            Are you sure want to delete {currentEvent?.type !== 'service' ? 'installation project' : 'service'}  <strong> {currentEvent?.name} </strong>?
+          </>
+        }
+        action={
+          <Button
+            variant="contained"
+            color="error"
+            onClick={onDelete}
+          >
+            Delete
+          </Button>
+        }
+      />
+    </>
   );
 }

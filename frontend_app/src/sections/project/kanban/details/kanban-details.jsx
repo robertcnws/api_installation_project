@@ -8,15 +8,16 @@ import Tab from '@mui/material/Tab';
 import Drawer from '@mui/material/Drawer';
 import Button from '@mui/material/Button';
 import Avatar from '@mui/material/Avatar';
-import { InputBase } from '@mui/material';
 import Tooltip from '@mui/material/Tooltip';
 import { styled } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
+import { ListItem, InputBase } from '@mui/material';
 
 import { useTabs } from 'src/hooks/use-tabs';
 import { useBoolean } from 'src/hooks/use-boolean';
 
+import { fDate, fIsAfter } from 'src/utils/format-time';
 import { availableTasks, previousTasksInStatus } from 'src/utils/project-tasks-utils';
 import { isInstaller, verifyPermissions, listRolesAndSubroles } from 'src/utils/check-permissions';
 
@@ -27,14 +28,16 @@ import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
 import { Scrollbar } from 'src/components/scrollbar';
 import { CustomTabs } from 'src/components/custom-tabs';
+import { ConfirmDialog } from 'src/components/custom-dialog';
+
+import { useDataContext } from 'src/auth/context/data/data-context';
 
 import { KanbanDetailsToolbar } from './kanban-details-toolbar';
 import { KanbanDetailsCommentInput } from './kanban-details-comment-input';
 import { KanbanContactsDialog } from '../components/kanban-contacts-dialog';
+import { KanbanDetailsReminderModal } from './kanban-details-reminder-modal';
 import { ProjectTaskDetailsPriority } from '../../project-task-details-priority';
 import { KanbanDetailsTaskAttachments } from './kanban-details-task-attachments';
-
-
 
 // ----------------------------------------------------------------------
 
@@ -65,6 +68,7 @@ export function KanbanDetails({
   onDeleteTask,
   onCloseDetails,
   listPermissions,
+  projectReminders,
 }) {
 
   const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
@@ -81,6 +85,10 @@ export function KanbanDetails({
 
   const [newFiles, setNewFiles] = useState([]);
 
+  const [selectedReminder, setSelectedReminder] = useState(null);
+
+  const confirmQuitReminder = useBoolean();
+
   const comments = useMemo(
     () => project.projectComments?.filter((comment) => comment?.project_default_task?.project_default_task?.id === task.id) || [],
     [project, task]);
@@ -89,6 +97,19 @@ export function KanbanDetails({
   const initialUsers = useMemo(() => [...project.usersAssignees, project.userManager].filter((user) => !task.users_assignees.some((t) => t.id === user.id)), [project, task]);
 
   const availableUsers = useMemo(() => initialUsers, [initialUsers]);
+
+  const availableReminders = useMemo(() =>
+    projectReminders?.filter(
+      (reminder) =>
+        reminder?.projectDefaultTask?.project_default_task?.id === task.id &&
+        reminder?.project?.id === project.id
+    ).sort((a, b) => fIsAfter(a.date, b.date) ? 1 : -1) || [],
+    [projectReminders, task, project]
+  );
+
+  const {
+    refetchProjectReminders,
+  } = useDataContext();
 
 
   const like = useBoolean();
@@ -104,12 +125,44 @@ export function KanbanDetails({
 
   const [taskStatus, setTaskStatus] = useState(task.status);
 
+  const [openReminder, setOpenReminder] = useState(false);
+
   useEffect(() => {
     if (project) {
       const filtered = availableTasks(project, project?.projectDefaultTasks, CONFIG);
       setLoadedTasks(filtered);
     }
   }, [project]);
+
+  const handleQuitReminder = useCallback(async () => {
+    try {
+      const reminderId = selectedReminder?.id;
+      const formData = new FormData();
+      formData.append('userReporter', JSON.stringify(userLogged?.data));
+      const response = await axios.post(`${CONFIG.apiUrl}/projects/quit/project-reminder/${reminderId}/`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      if (response.status !== 201) {
+        console.error('Error quitting reminder', response.statusText);
+        toast.error('Error quitting reminder');
+        return;
+      }
+
+      refetchProjectReminders?.();
+
+      confirmQuitReminder.onFalse();
+
+      setSelectedReminder(null);
+
+    } catch (error) {
+      console.error('Error quitting reminder', error);
+      toast.error('Error quitting reminder');
+    }
+  }, [selectedReminder, userLogged, refetchProjectReminders, confirmQuitReminder]);
+
 
   const handleAddFiles = useCallback(
     async () => {
@@ -220,7 +273,7 @@ export function KanbanDetails({
     >
       {[
         { value: 'overview', label: 'Overview' },
-        { value: 'comments', label: `Comments (${comments?.length})` },
+        { value: 'comments', label: `Comments (${comments?.length}) & History` },
       ].map((tab) => (
         <Tab key={tab.value} value={tab.value} label={tab.label} />
       ))}
@@ -310,7 +363,7 @@ export function KanbanDetails({
                             startIcon={<Iconify icon="eos-icons:snapshot-rollback" />}
                             sx={{ ml: 2.5, height: 50 }}
                             disabled={
-                              !task 
+                              !task
                               // || task?.users_assignees?.length === 0 
                               || !priority
                             }
@@ -484,6 +537,88 @@ export function KanbanDetails({
             />
           </Box>
 
+          {(listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator) &&
+            task?.status !== CONFIG.taskStatus.finished) && (
+              <>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <StyledLabel>Reminders</StyledLabel>
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    size="small"
+                    startIcon={<Iconify icon="eva:bell-outline" />}
+                    sx={{ ml: 0, height: 30 }}
+                    onClick={() => {
+                      setSelectedReminder(null);
+                      setOpenReminder(true);
+                    }}
+                  >
+                    Set Reminder
+                  </Button>
+                </Box>
+                {availableReminders?.length > 0 && (
+                  <Box sx={{ display: 'flex', alignItems: 'left', flexDirection: 'column', gap: 1 }}>
+                    <Typography variant="subtitle2" sx={{ mb: -1 }}>Reminder list</Typography>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, p: 0.5 }}>
+                      {availableReminders?.map((reminder) => (
+                        <ListItem
+                          key={reminder.id}
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            color: fDate(reminder?.date) === fDate(new Date()) ? 'error.main' : 'default',
+                            p: 0,
+                            gap: 0,
+                          }}>
+                          <StyledLabel sx={{ width: 120, color: fDate(reminder?.date) === fDate(new Date()) ? 'error.main' : 'default', }}>
+                            Date: <b>{reminder?.date ? fDate(reminder?.date) : ''}</b>
+                          </StyledLabel>
+                          <Typography variant="caption" sx={{ ml: 1, width: 100 }}>
+                            {reminder?.date ? dayjs(reminder?.date).format('HH:mm') : ''} to 23:59
+                          </Typography>
+                          <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, p: 0 }}>
+                            <IconButton
+                              variant="outlined"
+                              color={fDate(reminder?.date) === fDate(new Date()) ? 'error' : 'warning'}
+                              onClick={() => {
+                                setSelectedReminder(reminder);
+                                setOpenReminder(true);
+                              }}
+                              sx={{
+                                '&:hover': {
+                                  boxShadow: 'none',
+                                  backgroundColor: 'transparent',
+                                },
+                              }}>
+                              <Iconify icon="ep:view" sx={{ width: 15 }} />
+                            </IconButton>
+                            <IconButton
+                              variant="outlined"
+                              color='error'
+                              onClick={() => {
+                                setSelectedReminder(reminder);
+                                confirmQuitReminder.onTrue();
+                                setTimeout(() => {
+                                  confirmQuitReminder.onFalse();
+                                }, 5000);
+                              }}
+                              sx={{
+                                '&:hover': {
+                                  boxShadow: 'none',
+                                  backgroundColor: 'transparent',
+                                },
+                              }}>
+                              <Iconify icon="eva:trash-2-outline" sx={{ width: 15 }} />
+                            </IconButton>
+                          </Box>
+                        </ListItem>
+                      ))}
+                    </Box>
+                  </Box>
+                )}
+              </>
+            )}
+
         </>
       )}
 
@@ -547,21 +682,42 @@ export function KanbanDetails({
   );
 
   return (
-    <Drawer
-      open={openDetails}
-      onClose={onCloseDetails}
-      anchor="right"
-      slotProps={{ backdrop: { invisible: true } }}
-      PaperProps={{ sx: { width: { xs: 1, sm: 520 } } }}
-    >
-      {renderToolbar}
+    <>
+      <Drawer
+        open={openDetails}
+        onClose={onCloseDetails}
+        anchor="right"
+        slotProps={{ backdrop: { invisible: true } }}
+        PaperProps={{ sx: { width: { xs: 1, sm: 520 } } }}
+      >
+        {renderToolbar}
 
-      {renderTabs}
+        {renderTabs}
 
-      <Scrollbar fillContent sx={{ py: 3, px: 2.5 }}>
-        {tabs.value === 'overview' && renderTabOverview}
-        {tabs.value === 'comments' && renderTabComments}
-      </Scrollbar>
-    </Drawer>
+        <Scrollbar fillContent sx={{ py: 3, px: 2.5 }}>
+          {tabs.value === 'overview' && renderTabOverview}
+          {tabs.value === 'comments' && renderTabComments}
+        </Scrollbar>
+      </Drawer>
+      <KanbanDetailsReminderModal
+        project={project}
+        task={task}
+        availableReminders={availableReminders}
+        open={openReminder}
+        reminder={selectedReminder}
+        onClose={() => setOpenReminder(false)}
+      />
+      <ConfirmDialog
+        open={confirmQuitReminder.value}
+        onClose={confirmQuitReminder.onFalse}
+        title="Quit Reminder"
+        content={`Are you sure want to quit reminder for ${selectedReminder?.projectDefaultTask?.project_default_task?.name} in date ${fDate(selectedReminder?.date)}?`}
+        action={
+          <Button variant="contained" color="error" onClick={handleQuitReminder}>
+            Quit
+          </Button>
+        }
+      />
+    </>
   );
 }

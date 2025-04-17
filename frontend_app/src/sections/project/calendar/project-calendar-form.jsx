@@ -8,9 +8,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
-import { Typography } from '@mui/material';
 import Tooltip from '@mui/material/Tooltip';
 import IconButton from '@mui/material/IconButton';
+import { Avatar, Typography } from '@mui/material';
 import LoadingButton from '@mui/lab/LoadingButton';
 import DialogActions from '@mui/material/DialogActions';
 
@@ -21,10 +21,12 @@ import { useBoolean } from 'src/hooks/use-boolean';
 
 import { uuidv4 } from 'src/utils/uuidv4';
 import { fDate, fIsAfter } from 'src/utils/format-time';
+import { getProjectInstaller } from 'src/utils/project-tasks-utils';
 
 import { CONFIG } from 'src/config-global';
 import { createEvent } from 'src/actions/calendar';
 
+import { Label } from 'src/components/label';
 import { toast } from 'src/components/snackbar';
 import { Iconify } from 'src/components/iconify';
 import { Scrollbar } from 'src/components/scrollbar';
@@ -92,7 +94,7 @@ export function ProjectCalendarForm({ currentEvent, colorOptions, onClose }) {
     const eventData = {
       id: currentEvent?.id ? currentEvent?.id : uuidv4(),
       // color: data?.color,
-      title: data?.title,
+      title: data?.name,
       // allDay: data?.allDay,
       description: data?.description,
       end: data?.end,
@@ -158,18 +160,32 @@ export function ProjectCalendarForm({ currentEvent, colorOptions, onClose }) {
             />
 
             {currentEvent?.type === 'installation' ? (
-
-              <Field.MobileDateTimePicker
-                name="end"
-                label="End date"
-                minDate={dayjs(currentEvent?.salesOrder?.date)}
-                slotProps={{
-                  textField: {
-                    error: dateError,
-                    helperText: dateError ? 'End date must be later than start date' : null,
-                  },
-                }}
-              />
+              <>
+                <Field.MobileDateTimePicker
+                  name="end"
+                  label="End date"
+                  minDate={dayjs(currentEvent?.salesOrder?.date)}
+                  slotProps={{
+                    textField: {
+                      error: dateError,
+                      helperText: dateError ? 'End date must be later than start date' : null,
+                    },
+                  }}
+                />
+                {getProjectInstaller(currentEvent, CONFIG)?.name && (
+                  <Box sx={{ display: 'flex', mb: 1, p: 1, justifyContent: 'flex-start' }}>
+                    <Typography variant="caption" sx={{ color: 'text.secondary', mr: 1, mt: 1.5 }}>
+                      Installer:
+                    </Typography>
+                    <Label sx={{ display: 'flex', minHeight: 40 }}>
+                      <Avatar
+                        src={getProjectInstaller(currentEvent, CONFIG).avatarUrl || getProjectInstaller(currentEvent, CONFIG).avatar_url}
+                        sx={{ width: 24, height: 24, mr: 1 }} />
+                      {getProjectInstaller(currentEvent, CONFIG).name}
+                    </Label>
+                  </Box>
+                )}
+              </>
 
             ) : (
               <Typography variant="caption" sx={{ color: 'text.secondary' }}>
@@ -218,7 +234,7 @@ export function ProjectCalendarForm({ currentEvent, colorOptions, onClose }) {
           <Button
             variant="contained"
             color="info"
-            onClick={() => handleDetails(currentEvent?.id)}
+            onClick={() => handleDetails(currentEvent?.id.split('-')[0])}
           >
             View Details
           </Button>

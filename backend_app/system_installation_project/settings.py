@@ -316,6 +316,7 @@ SERVICE_FINISHED_STAGE = env('SERVICE_FINISHED_STAGE', default='Finished')
 
 # ZOHO
 ZOHO_ORG_ID = env('ZOHO_ORG_ID', default='')
+ZOHO_ORG_NWS_ID = env('ZOHO_ORG_NWS_ID', default='')
 
 # PROJECTS
 PROJECT_WORK = env('PROJECT_WORK', default='Work')

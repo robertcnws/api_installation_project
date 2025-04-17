@@ -1,30 +1,31 @@
 import Calendar from '@fullcalendar/react'; // => request placed at the top
 
-import { useEffect } from 'react';
 import listPlugin from '@fullcalendar/list';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import timelinePlugin from '@fullcalendar/timeline';
+import { useMemo, useState, useEffect } from 'react';
 import interactionPlugin from '@fullcalendar/interaction';
 
 import Card from '@mui/material/Card';
-import Stack from '@mui/material/Stack';
-import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 import { useTheme } from '@mui/material/styles';
-import Typography from '@mui/material/Typography';
 import DialogTitle from '@mui/material/DialogTitle';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 import { useSetState } from 'src/hooks/use-set-state';
 
 import { fDate, fIsAfter, fIsBetween } from 'src/utils/format-time';
+import { verifyPermissions, listRolesAndSubroles } from 'src/utils/check-permissions';
 
+import { CONFIG } from 'src/config-global';
 import { DashboardContent } from 'src/layouts/dashboard';
 import { CALENDAR_COLOR_OPTIONS } from 'src/_mock/_calendar';
-import { updateEvent, useGetEvents } from 'src/actions/calendar';
+import { updateEvent, useGetProjectEvents } from 'src/actions/calendar';
 
 import { Iconify } from 'src/components/iconify';
+
+import { useDataContext } from 'src/auth/context/data/data-context';
 
 import { StyledCalendar } from '../styles';
 import { useEvent } from '../hooks/use-event';
@@ -37,11 +38,164 @@ import { CalendarFiltersResult } from '../calendar-filters-result';
 // ----------------------------------------------------------------------
 
 export function CalendarView() {
+
+  const {
+    loadedProjects,
+    loadedServices,
+  } = useDataContext();
+
+  const [projects, setProjects] = useState([]);
+  const [services, setServices] = useState([]);
+
+  useEffect(() => {
+    if (loadedProjects && loadedProjects.length > 0) {
+      setProjects(loadedProjects);
+    }
+  }, [loadedProjects, setProjects]);
+
+  useEffect(() => {
+    if (loadedServices && loadedServices.length > 0) {
+      setServices(loadedServices);
+    }
+  }, [loadedServices, setServices]);
+
+  useEffect(() => {
+    const socket = new WebSocket(`wss://${CONFIG.apiHost}/api/projects/ws/projects/`);
+    socket.onerror = (errorEvent) => {
+      console.dir(errorEvent);
+      console.error('WebSocket error (toString):', errorEvent.toString());
+    };
+    socket.onmessage = (event) => {
+      const message = JSON.parse(event.data);
+      if (message.type === 'created' || message.type === 'updated') {
+        setProjects((prevData) => {
+          const existingItemIndex = prevData.findIndex(item => String(item.id) === String(message.item.id));
+          if (existingItemIndex !== -1) {
+            const updatedData = [...prevData];
+            updatedData[existingItemIndex] = message.item;
+            return updatedData;
+          }
+          return [message.item, ...prevData];
+        });
+      }
+      else if (message.type === 'deleted') {
+        setProjects((prevData) => prevData.filter(item => String(item.id) !== String(message.item.id)));
+      }
+    };
+    return () => {
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.close();
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    const socket = new WebSocket(`wss://${CONFIG.apiHost}/api/services/ws/services/`);
+    socket.onerror = (errorEvent) => {
+      console.dir(errorEvent);
+      console.error('WebSocket error (toString):', errorEvent.toString());
+    };
+    socket.onmessage = (event) => {
+      const message = JSON.parse(event.data);
+      if (message.type === 'created' || message.type === 'updated') {
+        setServices((prevData) => {
+          const existingItemIndex = prevData.findIndex(item => String(item.id) === String(message.item.id));
+          if (existingItemIndex !== -1) {
+            const updatedData = [...prevData];
+            updatedData[existingItemIndex] = message.item;
+            return updatedData;
+          }
+          return [message.item, ...prevData];
+        });
+      }
+      else if (message.type === 'deleted') {
+        setServices((prevData) => prevData.filter(item => String(item.id) !== String(message.item.id)));
+      }
+    };
+    return () => {
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.close();
+      }
+    };
+  }, []);
+
   const theme = useTheme();
 
   const openFilters = useBoolean();
 
-  const { events, eventsLoading } = useGetEvents();
+  const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
+
+  const {
+    listPermissions,
+  } = useDataContext();
+
+  const installProjects = useMemo(() => projects?.filter((project) => project.startDate).map((p) => ({
+    ...p,
+    id: `${p.id}-installation`,
+    originalName: p.name,
+    title: `Installation ${p.name}`,
+    type: 'installation',
+    namedType: 'installation',
+    icon: 'fluent-emoji-high-contrast:man-mechanic',
+  })) || [], [projects]);
+
+  const inspectionProjects = useMemo(
+    () => projects?.filter((project) => project.hasPermission && project.inspectionDate).map((p) => ({
+      ...p,
+      id: `${p.id}-inspection`,
+      originalName: p.name,
+      title: `Inspection ${p.name}`,
+      type: 'inspection',
+      namedType: 'inspection',
+      icon: 'icon-park-outline:inspection',
+    })) || [], [projects]);
+
+  const finishPermissionProjects = useMemo(
+    () => projects?.filter((project) => project.hasPermission && project.finishPermissionDate).map((p) => ({
+      ...p,
+      id: `${p.id}-finishPermission`,
+      originalName: p.name,
+      title: `Finish Permission ${p.name}`,
+      type: 'finishPermission',
+      namedType: 'finish permission',
+      icon: 'ep:finished',
+    })) || [], [projects]);
+
+  const eventsServices = useMemo(
+    () => services?.filter((s) => s.startDate).map((service) => ({
+    ...service,
+    id: `${service.id}-service`,
+    originalName: service.name,
+    description: service.serviceNotes,
+    title: `Service ${service.name}`,
+    start: service.startDate,
+    end: service.endDate,
+    // allDay: true,
+    type: 'service',
+    namedType: 'service',
+    icon: 'carbon:user-service',
+  })) || [], [services]);
+
+
+  const {
+    events: installEvents, eventsLoading: installEventsLoading
+  } = useGetProjectEvents(installProjects, 'installation');
+
+  const {
+    events: inspectionEvents, eventsLoading: inspectionEventsLoading
+  } = useGetProjectEvents(inspectionProjects, 'inspection');
+
+  const {
+    events: finishPermissionEvents, eventsLoading: finishPermissionEventsLoading
+  } = useGetProjectEvents(finishPermissionProjects, 'finishPermission');
+
+  const {
+    events: serviceEvents, eventsLoading: serviceEventsLoading
+  } = useGetProjectEvents(eventsServices, 'service');
+
+  const events = [...installEvents, ...inspectionEvents, ...finishPermissionEvents, ...serviceEvents];
+
+  const eventsLoading = installEventsLoading || inspectionEventsLoading || finishPermissionEventsLoading || serviceEventsLoading;
 
   const filters = useSetState({
     colors: [],
@@ -50,6 +204,33 @@ export function CalendarView() {
   });
 
   const dateError = fIsAfter(filters.state.startDate, filters.state.endDate);
+
+  const renderEventContent = (eventInfo) => {
+    const customTitle = eventInfo.event._def.extendedProps.customTitle || eventInfo.event._def.extendedProps.name;
+    const iconClass = eventInfo.event._def.extendedProps.icon;
+
+    return (
+      <div style={{ display: 'flex', alignItems: 'center' }}>
+        {iconClass && (
+          <Iconify
+            icon={iconClass}
+            sx={{ mr: 1 }}
+          />
+        )}
+        <span
+          style={{
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            display: 'block',
+            maxWidth: '100%'
+          }}
+        >
+          {customTitle}
+        </span>
+      </div>
+    );
+  }
 
   const {
     calendarRef,
@@ -80,7 +261,10 @@ export function CalendarView() {
   const currentEvent = useEvent(events, selectEventId, selectedRange, openForm);
 
   useEffect(() => {
-    onInitialView();
+    const newView = null;
+    Promise.resolve().then(() => {
+      onInitialView(newView);
+    });
   }, [onInitialView]);
 
   const canReset =
@@ -92,35 +276,25 @@ export function CalendarView() {
     <CalendarFiltersResult
       filters={filters}
       totalResults={dataFiltered.length}
-      sx={{ mb: { xs: 3, md: 5 } }}
+      sx={{ mb: { xs: 2, md: 3 } }}
     />
   );
 
-  const flexProps = { flex: '1 1 auto', display: 'flex', flexDirection: 'column' };
+  const flexProps = { flex: '0 0 auto', display: 'flex', flexDirection: 'column' };
 
   return (
     <>
-      <DashboardContent maxWidth="xl" sx={{ ...flexProps }}>
-        <Stack
-          direction="row"
-          alignItems="center"
-          justifyContent="space-between"
-          sx={{ mb: { xs: 3, md: 5 } }}
-        >
-          <Typography variant="h4">Calendar</Typography>
-          <Button
-            variant="contained"
-            startIcon={<Iconify icon="mingcute:add-line" />}
-            onClick={onOpenForm}
-          >
-            New event
-          </Button>
-        </Stack>
+      <DashboardContent sx={{ ...flexProps }} maxWidth="xl">
 
         {canReset && renderResults}
 
-        <Card sx={{ ...flexProps, minHeight: '50vh' }}>
-          <StyledCalendar sx={{ ...flexProps, '.fc.fc-media-screen': { flex: '1 1 auto' } }}>
+        <Card sx={{
+          ...flexProps,
+          height: '100%',
+          minWidth: '100%',
+          minHeight: filters.state.colors.length === 0 && !filters.state.startDate && !filters.state.endDateDate ? 770 : 670
+        }}>
+          <StyledCalendar sx={{ ...flexProps, '.fc.fc-media-screen': { flex: '0 0 auto' }, minHeight: '100%', height: '100%' }}>
             <CalendarToolbar
               date={fDate(date)}
               view={view}
@@ -137,19 +311,28 @@ export function CalendarView() {
               weekends
               editable
               droppable
-              selectable
+              selectable={false}
               rerenderDelay={10}
               allDayMaintainDuration
               eventResizableFromStart
               ref={calendarRef}
               initialDate={date}
               initialView={view}
-              dayMaxEventRows={3}
+              dayMaxEventRows={5}
               eventDisplay="block"
               events={dataFiltered}
+              eventContent={renderEventContent}
               headerToolbar={false}
               select={onSelectRange}
-              eventClick={onClickEvent}
+              eventClick={
+                verifyPermissions(
+                  listPermissions,
+                  CONFIG.permissions.system,
+                  CONFIG.permissions.moduleProjects,
+                  CONFIG.permissions.operationEditCalendar
+                ) ||
+                  listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.projectManager) ? onClickEvent : null
+              }
               aspectRatio={3}
               eventDrop={(arg) => {
                 onDropEvent(arg, updateEvent);
@@ -164,6 +347,7 @@ export function CalendarView() {
                 timeGridPlugin,
                 interactionPlugin,
               ]}
+              height={filters.state.colors.length === 0 && !filters.state.startDate && !filters.state.endDateDate ? 700 : 600}
             />
           </StyledCalendar>
         </Card>
@@ -188,7 +372,7 @@ export function CalendarView() {
         }}
       >
         <DialogTitle sx={{ minHeight: 76 }}>
-          {openForm && <> {currentEvent?.id ? 'Edit' : 'Add'} event</>}
+          {openForm && <> {currentEvent?.id ? 'Edit' : 'Add'} {currentEvent?.namedType} event</>}
         </DialogTitle>
 
         <CalendarForm

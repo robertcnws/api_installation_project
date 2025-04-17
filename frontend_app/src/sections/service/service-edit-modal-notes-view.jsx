@@ -10,6 +10,8 @@ import { LoadingButton } from '@mui/lab';
 import Button from '@mui/material/Button';
 import { Dialog, DialogTitle, DialogActions } from '@mui/material';
 
+import { listRolesAndSubroles } from 'src/utils/check-permissions';
+
 import { CONFIG } from 'src/config-global';
 
 import { toast } from 'src/components/snackbar';
@@ -117,44 +119,46 @@ export function ServiceEditModalNotesView({
 
     const renderService = (
         <Dialog fullWidth maxWidth="md" open={open} onClose={onClose}>
-                <DialogTitle>{service?.serviceNotes ? 'Update' : 'Add'} Notes to Service {service?.name} </DialogTitle>
+            <DialogTitle>
+                {listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.serviceStaff) ? service?.serviceNotes ? 'Update' : 'Add' : '' } Notes to Service {service?.name}
+            </DialogTitle>
 
-                <Form methods={methods} onSubmit={onSubmit}>
+            <Form methods={methods} onSubmit={onSubmit}>
 
-                    <Stack
-                        spacing={2.5}
-                        justifyContent="center"
-                        sx={{ p: 2.5 }}
-                    >
+                <Stack
+                    spacing={2.5}
+                    justifyContent="center"
+                    sx={{ p: 2.5 }}
+                >
 
-                        <Box sx={{ flexDirection: !isMobile ? 'row' : 'column', display: 'flex' }}>
-                            
-                            <Box sx={{ width: '100%', color: 'text.secondary', mt: !isMobile ? 0 : 2, ml: !isMobile ? 2 : 0 }}>
-                                <Field.Text
-                                    name="notes"
-                                    label="Notes"
-                                    control={control}
-                                    fullWidth
-                                    multiline
-                                    rows={3}
-                                    placeholder="Enter notes"
-                                />
-                            </Box>
+                    <Box sx={{ flexDirection: !isMobile ? 'row' : 'column', display: 'flex' }}>
+
+                        <Box sx={{ width: '100%', color: 'text.secondary', mt: !isMobile ? 0 : 2, ml: !isMobile ? 2 : 0 }}>
+                            <Field.Text
+                                name="notes"
+                                label="Notes"
+                                control={control}
+                                fullWidth
+                                multiline
+                                rows={3}
+                                placeholder="Enter notes"
+                                disabled={!listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.serviceStaff)}
+                            />
                         </Box>
-                    </Stack>
-                    <DialogActions>
+                    </Box>
+                </Stack>
+                <DialogActions>
+                    {listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.serviceStaff) && (
                         <LoadingButton type="submit" variant="contained" loading={isSubmitting}>
                             {service?.serviceNotes ? 'Update' : 'Add'}
                         </LoadingButton>
-                        {/* <Button onClick={onClose}>
-                            Delete
-                        </Button> */}
-                        <Button variant="outlined" onClick={onClose}>
-                            Cancel
-                        </Button>
-                    </DialogActions>
-                </Form>
-            </Dialog>
+                    )}
+                    <Button variant="outlined" onClick={onClose}>
+                        Cancel
+                    </Button>
+                </DialogActions>
+            </Form>
+        </Dialog>
     )
 
     return (

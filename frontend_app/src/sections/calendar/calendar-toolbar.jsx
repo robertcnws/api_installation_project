@@ -1,3 +1,4 @@
+
 import Stack from '@mui/material/Stack';
 import Badge from '@mui/material/Badge';
 import Button from '@mui/material/Button';
@@ -38,6 +39,13 @@ export function CalendarToolbar({
 
   return (
     <>
+      {/* {isOnlyWeek && (
+        <Box sx={{ ml: 2, mb: 2, mt: 2 }}>
+          <Typography variant="title1">
+            <b>Installations Calendar (Week)</b>
+          </Typography>
+        </Box>
+      )} */}
       <Stack
         direction="row"
         alignItems="center"

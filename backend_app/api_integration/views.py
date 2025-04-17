@@ -4,6 +4,7 @@ from django.http import JsonResponse
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from api_projects.models import Project
+from api_services.models import Service
 import json
 import requests
 import logging
@@ -221,6 +222,53 @@ def refetch_salesorder(request, project_id):
     if len(items_to_get) > 0:
         project.sales_order = items_to_get[0]
         project.save()
+    return JsonResponse({'message': 'Sales order refetched successfully'})
+
+
+#############################################
+# REFETCH SALES ORDERS TO SERVICE
+#############################################
+    
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def refetch_salesorder_service(request, service_id):
+    service = Service.objects(id=service_id).first()
+    salesorder_number = service.sales_order.get('salesorder_number', None)
+    if not salesorder_number:
+        return JsonResponse({'error': 'Missing salesorder_number in service'}, status=400)
+    
+    headers = config_headers()
+    
+    def get_sales_orders(url):
+        items_to_get = []
+        session = requests.Session()
+        while True:
+            try:
+                response = session.get(url, headers=headers)
+                response.raise_for_status()
+                items = response.json()
+                items_confirmed = [item for item in items.get('results', []) if item.get('status', None).lower() != 'draft']
+                items_to_get.extend(items_confirmed)
+                if not items.get('next', None):
+                    break
+            except requests.exceptions.RequestException as e:
+                logger.error(f"Error fetching sales orders: {e}")
+                return JsonResponse({'error': 'Failed to fetch sales orders to service'}, status=500)
+        return items_to_get
+    
+    zogo_org_id = settings.ZOHO_ORG_ID
+    url = f'{settings.API_MAIN_DATA_URL}/zoho/refetch_salesorder/{zogo_org_id}/{salesorder_number}/'
+    items_to_get = get_sales_orders(url)
+    
+    if len(items_to_get) == 0:
+        zoho_org_nws_id = settings.ZOHO_ORG_NWS_ID
+        url = f'{settings.API_MAIN_DATA_URL}/zoho/refetch_salesorder/{zoho_org_nws_id}/{salesorder_number}/'
+        items_to_get = get_sales_orders(url)
+        
+    if len(items_to_get) > 0:
+        service.sales_order = items_to_get[0]
+        service.save()
+        
     return JsonResponse({'message': 'Sales order refetched successfully'})
 
 

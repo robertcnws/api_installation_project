@@ -15,6 +15,7 @@ import { AuthGuard } from 'src/auth/guard';
 // Overview
 const IndexPage = lazy(() => import('src/pages/dashboard'));
 const OverviewAnalyticsPage = lazy(() => import('src/pages/dashboard/analytics'));
+const CalendarPage = lazy(() => import('src/pages/dashboard/calendar'));
 // User
 const UserProfilePage = lazy(() => import('src/pages/dashboard/user/profile'));
 const UserCardsPage = lazy(() => import('src/pages/dashboard/user/cards'));
@@ -94,6 +95,15 @@ export const dashboardRoutes = (listPermissions, user) => [
           CONFIG.permissions.moduleDashboards,
           CONFIG.permissions.operationList
         ) || listRolesAndSubroles(user?.user_role?.name).includes(CONFIG.roles.projectManager) ? <OverviewAnalyticsPage /> : <Page403 />
+      },
+      {
+        path: 'calendar',
+        element: verifyPermissions(
+          listPermissions,
+          CONFIG.permissions.system,
+          CONFIG.permissions.moduleDashboards,
+          CONFIG.permissions.operationList
+        ) || listRolesAndSubroles(user?.user_role?.name).includes(CONFIG.roles.projectManager) ? <CalendarPage /> : <Page403 />
       },
       {
         path: 'sales-order',
@@ -544,7 +554,7 @@ export const dashboardRoutes = (listPermissions, user) => [
             ],
           },
         ] : [],
-        ...(user && listRolesAndSubroles(user?.user_role?.name).includes(CONFIG.roles.administrator)) ?
+        ...(user && listRolesAndSubroles(user?.user_role?.name).includes(CONFIG.roles.serviceStaff)) ?
         [
           {
             path: 'service',
@@ -553,7 +563,7 @@ export const dashboardRoutes = (listPermissions, user) => [
                 element: listRolesAndSubroles(
                   user?.user_role?.name
                 ).includes(
-                  CONFIG.roles.administrator
+                  CONFIG.roles.serviceStaff
                 ) ? <ServicePage /> : <Page403 />,
                 index: true
               },
@@ -562,7 +572,7 @@ export const dashboardRoutes = (listPermissions, user) => [
                 element: listRolesAndSubroles(
                   user?.user_role?.name
                 ).includes(
-                  CONFIG.roles.projectManager
+                  CONFIG.roles.serviceStaff
                 ) ? <ServicePage /> : <Page403 />,
               },
               {
@@ -570,7 +580,7 @@ export const dashboardRoutes = (listPermissions, user) => [
                 element: listRolesAndSubroles(
                   user?.user_role?.name
                 ).includes(
-                  CONFIG.roles.administrator
+                  CONFIG.roles.serviceStaff
                 ) ? <ServiceCreatePage /> : <Page403 />,
               },
               {
@@ -578,7 +588,7 @@ export const dashboardRoutes = (listPermissions, user) => [
                 element: listRolesAndSubroles(
                   user?.user_role?.name
                 ).includes(
-                  CONFIG.roles.projectManager
+                  CONFIG.roles.serviceStaff
                 ) ? <ServiceDetailsPage /> : <Page403 />,
               }
             ],

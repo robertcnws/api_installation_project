@@ -81,7 +81,7 @@ export function ServiceDetailsToolbar({
   const handleRefetchSalesOrder = useCallback(
     async () => {
       try {
-        const promise = axios.get(`${CONFIG.apiUrl}/integration/refetch_salesorder/${service?.id}/`);
+        const promise = axios.get(`${CONFIG.apiUrl}/integration/refetch_salesorder_service/${service?.id}/`);
 
         toast.promise(promise, {
           loading: 'Loading...',
@@ -106,8 +106,13 @@ export function ServiceDetailsToolbar({
           startIcon={<Iconify icon="eva:arrow-ios-back-fill" width={12} />}
           sx={{ mr: -3 }}
         /> */}
-        <Box sx={{ display: 'flex', flexDirection: 'row' }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column' }}>
           <Typography variant="h6">SERVICE {service?.name}</Typography>
+          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+            {service?.createdBy?.first_name ? 
+            `Created by ${service?.createdBy?.first_name || service?.createdBy?.firstName} ${service?.createdBy?.last_name || service?.createdBy?.lastName}` :
+              `Created by ${service?.createdBy?.first_name || service?.userReporter?.firstName} ${service?.createdBy?.last_name || service?.userReporter?.lastName}`}
+          </Typography>
         </Box>
         <Box sx={{ flexGrow: 1 }} />
 
@@ -128,12 +133,12 @@ export function ServiceDetailsToolbar({
                 </Tooltip>
               )} */}
             {(listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) && (
-                <Tooltip title="Delete service" arrow>
-                  <IconButton onClick={confirmDelete.onTrue} color="error">
-                    <Iconify icon="solar:trash-bin-trash-bold" />
-                  </IconButton>
-                </Tooltip>
-              )}
+              <Tooltip title="Delete service" arrow>
+                <IconButton onClick={confirmDelete.onTrue} color="error">
+                  <Iconify icon="solar:trash-bin-trash-bold" />
+                </IconButton>
+              </Tooltip>
+            )}
           </>
         )}
         <Tooltip title='Close service' arrow>

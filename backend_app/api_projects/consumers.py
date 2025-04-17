@@ -5,6 +5,31 @@ import json
 # PROJECT DEFAULT GUIDE PRODUCT
 ######################################################
 
+class ProjectReminderConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        await self.channel_layer.group_add(
+            "project_reminder", 
+            self.channel_name
+        )
+        await self.accept()
+
+    async def disconnect(self, close_code):
+        await self.channel_layer.group_discard(
+            "project_reminder",
+            self.channel_name
+        )
+
+    async def receive(self, text_data):
+        pass
+
+    async def project_reminder_update(self, event):
+        await self.send(text_data=json.dumps(event["message"]))
+        
+
+######################################################
+# PROJECT DEFAULT GUIDE PRODUCT
+######################################################
+
 class ProjectDefaultGuideProductConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         await self.channel_layer.group_add(

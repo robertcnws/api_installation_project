@@ -46,6 +46,12 @@ class Service(Document):
     service_type = StringField(max_length=255, null=True)
     service_place = DynamicField(null=True)
     service_notes = StringField(null=True)
+    has_to_pay = BooleanField(default=False)
+    paid = BooleanField(default=False)
+    by_factory = BooleanField(default=False)
+    repaired = BooleanField(default=False)
+    created_by = DynamicField(null=True)
+    is_part_days = BooleanField(default=False)
     
     meta = {
         'collection': 'service',
@@ -159,13 +165,33 @@ class ServiceAttachment(Document):
     is_active = BooleanField(default=True)
     
     meta = {
-        'collection': 'project_attachment',
+        'collection': 'service_attachment',
         'indexes': [
-            'name', 'created_time', 'last_modified_time', 'is_active', 'user_upload', 'service', 'current_stage'
+            'name', 'created_time', 'last_modified_time', 'is_active', 'user_upload', 'service', 'current_stage', 'attachment_type', 'service_default_task'
         ],
-        'verbose_name': 'Project Attachment',
-        'verbose_name_plural': 'Project Attachments'
+        'verbose_name': 'Service Attachment',
+        'verbose_name_plural': 'Service Attachments'
     }
 
     def __str__(self):
         return self.name
+    
+class ServiceTaskComment(Document):
+    comment = StringField(required=True)
+    user_reporter = DynamicField(required=True, null=True)
+    created_time = DateTimeField(default=timezone.now, null=True)
+    last_modified_time = DateTimeField(default=timezone.now, null=True)
+    service = DynamicField(required=True)
+    service_default_task = DynamicField(null=True)
+    service_default_task_comment_attachments = ListField(DynamicField(), default=list, null=True)
+    is_active = BooleanField(default=True)
+    meta = {
+        'collection': 'service_task_comment',
+        'indexes': [
+            'comment', 'user_reporter', 'created_time', 'last_modified_time', 'service_default_task', 'is_active', 'service'
+        ],
+        'verbose_name': 'Service Task Comment',
+        'verbose_name_plural': 'Service Task Comments'
+    }
+    def __str__(self):
+        return self.comment

@@ -1,7 +1,7 @@
 
 import { paths } from 'src/routes/paths';
 
-import { listRolesAndSubroles } from 'src/utils/check-permissions';
+import { isServiceStaff, listRolesAndSubroles } from 'src/utils/check-permissions';
 
 import { CONFIG } from 'src/config-global';
 
@@ -55,6 +55,7 @@ const ICONS = {
   serviceIssue: icon('ic-service-issue'),
   serviceStage: icon('ic-service-stage'),
   serviceTask: icon('ic-service-task'),
+  calendarOverview: icon('ic-calendar-overview'),
 };
 
 const userLogged = JSON.parse(sessionStorage.getItem('userLogged'));
@@ -72,6 +73,7 @@ export const navData = () => [
     subheader: 'Overview',
     items: [
       { title: 'Analytics', path: paths.dashboard.general.analytics, icon: ICONS.analytics },
+      { title: 'Calendar', path: paths.dashboard.general.calendar, icon: ICONS.calendarOverview },
     ],
   },
   /**
@@ -80,18 +82,20 @@ export const navData = () => [
   {
     subheader: 'Management',
     items: [
-      {
-        title: 'Installations',
-        path: paths.dashboard.project.root,
-        icon: ICONS.project,
-        children: [
-          {
-            title: 'List',
-            path: paths.dashboard.project.list,
-          },
-        ],
-      },
-      ...(userLogged && listRolesAndSubroles(userLogged?.data.user_role.name).includes(CONFIG.roles.administrator) ? [
+      ...(userLogged && !isServiceStaff(userLogged?.data.user_role.name) ? [
+        {
+          title: 'Installations',
+          path: paths.dashboard.project.root,
+          icon: ICONS.project,
+          children: [
+            {
+              title: 'List',
+              path: paths.dashboard.project.list,
+            },
+          ],
+        },
+      ] : []),
+      ...(userLogged && listRolesAndSubroles(userLogged?.data.user_role.name).includes(CONFIG.roles.serviceStaff) ? [
         {
           title: 'Services',
           path: paths.dashboard.service.root,
@@ -107,6 +111,8 @@ export const navData = () => [
             },
           ],
         },
+      ] : []),
+      ...(userLogged && listRolesAndSubroles(userLogged?.data.user_role.name).includes(CONFIG.roles.administrator) ? [
         {
           title: 'Sales Orders',
           path: paths.dashboard.salesOrder.root,

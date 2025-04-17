@@ -33,6 +33,12 @@ const GET_ALL_SERVICES = gql`
       serviceType
       servicePlace
       serviceNotes
+      hasToPay
+      paid
+      byFactory
+      repaired
+      createdBy
+      isPartDays
     }
   }
 `;
@@ -68,6 +74,12 @@ const GET_SERVICE_BY_ID = gql`
       serviceType
       servicePlace
       serviceNotes
+      hasToPay
+      paid
+      byFactory
+      repaired
+      createdBy
+      isPartDays
     }
   }
 `;

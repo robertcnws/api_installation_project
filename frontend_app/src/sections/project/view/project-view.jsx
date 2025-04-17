@@ -194,6 +194,7 @@ export function ProjectView() {
   const handleChangeView = useCallback((event, newView) => {
     if (newView !== null) {
       localStorage.setItem('projectView', newView);
+      localStorage.removeItem('projectReminderTab');
       setView(newView);
     }
   }, []);

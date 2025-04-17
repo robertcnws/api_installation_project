@@ -60,7 +60,7 @@ export function ServiceEditModalAttachmentsView({
     const confirm = useBoolean();
 
     useEffect(() => {
-        const attachments = service.serviceAttachments || [];
+        const attachments = service?.serviceAttachments || [];
         if (!attachments.length) {
             setInitialFiles([]);
             return;
@@ -200,7 +200,7 @@ export function ServiceEditModalAttachmentsView({
         const formData = new FormData();
         formData.append('userReporter', JSON.stringify(userLogged?.data));
 
-        const promise = axios.post(`${CONFIG.apiUrl}/services/update/service/${service.id}/change-notes/`, formData, {
+        const promise = axios.post(`${CONFIG.apiUrl}/services/update/service/${service?.id}/change-notes/`, formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
             },
@@ -209,8 +209,8 @@ export function ServiceEditModalAttachmentsView({
         try {
             toast.promise(promise, {
                 loading: 'Loading...',
-                success: `Update Service (${service.name}) success!`,
-                error: `Update Service (${service.name}) error!`,
+                success: `Update Service (${service?.name}) success!`,
+                error: `Update Service (${service?.name}) error!`,
             });
 
             const response = await promise;
@@ -230,7 +230,7 @@ export function ServiceEditModalAttachmentsView({
 
     const renderService = (
         <Dialog fullWidth maxWidth="md" open={open} onClose={onClose}>
-            <DialogTitle>{service?.serviceAttachments?.length > 0 ? 'Update' : 'Add'} Attachments to Service {service?.name} </DialogTitle>
+            <DialogTitle>{listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.serviceStaff) ? service?.serviceAttachments?.length > 0 ? 'Update' : 'Add' : ''} Attachments to Service {service?.name} </DialogTitle>
 
             <Stack
                 spacing={2.5}
@@ -251,7 +251,7 @@ export function ServiceEditModalAttachmentsView({
                                         <Box sx={{ mb: 1, typography: 'overline' }}>
                                             <b>About issues</b>
                                         </Box>
-                                        {(listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) && (
+                                        {(listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.serviceStaff)) && (
                                             <Box sx={{ mb: 1 }}>
                                                 <Button
                                                     color="primary"
@@ -273,8 +273,11 @@ export function ServiceEditModalAttachmentsView({
                                         files={mappedDisplayFiles.find((mappedFile) => mappedFile?.attachmentType === 'issued')?.files || []}
                                         onRemove={handleClickRemoveFile}
                                         onDownload={handleDownloadFile}
+                                        isService
+                                        isProject={false}
+                                        moduleType="issued"
                                         lastNode={
-                                            (listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) ? (
+                                            (listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.serviceStaff)) ? (
                                                 <UploadBox onDrop={(files) => {
                                                     if (files && files.length) {
                                                         const uniqueFiles = files.filter((file) =>

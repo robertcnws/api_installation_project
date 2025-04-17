@@ -7,11 +7,11 @@ import Avatar from '@mui/material/Avatar';
 import { useTheme } from '@mui/material/styles';
 import Grid from '@mui/material/Unstable_Grid2';
 import Typography from '@mui/material/Typography';
-import { Box, Chip, Table, Radio, Button, Tooltip, TableRow, ListItem, TableBody, TableCell, TableHead, TextField, IconButton, RadioGroup, Autocomplete, TableContainer, FormControlLabel } from '@mui/material';
+import { Box, Chip, Table, Radio, Button, Switch, Tooltip, TableRow, ListItem, TableBody, TableCell, TableHead, TextField, IconButton, RadioGroup, Autocomplete, TableContainer, FormControlLabel } from '@mui/material';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
-import { fDate, fIsAfter } from 'src/utils/format-time';
+import { fDate, fIsAfter, fDuration } from 'src/utils/format-time';
 import { getServiceInstaller } from 'src/utils/service-tasks-utils';
 import { filteredDescriptionJson } from 'src/utils/project-tasks-utils';
 import { isInstaller, listRolesAndSubroles } from 'src/utils/check-permissions';
@@ -53,6 +53,7 @@ export function ServiceDetailsContent({
   openDialogs,
   setOpenDialogs,
   openSalesOrderModal,
+  handleChangeProperties,
 }) {
 
   const theme = useTheme();
@@ -90,6 +91,11 @@ export function ServiceDetailsContent({
   const [selectedServicePlace, setSelectedServicePlace] = useState(null);
 
   const [selectedServiceType, setSelectedServiceType] = useState(null);
+
+  const [selectedHasToPay, setSelectedHasToPay] = useState(false);
+  const [selectedPaid, setSelectedPaid] = useState(false);
+  const [selectedByFactory, setSelectedByFactory] = useState(false);
+  const [selectedRepaired, setSelectedRepaired] = useState(false);
 
   const possibleItems = useMemo(() =>
     service ?
@@ -135,6 +141,10 @@ export function ServiceDetailsContent({
         service?.hasPermission ? service?.serviceDefaultTasks?.filter((task) => task.status === CONFIG.taskStatus.notStarted).length :
           service?.serviceDefaultTasks?.filter((task) => task.status === CONFIG.taskStatus.notStarted && task.service_default_task.service_stage.name !== CONFIG.stages.permission).length
       );
+      setSelectedHasToPay(service?.hasToPay);
+      setSelectedPaid(service?.paid);
+      setSelectedByFactory(service?.byFactory);
+      setSelectedRepaired(service?.repaired);
     }
   }, [service]);
 
@@ -156,6 +166,8 @@ export function ServiceDetailsContent({
 
   const items = useMemo(() => service?.salesOrder?.line_items, [service]);
 
+
+
   const issuedProducts = useMemo(() =>
     service?.issuedProducts
       ? [...service.issuedProducts].sort((a, b) =>
@@ -164,6 +176,23 @@ export function ServiceDetailsContent({
       : [],
     [service]
   );
+
+  const handleSwitch = (event, property) => {
+    const newVal = event.target.checked;
+    if (property === 'hasToPay') {
+      setSelectedHasToPay(newVal);
+      handleChangeProperties('hasToPay', newVal);
+    } else if (property === 'paid') {
+      setSelectedPaid(newVal);
+      handleChangeProperties('paid', newVal);
+    } else if (property === 'byFactory') {
+      setSelectedByFactory(newVal);
+      handleChangeProperties('byFactory', newVal);
+    } else if (property === 'repaired') {
+      setSelectedRepaired(newVal);
+      handleChangeProperties('repaired', newVal);
+    }
+  }
 
   const handleDeleteIssue = useCallback(async () => {
     const formData = new FormData();
@@ -375,8 +404,7 @@ export function ServiceDetailsContent({
                           (fIsAfter(dayjs(new Date()), dayjs(service?.endDate).format('YYYY-MM-DD')) &&
                             (
                               service?.currentStage?.name.toLowerCase().includes(CONFIG.stages.preparation.toLowerCase()) ||
-                              service?.currentStage?.name.toLowerCase().includes(CONFIG.stages.coordination.toLowerCase()) ||
-                              service?.currentStage?.name.toLowerCase().includes(CONFIG.stages.installation.toLowerCase())
+                              service?.currentStage?.name.toLowerCase().includes('repair')
                             )
                           )
                             ? 'error.main'
@@ -389,8 +417,7 @@ export function ServiceDetailsContent({
                         (fIsAfter(dayjs(new Date()), dayjs(service?.endDate).format('YYYY-MM-DD')) &&
                           (
                             service?.currentStage?.name.toLowerCase().includes(CONFIG.stages.preparation.toLowerCase()) ||
-                            service?.currentStage?.name.toLowerCase().includes(CONFIG.stages.coordination.toLowerCase()) ||
-                            service?.currentStage?.name.toLowerCase().includes(CONFIG.stages.installation.toLowerCase())
+                            service?.currentStage?.name.toLowerCase().includes('repair')
                           )
                         )
                           ? 'bold'
@@ -398,7 +425,10 @@ export function ServiceDetailsContent({
                       ) : 'normal'
                     }}
                   >
-                    {fDate(service?.startDate)}
+                    {fDate(service?.startDate)} <b>({fDuration(service?.startDate, service?.endDate)})</b> <br />
+                    <Label variant="filled" sx={{ bgcolor: 'whitesmoke', color: 'text.primary' }}>
+                      {service?.isPartDays ? 'Part Days' : 'Full Days'}
+                    </Label>
                   </Typography>
                 ) : (
                   <Iconify icon="fluent-mdl2:date-time" color="warning" width={20} sx={{ ml: 0.5, mt: 0.5 }} />
@@ -434,338 +464,162 @@ export function ServiceDetailsContent({
             </TableCell>
           </TableRow>
 
-          {/* <TableRow>
-            <TableCell>
-              <Typography variant="subtitle2" color="text.secondary">Estimated Closing Date:</Typography>
-            </TableCell>
-            <TableCell>
-              <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, justifyContent: 'space-between' }}>
-                {service?.endDate ? (
+          <TableRow>
+            <TableCell colSpan={3}>
+              <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, mt: 0, mb: 0, justifyContent: 'space-between', p: 0 }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    gap: 1,
+                    justifyContent: 'flex-start',
+                    p: 0,
+                    width: service?.hasToPay ? '50%' : '100%'
+                  }}>
                   <Typography
-                    variant="subtitle2"
-                    color={
-                      service?.endDate
-                        ? (
-                          (fIsAfter(dayjs(new Date()), dayjs(service?.endDate).format('YYYY-MM-DD')) &&
-                            (
-                              service?.currentStage?.name.toLowerCase().includes(CONFIG.stages.preparation.toLowerCase()) ||
-                              service?.currentStage?.name.toLowerCase().includes(CONFIG.stages.coordination.toLowerCase()) ||
-                              service?.currentStage?.name.toLowerCase().includes(CONFIG.stages.installation.toLowerCase())
-                            )
-                          )
-                            ? 'error.main'
-                            : 'text.primary'
-                        )
-                        : 'text.primary'
-                    }
-                    sx={{
-                      fontWeight: service?.endDate ? (
-                        (fIsAfter(dayjs(new Date()), dayjs(service?.endDate).format('YYYY-MM-DD')) &&
-                          (
-                            service?.currentStage?.name.toLowerCase().includes(CONFIG.stages.preparation.toLowerCase()) ||
-                            service?.currentStage?.name.toLowerCase().includes(CONFIG.stages.coordination.toLowerCase()) ||
-                            service?.currentStage?.name.toLowerCase().includes(CONFIG.stages.installation.toLowerCase())
-                          )
-                        )
-                          ? 'bold'
-                          : 'normal'
-                      ) : 'normal'
-                    }}
-                  >
-                    {fDate(service?.endDate)}
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ width: 80 }}
+                  ><b>Has to pay?</b>
                   </Typography>
-                ) : (
-                  <Iconify icon="fluent-mdl2:date-time" color="warning" width={20} sx={{ ml: 0.5, mt: 0.5 }} />
+                  <Iconify icon={service?.hasToPay ? 'ep:success-filled' : 'icon-park-solid:close-one'}
+                    color={service?.hasToPay ? 'success.main' : 'error.main'}
+                    width={20}
+                  />
+                  {(listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) && (
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        gap: 1,
+                        maxWidth: '30px',
+                        mt: -1,
+                        mb: -3
+                      }}>
+                      <Switch
+                        checked={!!(service && selectedHasToPay)}
+                        onChange={(e) => handleSwitch(e, 'hasToPay')}
+                        sx={{ maxWidth: 56 }}
+                      />
+                    </Box>
+                  )}
+                </Box>
+                {service?.hasToPay && (
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      flexDirection: 'row',
+                      gap: 1,
+                      justifyContent: 'flex-end',
+                      p: 0,
+                      width: '50%'
+                    }}>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ width: 60 }}
+                    >
+                      <b>Paid?</b>
+                    </Typography>
+                    <Iconify icon={service?.paid ? 'ep:success-filled' : 'icon-park-solid:close-one'}
+                      color={service?.paid ? 'success.main' : 'error.main'}
+                      width={20}
+                    />
+                    {(listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) && (
+                      <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, maxWidth: '30px', mt: -1, mb: -3 }}>
+                        <Switch
+                          checked={!!(service && selectedPaid)}
+                          onChange={(e) => handleSwitch(e, 'paid')}
+                          sx={{ maxWidth: 56 }}
+                        />
+                      </Box>
+                    )}
+                  </Box>
                 )}
-
               </Box>
+
             </TableCell>
-            <TableCell sx={{ textAlign: 'right', maxWidth: '30px' }}>
-              {(service?.endDate &&
-                (listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
-                  <IconButton variant="text" color="primary" size="small" sx={{ ml: 0, maxWidth: 10 }}
-                    onClick={() => {
-                      setIsStartDate(false)
-                      setIsInspectionDate(false)
-                      setOpenDialogs({ ...openDialogs, date: true })
-                    }}
+          </TableRow>
+
+          <TableRow>
+            <TableCell colSpan={3}>
+              <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, mt: 0, mb: 0, justifyContent: 'space-between', p: 0 }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    gap: 1,
+                    justifyContent: 'flex-start',
+                    p: 0,
+                    width: service?.byFactory ? '50%' : '100%'
+                  }}>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ width: 80 }}
                   >
-                    <Iconify icon="fluent:calendar-edit-32-regular" color="primary" width={22} />
-                  </IconButton>
+                    <b>By Factory?</b>
+                  </Typography>
+                  <Iconify icon={service?.byFactory ? 'ep:success-filled' : 'icon-park-solid:close-one'}
+                    color={service?.byFactory ? 'success.main' : 'error.main'}
+                    width={20}
+                  />
+                  {(listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) && (
+                    <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, maxWidth: '30px', mt: -1, mb: -3 }}>
+                      <Switch
+                        checked={!!(service && selectedByFactory)}
+                        onChange={(e) => handleSwitch(e, 'byFactory')}
+                        sx={{ maxWidth: 56 }}
+                      />
+                    </Box>
+                  )}
+                </Box>
+                {service?.byFactory && (
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      flexDirection: 'row',
+                      gap: 1,
+                      justifyContent: 'flex-end',
+                      p: 0,
+                      width: '50%'
+                    }}>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ width: 60}}
+                    >
+                      <b>Repaired?</b>
+                    </Typography>
+                    <Iconify icon={service?.repaired ? 'ep:success-filled' : 'icon-park-solid:close-one'}
+                      color={service?.repaired ? 'success.main' : 'error.main'}
+                      width={20}
+                    />
+                    {(listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) && (
+                      <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, maxWidth: '30px', mt: -1, mb: -3 }}>
+                        <Switch
+                          checked={!!(service && selectedRepaired)}
+                          onChange={(e) => handleSwitch(e, 'repaired')}
+                          sx={{ maxWidth: 56 }}
+                        />
+                      </Box>
+                    )}
+                  </Box>
                 )}
-              {(!service?.endDate &&
-                (listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
-                  <IconButton variant="text" color="warning" size="small" sx={{ ml: 0, maxWidth: 10 }}
-                    onClick={() => {
-                      setIsStartDate(false)
-                      setIsInspectionDate(false)
-                      setOpenDialogs({ ...openDialogs, date: true })
-                    }}
-                  >
-                    <Iconify icon="zondicons:date-add" color="warning" width={20} />
-                  </IconButton>
-                )}
+              </Box>
+
             </TableCell>
-          </TableRow> */}
+          </TableRow>
 
         </TableBody>
 
       </Table>
-    </Card>
+    </Card >
   );
-  //   <Card sx={{ p: 3, gap: 1, display: 'flex', flexDirection: 'column', width: '100%' }}>
-  //     <Table size="small">
-  //       <TableBody>
-  //         <TableRow>
-  //           <TableCell>
-  //             <Typography variant="subtitle2" color="text.secondary">Number:</Typography>
-  //           </TableCell>
-  //           <TableCell>
-  //             <Typography variant="subtitle2" color="text.primary"><b>{`${service?.number}-${service?.version}`}</b></Typography>
-  //           </TableCell>
-  //           <TableCell />
-  //         </TableRow>
-
-  //         {!isInstaller(userLogged?.data?.user_role?.name) && (
-
-  //           <TableRow>
-  //             <TableCell>
-  //               <Typography variant="subtitle2" color="text.secondary">Responsible:</Typography>
-  //             </TableCell>
-  //             <TableCell>
-  //               <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, justifyContent: 'space-between' }}>
-  //                 <Avatar alt={service?.userManager?.name} src={service?.userManager?.avatarUrl} sx={{ width: 24, height: 24, mr: 1 }} />
-  //                 <Typography variant="body2" color="text.primary">
-  //                   <b>{service?.userManager?.name ? service?.userManager?.name : ''}</b>
-  //                 </Typography>
-  //               </Box>
-  //             </TableCell>
-  //             <TableCell sx={{ textAlign: 'right', maxWidth: '30px' }}>
-  //               {(service?.userManager?.name &&
-  //                 (listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
-
-  //                   <IconButton variant="text" color="primary" size="small" sx={{ ml: 0, maxWidth: 10 }}
-  //                     onClick={() => setOpenDialogs({ ...openDialogs, userManager: true })}
-  //                   >
-  //                     <Iconify icon="la:user-edit" color="primary" width={22} />
-  //                   </IconButton>
-
-  //                 )}
-  //               {(!service?.userManager?.name &&
-  //                 (listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
-  //                   <IconButton variant="text" color="warning" size="small" sx={{ ml: 0, maxWidth: 10 }}
-  //                     onClick={() => setOpenDialogs({ ...openDialogs, userManager: true })}
-  //                   >
-  //                     <Iconify icon="tdesign:user-add-filled" color="warning" width={20} />
-  //                   </IconButton>
-  //                 )}
-  //             </TableCell>
-  //           </TableRow>
-
-  //         )}
-
-  //         {service?.userManager?.name && (
-
-  //           <TableRow>
-  //             <TableCell>
-  //               <Typography variant="subtitle2" color="text.secondary">Service Team:</Typography>
-  //             </TableCell>
-  //             <TableCell>
-  //               <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, justifyContent: 'space-between' }}>
-  //                 <Avatar
-  //                   alt={getServiceInstaller(service, CONFIG)?.name}
-  //                   src={getServiceInstaller(service, CONFIG)?.avatarUrl}
-  //                   sx={{ width: 24, height: 24, mr: 1 }}
-  //                 />
-  //                 <Typography variant="body2" color="text.primary">
-  //                   <b>
-  //                     {getServiceInstaller(service, CONFIG)?.name ?
-  //                       getServiceInstaller(service, CONFIG)?.name : ''}
-  //                   </b>
-  //                 </Typography>
-  //               </Box>
-  //             </TableCell>
-  //             <TableCell sx={{ textAlign: 'right', maxWidth: '30px' }}>
-  //               {(getServiceInstaller(service, CONFIG)?.name &&
-  //                 (listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
-
-  //                   <IconButton variant="text" color="primary" size="small" sx={{ ml: 0, maxWidth: 10 }}
-  //                     onClick={() => setOpenDialogs({ ...openDialogs, installationTeam: true })}
-  //                   >
-  //                     <Iconify icon="la:user-edit" color="primary" width={22} />
-  //                   </IconButton>
-
-  //                 )}
-  //               {(!getServiceInstaller(service, CONFIG)?.name &&
-  //                 (listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
-  //                   <IconButton variant="text" color="warning" size="small" sx={{ ml: 0, maxWidth: 10 }}
-  //                     onClick={() => setOpenDialogs({ ...openDialogs, installationTeam: true })}
-  //                   >
-  //                     <Iconify icon="tdesign:user-add-filled" color="warning" width={20} />
-  //                   </IconButton>
-  //                 )}
-  //             </TableCell>
-  //           </TableRow>
-
-  //         )}
-
-  //         <TableRow>
-  //           <TableCell>
-  //             <Typography variant="subtitle2" color="text.secondary">Estimated Start Date:</Typography>
-  //           </TableCell>
-  //           <TableCell>
-  //             <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, justifyContent: 'space-between' }}>
-  //               {service?.startDate ? (
-  //                 <Typography
-  //                   variant="subtitle2"
-  //                   color={
-  //                     service?.endDate
-  //                       ? (
-  //                         (fIsAfter(dayjs(new Date()), dayjs(service?.endDate).format('YYYY-MM-DD')) &&
-  //                           (
-  //                             service?.currentStage?.name.toLowerCase().includes(CONFIG.stages.preparation.toLowerCase()) ||
-  //                             service?.currentStage?.name.toLowerCase().includes(CONFIG.stages.coordination.toLowerCase()) ||
-  //                             service?.currentStage?.name.toLowerCase().includes(CONFIG.stages.installation.toLowerCase())
-  //                           )
-  //                         )
-  //                           ? 'error.main'
-  //                           : 'text.primary'
-  //                       )
-  //                       : 'text.primary'
-  //                   }
-  //                   sx={{
-  //                     fontWeight: service?.endDate ? (
-  //                       (fIsAfter(dayjs(new Date()), dayjs(service?.endDate).format('YYYY-MM-DD')) &&
-  //                         (
-  //                           service?.currentStage?.name.toLowerCase().includes(CONFIG.stages.preparation.toLowerCase()) ||
-  //                           service?.currentStage?.name.toLowerCase().includes(CONFIG.stages.coordination.toLowerCase()) ||
-  //                           service?.currentStage?.name.toLowerCase().includes(CONFIG.stages.installation.toLowerCase())
-  //                         )
-  //                       )
-  //                         ? 'bold'
-  //                         : 'normal'
-  //                     ) : 'normal'
-  //                   }}
-  //                 >
-  //                   {fDate(service?.startDate)}
-  //                 </Typography>
-  //               ) : (
-  //                 <Iconify icon="fluent-mdl2:date-time" color="warning" width={20} sx={{ ml: 0.5, mt: 0.5 }} />
-  //               )}
-
-  //             </Box>
-  //           </TableCell>
-  //           <TableCell sx={{ textAlign: 'right', maxWidth: '30px' }}>
-  //             {(service?.startDate &&
-  //               (listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
-  //                 <IconButton variant="text" color="primary" size="small" sx={{ ml: 0, maxWidth: 10 }}
-  //                   onClick={() => {
-  //                     setIsStartDate(true)
-  //                     setIsInspectionDate(false)
-  //                     setOpenDialogs({ ...openDialogs, date: true })
-  //                   }}
-  //                 >
-  //                   <Iconify icon="fluent:calendar-edit-32-regular" color="primary" width={22} />
-  //                 </IconButton>
-  //               )}
-  //             {(!service?.startDate &&
-  //               (listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
-  //                 <IconButton variant="text" color="warning" size="small" sx={{ ml: 0, maxWidth: 10 }}
-  //                   onClick={() => {
-  //                     setIsStartDate(true)
-  //                     setIsInspectionDate(false)
-  //                     setOpenDialogs({ ...openDialogs, date: true })
-  //                   }}
-  //                 >
-  //                   <Iconify icon="zondicons:date-add" color="warning" width={20} />
-  //                 </IconButton>
-  //               )}
-  //           </TableCell>
-  //         </TableRow>
-
-  //         <TableRow>
-  //           <TableCell>
-  //             <Typography variant="subtitle2" color="text.secondary">Estimated Closing Date:</Typography>
-  //           </TableCell>
-  //           <TableCell>
-  //             <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, justifyContent: 'space-between' }}>
-  //               {service?.endDate ? (
-  //                 <Typography
-  //                   variant="subtitle2"
-  //                   color={
-  //                     service?.endDate
-  //                       ? (
-  //                         (fIsAfter(dayjs(new Date()), dayjs(service?.endDate).format('YYYY-MM-DD')) &&
-  //                           (
-  //                             service?.currentStage?.name.toLowerCase().includes(CONFIG.stages.preparation.toLowerCase()) ||
-  //                             service?.currentStage?.name.toLowerCase().includes(CONFIG.stages.coordination.toLowerCase()) ||
-  //                             service?.currentStage?.name.toLowerCase().includes(CONFIG.stages.installation.toLowerCase())
-  //                           )
-  //                         )
-  //                           ? 'error.main'
-  //                           : 'text.primary'
-  //                       )
-  //                       : 'text.primary'
-  //                   }
-  //                   sx={{
-  //                     fontWeight: service?.endDate ? (
-  //                       (fIsAfter(dayjs(new Date()), dayjs(service?.endDate).format('YYYY-MM-DD')) &&
-  //                         (
-  //                           service?.currentStage?.name.toLowerCase().includes(CONFIG.stages.preparation.toLowerCase()) ||
-  //                           service?.currentStage?.name.toLowerCase().includes(CONFIG.stages.coordination.toLowerCase()) ||
-  //                           service?.currentStage?.name.toLowerCase().includes(CONFIG.stages.installation.toLowerCase())
-  //                         )
-  //                       )
-  //                         ? 'bold'
-  //                         : 'normal'
-  //                     ) : 'normal'
-  //                   }}
-  //                 >
-  //                   {fDate(service?.endDate)}
-  //                 </Typography>
-  //               ) : (
-  //                 <Iconify icon="fluent-mdl2:date-time" color="warning" width={20} sx={{ ml: 0.5, mt: 0.5 }} />
-  //               )}
-
-  //             </Box>
-  //           </TableCell>
-  //           <TableCell sx={{ textAlign: 'right', maxWidth: '30px' }}>
-  //             {(service?.endDate &&
-  //               (listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
-  //                 <IconButton variant="text" color="primary" size="small" sx={{ ml: 0, maxWidth: 10 }}
-  //                   onClick={() => {
-  //                     setIsStartDate(false)
-  //                     setIsInspectionDate(false)
-  //                     setOpenDialogs({ ...openDialogs, date: true })
-  //                   }}
-  //                 >
-  //                   <Iconify icon="fluent:calendar-edit-32-regular" color="primary" width={22} />
-  //                 </IconButton>
-  //               )}
-  //             {(!service?.endDate &&
-  //               (listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
-  //                 <IconButton variant="text" color="warning" size="small" sx={{ ml: 0, maxWidth: 10 }}
-  //                   onClick={() => {
-  //                     setIsStartDate(false)
-  //                     setIsInspectionDate(false)
-  //                     setOpenDialogs({ ...openDialogs, date: true })
-  //                   }}
-  //                 >
-  //                   <Iconify icon="zondicons:date-add" color="warning" width={20} />
-  //                 </IconButton>
-  //               )}
-  //           </TableCell>
-  //         </TableRow>
-
-  //       </TableBody>
-
-  //     </Table>
-  //   </Card>
-  // );
 
   const renderDescription = (
     <Card sx={{ p: 3, gap: 1.5, display: 'flex', flexDirection: 'column', width: '100%' }}>
-      {service?.description?.split('&').map((line, index) => (
+      {/* {service?.description?.split('&').map((line, index) => (
         <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, mt: 0, mb: 0 }} key={`box-${index}`}>
           <Typography
             key={`typo-${index}`}
@@ -821,47 +675,7 @@ export function ServiceDetailsContent({
               {field.value}
             </Label>
           </Box>
-        )))}
-      {/* <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, mt: 0, mb: 0, textAlign: 'right' }}>
-        <Typography variant="subtitle2" color="text.primary" sx={{ mt: 0.3 }}>
-          <b>Issues:</b>
-        </Typography>
-        <Box
-          variant="filled"
-          sx={{
-            bgcolor: 'whitesmoke',
-            color: 'text.primary',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 1,
-            p: 1,
-            borderRadius: 1,
-            mt: 0,
-            mb: 0,
-            textAlign: 'right'
-          }}>
-          {Object.keys(totalsByIssues || {}).length > 0 ? Object.keys(totalsByIssues || {}).map((issue, index) => (
-            <Box
-              key={`xbox-${index}`}
-              sx={{
-                display: 'flex',
-                flexDirection: 'row',
-                gap: 1,
-                mt: 0,
-                mb: 0,
-                textAlign: 'right',
-                justifyContent: 'space-between',
-              }}>
-              <Typography variant="caption" color="text.primary" sx={{ mt: 0.3 }}>
-                <b>{issue}:</b>
-              </Typography>
-              <Label variant="filled" sx={{ bgcolor: 'whitesmoke', color: 'text.primary' }}>
-                {totalsByIssues[issue]}
-              </Label>
-            </Box>
-          )) : <Label variant="filled" sx={{ bgcolor: 'whitesmoke', color: 'text.primary' }}>0</Label>}
-        </Box>
-      </Box> */}
+        )))} */}
       <Box
         sx={{
           display: 'flex',
@@ -901,6 +715,7 @@ export function ServiceDetailsContent({
           }}
         >
           <Autocomplete
+            disabled={!listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)}
             sx={{ width: '100%' }}
             value={selectedServicePlace || null}
             onChange={(e, newValue) => {
@@ -951,20 +766,22 @@ export function ServiceDetailsContent({
               />
             )}
           />
-          <Tooltip title={`Set service place to ${service?.name}`} arrow>
-            <span>
-              <IconButton
-                variant="text"
-                color="primary"
-                size="small"
-                sx={{ ml: 0, minWidth: 15 }}
-                disabled={!selectedServicePlace || selectedServicePlace?.id === service?.servicePlace?.id}
-                onClick={handleSetServicePlace}
-              >
-                <Iconify icon="gg:check-o" color="primary" width={22} />
-              </IconButton>
-            </span>
-          </Tooltip>
+          {(listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) && (
+            <Tooltip title={`Set service place to ${service?.name}`} arrow>
+              <span>
+                <IconButton
+                  variant="text"
+                  color="primary"
+                  size="small"
+                  sx={{ ml: 0, minWidth: 15 }}
+                  disabled={!selectedServicePlace || selectedServicePlace?.id === service?.servicePlace?.id}
+                  onClick={handleSetServicePlace}
+                >
+                  <Iconify icon="gg:check-o" color="primary" width={22} />
+                </IconButton>
+              </span>
+            </Tooltip>
+          )}
         </Box>
 
       </Box>
@@ -1021,7 +838,7 @@ export function ServiceDetailsContent({
               {service?.address || 'No address assigned'}
             </Typography>
 
-            {service?.servicePlace?.id === 1 && (
+            {(service?.servicePlace?.id === 1 && listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) && (
 
               <Tooltip title={`Change address for service ${service?.name}`} arrow>
                 <IconButton variant="text" color={service?.address ? "primary" : "warning"} size="small" sx={{
@@ -1050,7 +867,7 @@ export function ServiceDetailsContent({
           mt: 0,
           mb: 0,
           textAlign: 'right',
-          justifyContent: 'space-between'
+          justifyContent: listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator) ? 'space-between' : 'flex-start'
         }}
         key='box-type'
       >
@@ -1067,103 +884,152 @@ export function ServiceDetailsContent({
         >
           <b>Installed By Us:</b>
         </Typography>
-        <RadioGroup
-          name="serviceType"
-          value={selectedServiceType || 'retail'}
-          onChange={(e) => {
-            setSelectedServiceType(e.target.value);
-            handleChangeServiceType(e.target.value);
-          }}
-          sx={{
-            width: '100%'
-          }}
-        >
+        {listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator) ? (
+          <RadioGroup
+            name="serviceType"
+            value={selectedServiceType || 'retail'}
+            onChange={(e) => {
+              setSelectedServiceType(e.target.value);
+              handleChangeServiceType(e.target.value);
+            }}
+            sx={{
+              width: '100%'
+            }}
+          >
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: !isMobile ? 'row' : 'column',
+                justifyContent: 'flex-start',
+                // gap: !isMobile ? 5 : 1,
+                mt: -1,
+              }}
+            >
+              <FormControlLabel
+                value="installed_by_us"
+                control={<Radio />}
+                label="YES"
+              />
+              <FormControlLabel
+                value="retail"
+                control={<Radio />}
+                label="NO"
+              />
+
+            </Box>
+          </RadioGroup>
+        ) : (
           <Box
             sx={{
               display: 'flex',
-              flexDirection: !isMobile ? 'row' : 'column',
-              justifyContent: 'flex-start',
-              // gap: !isMobile ? 5 : 1,
-              mt: -1,
+              flexDirection: 'row',
+              gap: 1,
+              mt: 0,
+              mb: 0,
+              textAlign: 'left',
+              justifyContent: 'flex-start'
             }}
           >
-            <FormControlLabel
-              value="installed_by_us"
-              control={<Radio />}
-              label="YES"
-            />
-            <FormControlLabel
-              value="retail"
-              control={<Radio />}
-              label="NO"
-            />
-
+            <Label variant="filled" sx={{ bgcolor: 'whitesmoke', color: selectedServiceType === 'retail' ? 'error.main' : 'success.main' }}>
+              {selectedServiceType === 'retail' ? 'NO' : 'YES'}
+            </Label>
           </Box>
-        </RadioGroup>
+        )}
       </Box>
-      {/* <Box sx={{ display: 'flex', flexDirection: 'row', gap: 2, verticalAlign: 'bottom', mt: 0, mb: 0 }}>
-        <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, mt: 0, mb: -1, textAlign: 'right' }}>
-          <Typography variant="caption" color="text.primary" sx={{ mt: 0.3 }}>
-            Created:
-          </Typography>
-          <Label variant="filled" sx={{ bgcolor: 'whitesmoke', color: 'text.primary' }}>
-            {fDateTime(service?.createdTime)}
-          </Label>
-        </Box>
-        <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, mt: 0, mb: -1, textAlign: 'right' }}>
-          <Typography variant="caption" color="text.primary" sx={{ mt: 0.3 }}>
-            Updated:
-          </Typography>
-          <Label variant="filled" sx={{ bgcolor: 'whitesmoke', color: 'text.primary' }}>
-            {fDateTime(service?.lastModifiedTime)}
-          </Label>
-        </Box>
-      </Box> */}
-      <Box sx={{ display: 'flex', flexDirection: 'row', gap: 2, verticalAlign: 'bottom', mt: 0, mb: 0 }}>
-        <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, mt: 0, mb: -1, textAlign: 'right' }}>
-          <Typography variant="caption" color="text.primary" sx={{ mt: 0.3 }}>
-            Notes:
-          </Typography>
-          <Label
-            variant="filled"
-            sx={{
-              bgcolor: 'whitesmoke',
-              color: service?.serviceNotes ? 'success.main' : 'warning.main',
-              cursor: 'pointer',
+
+      <Box sx={{
+        display: 'flex',
+        flexDirection: 'row',
+        gap: 1,
+        mt: 0,
+        mb: 0,
+        // textAlign: 'right'
+      }}>
+        <Typography
+          variant="subtitle2"
+          color="text.primary"
+          key='typo-type'
+          sx={{
+            maxWidth: 130,
+            width: 130,
+            minWidth: 130,
+            textAlign: 'left',
+          }}
+        >
+          <b>Notes:</b>
+        </Typography>
+        <Typography
+          variant="caption"
+          color="text.primary"
+          sx={{
+            mt: 0.3,
+            width: '100%',
+            maxHeight: 100,
+            overflowY: 'auto',
+            bgcolor: 'whitesmoke',
+            borderRadius: 1, p: 0.5
+          }}
+          textAlign='left'
+        >
+          {service?.serviceNotes ? service?.serviceNotes : 'No notes assigned'}
+        </Typography>
+        {(listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.serviceStaff)) && (
+
+          <Tooltip title={`${service?.serviceNotes ? 'Edit' : 'Add'} notes to service ${service?.name}`} arrow>
+            <IconButton variant="text" color={service?.serviceNotes ? "primary" : "warning"} size="small" sx={{
+              // ml: -15, 
+              minWidth: 15,
+              mt: -0.5,
               '&:hover': {
-                bgcolor: 'text.lighter',
-                color: service?.serviceNotes ? 'success.main' : 'warning.main',
+                boxShadow: 'none',
+                backgroundColor: 'transparent',
               },
             }}
-            onClick={() => {
-              setOpenDialogs({ ...openDialogs, editNotes: true });
-            }}
-          >
-            {service?.serviceNotes ? 'Edit' : 'Add'} Notes
-          </Label>
-        </Box>
-        <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, mt: 0, mb: -1, textAlign: 'right' }}>
-          <Typography variant="caption" color="text.primary" sx={{ mt: 0.3 }}>
-            Attachments:
-          </Typography>
-          <Label
-            variant="filled"
-            sx={{
-              bgcolor: 'whitesmoke',
+              onClick={() => setOpenDialogs({ ...openDialogs, editNotes: true })}
+            >
+              <Iconify icon="fluent:slide-text-edit-20-regular" color="primary" width={22} />
+            </IconButton>
+          </Tooltip>
+        )}
+      </Box>
+      <Box sx={{
+        display: 'flex',
+        flexDirection: 'row',
+        gap: 1,
+        mt: 0,
+        mb: 0,
+        // textAlign: 'right'
+      }}>
+        <Typography
+          variant="subtitle2"
+          color="text.primary"
+          key='typo-type'
+          sx={{
+            maxWidth: 130,
+            width: 130,
+            minWidth: 130,
+            textAlign: 'left',
+          }}
+        >
+          <b>Attachments:</b>
+        </Typography>
+        <Label
+          variant="filled"
+          sx={{
+            bgcolor: 'whitesmoke',
+            color: service?.serviceAttachments?.length > 0 ? 'success.main' : 'warning.main',
+            cursor: 'pointer',
+            '&:hover': {
+              bgcolor: 'text.lighter',
               color: service?.serviceAttachments?.length > 0 ? 'success.main' : 'warning.main',
-              cursor: 'pointer',
-              '&:hover': {
-                bgcolor: 'text.lighter',
-                color: service?.serviceAttachments?.length > 0 ? 'success.main' : 'warning.main',
-              },
-            }}
-            onClick={() => {
-              setOpenDialogs({ ...openDialogs, editAttachments: true });
-            }}
-          >
-            {service?.serviceAttachments?.length > 0 ? 'Edit' : 'Add'} Files
-          </Label>
-        </Box>
+            },
+          }}
+          onClick={() => {
+            setOpenDialogs({ ...openDialogs, editAttachments: true });
+          }}
+        >
+          {listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator) ? service?.serviceAttachments?.length > 0 ? 'Edit' : 'Add' : ''} Files
+        </Label>
       </Box>
     </Card>
   );
@@ -1195,15 +1061,26 @@ export function ServiceDetailsContent({
 
 
   const dynamicHeight = useMemo(() => {
-    let height = selectedServicePlace?.id === 1 && !service?.userManager?.name ? 340 :
-      selectedServicePlace?.id === 1 && service?.userManager?.name ? 335 :
-        service?.userManager?.name ? 355 : 375
+    let height = 290
+
+    if (!service?.userManager?.name) {
+      height += 40
+    }
 
     if (service?.usersServiceTeam?.length > 0) {
       height -= 5
     }
+    if (service?.startDate) {
+      height -= 15
+    }
+    // if (!service?.hasToPay && !service?.byFactory) {
+    //   height -= 45
+    // }
+    // if (service?.hasToPay || service?.byFactory) {
+    //   height -= 10
+    // }
     return height
-  }, [selectedServicePlace, service]);
+  }, [service]);
 
 
   const renderIssuedProducts = (
@@ -1225,31 +1102,33 @@ export function ServiceDetailsContent({
               <TableCell width={100}>Issue</TableCell>
               <TableCell width={50}>Qty</TableCell>
               <TableCell width={200}>Notes</TableCell>
-              <TableCell width={50}>
-                <Box sx={{ display: 'flex', flexDirection: 'row', gap: 0, justifyContent: 'space-between' }}>
-                  <Typography
-                    variant="subtitle2"
-                    color="text.secondary"
-                    sx={{
-                      mt: (possibleLineItems?.length > 0 || issuedProducts?.length === 0) ? 1.5 : 0,
-                    }}
-                  >
-                    Actions
-                  </Typography>
-                  {(possibleLineItems?.length > 0 || issuedProducts?.length === 0) && (
-                    <Tooltip title={`Add new issued product to ${service?.name}`} arrow>
-                      <IconButton variant="outlined" color='success' onClick={openSalesOrderModal.onTrue} disabled={false} sx={{
-                        '&:hover': {
-                          boxShadow: 'none',
-                          backgroundColor: 'transparent',
-                        },
-                      }}>
-                        <Iconify icon="lets-icons:arhive-alt-small-add" sx={{ width: 30, height: 30 }} />
-                      </IconButton>
-                    </Tooltip>
-                  )}
-                </Box>
-              </TableCell>
+              {listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator) && (
+                <TableCell width={50}>
+                  <Box sx={{ display: 'flex', flexDirection: 'row', gap: 0, justifyContent: 'space-between' }}>
+                    <Typography
+                      variant="subtitle2"
+                      color="text.secondary"
+                      sx={{
+                        mt: (possibleLineItems?.length > 0 || issuedProducts?.length === 0) ? 1.5 : 0,
+                      }}
+                    >
+                      Actions
+                    </Typography>
+                    {(possibleLineItems?.length > 0 || issuedProducts?.length === 0) && (
+                      <Tooltip title={`Add new issued product to ${service?.name}`} arrow>
+                        <IconButton variant="outlined" color='success' onClick={openSalesOrderModal.onTrue} disabled={false} sx={{
+                          '&:hover': {
+                            boxShadow: 'none',
+                            backgroundColor: 'transparent',
+                          },
+                        }}>
+                          <Iconify icon="lets-icons:arhive-alt-small-add" sx={{ width: 30, height: 30 }} />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                  </Box>
+                </TableCell>
+              )}
             </TableRow>
           </TableHead>
           <TableBody>
@@ -1258,19 +1137,21 @@ export function ServiceDetailsContent({
                 <React.Fragment key={index1}>
                   <TableRow key={`${product.line_item_id}-${index1}`}>
                     <TableCell width={50} rowSpan={product?.issues?.length}>
-                      <Tooltip title={`Add new issue to ${product.name}`} arrow>
-                        <IconButton variant="outlined" color='success' onClick={() => {
-                          setSelectedItem(product);
-                          setOpenDialogs({ ...openDialogs, newIssue: true });
-                        }} disabled={false} sx={{
-                          '&:hover': {
-                            boxShadow: 'none',
-                            backgroundColor: 'transparent',
-                          },
-                        }}>
-                          <Iconify icon="lets-icons:add-duotone" sx={{ width: 30, height: 30 }} />
-                        </IconButton>
-                      </Tooltip>
+                      {listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator) && (
+                        <Tooltip title={`Add new issue to ${product.name}`} arrow>
+                          <IconButton variant="outlined" color='success' onClick={() => {
+                            setSelectedItem(product);
+                            setOpenDialogs({ ...openDialogs, newIssue: true });
+                          }} disabled={false} sx={{
+                            '&:hover': {
+                              boxShadow: 'none',
+                              backgroundColor: 'transparent',
+                            },
+                          }}>
+                            <Iconify icon="lets-icons:add-duotone" sx={{ width: 30, height: 30 }} />
+                          </IconButton>
+                        </Tooltip>
+                      )}
                     </TableCell>
                     <TableCell width={100} rowSpan={product?.issues?.length}>
                       {filteredDescriptionJson(product?.description)?.SKU || product?.sku}
@@ -1279,44 +1160,46 @@ export function ServiceDetailsContent({
                     <TableCell width={100}>{product.issues[0].issue.name}</TableCell>
                     <TableCell width={50}>{product.issues[0].quantity}</TableCell>
                     <TableCell width={200}>{product.issues[0].notes}</TableCell>
-                    <TableCell width={50}>
-                      <Box sx={{ display: 'flex', flexDirection: 'row', gap: 0, justifyContent: 'space-between' }}>
-                        <Tooltip title={`Edit ${product.issues[0].issue.name} quantity`} arrow>
-                          <IconButton variant="text" color="warning" size="small" sx={{
-                            ml: 1,
-                            '&:hover': {
-                              boxShadow: 'none',
-                              backgroundColor: 'transparent',
-                            },
-                          }}
-                            onClick={() => {
-                              setSelectedIssue(product.issues[0]);
-                              setSelectedItem(product);
-                              setOpenDialogs({ ...openDialogs, editIssue: true });
+                    {listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator) && (
+                      <TableCell width={50}>
+                        <Box sx={{ display: 'flex', flexDirection: 'row', gap: 0, justifyContent: 'space-between' }}>
+                          <Tooltip title={`Edit ${product.issues[0].issue.name} quantity`} arrow>
+                            <IconButton variant="text" color="warning" size="small" sx={{
+                              ml: 1,
+                              '&:hover': {
+                                boxShadow: 'none',
+                                backgroundColor: 'transparent',
+                              },
                             }}
-                          >
-                            <Iconify icon="fluent:slide-text-edit-20-regular" color="warning" width={22} />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title={`Delete ${product.issues[0].issue.name}`} arrow>
-                          <IconButton variant="text" color="error" size="small" sx={{
-                            ml: 1,
-                            '&:hover': {
-                              boxShadow: 'none',
-                              backgroundColor: 'transparent',
-                            },
-                          }}
-                            onClick={() => {
-                              setSelectedIssue(product.issues[0]);
-                              setSelectedItem(product);
-                              confirmDelete.onTrue();
+                              onClick={() => {
+                                setSelectedIssue(product.issues[0]);
+                                setSelectedItem(product);
+                                setOpenDialogs({ ...openDialogs, editIssue: true });
+                              }}
+                            >
+                              <Iconify icon="fluent:slide-text-edit-20-regular" color="warning" width={22} />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title={`Delete ${product.issues[0].issue.name}`} arrow>
+                            <IconButton variant="text" color="error" size="small" sx={{
+                              ml: 1,
+                              '&:hover': {
+                                boxShadow: 'none',
+                                backgroundColor: 'transparent',
+                              },
                             }}
-                          >
-                            <Iconify icon="fluent:delete-12-filled" color="warning" width={22} />
-                          </IconButton>
-                        </Tooltip>
-                      </Box>
-                    </TableCell>
+                              onClick={() => {
+                                setSelectedIssue(product.issues[0]);
+                                setSelectedItem(product);
+                                confirmDelete.onTrue();
+                              }}
+                            >
+                              <Iconify icon="fluent:delete-12-filled" color="warning" width={22} />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
+                      </TableCell>
+                    )}
                   </TableRow>
                   {product?.issues?.map((issue, index2) => (
                     index2 > 0 && (
@@ -1333,44 +1216,46 @@ export function ServiceDetailsContent({
                         <TableCell>{issue.issue.name}</TableCell>
                         <TableCell>{issue.quantity}</TableCell>
                         <TableCell>{issue.notes}</TableCell>
-                        <TableCell width={50}>
-                          <Box sx={{ display: 'flex', flexDirection: 'row', gap: 0, justifyContent: 'space-between' }}>
-                            <Tooltip title={`Edit ${issue.issue.name} quantity`} arrow>
-                              <IconButton variant="text" color="warning" size="small" sx={{
-                                ml: 1,
-                                '&:hover': {
-                                  boxShadow: 'none',
-                                  backgroundColor: 'transparent',
-                                },
-                              }}
-                                onClick={() => {
-                                  setSelectedIssue(issue);
-                                  setSelectedItem(product);
-                                  setOpenDialogs({ ...openDialogs, editIssue: true });
+                        {listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator) && (
+                          <TableCell width={50}>
+                            <Box sx={{ display: 'flex', flexDirection: 'row', gap: 0, justifyContent: 'space-between' }}>
+                              <Tooltip title={`Edit ${issue.issue.name} quantity`} arrow>
+                                <IconButton variant="text" color="warning" size="small" sx={{
+                                  ml: 1,
+                                  '&:hover': {
+                                    boxShadow: 'none',
+                                    backgroundColor: 'transparent',
+                                  },
                                 }}
-                              >
-                                <Iconify icon="fluent:slide-text-edit-20-regular" color="warning" width={22} />
-                              </IconButton>
-                            </Tooltip>
-                            <Tooltip title={`Delete ${product.issues[0].issue.name}`} arrow>
-                              <IconButton variant="text" color="error" size="small" sx={{
-                                ml: 1,
-                                '&:hover': {
-                                  boxShadow: 'none',
-                                  backgroundColor: 'transparent',
-                                },
-                              }}
-                                onClick={() => {
-                                  setSelectedIssue(issue);
-                                  setSelectedItem(product);
-                                  confirmDelete.onTrue();
+                                  onClick={() => {
+                                    setSelectedIssue(issue);
+                                    setSelectedItem(product);
+                                    setOpenDialogs({ ...openDialogs, editIssue: true });
+                                  }}
+                                >
+                                  <Iconify icon="fluent:slide-text-edit-20-regular" color="warning" width={22} />
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title={`Delete ${product.issues[0].issue.name}`} arrow>
+                                <IconButton variant="text" color="error" size="small" sx={{
+                                  ml: 1,
+                                  '&:hover': {
+                                    boxShadow: 'none',
+                                    backgroundColor: 'transparent',
+                                  },
                                 }}
-                              >
-                                <Iconify icon="fluent:delete-12-filled" color="warning" width={22} />
-                              </IconButton>
-                            </Tooltip>
-                          </Box>
-                        </TableCell>
+                                  onClick={() => {
+                                    setSelectedIssue(issue);
+                                    setSelectedItem(product);
+                                    confirmDelete.onTrue();
+                                  }}
+                                >
+                                  <Iconify icon="fluent:delete-12-filled" color="warning" width={22} />
+                                </IconButton>
+                              </Tooltip>
+                            </Box>
+                          </TableCell>
+                        )}
                       </TableRow>
                     )))}
                 </React.Fragment>

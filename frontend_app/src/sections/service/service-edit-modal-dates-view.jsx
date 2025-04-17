@@ -10,11 +10,13 @@ import Stack from '@mui/material/Stack';
 import { LoadingButton } from '@mui/lab';
 import Button from '@mui/material/Button';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { Grid, Dialog, TextField, IconButton, DialogTitle, DialogActions } from '@mui/material';
+import { Grid, Dialog, Switch, TextField, IconButton, Typography, DialogTitle, DialogActions } from '@mui/material';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
-import { fDate } from 'src/utils/format-time';
+import { fDate, getDatesBetween } from 'src/utils/format-time';
+import { getServiceInstaller } from 'src/utils/service-tasks-utils';
+import { getProjectInstaller } from 'src/utils/project-tasks-utils';
 
 import { CONFIG } from 'src/config-global';
 
@@ -22,6 +24,8 @@ import { toast } from 'src/components/snackbar';
 import { Form } from 'src/components/hook-form';
 import { Iconify } from 'src/components/iconify';
 import { ConfirmDialog } from 'src/components/custom-dialog';
+
+import { useDataContext } from 'src/auth/context/data/data-context';
 
 
 
@@ -36,6 +40,43 @@ export function ServiceEditModalDatesView({
 }) {
 
     const [diffDays, setDiffDays] = useState(1);
+
+    const {
+        loadedProjects,
+        loadedServices,
+    } = useDataContext();
+
+    const busyDays = useMemo(() => {
+        const installer = getServiceInstaller(service, CONFIG);
+        if (!installer) return [];
+
+        const installerProjects = loadedProjects?.filter(
+            (p) => getProjectInstaller(p, CONFIG)?.id === installer.id
+        ) || [];
+        const installerServices = loadedServices?.filter(
+            (s) => getServiceInstaller(s, CONFIG)?.id === installer.id
+        ) || [];
+
+        const occupiedDays = [];
+
+        installerProjects.forEach((p) => {
+            if (!p.isPartDays) {
+                getDatesBetween(p.startDate, p.endDate)
+                    .forEach((date) => occupiedDays.push(date));
+            }
+        });
+
+        installerServices.forEach((s) => {
+            if (!s.isPartDays) {
+                getDatesBetween(s.startDate, s.endDate)
+                    .forEach((date) => occupiedDays.push(date));
+            }
+        });
+
+        const finalDays = occupiedDays.filter((date) => fDate(date) !== fDate(service?.startDate));
+
+        return Array.from(new Set(finalDays));
+    }, [loadedProjects, loadedServices, service]);
 
     useEffect(() => {
         if (service?.endDate) {
@@ -73,30 +114,13 @@ export function ServiceEditModalDatesView({
     const handleDaysChange = (e) => {
         const days = parseInt(e.target.value, 10) || 1;
         setDaysToInstall(days);
-        const newEndDate = dayjs(service?.startDate).add(days, 'day');
+        const newEndDate = dayjs(service?.startDate).add(days - 1, 'day');
         setEndDate(newEndDate);
         setFormChanged(!Number.isNaN(days) && days > 0);
     };
 
     const handleDateChange = useCallback(
         (date) => {
-            // const currentStage = service?.currentStage;
-            // if (currentStage?.name === CONFIG.stages.preparation && totalPercentageServiceStage(service, CONFIG.stages.preparation, CONFIG) < 50) {
-            //     const today = dayjs().format('YYYY-MM-DD');
-            //     const formatDate = dayjs(date).format('YYYY-MM-DD');
-            //     const isSame = fIsSame(today, formatDate);
-            //     if (isSame) {
-            //         const message = isStartDate ? 'You have to finish all tasks in the previous stages before setting the start date.' :
-            //             'You have to finish all tasks in the previous stages before setting the closing date.';
-            //         setConfirmValidInstallMessage(message);
-            //         confirmValidInstallDate.onTrue();
-            //     }
-            // }
-            // else {
-            //     setSelectedDate(date);
-            //     setFormChanged(true);
-            //     setConfirmValidInstallMessage(null);
-            // }
             setSelectedDate(date);
             setFormChanged(true);
             setConfirmValidInstallMessage(null);
@@ -152,6 +176,27 @@ export function ServiceEditModalDatesView({
     }, [service, userLogged?.data, reset, diffDays, isStartDate]);
 
 
+    const [isPartDays, setIsPartDays] = useState(false);
+
+    useEffect(() => {
+        if (service) {
+            setIsPartDays(service.isPartDays);
+        }
+    }, [service]);
+
+    const handleSwitch = (event) => {
+        const newVal = event.target.checked;
+        setIsPartDays(newVal);
+        setFormChanged(newVal !== service.isPartDays);
+    }
+
+
+    const minDate = useMemo(() =>
+        isStartDate ? dayjs(service?.salesOrder?.date) : service?.startDate ? dayjs(service?.startDate) : dayjs(service?.salesOrder?.date),
+        [isStartDate, service?.salesOrder?.date, service?.startDate]
+    );
+
+
     const onSubmit = handleSubmit(async (data) => {
         const formData = new FormData();
         formData.append('userReporter', JSON.stringify(userLogged?.data));
@@ -163,9 +208,10 @@ export function ServiceEditModalDatesView({
                 formData.append('endDate', fDate(endDate));
             }
             else {
-                const newEndDate = dayjs(selectedDate).add(daysToInstall, 'day');
+                const newEndDate = dayjs(selectedDate).add(daysToInstall - 1, 'day');
                 formData.append('endDate', fDate(newEndDate));
             }
+            formData.append('isPartDays', isPartDays ? 'true' : 'false');
         }
 
 
@@ -203,9 +249,10 @@ export function ServiceEditModalDatesView({
             setIsRemovingDate(true);
             const formData = new FormData();
             formData.append('userReporter', JSON.stringify(userLogged?.data));
+            formData.append('dateType', 'startDate');
 
 
-            const promise = axios.post(`${CONFIG.apiUrl}/services/update/service/${service.id}/revove-start-date/`, formData, {
+            const promise = axios.post(`${CONFIG.apiUrl}/services/update/service/${service.id}/remove-date/`, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
@@ -248,67 +295,92 @@ export function ServiceEditModalDatesView({
                                         }
                                         value={selectedDate}
                                         onChange={handleDateChange}
-                                        minDate={
-                                            isStartDate ? dayjs(service?.salesOrder?.date) : service?.startDate ? dayjs(service?.startDate) : dayjs(service?.salesOrder?.date)
-                                        }
+                                        minDate={minDate}
                                         maxDate={
                                             isStartDate ? dayjs(service?.endDate) : null
                                         }
-                                        inputFormat="yyyy-MM-dd"
+                                        shouldDisableDate={(date) => {
+                                            if (date.isBefore(minDate, 'day')) return true;
+                                            if (busyDays.some(disabledDate => date.isSame(disabledDate, 'day'))) {
+                                                return true;
+                                            }
+                                            return false;
+                                        }}
+                                        inputFormat="YYYY-MM-DD"
                                         sx={{ width: '100%' }}
                                     />
                                 </Box>
                             </Stack>
                             {isStartDate && (
-                                <Stack direction="row" sx={{ typography: 'caption', textTransform: 'capitalize' }}>
-                                    <Box sx={{
-                                        display: 'flex',
-                                        justifyContent: 'flex-start',
-                                        flexDirection: 'row',
-                                        width: '100%',
-                                        color: 'text.secondary',
-                                        mt: 1,
-                                        gap: 0.5
-                                    }}>
-                                        <IconButton
-                                            sx={{ width: 50, height: 50, mt: 1 }}
-                                            onClick={() => {
-                                                if (daysToInstall > 1) {
-                                                    const newDays = daysToInstall - 1;
+                                <>
+                                    <Stack direction="row" sx={{ typography: 'caption', textTransform: 'capitalize' }}>
+                                        <Box sx={{
+                                            display: 'flex',
+                                            justifyContent: 'flex-start',
+                                            flexDirection: 'row',
+                                            width: '100%',
+                                            color: 'text.secondary',
+                                            mt: 1,
+                                            gap: 0.5
+                                        }}>
+                                            <IconButton
+                                                sx={{ width: 50, height: 50, mt: 1 }}
+                                                onClick={() => {
+                                                    if (daysToInstall > 0) {
+                                                        const newDays = daysToInstall - 1;
+                                                        setDaysToInstall(newDays);
+                                                        const newEndDate = dayjs(service?.startDate).add(newDays, 'day');
+                                                        setEndDate(newEndDate);
+                                                        setFormChanged(true);
+                                                    }
+                                                }}
+                                                disabled={daysToInstall < 1}
+                                            >
+                                                <Iconify icon="mdi:minus-box-outline" sx={{ width: 30, height: 30 }} />
+                                            </IconButton>
+
+                                            <TextField
+                                                type="number"
+                                                min={1}
+                                                label="Duration days"
+                                                sx={{ width: '30%', mt: 1 }}
+                                                value={daysToInstall + 1}
+                                                onChange={handleDaysChange}
+                                            />
+
+                                            <IconButton
+                                                sx={{ width: 50, height: 50, mt: 1 }}
+                                                onClick={() => {
+                                                    const newDays = daysToInstall + 1;
                                                     setDaysToInstall(newDays);
                                                     const newEndDate = dayjs(service?.startDate).add(newDays, 'day');
                                                     setEndDate(newEndDate);
                                                     setFormChanged(true);
-                                                }
-                                            }}
-                                            disabled={daysToInstall <= 1}
-                                        >
-                                            <Iconify icon="mdi:minus-box-outline" sx={{ width: 30, height: 30 }} />
-                                        </IconButton>
-
-                                        <TextField
-                                            type="number"
-                                            min={1}
-                                            label="Duration days"
-                                            sx={{ width: '30%', mt: 1 }}
-                                            value={daysToInstall}
-                                            onChange={handleDaysChange}
-                                        />
-
-                                        <IconButton
-                                            sx={{ width: 50, height: 50, mt: 1 }}
-                                            onClick={() => {
-                                                const newDays = daysToInstall + 1;
-                                                setDaysToInstall(newDays);
-                                                const newEndDate = dayjs(service?.startDate).add(newDays, 'day');
-                                                setEndDate(newEndDate);
-                                                setFormChanged(true);
-                                            }}
-                                        >
-                                            <Iconify icon="mdi:plus-box-outline" sx={{ width: 30, height: 30 }} />
-                                        </IconButton>
-                                    </Box>
-                                </Stack>
+                                                }}
+                                            >
+                                                <Iconify icon="mdi:plus-box-outline" sx={{ width: 30, height: 30 }} />
+                                            </IconButton>
+                                        </Box>
+                                    </Stack>
+                                    <Stack direction="row" sx={{ typography: 'caption', textTransform: 'capitalize', mt: 1 }}>
+                                        <Box
+                                            sx={{
+                                                display: 'flex',
+                                                flexDirection: 'row',
+                                                gap: 1,
+                                                justifyContent: 'space-between',
+                                                p: 0,
+                                                width: '45%'
+                                            }}>
+                                            <Typography variant="subtitle2" color="text.secondary"><b>Is Part Days?</b></Typography>
+                                            <Switch
+                                                checked={!!(service && isPartDays)}
+                                                onChange={(e) => handleSwitch(e)}
+                                                sx={{ maxWidth: 56, mt: -1 }}
+                                            />
+                                        </Box>
+                                    </Stack>
+                                </>
                             )}
                         </Grid>
                     </Grid>
@@ -324,7 +396,7 @@ export function ServiceEditModalDatesView({
 
     const renderService = (
         <Dialog fullWidth maxWidth="xs" open={open} onClose={onClose}>
-            <DialogTitle>{isEdit ? 'Update' : 'Add'} {isStartDate ? 'Install' : 'Closing'} date to Service {service?.name} </DialogTitle>
+            <DialogTitle>{isEdit ? 'Update' : 'Add'} {isStartDate ? 'Start' : 'Closing'} date to Service {service?.name} </DialogTitle>
 
             <Form methods={methods} onSubmit={onSubmit}>
 

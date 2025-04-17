@@ -52,6 +52,12 @@ def service_saved(sender, document, **kwargs):
                 "serviceType": document.service_type,
                 "servicePlace": document.service_place,
                 "serviceNotes": document.service_notes,
+                "hasToPay": document.has_to_pay,
+                "paid": document.paid,
+                "byFactory": document.by_factory,
+                "repaired": document.repaired,
+                "createdBy": document.created_by,
+                "isPartDays": document.is_part_days,
             }
 
         }
@@ -94,6 +100,12 @@ def service_deleted(sender, document, **kwargs):
                 "serviceType": document.service_type,
                 "servicePlace": document.service_place,
                 "serviceNotes": document.service_notes,
+                "hasToPay": document.has_to_pay,
+                "paid": document.paid,
+                "byFactory": document.by_factory,
+                "repaired": document.repaired,
+                "createdBy": document.created_by,
+                "isPartDays": document.is_part_days,
             }
         }
     }
@@ -141,6 +153,12 @@ def service_by_id_saved(sender, document, **kwargs):
                 "serviceType": document.service_type,
                 "servicePlace": document.service_place,
                 "serviceNotes": document.service_notes,
+                "hasToPay": document.has_to_pay,
+                "paid": document.paid,
+                "byFactory": document.by_factory,
+                "repaired": document.repaired,
+                "createdBy": document.created_by,
+                "isPartDays": document.is_part_days,
             }
 
         }
@@ -184,6 +202,12 @@ def service_by_id_deleted(sender, document, **kwargs):
                 "serviceType": document.service_type,
                 "servicePlace": document.service_place,
                 "serviceNotes": document.service_notes,
+                "hasToPay": document.has_to_pay,
+                "paid": document.paid,
+                "byFactory": document.by_factory,
+                "repaired": document.repaired,
+                "createdBy": document.created_by,
+                "isPartDays": document.is_part_days,
             }
         }
     }

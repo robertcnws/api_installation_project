@@ -1,3 +1,4 @@
+import dayjs from 'dayjs';
 import useSWR, { mutate } from 'swr';
 import { useRef, useMemo, useCallback } from 'react';
 
@@ -46,38 +47,43 @@ export function useGetProjectEvents(projects = [], type = 'installation') {
   const colorMappingRef = useRef({});
   // const usedColorsRef = useRef(new Set());
 
+  const currentProjects = useMemo(() => projects || [], [projects]);
+
   const getAvailableColor = useCallback(() => {
-    const index = type === 'installation' ? 2 : type === 'inspection' ? 1 : 0;
+    const index = type === 'installation' ? 2 : type === 'inspection' ? 1 : type === 'service' ? 3 : 0;
     return ALL_COLORS[index];
   }, [type]);
 
   const memoizedValue = useMemo(() => {
-    const events = projects.map((project) => {
+    const events = currentProjects.map((project) => {
       if (!colorMappingRef.current[project.id]) {
         colorMappingRef.current[project.id] = getAvailableColor();
       }
       const color = colorMappingRef.current[project.id];
 
+      const endDate = dayjs(project.endDate).add(23, 'hours').add(59, 'minutes').format('YYYY-MM-DD HH:mm:ss');
+
       return {
         ...project,
         id: project.id,
         title: project.name,
-        start: type === 'installation' ?
+        start: type === 'installation' || type === 'service' ?
           project.startDate : type === 'inspection' ?
             project.inspectionDate : project.finishPermissionDate,
         end: type === 'inspection' ?
           project.inspectionDate : type === 'finishPermission' ?
             project.finishPermissionDate : project.endDate ?
-              project.endDate : '9999-12-31',
+            endDate : '9999-12-31',
         textColor: color,
+        color,
       };
     });
 
     return {
       events,
-      eventsLoading: type === 'installation' ? projects.length === 0 : false,
+      eventsLoading: false,
     };
-  }, [projects, getAvailableColor, type]);
+  }, [currentProjects, getAvailableColor, type]);
 
   return memoizedValue;
 }
