@@ -91,6 +91,8 @@ export function ProjectDetailsView({ projectId }) {
 
     const [listSelectedTracks, setListSelectedTracks] = useState([]);
 
+    
+
 
     const DETAILS_TABS = [
         { label: 'Overview', value: 'overview' },

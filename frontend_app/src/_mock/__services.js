@@ -39,6 +39,7 @@ const GET_ALL_SERVICES = gql`
       repaired
       createdBy
       isPartDays
+      isClosed
     }
   }
 `;
@@ -80,6 +81,7 @@ const GET_SERVICE_BY_ID = gql`
       repaired
       createdBy
       isPartDays
+      isClosed
     }
   }
 `;

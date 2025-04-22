@@ -21,7 +21,7 @@ import {
 
 import Stack from '@mui/material/Stack';
 import Switch from '@mui/material/Switch';
-import { Box, Alert, LinearProgress } from '@mui/material';
+import { Box, LinearProgress } from '@mui/material';
 import FormControlLabel from '@mui/material/FormControlLabel';
 
 import { isInstaller } from 'src/utils/check-permissions';
@@ -71,13 +71,14 @@ export function KanbanView({
 
   useEffect(() => {
     if (loadedServiceStages) {
-      const actionStages = hasInstallDate ?
-        loadedServiceStages.filter((stage) => stage.name.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) === -1) :
-        loadedServiceStages.filter((stage) => stage.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
-          stage.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1);
+      // const actionStages = hasInstallDate ?
+      //   loadedServiceStages.filter((stage) => stage.name.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) === -1) :
+      //   loadedServiceStages.filter((stage) => stage.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
+      //     stage.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1);
+      const actionStages = loadedServiceStages.filter((stage) => stage.name.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) === -1);
       setStages(actionStages);
     }
-  }, [loadedServiceStages, userLogged, hasInstallDate]);
+  }, [loadedServiceStages, userLogged]);
 
   const { isMobile } = useContext(LoadingContext)
 
@@ -426,11 +427,11 @@ export function KanbanView({
                   </SortableContext>
                 </KanbanColumn>
               ))}
-              {!hasInstallDate && (
+              {/* {!hasInstallDate && (
                 <Alert severity="error" sx={{ width: '100%', mt: 1 }}>
                   You must define the start date of the service to see other tasks.
                 </Alert>
-              )}
+              )} */}
 
               {/* <KanbanColumnAdd id={PLACEHOLDER_ID} /> */}
             </SortableContext>

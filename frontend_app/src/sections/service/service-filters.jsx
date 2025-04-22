@@ -55,7 +55,7 @@ export function ServiceFilters({
 
 
   const createCustomFilterName = useCallback(() => {
-    const name = filters.state.list === 'in progress' ? 'In progress' : 'Finished';
+    const name = filters.state.list === 'in progress' ? 'In progress' : filters.state.list === 'finished' ? 'Finished' : 'Closed';
     const active = [];
     if (custom.hasComments) active.push('Have comments');
     if (filters.state.startDate && filters.state.endDate) active.push(fDateRangeShortLabel(filters.state.startDate, filters.state.endDate));
@@ -103,6 +103,18 @@ export function ServiceFilters({
         },
       });
     }
+    else if (fieldName === 'byFactory') {
+      const byFactory = !filters.state.byFactory;
+      filters.setState({
+        byFactory,
+      });
+    }
+    else if (fieldName === 'notByFactory') {
+      const byFactory = !filters.state.notByFactory;
+      filters.setState({
+        notByFactory: byFactory,
+      });
+    }
 
     setCustomFilterName(createCustomFilterName());
   }, [filters, createCustomFilterName, onResetPage, setCustomFilterName]);
@@ -138,19 +150,6 @@ export function ServiceFilters({
         : [...filters.state.type, newValue];
 
       filters.setState({ type: checked });
-    },
-    [filters]
-  );
-
-  const handleFilterHasPermission = useCallback(
-    (newValue) => {
-      filters.setState(prev => ({
-        ...prev,
-        custom: {
-          ...prev.custom,
-          hasPermission: newValue,
-        }
-      }));
     },
     [filters]
   );
@@ -305,6 +304,18 @@ export function ServiceFilters({
                 </Box>
               </MenuItem>
               <MenuItem sx={{ py: 1 }} onClick={(e) => {
+                handleFilterTypeList('closed');
+                popoverTypeList.onClose(e);
+                setIsTypeListOpen(false);
+              }}>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <ListItemIcon>
+                    <Iconify icon="mdi:close-network" sx={{ color: 'text.disabled' }} />
+                  </ListItemIcon>
+                  <ListItemText primary="Closed services" />
+                </Box>
+              </MenuItem>
+              <MenuItem sx={{ py: 1 }} onClick={(e) => {
                 handleFilterTypeList('finished');
                 popoverTypeList.onClose(e);
                 setIsTypeListOpen(false);
@@ -418,7 +429,40 @@ export function ServiceFilters({
                 </Box>
               </MenuItem>,
               ]}
-              <MenuItem sx={{ py: 0 }}>
+
+              <MenuItem sx={{ py: 0 }} key="factory-divider">
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', p: 0 }}>
+                  <Divider orientation="vertical" flexItem sx={{ color: 'text.disabled' }} >
+                    <ListItemText primary="Factory" />
+                  </Divider>
+                </Box>
+              </MenuItem>
+              
+              <MenuItem sx={{ py: 0 }} key="byFactory" onClick={() => handleFilterCustom('byFactory')}>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <ListItemIcon>
+                    <CheckBox
+                      checked={filters.state.byFactory}
+                      onChange={() => handleFilterCustom('byFactory')}
+                    />
+                  </ListItemIcon>
+                  <ListItemText primary="By Factory?" />
+                </Box>
+              </MenuItem>
+
+              <MenuItem sx={{ py: 0 }} key="notByFactory" onClick={() => handleFilterCustom('notByFactory')}>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <ListItemIcon>
+                    <CheckBox
+                      checked={filters.state.notByFactory}
+                      onChange={() => handleFilterCustom('notByFactory')}
+                    />
+                  </ListItemIcon>
+                  <ListItemText primary="Not by Factory?" />
+                </Box>
+              </MenuItem>
+
+              <MenuItem sx={{ py: 0 }} key="comments-divider">
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', p: 0 }}>
                   <Divider orientation="vertical" flexItem sx={{ color: 'text.disabled' }} >
                     <ListItemText primary="Comments" />
@@ -426,7 +470,7 @@ export function ServiceFilters({
                 </Box>
               </MenuItem>
               
-              <MenuItem sx={{ py: 0 }} onClick={() => handleFilterCustom('hasComments')}>
+              <MenuItem sx={{ py: 0 }} key="hasComments" onClick={() => handleFilterCustom('hasComments')}>
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
                   <ListItemIcon>
                     <CheckBox

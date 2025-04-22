@@ -14,13 +14,21 @@ const httpLinkServices = new HttpLink({
   uri: `${CONFIG.apiUrl}/services/graphql/`,
 });
 
+const httpLinkMeasurements = new HttpLink({
+  uri: `${CONFIG.apiUrl}/measurements/graphql/`,
+});
+
 const splitLink = split(
   (operation) => operation.getContext().clientName === 'Projects',
   httpLinkProjects,
   split(
     (operation) => operation.getContext().clientName === 'Users',
     httpLinkUsers,
-    httpLinkServices
+    split(
+      (operation) => operation.getContext().clientName === 'Services',
+      httpLinkServices,
+      httpLinkMeasurements
+    )
   )
 );
 

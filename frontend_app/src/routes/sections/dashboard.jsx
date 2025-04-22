@@ -54,9 +54,10 @@ const DefaultGuideProductCreatePage = lazy(() => import('src/pages/dashboard/def
 // Service
 const ServicePage = lazy(() => import('src/pages/dashboard/service'));
 const ServiceCreatePage = lazy(() => import('src/pages/dashboard/service/new'));
-// const ProjectEditPage = lazy(() => import('src/pages/dashboard/project/edit'));
 const ServiceDetailsPage = lazy(() => import('src/pages/dashboard/service/details'));
-// const KanbanPage = lazy(() => import('src/pages/dashboard/project/kanban-id'));
+// Measurement
+// const ServicePage = lazy(() => import('src/pages/dashboard/service'));
+const MeasurementCreatePage = lazy(() => import('src/pages/dashboard/measurement/new'));
 
 // Service Issue
 const ServiceIssueListPage = lazy(() => import('src/pages/dashboard/service-issue/list'));
@@ -84,7 +85,7 @@ export const dashboardRoutes = (listPermissions, user) => [
     element: CONFIG.auth.skip ? <OverviewAnalyticsPage /> : <AuthGuard>{layoutContent}</AuthGuard>,
     children: [
       {
-        element: <IndexPage />,
+        element: <OverviewAnalyticsPage />,
         index: true
       },
       {
@@ -582,6 +583,46 @@ export const dashboardRoutes = (listPermissions, user) => [
                 ).includes(
                   CONFIG.roles.serviceStaff
                 ) ? <ServiceCreatePage /> : <Page403 />,
+              },
+              {
+                path: ':id/details',
+                element: listRolesAndSubroles(
+                  user?.user_role?.name
+                ).includes(
+                  CONFIG.roles.serviceStaff
+                ) ? <ServiceDetailsPage /> : <Page403 />,
+              }
+            ],
+          },
+        ] : [],
+        ...(user && listRolesAndSubroles(user?.user_role?.name).includes(CONFIG.roles.installer)) ?
+        [
+          {
+            path: 'measurement',
+            children: [
+              {
+                element: listRolesAndSubroles(
+                  user?.user_role?.name
+                ).includes(
+                  CONFIG.roles.installer
+                ) ? <ServicePage /> : <Page403 />,
+                index: true
+              },
+              {
+                path: 'list',
+                element: listRolesAndSubroles(
+                  user?.user_role?.name
+                ).includes(
+                  CONFIG.roles.installer
+                ) ? <ServicePage /> : <Page403 />,
+              },
+              {
+                path: 'new',
+                element: listRolesAndSubroles(
+                  user?.user_role?.name
+                ).includes(
+                  CONFIG.roles.serviceStaff
+                ) ? <MeasurementCreatePage /> : <Page403 />,
               },
               {
                 path: ':id/details',

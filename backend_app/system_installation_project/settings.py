@@ -141,6 +141,7 @@ INSTALLED_APPS = [
     'api_projects.apps.ApiProjectsConfig',
     'api_projects_async_task_sequence',
     'api_services.apps.ApiServicesConfig',
+    'api_measurements.apps.ApiMeasurementsConfig',
 ]
 
 MIDDLEWARE = [

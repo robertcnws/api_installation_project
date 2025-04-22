@@ -130,6 +130,8 @@ export function ServiceView() {
     type: [],
     startDate: null,
     endDate: null,
+    byFactory: false,
+    notByFactory: false,
     custom: {
       hasPermission: false,
       isPreparation: {
@@ -169,7 +171,9 @@ export function ServiceView() {
     // filters.state.custom.isInstallation?.value ||
     // filters.state.custom.isPermission?.value ||
     filters.state.custom.isClosing?.value ||
-    filters.state.custom.hasComments;
+    filters.state.custom.hasComments ||
+    filters.state.byFactory ||
+    filters.state.notByFactory;
 
   const notFound = (!dataFiltered.length && canReset) || !dataFiltered.length;
 
@@ -228,6 +232,25 @@ export function ServiceView() {
         totalRowsFiltered: dataFiltered.length,
       });
     }, [dataFiltered.length, dataInPage.length, table, tableData, refetchServices, userLogged]);
+
+
+  const handleCloseItem = useCallback(
+    async (id, isClosed) => {
+      const promise = axios.post(`${CONFIG.apiUrl}/services/update/service/${id}/close-service/`, {
+        userReporter: JSON.stringify(userLogged?.data),
+        isClosed, 
+      });
+
+      await promise;
+
+      toast.success('Closing success!');
+
+      refetchServices?.();
+
+      table.onUpdatePageDeleteRow(dataInPage.length);
+    },
+    [dataInPage.length, table, refetchServices, userLogged]
+  );
 
 
   const handleViewKanban = useCallback(
@@ -339,6 +362,7 @@ export function ServiceView() {
                 table={table}
                 dataFiltered={dataFiltered}
                 onDeleteRow={handleDeleteItem}
+                onCloseRow={handleCloseItem}
                 // onKanbanView={handleViewKanban}
                 onViewRow={handleDetailsView}
                 notFound={notFound}
@@ -351,33 +375,33 @@ export function ServiceView() {
                 setTableData={setTableData}
                 refetchServices={refetchServices}
                 loadedServices={loadedServices}
-                // onOpenConfirmStaff={confirmStaff.onTrue}
-                // isWarehouseStaff={isWarehouseStaff}
-                // setIsWarehouseStaff={setIsWarehouseStaff}
+              // onOpenConfirmStaff={confirmStaff.onTrue}
+              // isWarehouseStaff={isWarehouseStaff}
+              // setIsWarehouseStaff={setIsWarehouseStaff}
               />
-            // ) : view === 'grid' ? (
-            //   <ServiceGridView
-            //     table={table}
-            //     dataFiltered={dataFiltered}
-            //     onDeleteItem={handleDeleteItem}
-            //     onKanbanView={handleViewKanban}
-            //     onViewRow={handleDetailsView}
-            //     onOpenConfirm={confirm.onTrue}
-            //     loadedUsers={loadedUsers}
-            //     loadedServicePermissions={loadedServicePermissions}
-            //     loadedServiceStages={finalStages}
-            //     loadedServiceStagesTask={loadedServiceStagesTask}
-            //     listPermissions={listPermissions}
-            //     setTableData={setTableData}
-            //     refetchServices={refetchServices}
-            //     onOpenConfirmStaff={confirmStaff.onTrue}
-            //     isWarehouseStaff={isWarehouseStaff}
-            //     setIsWarehouseStaff={setIsWarehouseStaff}
-            //   />
-            // ) : view === 'calendar' ? (
-            //   <ServiceCalendarView services={dataFiltered} isOnlyWeek={false} />
-            // ) : (
-            //   <KanbanServiceView services={dataFiltered} refetchServices={refetchServices} />
+              // ) : view === 'grid' ? (
+              //   <ServiceGridView
+              //     table={table}
+              //     dataFiltered={dataFiltered}
+              //     onDeleteItem={handleDeleteItem}
+              //     onKanbanView={handleViewKanban}
+              //     onViewRow={handleDetailsView}
+              //     onOpenConfirm={confirm.onTrue}
+              //     loadedUsers={loadedUsers}
+              //     loadedServicePermissions={loadedServicePermissions}
+              //     loadedServiceStages={finalStages}
+              //     loadedServiceStagesTask={loadedServiceStagesTask}
+              //     listPermissions={listPermissions}
+              //     setTableData={setTableData}
+              //     refetchServices={refetchServices}
+              //     onOpenConfirmStaff={confirmStaff.onTrue}
+              //     isWarehouseStaff={isWarehouseStaff}
+              //     setIsWarehouseStaff={setIsWarehouseStaff}
+              //   />
+              // ) : view === 'calendar' ? (
+              //   <ServiceCalendarView services={dataFiltered} isOnlyWeek={false} />
+              // ) : (
+              //   <KanbanServiceView services={dataFiltered} refetchServices={refetchServices} />
             )}
           </>
         )}
@@ -412,7 +436,7 @@ export function ServiceView() {
 }
 
 function applyFilter({ inputData, comparator, filters, dateError }) {
-  const { list, name, type, startDate, endDate, custom } = filters;
+  const { list, name, type, startDate, endDate, byFactory, notByFactory, custom } = filters;
 
   const stabilizedThis = inputData.map((el, index) => [el, index]);
 
@@ -425,13 +449,22 @@ function applyFilter({ inputData, comparator, filters, dateError }) {
   inputData = stabilizedThis.map((el) => el[0]);
 
   if (list) {
-      if (list === 'in progress') {
-        inputData = inputData.filter((file) => file.currentStage.name.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) === -1);
-      }
-      else if (list === 'finished') {
-        inputData = inputData.filter((file) => file.currentStage.name.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) !== -1);
-      }
+    if (list === 'in progress') {
+      inputData = inputData.filter(
+        (file) => file.currentStage.name.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) === -1 && !file.isClosed
+      );
     }
+    else if (list === 'finished') {
+      inputData = inputData.filter(
+        (file) => file.currentStage.name.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) !== -1 && !file.isClosed
+      );
+    }
+    else if (list === 'closed') {
+      inputData = inputData.filter(
+        (file) => file.isClosed
+      );
+    }
+  }
 
   if (name) {
     inputData = inputData.filter(
@@ -471,9 +504,17 @@ function applyFilter({ inputData, comparator, filters, dateError }) {
     }
   }
 
-  if (custom.hasPermission) {
-    inputData = inputData.filter(file => file.hasPermission);
+  if (byFactory && !notByFactory) {
+    inputData = inputData.filter(file => file.byFactory);
   }
+
+  if (notByFactory && !byFactory) {
+    inputData = inputData.filter(file => !file.byFactory);
+  }
+
+  // if (byFactory && notByFactory) {
+  //   inputData = inputData.filter(file => file.byFactory || !file.byFactory);
+  // }
 
   if (custom.hasComments) {
     inputData = inputData.filter(file => file.serviceComments.length > 0);

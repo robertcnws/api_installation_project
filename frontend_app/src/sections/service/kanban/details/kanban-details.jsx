@@ -132,15 +132,20 @@ export function KanbanDetails({
         const filesToUpload = (await Promise.all(filePromises)).filter((f) => f !== null);
 
         filesToUpload.forEach((file) => {
-          formData.append('serviceTaskAttachments', file);
+          formData.append('serviceAttachments', file);
         });
         formData.append('userReporter', JSON.stringify(userLogged?.data));
 
-        const taskId = task?.service_default_task?.id;
+        const attachmentType = task?.service_default_task?.name.toLowerCase().includes('issue')
+          ? 'issued' : 'repair';
+
+        console.log('attachmentType', attachmentType);
+
+        formData.append('attachmentType', attachmentType);
 
         const { id } = service;
 
-        const response = await axios.post(`${CONFIG.apiUrl}/services/upload/service/${id}/task/${taskId}/file/`, formData, {
+        const response = await axios.post(`${CONFIG.apiUrl}/services/upload/service/${id}/file/`, formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
           },
@@ -151,17 +156,13 @@ export function KanbanDetails({
           toast.error('Error uploading new default task files');
           return;
         }
-        const respRefetch = await refetchService?.();
 
-        const updatedService = respRefetch?.data?.serviceById;
+        refetchService?.();
 
-        if (updatedService) {
-          const updated = updatedService?.serviceDefaultTasks.find(
-            (t) => t.service_default_task.id === task.service_default_task.id
-          );
-          setNewFiles([]);
-          toast.success('Default Task Files uploaded successfully');
-        }
+        setNewFiles([]);
+
+        toast.success('Default Task Files uploaded successfully');
+
       } catch (error) {
         console.error('Error uploading new default task files', error);
         toast.error('Error uploading new default task files');
@@ -256,27 +257,28 @@ export function KanbanDetails({
                     service?.userManager?.id === userLogged?.data?.id
                   ) && (
                       <>
-                        {((task && task.status === CONFIG.taskStatus.notStarted && (task?.service_default_task?.order === 1 ||
+                        {/* {((task && task.status === CONFIG.taskStatus.notStarted && (task?.service_default_task?.order === 1 ||
                           (service?.hasPermission && task?.service_default_task?.service_stage.name.toLowerCase() === CONFIG.stages.permission.toLowerCase()))) ||
-                          (task.beforeNoMatter && task.status === CONFIG.taskStatus.notStarted)) && (
-                            <Button
-                              variant="soft"
-                              color="default"
-                              size="medium"
-                              startIcon={<Iconify icon="vaadin:start-cog" />}
-                              sx={{ ml: 2.5, height: 50 }}
-                              disabled={
-                                !task
-                                || task.status !== CONFIG.taskStatus.notStarted
-                                // || task?.users_assignees?.length === 0 
-                                || !priority
-                              }
-                              onClick={() => handleManageTask('start')}
-                            >
-                              Start Task
-                            </Button>
-                          )}
-                        {task && task.status !== CONFIG.taskStatus.notStarted && task.status !== 'finished' && (
+                          (task.beforeNoMatter && task.status === CONFIG.taskStatus.notStarted)) && ( */}
+                        {((task && task.status === CONFIG.taskStatus.notStarted)) && (
+                          <Button
+                            variant="soft"
+                            color="default"
+                            size="medium"
+                            startIcon={<Iconify icon="vaadin:start-cog" />}
+                            sx={{ ml: 2.5, height: 50 }}
+                            disabled={
+                              !task
+                              || task.status !== CONFIG.taskStatus.notStarted
+                              // || task?.users_assignees?.length === 0 
+                              || !priority
+                            }
+                            onClick={() => handleManageTask('start')}
+                          >
+                            Start Task
+                          </Button>
+                        )}
+                       {(task && task.status !== CONFIG.taskStatus.notStarted && task.status !== 'finished') && (
                           previousTasksInStatus(
                             task,
                             service?.serviceDefaultTasks,
@@ -310,7 +312,7 @@ export function KanbanDetails({
                             startIcon={<Iconify icon="eos-icons:snapshot-rollback" />}
                             sx={{ ml: 2.5, height: 50 }}
                             disabled={
-                              !task 
+                              !task
                               // || task?.users_assignees?.length === 0 
                               || !priority
                             }
@@ -395,8 +397,8 @@ export function KanbanDetails({
                 </StyledLabel>
 
                 <Box sx={{ gap: 1, display: 'flex', flexWrap: 'wrap' }}>
-                  {(task?.users_assignees?.length === 0 && 
-                  !listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) && (
+                  {(task?.users_assignees?.length === 0 &&
+                    !listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) && (
                       <Typography variant="subtitle2" sx={{
                         ml: 0,
                         mt: 1,
@@ -412,43 +414,43 @@ export function KanbanDetails({
                   ))}
 
                   {(listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) && (
-                      <>
-                        {task?.status !== CONFIG.taskStatus.finished && (
-                          <Tooltip title="Add assignee">
-                            <IconButton
-                              onClick={() => {
-                                contacts.onTrue();
-                                setIsRemove(false);
-                              }}
-                              sx={{
-                                bgcolor: (theme) => varAlpha(theme.vars.palette.grey['500Channel'], 0.08),
-                                border: (theme) => `dashed 1px ${theme.vars.palette.divider}`,
-                                color: task?.users_assignees?.length === 0 ? 'error.main' : 'default',
-                              }}
-                            >
-                              <Iconify icon="mingcute:add-line" />
-                            </IconButton>
-                          </Tooltip>
-                        )}
+                    <>
+                      {task?.status !== CONFIG.taskStatus.finished && (
+                        <Tooltip title="Add assignee">
+                          <IconButton
+                            onClick={() => {
+                              contacts.onTrue();
+                              setIsRemove(false);
+                            }}
+                            sx={{
+                              bgcolor: (theme) => varAlpha(theme.vars.palette.grey['500Channel'], 0.08),
+                              border: (theme) => `dashed 1px ${theme.vars.palette.divider}`,
+                              color: task?.users_assignees?.length === 0 ? 'error.main' : 'default',
+                            }}
+                          >
+                            <Iconify icon="mingcute:add-line" />
+                          </IconButton>
+                        </Tooltip>
+                      )}
 
-                        {(task?.users_assignees?.length > 0 && task?.status !== CONFIG.taskStatus.finished) && (
-                          <Tooltip title="Remove assignee">
-                            <IconButton
-                              onClick={() => {
-                                contacts.onTrue();
-                                setIsRemove(true);
-                              }}
-                              sx={{
-                                bgcolor: (theme) => varAlpha(theme.vars.palette.grey['500Channel'], 0.08),
-                                border: (theme) => `dashed 1px ${theme.vars.palette.divider}`,
-                              }}
-                            >
-                              <Iconify icon="stash:minus-solid" />
-                            </IconButton>
-                          </Tooltip>
-                        )}
-                      </>
-                    )}
+                      {(task?.users_assignees?.length > 0 && task?.status !== CONFIG.taskStatus.finished) && (
+                        <Tooltip title="Remove assignee">
+                          <IconButton
+                            onClick={() => {
+                              contacts.onTrue();
+                              setIsRemove(true);
+                            }}
+                            sx={{
+                              bgcolor: (theme) => varAlpha(theme.vars.palette.grey['500Channel'], 0.08),
+                              border: (theme) => `dashed 1px ${theme.vars.palette.divider}`,
+                            }}
+                          >
+                            <Iconify icon="stash:minus-solid" />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+                    </>
+                  )}
 
 
                   <KanbanContactsDialog
@@ -483,22 +485,22 @@ export function KanbanDetails({
           <Box sx={{ display: 'flex', flexDirection: 'column' }}>
             <StyledLabel>Attachments</StyledLabel>
             {(listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) && (
-                <Tooltip title="Add Files" sx={{ width: 40 }}>
-                  <span>
-                    <Button
-                      color="primary"
-                      variant="outlined"
-                      disabled={newFiles.length === 0}
-                      onClick={handleAddFiles}
-                    >
-                      <Iconify icon="material-symbols:attach-file-add" />
-                    </Button>
-                  </span>
-                </Tooltip>
-              )}
+              <Tooltip title="Add Files" sx={{ width: 40 }}>
+                <span>
+                  <Button
+                    color="primary"
+                    variant="outlined"
+                    disabled={newFiles.length === 0}
+                    onClick={handleAddFiles}
+                  >
+                    <Iconify icon="material-symbols:attach-file-add" />
+                  </Button>
+                </span>
+              </Tooltip>
+            )}
           </Box>
-          {(task?.service_task_attachments?.length === 0 && 
-          !listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) && (
+          {(task?.service_task_attachments?.length === 0 &&
+            !listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) && (
               <Typography variant="subtitle2" sx={{
                 ml: 0,
                 mt: 0,

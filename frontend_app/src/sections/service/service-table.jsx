@@ -38,6 +38,7 @@ export function ServiceTable({
   table,
   notFound,
   onDeleteRow,
+  onCloseRow,
   // onKanbanView,
   onViewRow,
   dataFiltered,
@@ -76,9 +77,9 @@ export function ServiceTable({
   const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
 
   const TABLE_HEAD = [
-    { id: 'startDate', label: 'Start Date' },
-    { id: 'duration', label: 'Duration' },
+    { id: 'startDate', label: 'Date & Duration' },
     { id: 'number', label: 'Number' },
+    { id: 'byFactory', label: 'By Factory?' },
     { id: 'name', label: 'Name' },
     { id: 'currentStage', label: 'Stage' },
     ...((loadedServiceStages || []).map((stage) => ({
@@ -210,6 +211,7 @@ export function ServiceTable({
                     selected={selected.includes(row.id)}
                     onSelectRow={() => onSelectRow(row.id)}
                     onDeleteRow={() => onDeleteRow(row.id)}
+                    onCloseRow={() => onCloseRow(row.id, !row.isClosed)}
                     // onKanbanView={() => onKanbanView(row.id)}
                     onViewRow={() => onViewRow(row.id)}
                     loadedUsers={loadedUsers}

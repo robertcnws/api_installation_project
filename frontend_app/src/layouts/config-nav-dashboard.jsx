@@ -56,6 +56,7 @@ const ICONS = {
   serviceStage: icon('ic-service-stage'),
   serviceTask: icon('ic-service-task'),
   calendarOverview: icon('ic-calendar-overview'),
+  measurement: icon('ic-measurements'),
 };
 
 const userLogged = JSON.parse(sessionStorage.getItem('userLogged'));
@@ -108,6 +109,23 @@ export const navData = () => [
             {
               title: 'Create',
               path: paths.dashboard.service.new
+            },
+          ],
+        },
+      ] : []),
+      ...(userLogged && listRolesAndSubroles(userLogged?.data.user_role.name).includes(CONFIG.roles.installer) ? [
+        {
+          title: 'Measurements',
+          path: paths.dashboard.service.root,
+          icon: ICONS.measurement,
+          children: [
+            {
+              title: 'List',
+              path: paths.dashboard.service.list,
+            },
+            {
+              title: 'Create',
+              path: paths.dashboard.measurement.new
             },
           ],
         },

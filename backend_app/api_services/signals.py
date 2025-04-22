@@ -58,6 +58,7 @@ def service_saved(sender, document, **kwargs):
                 "repaired": document.repaired,
                 "createdBy": document.created_by,
                 "isPartDays": document.is_part_days,
+                "isClosed": document.is_closed,
             }
 
         }
@@ -106,6 +107,7 @@ def service_deleted(sender, document, **kwargs):
                 "repaired": document.repaired,
                 "createdBy": document.created_by,
                 "isPartDays": document.is_part_days,
+                "isClosed": document.is_closed,
             }
         }
     }
@@ -159,6 +161,7 @@ def service_by_id_saved(sender, document, **kwargs):
                 "repaired": document.repaired,
                 "createdBy": document.created_by,
                 "isPartDays": document.is_part_days,
+                "isClosed": document.is_closed,
             }
 
         }
@@ -208,6 +211,7 @@ def service_by_id_deleted(sender, document, **kwargs):
                 "repaired": document.repaired,
                 "createdBy": document.created_by,
                 "isPartDays": document.is_part_days,
+                "isClosed": document.is_closed,
             }
         }
     }

@@ -9,8 +9,8 @@ import { styled } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import AvatarGroup, { avatarGroupClasses } from '@mui/material/AvatarGroup';
 
+import { availableTasks } from 'src/utils/service-tasks-utils';
 import { isInstaller, listRolesAndSubroles } from 'src/utils/check-permissions';
-import { availableTasks, previousTasksInStatus } from 'src/utils/service-tasks-utils';
 
 import { CONFIG } from 'src/config-global';
 import { varAlpha, stylesMode } from 'src/theme/styles';
@@ -157,9 +157,10 @@ const ItemBase = forwardRef(({
             service?.userManager?.id === userLogged?.data?.id
           ) && (
               <>
-                {((task && task.status === CONFIG.taskStatus.notStarted && (task?.service_default_task?.order === 1 ||
+                {/* {((task && task.status === CONFIG.taskStatus.notStarted && (task?.service_default_task?.order === 1 ||
                   (service?.hasPermission && task?.service_default_task?.service_stage.name.toLowerCase() === CONFIG.stages.permission.toLowerCase()))) ||
-                  (task.beforeNoMatter && task.status === CONFIG.taskStatus.notStarted)) && (
+                  (task.beforeNoMatter && task.status === CONFIG.taskStatus.notStarted)) && ( */}
+                {((task && task.status === CONFIG.taskStatus.notStarted)) && (
                     <IconButton
                       variant="soft"
                       color="default"
@@ -182,13 +183,7 @@ const ItemBase = forwardRef(({
                     </IconButton>
                   )}
                 {(task && task.status !== CONFIG.taskStatus.notStarted && task.status !== 'finished') && (
-                  ((previousTasksInStatus(
-                    task,
-                    service?.serviceDefaultTasks,
-                    CONFIG.taskStatus.inProgress,
-                    task?.service_default_task?.service_stage?.name.toLowerCase().indexOf(CONFIG.stages.permission.toLowerCase()) !== -1,
-                    CONFIG
-                  ).length === 0) || (task.beforeNoMatter && task.status === CONFIG.taskStatus.inProgress)) && (
+                  
                     <IconButton
                       variant="soft"
                       color="success"
@@ -214,7 +209,6 @@ const ItemBase = forwardRef(({
                     >
                       <Iconify icon="octicon:tracked-by-closed-completed-16" sx={{ width: 15, height: 15 }} /> Finish
                     </IconButton>
-                  )
                   // : (
                   //   <Label color='error' sx={{ fontSize: '8px', mr: -3 }}>Finish previous tasks</Label>
                   // )

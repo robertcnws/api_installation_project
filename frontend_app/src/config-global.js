@@ -58,6 +58,7 @@ export const CONFIG = {
     permission: import.meta.env.VITE_STAGE_PERMISSION ?? '',
     closing: import.meta.env.VITE_STAGE_CLOSING ?? '',
     finished: import.meta.env.VITE_STAGE_FINISHED ?? '',
+    repair: import.meta.env.VITE_STAGE_REPAIR ?? '',
   },
   taskStatus: {
     notStarted: import.meta.env.VITE_TASK_STATUS_NOT_STARTED ?? '',

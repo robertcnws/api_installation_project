@@ -29,6 +29,16 @@ export function ServiceFiltersResult({ filters, onResetPage, totalResults, sx })
     filters.setState({ startDate: null, endDate: null });
   }, [filters, onResetPage]);
 
+  const handleRemoveByFactory = useCallback(() => {
+    onResetPage();
+    filters.setState({ byFactory: false });
+  }, [filters, onResetPage]);
+
+  const handleRemoveNotByFactory = useCallback(() => {
+    onResetPage();
+    filters.setState({ notByFactory: false });
+  }, [filters, onResetPage]);
+
   const handleRemoveCustom = useCallback(
     (customType) => {
       onResetPage();
@@ -84,6 +94,14 @@ export function ServiceFiltersResult({ filters, onResetPage, totalResults, sx })
           label={fDateRangeShortLabel(filters.state.startDate, filters.state.endDate)}
           onDelete={handleRemoveDate}
         />
+      </FiltersBlock>
+
+      <FiltersBlock label="By Factory?:" isShow={Boolean(filters.state.byFactory)}>
+        <Chip {...chipProps} label='Yes' onDelete={() => handleRemoveByFactory()} />
+      </FiltersBlock>
+
+      <FiltersBlock label="Not by Factory?:" isShow={Boolean(filters.state.notByFactory)}>
+        <Chip {...chipProps} label='Yes' onDelete={() => handleRemoveNotByFactory()} />
       </FiltersBlock>
 
       <FiltersBlock label="Has Comment(s):" isShow={Boolean(filters.state.custom.hasComments)}>

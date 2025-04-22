@@ -45,6 +45,7 @@ export function ServiceDetailsView({ serviceId }) {
 
     const {
         loadedServices,
+        loadedTracks,
     } = useDataContext();
 
     const [openDialogs, setOpenDialogs] = useState({
@@ -72,7 +73,7 @@ export function ServiceDetailsView({ serviceId }) {
         { label: 'Overview', value: 'overview' },
         { label: 'Tasks', value: 'tasks' },
         // { label: 'Attachments', value: 'attachments' },
-        { label: 'Comments', value: 'comments' },
+        { label: 'Comments & History', value: 'comments' },
     ];
 
 
@@ -93,12 +94,20 @@ export function ServiceDetailsView({ serviceId }) {
 
     const [serviceType, setServiceType] = useState(itemById?.serviceType);
 
+    const [listSelectedTracks, setListSelectedTracks] = useState([]);
+
 
     useEffect(() => {
         if (fetchedService) {
             setItemById(fetchedService);
         }
     }, [fetchedService]);
+
+    useEffect(() => {
+        if (loadedTracks) {
+            setListSelectedTracks(loadedTracks);
+        }
+    }, [loadedTracks]);
 
     useEffect(() => {
         const socket = new WebSocket(`wss://${CONFIG.apiHost}/api/services/ws/service/${serviceId}/`);
@@ -133,6 +142,48 @@ export function ServiceDetailsView({ serviceId }) {
         };
     }, [serviceId]);
 
+
+    useEffect(() => {
+        const socket = new WebSocket(`wss://${CONFIG.apiHost}/api/projects/ws/tracks/`);
+        socket.onerror = (errorEvent) => {
+            console.dir(errorEvent);
+            console.error('WebSocket error (toString):', errorEvent.toString());
+        };
+        socket.onmessage = (event) => {
+            const message = JSON.parse(event.data);
+            // console.log("WebSocket message:", message);
+            if (message.type === 'created' || message.type === 'updated') {
+                setListSelectedTracks((prevData) => {
+                    if (prevData?.some((track) => track.id === message.item.id)) {
+                        return prevData.map((track) => {
+                            if (track.id === message.item.id) {
+                                return message.item;
+                            }
+                            return track;
+                        });
+                    }
+                    return [...prevData, message.item];
+                }
+                );
+            }
+            else if (message.type === 'deleted') {
+                setListSelectedTracks((prevData) => {
+                    if (prevData?.some((track) => track.id === message.item.id)) {
+                        return prevData.filter((track) => track.id !== message.item.id);
+                    }
+                    return prevData;
+                }
+                );
+            }
+        };
+        return () => {
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.close();
+            }
+        };
+    }, []);
+
+
     const qtyServiceAttachments = useMemo(
         () => itemById?.serviceAttachments?.length || 0,
         [itemById]
@@ -147,11 +198,20 @@ export function ServiceDetailsView({ serviceId }) {
 
     const totalAttachments = useMemo(() => qtyServiceAttachments + qtyTaskAttachments, [qtyServiceAttachments, qtyTaskAttachments]);
 
-    const totalComments = useMemo(() => itemById?.serviceComments?.length || 0, [itemById]);
+    const [selectedComments, setSelectedComments] = useState(false);
+
+    const totalComments = useMemo(() => {
+            const tComments = itemById?.serviceComments?.length || 0
+            const tListSelectedTracks = !selectedComments ? (listSelectedTracks.filter(
+                (track) => track.action.includes(itemById?.id) && !track.action.includes('comment')
+            )?.length || 0) : 0;
+            return tComments + tListSelectedTracks;
+        }, [itemById, listSelectedTracks, selectedComments]);
+
 
     const totalTasks = useMemo(() => (
         itemById?.serviceDefaultTasks?.filter((task) => task.service_default_task.is_active)?.length
-            || 0), [itemById]
+        || 0), [itemById]
     );
 
 
@@ -209,7 +269,7 @@ export function ServiceDetailsView({ serviceId }) {
     }, [selectedSalesOrder, selectedListItems, userLogged, openSalesOrderModal, itemById?.id]);
 
 
-    const handleChangeProperties = useCallback(async(property, value) => {
+    const handleChangeProperties = useCallback(async (property, value) => {
         try {
             const promise = axios.post(`${CONFIG.apiUrl}/services/update/service/${itemById?.id}/change-properties/`, {
                 [property]: value,
@@ -285,8 +345,8 @@ export function ServiceDetailsView({ serviceId }) {
                 <ServiceDetailsToolbar
                     service={itemById}
                     backLink={
-                        localStorage.getItem('backFromServiceDetails') === 'analytics' ? paths.dashboard.general.analytics : 
-                        localStorage.getItem('backFromProjectDetails') === 'calendarDashboard' ? paths.dashboard.general.calendar : paths.dashboard.service.list
+                        localStorage.getItem('backFromServiceDetails') === 'analytics' ? paths.dashboard.general.analytics :
+                            localStorage.getItem('backFromProjectDetails') === 'calendarDashboard' ? paths.dashboard.general.calendar : paths.dashboard.service.list
                     }
                     editLink={paths.dashboard.service.edit(`${itemById?.id}`)}
                     openEdit={tabs.value === 'overview' ? openEdit : tabs.value === 'tasks' ? openEditTask : null}
@@ -329,6 +389,9 @@ export function ServiceDetailsView({ serviceId }) {
                     <ServiceDetailsCommentView
                         service={itemById}
                         refetchService={refetchService}
+                        listSelectedTracks={listSelectedTracks.filter((track) => track.action.includes(itemById?.id))}
+                        selectedComments={selectedComments}
+                        setSelectedComments={setSelectedComments}
                     />
                 }
 

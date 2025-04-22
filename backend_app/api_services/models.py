@@ -52,6 +52,7 @@ class Service(Document):
     repaired = BooleanField(default=False)
     created_by = DynamicField(null=True)
     is_part_days = BooleanField(default=False)
+    is_closed = BooleanField(default=False)
     
     meta = {
         'collection': 'service',

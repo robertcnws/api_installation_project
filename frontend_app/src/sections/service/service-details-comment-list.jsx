@@ -8,7 +8,7 @@ import { Box, Button, Divider, MenuItem, MenuList } from '@mui/material';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
-import { fToNow, fIsAfter } from 'src/utils/format-time';
+import { fIsAfter, fDateTime } from 'src/utils/format-time';
 
 import { CONFIG } from 'src/config-global';
 
@@ -24,13 +24,19 @@ import { LoadingContext } from 'src/auth/context/loading-context';
 import { useDataContext } from 'src/auth/context/data/data-context';
 
 import { ServiceDetailsCommentInput } from './service-details-comment-input';
+import { ServiceDetailsCommentListTrackInfo } from './service-details-comment-list-track-info';
 
 
 
 
 // ----------------------------------------------------------------------
 
-export function ServiceDetailsCommentList({ comments, service, refetchService }) {
+export function ServiceDetailsCommentList({
+  comments,
+  service,
+  refetchService,
+  listSelectedTracks,
+}) {
 
   const { isMobile } = useContext(LoadingContext);
 
@@ -39,13 +45,48 @@ export function ServiceDetailsCommentList({ comments, service, refetchService })
   const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
 
   const [sortedComments, setSortedComments] = useState([]);
+  const [sortedTracks, setSortedTracks] = useState([]);
+  const [sortedAllInfo, setSortedAllInfo] = useState([]);
 
   useEffect(() => {
     if (comments && refetchService) {
       refetchService?.();
-      setSortedComments([...comments].sort((a, b) => fIsAfter(b.last_modified_time, a.last_modified_time) ? 1 : -1));
+      const orderedComments = [...comments].sort((a, b) => fIsAfter(b.last_modified_time, a.last_modified_time) ? 1 : -1);
+      const allComments = orderedComments.map((comment) => ({
+        ...comment,
+        type: 'comment',
+        comparingTime: comment.last_modified_time,
+      }));
+      setSortedComments(allComments);
     }
   }, [comments, refetchService]);
+
+  useEffect(() => {
+    if (listSelectedTracks && refetchService) {
+      refetchService?.();
+      const orderedTracks = [...listSelectedTracks].sort((a, b) => fIsAfter(b.createdTime, a.createdTime) ? 1 : -1);
+      const tracks = orderedTracks.filter(track => !track.action.includes('comment')).map((track) => ({
+        ...track,
+        type: 'track',
+        comparingTime: track.createdTime,
+      }));
+      setSortedTracks(tracks);
+    }
+  }, [listSelectedTracks, refetchService]);
+
+  useEffect(() => {
+    if (sortedComments.length > 0 && sortedTracks.length > 0) {
+      const allInfo = [...sortedComments, ...sortedTracks].sort((a, b) => fIsAfter(b.comparingTime, a.comparingTime) ? 1 : -1);
+      setSortedAllInfo(allInfo);
+    } else if (sortedComments.length > 0) {
+      setSortedAllInfo(sortedComments);
+    } else if (sortedTracks.length > 0) {
+      setSortedAllInfo(sortedTracks);
+    } else {
+      setSortedAllInfo([]);
+    }
+  }, [sortedComments, sortedTracks]);
+
 
   const popover = usePopover();
 
@@ -88,100 +129,132 @@ export function ServiceDetailsCommentList({ comments, service, refetchService })
 
   return (
     <>
-      <Stack component="ul" spacing={3} sx={{ mb: 1, ml: 2, mr: 5, borderRadius: 1, p: 2, bgcolor: 'background.neutral' }}>
-        {sortedComments.map((comment) => (
-          <Stack component="li" key={comment.id} direction="row" spacing={2}>
-            <Avatar src={comment.user_reporter.avatar_url} />
+      <Stack component="ul" spacing={3} sx={{ mb: 1, ml: 2, mr: 5 }}>
+        {sortedAllInfo.map((comment) => (
+          comment.type === 'comment' ? (
+            <Stack component="li" key={comment.id} direction="row" spacing={1} sx={{ bgcolor: 'background.neutral', borderRadius: 2, p: 1 }}>
+              <Avatar src={comment.user_reporter.avatar_url} />
 
-            <Stack spacing={comment.messageType === 'image' ? 1 : 0.5} flexGrow={1}>
-              <Stack
-                direction={!isMobile ? "row" : "column"}
-                alignItems={!isMobile ? "center" : "left"}
-                justifyContent={!isMobile ? "space-between" : "flex-start"}
-              >
-                <Typography variant="subtitle2" sx={{ fontSize: 'x-small' }}>
-                  {comment.user_reporter.first_name} {comment.user_reporter.last_name}
-                </Typography>
-                <Box sx={{ 
-                  display: 'flex', 
-                  flexDirection: 'row',
-                  alignItems: 'center', 
-                  gap: !isMobile ? 1 : 15,
-                  }}>
-                  <Typography variant="caption" sx={{ color: 'text.disabled', fontSize: 'x-small' }}>
-                    {fToNow(comment.last_modified_time)}
-                  </Typography>
-                  {userLogged?.data.id === comment?.user_reporter.id ? (
-                    <Button sx={{ p: 0, ml: 1 }} onClick={(e) => {
-                      popover.onOpen(e);
-                      setSelectedComment(comment)
-                    }}>
-                      <Iconify icon="eva:more-vertical-fill" />
-                    </Button>
-                  ) : (
-                    <Box sx={{ width: 72 }} />
-                  )}
-                </Box>
-                <CustomPopover
-                  open={popover.open}
-                  anchorEl={popover.anchorEl}
-                  onClose={popover.onClose}
-                // slotProps={{ arrow: { placement: 'right-top' } }}
+              <Stack spacing={comment.messageType === 'image' ? 1 : 0.5} flexGrow={1}>
+                <Stack
+                  direction={!isMobile ? "row" : "column"}
+                  alignItems={!isMobile ? "center" : "left"}
+                  justifyContent={!isMobile ? "space-between" : "flex-start"}
                 >
-                  <MenuList>
-                    <MenuItem
-                      onClick={() => {
-                        confirmEdit.onTrue();
-                        popover.onClose();
-                      }}
-                    >
-                      <Iconify icon="typcn:edit" />
-                      Edit Comment
-                    </MenuItem>
+                  <Typography variant="subtitle2" sx={{ fontSize: 'x-small' }}>
+                    {comment.user_reporter.first_name} {comment.user_reporter.last_name}
+                  </Typography>
+                  <Box sx={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: !isMobile ? 1 : 15,
+                  }}>
+                    <Typography variant="caption" sx={{ color: 'text.disabled', fontSize: 'x-small' }}>
+                      {fDateTime(comment.last_modified_time)}
+                    </Typography>
+                    {userLogged?.data.id === comment?.user_reporter.id ? (
+                      <Button sx={{ p: 0, ml: 1 }} onClick={(e) => {
+                        popover.onOpen(e);
+                        setSelectedComment(comment)
+                      }}>
+                        <Iconify icon="eva:more-vertical-fill" />
+                      </Button>
+                    ) : (
+                      <Box sx={{ width: 72 }} />
+                    )}
+                  </Box>
+                  <CustomPopover
+                    open={popover.open}
+                    anchorEl={popover.anchorEl}
+                    onClose={popover.onClose}
+                  // slotProps={{ arrow: { placement: 'right-top' } }}
+                  >
+                    <MenuList>
+                      <MenuItem
+                        onClick={() => {
+                          confirmEdit.onTrue();
+                          popover.onClose();
+                        }}
+                      >
+                        <Iconify icon="typcn:edit" />
+                        Edit Comment
+                      </MenuItem>
 
-                    <Divider sx={{ borderStyle: 'dashed' }} />
+                      <Divider sx={{ borderStyle: 'dashed' }} />
 
-                    <MenuItem
-                      onClick={() => {
-                        confirm.onTrue();
-                        popover.onClose();
-                      }}
-                      sx={{ color: 'error.main' }}
-                    >
-                      <Iconify icon="solar:trash-bin-trash-bold" />
-                      Delete Comment
-                    </MenuItem>
-                  </MenuList>
-                </CustomPopover>
+                      <MenuItem
+                        onClick={() => {
+                          confirm.onTrue();
+                          popover.onClose();
+                        }}
+                        sx={{ color: 'error.main' }}
+                      >
+                        <Iconify icon="solar:trash-bin-trash-bold" />
+                        Delete Comment
+                      </MenuItem>
+                    </MenuList>
+                  </CustomPopover>
+                </Stack>
+
+                {comment.messageType === 'image' ? (
+                  <Image
+                    alt={comment.comment}
+                    src={comment.comment}
+                    onClick={() => lightbox.onOpen(comment.comment)}
+                    sx={{
+                      borderRadius: 1.5,
+                      cursor: 'pointer',
+                      transition: (theme) => theme.transitions.create(['opacity']),
+                      '&:hover': { opacity: 0.8 },
+                    }}
+                  />
+                ) : (
+                  <Typography variant="body2" sx={{ fontSize: 'small', mr: 15 }}>
+                    <Iconify icon="icon-park:comment" /> {comment.comment}
+                    {comment.project_default_task && (
+                      <>
+                        <br />
+                        <Label>
+                          <b>{comment.project_default_task.project_default_task.name}</b>
+                        </Label>
+                      </>
+                    )}
+                  </Typography>
+                )}
               </Stack>
-
-              {comment.messageType === 'image' ? (
-                <Image
-                  alt={comment.comment}
-                  src={comment.comment}
-                  onClick={() => lightbox.onOpen(comment.comment)}
-                  sx={{
-                    borderRadius: 1.5,
-                    cursor: 'pointer',
-                    transition: (theme) => theme.transitions.create(['opacity']),
-                    '&:hover': { opacity: 0.8 },
-                  }}
-                />
-              ) : (
-                <Typography variant="body2" sx={{ fontSize: 'small', mr: 15 }}>
-                  {comment.comment}
-                  {comment.service_default_task && (
-                    <>
-                      <br />
-                      <Label>
-                        <b>{comment.service_default_task.service_default_task.name}</b>
-                      </Label>
-                    </>
-                  )}
-                </Typography>
-              )}
             </Stack>
-          </Stack>
+          ) : (
+            <Stack component="li" key={comment.id} direction="row" spacing={1} sx={{ bgcolor: 'transparent', borderRadius: 1, p: 1 }}>
+              <Avatar src={comment.userReporter.avatar_url} />
+
+              <Stack spacing={0.5} flexGrow={1}>
+                <Stack
+                  direction={!isMobile ? "row" : "column"}
+                  alignItems={!isMobile ? "center" : "left"}
+                  justifyContent={!isMobile ? "space-between" : "flex-start"}
+                >
+                  <Typography variant="subtitle2" sx={{ fontSize: 'x-small' }}>
+                    {comment.userReporter.first_name} {comment.userReporter.last_name}
+                  </Typography>
+                  <Box sx={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: !isMobile ? 1 : 15,
+                  }}>
+                    <Typography variant="caption" sx={{ color: 'text.disabled', fontSize: 'x-small', mr: 10 }}>
+                      {fDateTime(comment.createdTime)}
+                    </Typography>
+
+                  </Box>
+                </Stack>
+                {comment.managedData && (
+                  <ServiceDetailsCommentListTrackInfo comment={comment} />
+                )}
+              </Stack>
+            </Stack>
+          )
         ))}
       </Stack >
 

@@ -100,6 +100,13 @@ export const paths = {
       edit: (id) => `${ROOTS.DASHBOARD}/service/${id}/edit`,
       details: (id) => `${ROOTS.DASHBOARD}/service/${id}/details`,
     },
+    measurement: {
+      root: `${ROOTS.DASHBOARD}/measurement`,
+      list: `${ROOTS.DASHBOARD}/measurement/list`,
+      new: `${ROOTS.DASHBOARD}/measurement/new`,
+      edit: (id) => `${ROOTS.DASHBOARD}/measurement/${id}/edit`,
+      details: (id) => `${ROOTS.DASHBOARD}/measurement/${id}/details`,
+    },
     config: {
       root: `${ROOTS.DASHBOARD_CONFIG}`,
     },

@@ -222,11 +222,12 @@ export function getIconByName(name) {
     },
     {
       keywords: ['change', 'address'],
-      icon: 'icon-park-outline:folder',
+      icon: 'fluent-color:people-home-16',
       includeFields: [
         'address'
       ],
       excludeFields: [
+        'id',
         'sales_order', 
         '_id', 
         'project'
@@ -378,6 +379,121 @@ export function getIconByName(name) {
         'project'
       ]
     },
+    {
+      keywords: ['change', 'manager', 'service'],
+      icon: 'flat-color-icons:manager',
+      includeFields: [
+        'user_manager.username',
+        'user_manager.firstName',
+        'user_manager.lastName',
+        'user_manager.email',
+      ],
+      excludeFields: [
+        'id', 
+        '_id',
+      ]
+    },
+    {
+      keywords: ['create', 'service'],
+      icon: 'vscode-icons:folder-type-services',
+      includeFields: [
+        'number',
+        'name',
+        'version',
+        'sales_order.salesorder_number',
+      ],
+      excludeFields: [
+        'id', 
+        '_id',
+      ]
+    },
+    {
+      keywords: ['change', 'properties', 'service'],
+      icon: 'catppuccin:properties',
+      includeFields: [],
+      excludeFields: [
+        'id', 
+        '__typename', 
+        'staff', 
+        'active', 
+        'avatar',
+      ]
+    },
+    {
+      keywords: ['close', 'service'],
+      icon: 'icon-park:folder-failed',
+      includeFields: [],
+      excludeFields: [
+        'id', 
+        '__typename', 
+        'staff', 
+        'active', 
+        'avatar',
+      ]
+    },
+    {
+      keywords: ['reopen', 'service'],
+      icon: 'icon-park:folder-open',
+      includeFields: [],
+      excludeFields: [
+        'id', 
+        '__typename', 
+        'staff', 
+        'active', 
+        'avatar',
+      ]
+    },
+    {
+      keywords: ['set', 'place', 'service'],
+      icon: 'fluent-color:location-ripple-16',
+      includeFields: [
+        'name',
+        'service_place.name',
+      ],
+      excludeFields: []
+    },
+    {
+      keywords: ['change', 'note', 'service'],
+      icon: 'fxemoji:note',
+      includeFields: [
+        'service_notes'
+      ],
+      excludeFields: []
+    },
+    {
+      keywords: ['change', 'type', 'service'],
+      icon: 'vscode-icons:folder-type-favicon',
+      includeFields: [
+        'service_type'
+      ],
+      excludeFields: []
+    },
+    {
+      keywords: ['change', 'user', 'team', 'service'],
+      icon: 'openmoji:construction-worker',
+      includeFields: [
+        'users_service_team.name',
+        'users_service_team.username',
+        'users_service_team.userRole.name',
+      ],
+      excludeFields: [
+        'sales_order', 
+        '_id', 
+        'project'
+      ]
+    },
+    {
+      keywords: ['change', 'date', 'service'],
+      icon: 'fluent-color:calendar-edit-16',
+      includeFields: [],
+      excludeFields: [
+        'id', 
+        '__typename', 
+        'staff', 
+        'active', 
+        'avatar',
+      ]
+    },
 
   ]
   const obj = mappedIcons.find((item) => item.keywords.every(key => name.includes(key)));
@@ -385,7 +501,7 @@ export function getIconByName(name) {
   return {
     icon: obj ? obj.icon : 'icon-park-outline:folder',
     includeFields: obj ? obj.includeFields : [],
-    excludeFields: obj ? obj.excludeFields : []
+    excludeFields: obj ? obj.excludeFields : ['id', '__typename', 'staff', 'active', 'avatar'],
   };
 }
 

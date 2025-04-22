@@ -2,11 +2,11 @@ import dayjs from 'dayjs';
 import React, { useMemo, useState, useContext, useCallback } from 'react';
 
 import Stack from '@mui/material/Stack';
-import { Tooltip } from '@mui/material';
 import Divider from '@mui/material/Divider';
 import MenuList from '@mui/material/MenuList';
 import MenuItem from '@mui/material/MenuItem';
 import Checkbox from '@mui/material/Checkbox';
+import { Button, Tooltip } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import { lighten, useTheme } from '@mui/material/styles';
@@ -26,6 +26,7 @@ import { varAlpha } from 'src/theme/styles';
 import { Label } from 'src/components/label';
 import { toast } from 'src/components/snackbar';
 import { Iconify } from 'src/components/iconify';
+import { ConfirmDialog } from 'src/components/custom-dialog';
 import { usePopover, CustomPopover } from 'src/components/custom-popover';
 
 import { LoadingContext } from 'src/auth/context/loading-context';
@@ -45,6 +46,7 @@ export function ServiceTableRow({
   selected,
   onSelectRow,
   onDeleteRow,
+  onCloseRow,
   // onKanbanView,
   onViewRow,
   loadedUsers,
@@ -102,6 +104,8 @@ export function ServiceTableRow({
 
   const confirm = useBoolean();
 
+  const confirmClose = useBoolean();
+
   const popover = usePopover();
 
   const handleChangeInvite = useCallback((event) => {
@@ -144,89 +148,75 @@ export function ServiceTableRow({
           [`&.${tableRowClasses.selected}, &:hover`]: {
             backgroundColor: row?.endDate ? ((fIsAfter(today, dayjs(row?.endDate).format('YYYY-MM-DD')) && (
               row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
-              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
-              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
-            )) ? lighten(theme.palette.error.lighter, 0.6) : 'background.paper' ) : 'background.paper',
+              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.repair.toLowerCase()) !== -1
+            )) ? lighten(theme.palette.error.lighter, 0.6) : 'background.paper') : 'background.paper',
             boxShadow: theme.customShadows.z20,
             transition: theme.transitions.create(['background-color', 'box-shadow'], {
               duration: theme.transitions.duration.shortest,
             }),
-            '&:hover': { backgroundColor: row?.endDate ? ((fIsAfter(today, dayjs(row?.endDate).format('YYYY-MM-DD')) && (
-              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
-              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
-              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
-            )) ? lighten(theme.palette.error.lighter, 0.6) : 'background.paper' ) : 'background.paper'
-            , boxShadow: theme.customShadows.z20 },
+            '&:hover': {
+              backgroundColor: row?.endDate ? ((fIsAfter(today, dayjs(row?.endDate).format('YYYY-MM-DD')) && (
+                row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
+                row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.repair.toLowerCase()) !== -1
+              )) ? lighten(theme.palette.error.lighter, 0.6) : 'background.paper') : 'background.paper'
+              , boxShadow: theme.customShadows.z20
+            },
           },
           [`& .${tableCellClasses.root}`]: { ...defaultStyles },
           ...(details.value && { [`& .${tableCellClasses.root}`]: { ...defaultStyles } }),
           bgcolor: row?.endDate ? ((fIsAfter(today, dayjs(row?.endDate).format('YYYY-MM-DD')) && (
             row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
-            row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
-            row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
-          )) ? lighten(theme.palette.error.lighter, 0.7) : 'inherit' ) : 'inherit', 
+            row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.repair.toLowerCase()) !== -1
+          )) ? lighten(theme.palette.error.lighter, 0.7) : 'inherit') : 'inherit',
         }}
       >
         {(listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) && (
-            <TableCell  padding="checkbox">
-              <Checkbox
-                checked={selected}
-                onDoubleClick={() => console.info('ON DOUBLE CLICK')}
-                onClick={onSelectRow}
-                inputProps={{ id: `row-checkbox-${row?.id}`, 'aria-label': `row-checkbox` }}
-              />
-            </TableCell>
-          )}
+          <TableCell padding="checkbox">
+            <Checkbox
+              checked={selected}
+              onDoubleClick={() => console.info('ON DOUBLE CLICK')}
+              onClick={onSelectRow}
+              inputProps={{ id: `row-checkbox-${row?.id}`, 'aria-label': `row-checkbox` }}
+            />
+          </TableCell>
+        )}
         <TableCell
           // onClick={handleClick} 
           onClick={onViewRow}
-          sx={{ 
-            whiteSpace: 'nowrap', 
+          sx={{
+            whiteSpace: 'nowrap',
             cursor: 'pointer',
             fontWeight: row?.endDate ? ((fIsAfter(today, dayjs(row?.endDate).format('YYYY-MM-DD')) && (
               row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
-              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
-              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
-            )) ? 'fontWeightBold' : 'inherit' ) : 'inherit',
+              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.repair.toLowerCase()) !== -1
+            )) ? 'fontWeightBold' : 'inherit') : 'inherit',
           }}
-          align='center'
+          align='left'
         >
-          {/* {fDate(row?.salesOrder.date)} */}
-          {fDate(row?.startDate) ? fDate(row?.startDate) :
+          {row?.startDate ? (
+            <>
+              {fDate(row.startDate)}{' '}
+              {row.endDate && `(${fDuration(row.startDate, row.endDate)})`}
+            </>
+          ) : (
             <Tooltip title="No Start Date" arrow>
               <Iconify icon="ph:calendar-x-bold" sx={{ color: 'error.main' }} />
             </Tooltip>
-          }
+          )}
+
         </TableCell>
-        <TableCell
-          onClick={onViewRow}
-          sx={{ 
-            whiteSpace: 'nowrap', 
-            cursor: 'pointer', 
-            fontWeight: row?.endDate ?  ((fIsAfter(today, dayjs(row?.endDate).format('YYYY-MM-DD')) && (
-              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
-              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
-              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
-            )) ? 'fontWeightBold' : 'inherit' ) : 'inherit',
-          }}
-        >
-          {row?.endDate ? fDuration(row?.startDate, row?.endDate) :
-            <Tooltip title="No Closing Date" arrow>
-              <Iconify icon="material-symbols:sms-failed-outline" sx={{ color: 'error.main' }} />
-            </Tooltip>}
-        </TableCell>
+
 
         <TableCell
           // onClick={handleClick} 
           onClick={onViewRow}
-          sx={{ 
-            whiteSpace: 'nowrap', 
-            cursor: 'pointer', 
-            fontWeight: row?.endDate ?  ((fIsAfter(today, dayjs(row?.endDate).format('YYYY-MM-DD')) && (
+          sx={{
+            whiteSpace: 'nowrap',
+            cursor: 'pointer',
+            fontWeight: row?.endDate ? ((fIsAfter(today, dayjs(row?.endDate).format('YYYY-MM-DD')) && (
               row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
-              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
-              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
-            )) ? 'fontWeightBold' : 'inherit' ) : 'inherit',
+              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.repair.toLowerCase()) !== -1
+            )) ? 'fontWeightBold' : 'inherit') : 'inherit',
           }}
         >
           <Stack direction="row" alignItems="center" spacing={2}>
@@ -246,19 +236,27 @@ export function ServiceTableRow({
           </Stack>
         </TableCell>
 
+        <TableCell
+          onClick={onViewRow}
+        >
+          <Label color={
+            row?.byFactory ? 'success' : 'error'
+          }>{row?.byFactory ? 'YES' : 'NO'}</Label>
+
+        </TableCell>
+
         {!isMobile && (
           <>
             <TableCell
               // onClick={handleClick} 
               onClick={onViewRow}
-              sx={{ 
-                cursor: 'pointer', 
+              sx={{
+                cursor: 'pointer',
                 maxWidth: 200,
-                fontWeight: row?.endDate ?  ((fIsAfter(today, dayjs(row?.endDate).format('YYYY-MM-DD')) && (
+                fontWeight: row?.endDate ? ((fIsAfter(today, dayjs(row?.endDate).format('YYYY-MM-DD')) && (
                   row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
-                  row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
-                  row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
-                )) ? 'fontWeightBold' : 'inherit' ) : 'inherit',
+                  row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.repair.toLowerCase()) !== -1
+                )) ? 'fontWeightBold' : 'inherit') : 'inherit',
               }}
             >
               {row?.name}
@@ -270,10 +268,8 @@ export function ServiceTableRow({
             >
               <Label color={
                 row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ? 'default' :
-                  row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ? 'secondary' :
-                    row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1 ? 'info' :
-                      row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.permission.toLowerCase()) !== -1 ? 'warning' :
-                        row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.closing.toLowerCase()) !== -1 ? 'success' : 'error'
+                  row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.repair.toLowerCase()) !== -1 ? 'secondary' :
+                    row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.closing.toLowerCase()) !== -1 ? 'success' : 'error'
               }>{row?.currentStage?.name}</Label>
             </TableCell>
 
@@ -394,6 +390,18 @@ export function ServiceTableRow({
             <Iconify icon="lsicon:view-filled" />
             View Service
           </MenuItem>
+          {listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator) ? [
+            <MenuItem
+              key="close"
+              onClick={!row?.isClosed ? () => {
+                confirmClose.onTrue();
+                popover.onClose();
+              } : onCloseRow}
+            >
+              <Iconify icon={!row?.isClosed ? 'mdi:close-network' : 'material-symbols:reopen-window'} />
+              {!row?.isClosed ? 'Close' : 'Reopen'} Service
+            </MenuItem>
+          ] : null}
 
           {listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.superadmin) ? [
             <Divider key="divider" sx={{ borderStyle: 'dashed' }} />,
@@ -412,46 +420,29 @@ export function ServiceTableRow({
         </MenuList>
       </CustomPopover >
 
-      {/* <ProjectFileDetails
-        item={row}
-        favorited={favorite.value}
-        onFavorite={favorite.onToggle}
-        onCopyLink={handleCopy}
-        open={details.value}
-        onClose={details.onFalse}
-        onDelete={onDeleteRow}
-        loadedUsers={loadedUsers}
-        loadedProjectPermissions={loadedProjectPermissions}
-        loadedStages={loadedStages}
-        loadedStagesTask={loadedStagesTask}
-        setTableData={setTableData}
-        refetchProjects={refetchProjects}
-      />
-
-      <ProjectShareDialog
-        open={share.value}
-        shared={row?.shared}
-        inviteEmail={inviteEmail}
-        onChangeInvite={handleChangeInvite}
-        onCopyLink={handleCopy}
-        loadedUsers={loadedUsers}
-        onClose={() => {
-          share.onFalse();
-          setInviteEmail('');
-        }}
-      />
-
       <ConfirmDialog
         open={confirm.value}
         onClose={confirm.onFalse}
-        title="Delete Project"
+        title="Delete Service"
         content={`Are you sure want to delete service ${row.name}?`}
         action={
           <Button variant="contained" color="error" onClick={onDeleteRow}>
             Delete
           </Button>
         }
-      /> */}
+      />
+
+      <ConfirmDialog
+        open={confirmClose.value}
+        onClose={confirmClose.onFalse}
+        title="Close Service"
+        content={`Are you sure want to close service ${row.name}?`}
+        action={
+          <Button variant="contained" color="warning" onClick={onCloseRow}>
+            Close
+          </Button>
+        }
+      />
     </>
   );
 }
