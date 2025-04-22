@@ -167,8 +167,8 @@ export function getIconByName(name) {
       keywords: ['update', 'project'],
       icon: 'material-icon-theme:folder-update-open',
       includeFields: [
-        'name', 
-        'number', 
+        'name',
+        'number',
         'reference_number',
         'start_date',
         'end_date',
@@ -179,17 +179,17 @@ export function getIconByName(name) {
         'has_permission',
         'description',
         'current_stage.name',
-        'user_manager.username', 
+        'user_manager.username',
         'user_manager.name',
         'users_assignees.username',
         'users_assignees.name',
       ],
       excludeFields: [
-        'sales_order', 
-        '_id', 
-        'project', 
-        'name', 
-        'number', 
+        'sales_order',
+        '_id',
+        'project',
+        'name',
+        'number',
         'id'
       ]
     },
@@ -200,8 +200,8 @@ export function getIconByName(name) {
         'has_permission'
       ],
       excludeFields: [
-        'sales_order', 
-        '_id', 
+        'sales_order',
+        '_id',
         'project'
       ]
     },
@@ -215,8 +215,8 @@ export function getIconByName(name) {
         'project_default_tasks.users_assignees.userRole.name',
       ],
       excludeFields: [
-        'sales_order', 
-        '_id', 
+        'sales_order',
+        '_id',
         'project'
       ]
     },
@@ -228,8 +228,8 @@ export function getIconByName(name) {
       ],
       excludeFields: [
         'id',
-        'sales_order', 
-        '_id', 
+        'sales_order',
+        '_id',
         'project'
       ]
     },
@@ -240,8 +240,8 @@ export function getIconByName(name) {
         'project_comments.comment'
       ],
       excludeFields: [
-        'sales_order', 
-        '_id', 
+        'sales_order',
+        '_id',
         'project'
       ]
     },
@@ -252,8 +252,8 @@ export function getIconByName(name) {
         'project_comments.comment'
       ],
       excludeFields: [
-        'sales_order', 
-        '_id', 
+        'sales_order',
+        '_id',
         'project'
       ]
     },
@@ -268,8 +268,8 @@ export function getIconByName(name) {
         'project_default_tasks.project_task_attachments.file'
       ],
       excludeFields: [
-        'sales_order', 
-        '_id', 
+        'sales_order',
+        '_id',
         'project'
       ]
     },
@@ -277,12 +277,12 @@ export function getIconByName(name) {
       keywords: ['delete', 'file'],
       icon: 'icon-park:delete-themes',
       includeFields: [
-        'name', 
+        'name',
         'file'
       ],
       excludeFields: [
-        'sales_order', 
-        '_id', 
+        'sales_order',
+        '_id',
         'project'
       ]
     },
@@ -293,8 +293,8 @@ export function getIconByName(name) {
         'project_guide_products.name'
       ],
       excludeFields: [
-        'sales_order', 
-        '_id', 
+        'sales_order',
+        '_id',
         'project'
       ]
     },
@@ -302,12 +302,12 @@ export function getIconByName(name) {
       keywords: ['check', 'guide'],
       icon: 'marketeq:check-circle',
       includeFields: [
-        'project_guide_products.name', 
+        'project_guide_products.name',
         'project_guide_products.ckecked'
       ],
       excludeFields: [
-        'sales_order', 
-        '_id', 
+        'sales_order',
+        '_id',
         'project'
       ]
     },
@@ -320,8 +320,8 @@ export function getIconByName(name) {
         'project_guide_products.price',
       ],
       excludeFields: [
-        'sales_order', 
-        '_id', 
+        'sales_order',
+        '_id',
         'project'
       ]
     },
@@ -332,8 +332,8 @@ export function getIconByName(name) {
         'description'
       ],
       excludeFields: [
-        'sales_order', 
-        '_id', 
+        'sales_order',
+        '_id',
         'project'
       ]
     },
@@ -341,12 +341,12 @@ export function getIconByName(name) {
       keywords: ['change', 'reference'],
       icon: 'fluent-color:number-symbol-square-20',
       includeFields: [
-        'reference_number', 
+        'reference_number',
         'sales_order.reference_number'
       ],
       excludeFields: [
-        'sales_order', 
-        '_id', 
+        'sales_order',
+        '_id',
         'project'
       ]
     },
@@ -354,14 +354,14 @@ export function getIconByName(name) {
       keywords: ['change', 'stage'],
       icon: 'token-branded:step',
       includeFields: [
-        'current_stage.name', 
-        'project_history.initial_stage.name', 
-        'project_history.final_stage.name', 
+        'current_stage.name',
+        'project_history.initial_stage.name',
+        'project_history.final_stage.name',
         'project_history.created_time'
       ],
       excludeFields: [
-        'sales_order', 
-        '_id', 
+        'sales_order',
+        '_id',
         'project'
       ]
     },
@@ -369,13 +369,13 @@ export function getIconByName(name) {
       keywords: ['create', 'reminder'],
       icon: 'emojione-v1:ringing-bell',
       includeFields: [
-        'date', 
-        'notes', 
+        'date',
+        'notes',
         'project_default_task.project_default_task.name'
       ],
       excludeFields: [
-        'sales_order', 
-        '_id', 
+        'sales_order',
+        '_id',
         'project'
       ]
     },
@@ -389,7 +389,7 @@ export function getIconByName(name) {
         'user_manager.email',
       ],
       excludeFields: [
-        'id', 
+        'id',
         '_id',
       ]
     },
@@ -403,7 +403,7 @@ export function getIconByName(name) {
         'sales_order.salesorder_number',
       ],
       excludeFields: [
-        'id', 
+        'id',
         '_id',
       ]
     },
@@ -412,10 +412,10 @@ export function getIconByName(name) {
       icon: 'catppuccin:properties',
       includeFields: [],
       excludeFields: [
-        'id', 
-        '__typename', 
-        'staff', 
-        'active', 
+        'id',
+        '__typename',
+        'staff',
+        'active',
         'avatar',
       ]
     },
@@ -424,10 +424,10 @@ export function getIconByName(name) {
       icon: 'icon-park:folder-failed',
       includeFields: [],
       excludeFields: [
-        'id', 
-        '__typename', 
-        'staff', 
-        'active', 
+        'id',
+        '__typename',
+        'staff',
+        'active',
         'avatar',
       ]
     },
@@ -436,10 +436,10 @@ export function getIconByName(name) {
       icon: 'icon-park:folder-open',
       includeFields: [],
       excludeFields: [
-        'id', 
-        '__typename', 
-        'staff', 
-        'active', 
+        'id',
+        '__typename',
+        'staff',
+        'active',
         'avatar',
       ]
     },
@@ -477,8 +477,8 @@ export function getIconByName(name) {
         'users_service_team.userRole.name',
       ],
       excludeFields: [
-        'sales_order', 
-        '_id', 
+        'sales_order',
+        '_id',
         'project'
       ]
     },
@@ -487,15 +487,36 @@ export function getIconByName(name) {
       icon: 'fluent-color:calendar-edit-16',
       includeFields: [],
       excludeFields: [
-        'id', 
-        '__typename', 
-        'staff', 
-        'active', 
+        'id',
+        '__typename',
+        'staff',
+        'active',
         'avatar',
       ]
     },
+    {
+      keywords: ['change', 'status', 'task', 'service'],
+      icon: 'fluent-color:clipboard-task-24',
+      includeFields: [
+        'service_default_task.name',
+        'status',
+        'percentage',
+      ],
+      excludeFields: []
+    },
+    {
+      keywords: ['change', 'status', 'task', 'project'],
+      icon: 'fluent-color:clipboard-task-24',
+      includeFields: [
+        'project_default_task.name',
+        'status',
+        'percentage',
+      ],
+      excludeFields: []
+    },
 
   ]
+  
   const obj = mappedIcons.find((item) => item.keywords.every(key => name.includes(key)));
 
   return {
@@ -510,15 +531,15 @@ export function getIconByName(name) {
 export function transformText(input) {
   if (!input) return '';
   const words = input.split(' ');
-  if (words.length < 2) return input; 
-  
+  if (words.length < 2) return input;
+
   const verb = words[0].toLowerCase();
   const objectWords = words.slice(1);
 
   const pastVerb = verb.endsWith('e') ? `${verb}d` : `${verb}ed`;
-  
+
   const objectPart = objectWords.length > 0 ? `${objectWords.join(' ')} ` : '';
-  
+
   // Construimos y retornamos el resultado
   return `${objectPart} ${pastVerb}`;
 }

@@ -1435,25 +1435,25 @@ def change_service_team(request, id):
                     task['user_reporter'] = user_reporter
                     task['last_modified_time'] = timezone.now()
                     
-                    not_started_tasks = [t for t in all_tasks if t['status'] == 'not started' and t['service_default_task']['order'] > task['service_default_task']['order']]
+                    # not_started_tasks = [t for t in all_tasks if t['status'] == 'not started' and t['service_default_task']['order'] > task['service_default_task']['order']]
                     
-                    sorted_tasks = sorted(not_started_tasks, key=lambda tt: tt['service_default_task']['order'])
+                    # sorted_tasks = sorted(not_started_tasks, key=lambda tt: tt['service_default_task']['order'])
                     
-                    def get_next_task(task, sorted_tasks):
-                        return next(
-                            (tt for tt in sorted_tasks if tt['service_default_task']['order'] > task['service_default_task']['order']),
-                            None
-                        )
+                    # def get_next_task(task, sorted_tasks):
+                    #     return next(
+                    #         (tt for tt in sorted_tasks if tt['service_default_task']['order'] > task['service_default_task']['order']),
+                    #         None
+                    #     )
                                 
-                    next_task = get_next_task(task, sorted_tasks)
+                    # next_task = get_next_task(task, sorted_tasks)
                     
-                    if next_task:
-                        next_task['status'] = 'in progress'
-                        next_task['percentage'] = 50
-                        next_task['user_reporter'] = user_reporter
-                        next_task['last_modified_time'] = timezone.now()
-                        all_tasks = [t for t in all_tasks if str(t['service_default_task']['_id']) != str(next_task['service_default_task']['_id'])]
-                        all_tasks.append(next_task)
+                    # if next_task:
+                    #     next_task['status'] = 'in progress'
+                    #     next_task['percentage'] = 50
+                    #     next_task['user_reporter'] = user_reporter
+                    #     next_task['last_modified_time'] = timezone.now()
+                    #     all_tasks = [t for t in all_tasks if str(t['service_default_task']['_id']) != str(next_task['service_default_task']['_id'])]
+                    #     all_tasks.append(next_task)
                            
     sorted_tasks = sorted(all_tasks, key=lambda x: x['service_default_task']['order'], reverse=True)
         
@@ -1533,25 +1533,25 @@ def change_service_dates(request, id):
                         task['user_reporter'] = user_reporter
                         task['last_modified_time'] = timezone.now()
                         
-                        not_started_tasks = [t for t in all_tasks if t['status'] == 'not started' and t['service_default_task']['order'] > task['service_default_task']['order']]
+                        # not_started_tasks = [t for t in all_tasks if t['status'] == 'not started' and t['service_default_task']['order'] > task['service_default_task']['order']]
                         
-                        sorted_tasks = sorted(not_started_tasks, key=lambda tt: tt['service_default_task']['order'])
+                        # sorted_tasks = sorted(not_started_tasks, key=lambda tt: tt['service_default_task']['order'])
                         
-                        def get_next_task(task, sorted_tasks):
-                            return next(
-                                (tt for tt in sorted_tasks if tt['service_default_task']['order'] > task['service_default_task']['order']),
-                                None
-                            )
+                        # def get_next_task(task, sorted_tasks):
+                        #     return next(
+                        #         (tt for tt in sorted_tasks if tt['service_default_task']['order'] > task['service_default_task']['order']),
+                        #         None
+                        #     )
                                     
-                        next_task = get_next_task(task, sorted_tasks)
+                        # next_task = get_next_task(task, sorted_tasks)
                         
-                        if next_task:
-                            next_task['status'] = 'in progress'
-                            next_task['percentage'] = 50
-                            next_task['user_reporter'] = user_reporter
-                            next_task['last_modified_time'] = timezone.now()
-                            all_tasks = [t for t in all_tasks if str(t['service_default_task']['_id']) != str(next_task['service_default_task']['_id'])]
-                            all_tasks.append(next_task)
+                        # if next_task:
+                        #     next_task['status'] = 'in progress'
+                        #     next_task['percentage'] = 50
+                        #     next_task['user_reporter'] = user_reporter
+                        #     next_task['last_modified_time'] = timezone.now()
+                        #     all_tasks = [t for t in all_tasks if str(t['service_default_task']['_id']) != str(next_task['service_default_task']['_id'])]
+                        #     all_tasks.append(next_task)
                             
         sorted_tasks = sorted(all_tasks, key=lambda x: x['service_default_task']['order'], reverse=True)
             
@@ -1765,6 +1765,8 @@ def change_status_service_default_task(request, serviceId, id):
         task['user_reporter'] = user_reporter
         task['last_modified_time'] = timezone.now()
         
+        tracking_task = task
+        
         not_started_tasks = [
             t for t in all_tasks if \
             t['status'] == 'not started' and \
@@ -1833,10 +1835,10 @@ def change_status_service_default_task(request, serviceId, id):
         
         tracking = ProjectTracking(
             user_reporter=user_reporter,
-            action=f'change status default task ({task["service_default_task"]["id"]} - {task["service_default_task"]["name"]})',
+            action=f'change status default task ({task["service_default_task"]["id"]} - {task["service_default_task"]["name"]}) in service ({service.id} - {service.name})',
             created_time=timezone.now(),
             managed_data={
-                'data': transform_data_to_mongo(service, include_fields=['id', 'name', 'number', 'current_stage', 'service_default_tasks'])
+                'data': tracking_task
             },
         )
         tracking.save()
@@ -2375,12 +2377,20 @@ def change_service_properties(request, id):
     task_3 = next((task for task in tasks if task['service_default_task']['order'] == 3), None)
     task_4 = next((task for task in tasks if task['service_default_task']['order'] == 4), None)
     task_5 = next((task for task in tasks if task['service_default_task']['order'] == 5), None)
+    task_6 = next((task for task in tasks if task['service_default_task']['order'] == 6), None)
+    task_7 = next((task for task in tasks if task['service_default_task']['order'] == 7), None)
     
     after_tasks = [
         t for t in tasks if t['service_default_task']['order'] > task_5['service_default_task']['order'] and\
         (t['service_default_task']['service_stage']['name'].lower() == 'repair' or\
         t['service_default_task']['service_stage']['name'].lower() == 'preparation')
     ]
+    final_after_tasks = after_tasks if after_tasks else []
+    if len(service.users_service_team) > 0:
+        final_after_tasks = [task for task in final_after_tasks if str(task['service_default_task']['_id']) != str(task_7['service_default_task']['_id'])]
+    if service.start_date:
+        final_after_tasks = [task for task in final_after_tasks if str(task['service_default_task']['_id']) != str(task_6['service_default_task']['_id'])]
+        
     closing_tasks = [task for task in tasks if task['service_default_task']['service_stage']['name'].lower() == 'closing']
     first_closing_task = min(closing_tasks, key=lambda x: x['service_default_task']['order']) if closing_tasks else None    
     
@@ -2425,6 +2435,7 @@ def change_service_properties(request, id):
         service.by_factory = by_factory
         include_fields.append('by_factory')
         properties.append('by factory')
+        
         if not by_factory:
             service.repaired = False
             include_fields.append('repaired')
@@ -2432,7 +2443,7 @@ def change_service_properties(request, id):
             
             if task_4:
                 task_4['service_default_task']['is_active'] = True
-                for task in after_tasks:
+                for task in final_after_tasks:
                     task['status'] = 'not started'
                     task['percentage'] = 0
                     task['service_default_task']['is_active'] = True
@@ -2441,8 +2452,8 @@ def change_service_properties(request, id):
                     task_4['percentage'] = 50
                 tasks = [task for task in tasks if str(task['service_default_task']['_id']) != str(task_4['service_default_task']['_id'])]
                 tasks.append(task_4) 
-                tasks = [t for t in tasks if str(t['service_default_task']['_id']) not in [str(task['service_default_task']['_id']) for task in after_tasks]]
-                tasks.extend(after_tasks)
+                tasks = [t for t in tasks if str(t['service_default_task']['_id']) not in [str(task['service_default_task']['_id']) for task in final_after_tasks]]
+                tasks.extend(final_after_tasks)
             
             if task_5:
                 task_5['status'] = 'not started'
@@ -2462,14 +2473,14 @@ def change_service_properties(request, id):
             task_4['service_default_task']['is_active'] = False
             task_4['status'] = 'not started'
             task_4['percentage'] = 0
-            for task in after_tasks:
+            for task in final_after_tasks:
                 task['status'] = 'not started'
                 task['percentage'] = 0
                 task['service_default_task']['is_active'] = False
             tasks = [task for task in tasks if str(task['service_default_task']['_id']) != str(task_4['service_default_task']['_id'])]
             tasks.append(task_4) 
-            tasks = [t for t in tasks if str(t['service_default_task']['_id']) not in [str(task['service_default_task']['_id']) for task in after_tasks]]
-            tasks.extend(after_tasks)
+            tasks = [t for t in tasks if str(t['service_default_task']['_id']) not in [str(task['service_default_task']['_id']) for task in final_after_tasks]]
+            tasks.extend(final_after_tasks)
             tasks = [task for task in tasks if str(task['service_default_task']['_id']) != str(task_5['service_default_task']['_id'])]
             tasks.append(task_5) 
         
@@ -2484,13 +2495,13 @@ def change_service_properties(request, id):
             if task_5:
                 task_5['status'] = 'in progress'
                 task_5['percentage'] = 50
-                if after_tasks:
-                    for task in after_tasks:
+                if final_after_tasks:
+                    for task in final_after_tasks:
                         task['status'] = 'not started'
                         task['percentage'] = 0
                         task['service_default_task']['is_active'] = False
-                    tasks = [t for t in tasks if str(t['service_default_task']['_id']) not in [str(task['service_default_task']['_id']) for task in after_tasks]]
-                    tasks.extend(after_tasks)
+                    tasks = [t for t in tasks if str(t['service_default_task']['_id']) not in [str(task['service_default_task']['_id']) for task in final_after_tasks]]
+                    tasks.extend(final_after_tasks)
                 if closing_tasks:
                     for task in closing_tasks:
                         task['status'] = 'not started'
@@ -2501,12 +2512,12 @@ def change_service_properties(request, id):
         elif task_5:
             task_4['status'] = 'finished'
             task_4['percentage'] = 100
-            for task in after_tasks:
+            for task in final_after_tasks:
                 task['status'] = 'not started'
                 task['percentage'] = 0
                 task['service_default_task']['is_active'] = False
-            tasks = [t for t in tasks if str(t['service_default_task']['_id']) not in [str(task['service_default_task']['_id']) for task in after_tasks]]
-            tasks.extend(after_tasks)
+            tasks = [t for t in tasks if str(t['service_default_task']['_id']) not in [str(task['service_default_task']['_id']) for task in final_after_tasks]]
+            tasks.extend(final_after_tasks)
             if first_closing_task:
                 first_closing_task['status'] = 'in progress'
                 first_closing_task['percentage'] = 50

@@ -8,49 +8,5 @@ from .schema import schema
 from . import views
 urlpatterns = [
     path('graphql/', csrf_exempt(GraphQLView.as_view(graphiql=True, schema=schema))),
-    # SERVICE ISSUES
-    path('create/service-issue/', views.create_service_issue, name='create_service_issue'),
-    path('edit/service-issue/<str:id>/', views.edit_service_issue, name='edit_service_issue'),
-    path('delete/service-issue/<str:id>/', views.delete_service_issue, name='delete_service_issue'),
-    path('delete/service-issues/', views.delete_service_issues, name='delete_service_issues'),
-    # SERVICE
-    path('delete/file/<str:id>/service/<str:folder>/<str:file>/', views.delete_service_file, name='delete_service_file'),
-    path('upload/service/<str:id>/file/', views.upload_files_to_service, name='upload_files_to_service'),
-    path('create/service/', views.create_service, name='create_service'),
-    path('delete/service/<str:id>/', views.delete_service, name='delete_service'),
-    path('delete/services/', views.delete_services, name='delete_services'),
-    path('update/service/<str:id>/', views.update_service, name='update_service'),
-    path('update/service/<str:id>/close-service/', views.close_service, name='close_service'),
-    path('update/service/<str:id>/remove-date/', views.remove_date_service, name='remove_date_service'),
-    path('update/service/<str:id>/add-new-issue/<str:issued_product_id>/', views.add_new_issue_service, name='add_new_issue_service'),
-    path('update/service/<str:id>/edit-issue/<str:issued_product_id>/<str:issue_id>/', views.edit_issue_service, name='edit_issue_service'),
-    path('update/service/<str:id>/delete-issue/<str:issued_product_id>/<str:issue_id>/', views.delete_issue_service, name='delete_issue_service'),
-    path('update/service/<str:id>/change-address/', views.change_service_address, name='change_service_address'),
-    path('update/service/<str:id>/change-phone-number/', views.change_service_phone_number, name='change_service_phone_number'),
-    path('update/service/<str:id>/change-reference-number/', views.change_service_reference_number, name='change_service_reference_number'),
-    path('update/service/<str:id>/change-user-manager/', views.change_service_manager, name='change_service_manager'),
-    path('update/service/<str:id>/change-users-team/', views.change_service_team, name='change_service_team'),
-    path('update/service/<str:id>/change-dates/', views.change_service_dates, name='change_service_dates'),
-    path('update/service/<str:id>/add-issued-products/', views.add_issued_products, name='add_issued_products'),
-    path('update/service/<str:id>/set-place/', views.set_service_place, name='set_service_place'),
-    path('update/service/<str:id>/change-type/', views.change_service_type, name='change_service_type'),
-    path('update/service/<str:id>/change-notes/', views.change_service_notes, name='change_service_notes'),
-    path('update/service/<str:id>/change-properties/', views.change_service_properties, name='change_service_properties'),
-    path('update/service/<str:serviceId>/task/<str:id>/change-status/', views.change_status_service_default_task, name='change_status_service_default_task'),
-    path('create/service/<str:id>/comment/', views.create_service_comment, name='create_service_comment'),
-    path('edit/service/<str:serviceId>/comment/<str:id>/', views.edit_service_comment, name='edit_service_comment'),
-    path('delete/service/<str:serviceId>/comment/<str:id>/', views.delete_service_comment, name='delete_service_comment'),
-    # SERVICE DEFAULT TASKS
-    path('create/default-task/', views.create_service_default_task, name='create_service_default_task'),
-    path('edit/default-task/<str:id>/', views.edit_service_default_task, name='edit_service_default_task'),
-    path('delete/default-task/<str:id>/', views.delete_service_default_task, name='delete_service_default_task'),
-    path('delete/default-tasks/', views.delete_service_default_tasks, name='delete_service_default_tasks'),
-    # SERVICE STAGES
-    path('create/stage/', views.create_service_stage, name='create_service_stage'),
-    path('edit/stage/<str:id>/', views.edit_service_stage, name='edit_service_stage'),
-    path('delete/stage/<str:id>/', views.delete_service_stage, name='delete_service_stage'),
-    path('delete/stages/', views.delete_service_stages, name='delete_service_stages'),
-    # GET FILE URL FROM AWS S3
-    path('get-file-url/', views.get_default_file_url, name='get_file_url'),
     
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

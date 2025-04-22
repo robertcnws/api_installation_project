@@ -2299,6 +2299,8 @@ def change_status_project_default_task(request, projectId, id):
         task['user_reporter'] = user_reporter
         task['last_modified_time'] = timezone.now()
         
+        tracking_task = task
+        
         not_started_tasks = [t for t in all_tasks if t['status'] == 'not started' and t['project_default_task']['order'] > task['project_default_task']['order']]
         # not_started_tasks.append(task)
         if not project.has_permission:
@@ -2388,10 +2390,10 @@ def change_status_project_default_task(request, projectId, id):
         
         tracking = ProjectTracking(
             user_reporter=user_reporter,
-            action=f'change status default task ({task["project_default_task"]["id"]} - {task["project_default_task"]["name"]})',
+            action=f'change status default task ({task["project_default_task"]["id"]} - {task["project_default_task"]["name"]}) in project ({project.id} - {project.name})',
             created_time=timezone.now(),
             managed_data={
-                'data': transform_data_to_mongo(project, include_fields=['id', 'name', 'number', 'current_stage', 'project_default_tasks'])
+                'data': tracking_task
             },
         )
         tracking.save()
