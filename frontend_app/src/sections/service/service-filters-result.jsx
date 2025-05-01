@@ -39,6 +39,11 @@ export function ServiceFiltersResult({ filters, onResetPage, totalResults, sx })
     filters.setState({ notByFactory: false });
   }, [filters, onResetPage]);
 
+  const handleRemoveInstaller = useCallback(() => {
+    onResetPage();
+    filters.setState({ installer: { id: null, name: null } });
+  }, [filters, onResetPage]);
+
   const handleRemoveCustom = useCallback(
     (customType) => {
       onResetPage();
@@ -96,6 +101,17 @@ export function ServiceFiltersResult({ filters, onResetPage, totalResults, sx })
         />
       </FiltersBlock>
 
+      <FiltersBlock
+        label="Service Team:"
+        isShow={Boolean(filters.state.installer.id)}
+      >
+        <Chip
+          {...chipProps}
+          label={filters.state.installer.name}
+          onDelete={handleRemoveInstaller}
+        />
+      </FiltersBlock>
+
       <FiltersBlock label="By Factory?:" isShow={Boolean(filters.state.byFactory)}>
         <Chip {...chipProps} label='Yes' onDelete={() => handleRemoveByFactory()} />
       </FiltersBlock>
@@ -109,8 +125,8 @@ export function ServiceFiltersResult({ filters, onResetPage, totalResults, sx })
       </FiltersBlock>
 
       <FiltersBlock label="Stage(s):" isShow={
-        Boolean(filters.state.custom.isPreparation.value || 
-          filters.state.custom.isRepair.value || 
+        Boolean(filters.state.custom.isPreparation.value ||
+          filters.state.custom.isRepair.value ||
           filters.state.custom.isClosing.value)
       }>
         {filters.state.custom.isPreparation.value && (

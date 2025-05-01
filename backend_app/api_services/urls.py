@@ -40,6 +40,7 @@ urlpatterns = [
     path('create/service/<str:id>/comment/', views.create_service_comment, name='create_service_comment'),
     path('edit/service/<str:serviceId>/comment/<str:id>/', views.edit_service_comment, name='edit_service_comment'),
     path('delete/service/<str:serviceId>/comment/<str:id>/', views.delete_service_comment, name='delete_service_comment'),
+    path('download/files/', views.download_s3_archive, name='download_s3_archive'),
     # SERVICE DEFAULT TASKS
     path('create/default-task/', views.create_service_default_task, name='create_service_default_task'),
     path('edit/default-task/<str:id>/', views.edit_service_default_task, name='edit_service_default_task'),

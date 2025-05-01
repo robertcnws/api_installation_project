@@ -6,7 +6,7 @@ import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
 import Grid from '@mui/material/Unstable_Grid2';
 import LoadingButton from '@mui/lab/LoadingButton';
-import { Button, Dialog, Switch, TextField, Typography, DialogActions, InputAdornment } from '@mui/material';
+import { Button, TextField, Typography } from '@mui/material';
 
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
@@ -17,8 +17,6 @@ import { useSetState } from 'src/hooks/use-set-state';
 import { CONFIG } from 'src/config-global';
 
 import { toast } from 'src/components/snackbar'
-import { Iconify } from 'src/components/iconify';
-import { Scrollbar } from 'src/components/scrollbar';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 import {
   useTable,

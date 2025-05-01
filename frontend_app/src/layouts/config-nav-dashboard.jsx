@@ -1,7 +1,7 @@
 
 import { paths } from 'src/routes/paths';
 
-import { isServiceStaff, listRolesAndSubroles } from 'src/utils/check-permissions';
+import { isServiceStaff, listRolesAndSubroles, belongsToWorkingStaff } from 'src/utils/check-permissions';
 
 import { CONFIG } from 'src/config-global';
 
@@ -113,15 +113,15 @@ export const navData = () => [
           ],
         },
       ] : []),
-      ...(userLogged && listRolesAndSubroles(userLogged?.data.user_role.name).includes(CONFIG.roles.installer) ? [
+      ...(userLogged && belongsToWorkingStaff(userLogged?.user_role?.name) ? [
         {
           title: 'Measurements',
-          path: paths.dashboard.service.root,
+          path: paths.dashboard.measurement.root,
           icon: ICONS.measurement,
           children: [
             {
               title: 'List',
-              path: paths.dashboard.service.list,
+              path: paths.dashboard.measurement.list,
             },
             {
               title: 'Create',

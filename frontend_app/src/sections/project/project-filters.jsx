@@ -16,6 +16,7 @@ import { varAlpha } from 'src/theme/styles';
 
 import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
+import { ConfirmDialog } from 'src/components/custom-dialog';
 import { usePopover, CustomPopover } from 'src/components/custom-popover';
 import { CustomDateRangePicker } from 'src/components/custom-date-range-picker';
 
@@ -25,12 +26,16 @@ import { LoadingContext } from 'src/auth/context/loading-context';
 
 export function ProjectFilters({
   filters,
+  loadedUsers,
   options,
   dateError,
   onResetPage,
   openDateRange,
   onOpenDateRange,
   onCloseDateRange,
+  openInstallerFilter,
+  onOpenInstallerFilter,
+  onCloseInstallerFilter,
 }) {
 
   const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
@@ -65,11 +70,26 @@ export function ProjectFilters({
     if (custom.isClosing?.value) active.push('In closing stage');
     if (custom.hasComments) active.push('Have comments');
     if (filters.state.startDate && filters.state.endDate) active.push(fDateRangeShortLabel(filters.state.startDate, filters.state.endDate));
-    if (filters.state.name) active.push(`matches: ${filters.state.name}`);
+    if (filters.state.name) active.push(`Matches: ${filters.state.name}`);
+    if (filters.state.installer.id) active.push(`Installer: ${filters.state.installer.name}`);
     return active.length > 0 ? `${name} Installations (${active.join(', ')})` : `${name} installations`;
-  }, [custom, filters]);
+  }, [
+    filters.state.list,
+    filters.state.startDate,
+    filters.state.endDate,
+    filters.state.name,
+    filters.state.installer.id,
+    filters.state.installer.name,
+    custom.hasPermission,
+    custom.isPreparation?.value,
+    custom.isCoordination?.value,
+    custom.isInstallation?.value,
+    custom.isPermission?.value,
+    custom.isClosing?.value,
+    custom.hasComments,
+  ]);
 
-  const [customFilterName, setCustomFilterName] = useState(createCustomFilterName());
+  const [customFilterName, setCustomFilterName] = useState(() => createCustomFilterName());
 
   const [customMarginTypeList, setCustomMarginTypeList] = useState(0);
 
@@ -129,6 +149,22 @@ export function ProjectFilters({
 
     setCustomFilterName(createCustomFilterName());
   }, [filters, createCustomFilterName, onResetPage, setCustomFilterName]);
+
+
+  const handleFilterInstaller = useCallback(
+    (event) => {
+      const id = event.target.value;
+      onResetPage();
+      const user = loadedUsers.find((u) => u.id === id);
+      filters.setState({
+        installer: {
+          id,
+          name: user?.name || ''
+        }
+      });
+    },
+    [loadedUsers, filters, onResetPage]
+  );
 
 
   const handleFilterName = useCallback(
@@ -195,6 +231,66 @@ export function ProjectFilters({
     popover.onClose();
     filters.setState({ type: [] });
   }, [filters, popover]);
+
+
+  const renderFilterInstaller = (
+    <>
+      <Button
+        color="inherit"
+        onClick={onOpenInstallerFilter}
+        endIcon={
+          <Iconify
+            icon={openInstallerFilter ? 'eva:arrow-ios-upward-fill' : 'eva:arrow-ios-downward-fill'}
+            sx={{ ml: -0.5 }}
+          />
+        }
+      >
+        {!!filters.state.installer.id && !!filters.state.installer.name
+          ? `Installer: ${filters.state.installer.name}`
+          : 'Select installer'}
+      </Button>
+
+      <ConfirmDialog
+        open={openInstallerFilter}
+        onClose={onCloseInstallerFilter}
+        title="Select installer"
+        content={
+          <TextField
+            select
+            value={filters.state.installer.id || ''}
+            onChange={handleFilterInstaller}
+            placeholder="Select installer"
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Iconify icon="eva:search-fill" sx={{ color: 'text.disabled' }} />
+                </InputAdornment>
+              ),
+            }}
+            sx={{ width: '100%' }}
+          >
+            {loadedUsers.filter((user) => isInstaller(user.userRole.name)).map((user) => (
+              <MenuItem key={user.id} value={user.id}>
+                {user.name}
+              </MenuItem>
+            ))}
+          </TextField>
+        }
+        action={
+          <Button
+            variant="contained"
+            onClick={() => {
+              onCloseInstallerFilter();
+              filters.setState({ installer: { id: null, name: null } });
+            }}
+            color='warning'
+          >
+            Clear
+          </Button>
+        }
+      />
+    </>
+  );
 
 
   const renderFilterDate = (isRenderCustom = false) => (
@@ -636,7 +732,10 @@ export function ProjectFilters({
 
       <Stack spacing={1} direction="row" alignItems="center" justifyContent="flex-end" flexGrow={1}>
         {!isInstaller(userLogged?.data?.user_role?.name) && (
-          renderFilterDate()
+          <>
+            {renderFilterInstaller}
+            {renderFilterDate()}
+          </>
         )}
         {renderFilterType}
       </Stack>

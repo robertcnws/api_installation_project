@@ -3,13 +3,16 @@ import { useMemo, useState, useEffect, useCallback } from 'react';
 
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
-import { Typography } from '@mui/material';
+import { Box, Tooltip, MenuItem, MenuList, Typography } from '@mui/material';
 
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
 
 import { useTabs } from 'src/hooks/use-tabs';
 
+import { fDate } from 'src/utils/format-time';
+import { filteredDescriptionJson } from 'src/utils/project-tasks-utils';
+import { extractDimensions } from 'src/utils/generate-installation-guide-pdf';
 import { isInstaller, isFinancialStaff, isWarehouseStaff, listRolesAndSubroles } from 'src/utils/check-permissions';
 
 import { CONFIG } from 'src/config-global';
@@ -18,7 +21,9 @@ import { useProjectByIdQuery } from 'src/_mock/__projects';
 
 import { Label } from 'src/components/label';
 import { toast } from 'src/components/snackbar';
+import { Iconify } from 'src/components/iconify';
 import { ConfirmDialog } from 'src/components/custom-dialog';
+import { usePopover, CustomPopover } from 'src/components/custom-popover';
 
 import { useDataContext } from 'src/auth/context/data/data-context';
 
@@ -39,14 +44,6 @@ import { ProjectDetailsReleaseFormInstallerView } from './project-details-releas
 import { ProjectDetailsInstallationGuideFormView } from './project-details-installation-guide-form-view';
 import { ProjectDetailsInstallationGuideFormInstallerView } from './project-details-installation-guide-form-installer-view';
 
-
-
-
-
-
-
-
-
 // ----------------------------------------------------------------------
 
 export function ProjectDetailsView({ projectId }) {
@@ -55,11 +52,15 @@ export function ProjectDetailsView({ projectId }) {
 
     const router = useRouter();
 
+    const morePopover = usePopover();
+
     const {
         loadedProjects,
         listPermissions,
         loadedDefaultGuideProducts,
         loadedTracks,
+        loadedMeasurements,
+        loadedServices,
     } = useDataContext();
 
     const [openDialogs, setOpenDialogs] = useState({
@@ -89,10 +90,21 @@ export function ProjectDetailsView({ projectId }) {
 
     // const listSelectedTracks = useMemo(() => loadedTracks?.filter((track) => track.action.includes(itemById?.id)), [loadedTracks, itemById]);
 
+    const items = useMemo(() => itemById?.salesOrder?.line_items, [itemById]);
+
+    const listItems = useMemo(() => items?.filter((product) => product.line_item_type === 'goods'), [items]);
+
     const [listSelectedTracks, setListSelectedTracks] = useState([]);
 
-    
+    const associatedMeasurement = useMemo(
+        () => loadedMeasurements?.find(measurement => measurement.project?.id === itemById?.id) || null,
+        [loadedMeasurements, itemById]
+    );
 
+    const associatedServices = useMemo(
+        () => loadedServices?.filter(serv => serv.salesOrder?.salesorder_id === itemById?.salesOrder?.salesorder_id) || null,
+        [loadedServices, itemById]
+    );
 
     const DETAILS_TABS = [
         { label: 'Overview', value: 'overview' },
@@ -117,6 +129,70 @@ export function ProjectDetailsView({ projectId }) {
             { label: 'Financial', value: 'financial' },
         ] : [],
         { label: 'Comments & History', value: 'comments' },
+        ...(associatedMeasurement || associatedServices?.length > 0) ? [
+            {
+                label: <>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }} onClick={morePopover.onOpen}>
+                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                            More
+                        </Typography>
+                        <Iconify icon="fluent:more-vertical-32-filled" width={16} sx={{ ml: 0.5 }} />
+                    </Box>
+                    <CustomPopover
+                        open={morePopover.open}
+                        anchorEl={morePopover.anchorEl}
+                        onClose={morePopover.onClose}
+                        slotProps={{ arrow: { placement: 'left-top' } }}
+                    >
+                        <MenuList>
+                            <MenuItem
+                                onClick={() => {
+                                    morePopover.onClose();
+                                    localStorage.setItem('measurementId', associatedMeasurement?.id);
+                                    localStorage.setItem('backFromMeasurementDetails', 'project');
+                                    localStorage.setItem('backFromMeasurementDetailsProjectId', itemById?.id);
+                                    localStorage.setItem('backFromMeasurementDetailsServiceId', '');
+                                    router.push(paths.dashboard.measurement.details(associatedMeasurement?.id));
+                                }}
+                            >
+                                <Iconify icon="tdesign:measurement-1" />
+                                Measurements
+                            </MenuItem>
+                            {associatedServices?.length > 0 && associatedServices?.map((service) => (
+                                <MenuItem
+                                    onClick={() => {
+                                        morePopover.onClose();
+                                        localStorage.setItem('serviceId', service?.id);
+                                        localStorage.setItem('backFromServiceDetails', 'projectDetails');
+                                        localStorage.setItem('projectId', itemById?.id);
+                                        router.push(paths.dashboard.service.details(service?.id));
+                                    }}
+                                >
+                                    <Tooltip
+                                        title={
+                                            <>
+                                                <Typography variant="body2" color="background.neutral" sx={{ mb: 0 }}>
+                                                    {service?.name}
+                                                </Typography>
+                                                <Typography variant="body2" color="background.neutral" sx={{ mb: 0 }}>
+                                                    Start date: {fDate(service?.startDate) || 'N/A'}
+                                                </Typography>
+                                            </>
+                                        }
+                                        placement="right"
+                                        arrow
+                                    >
+                                        <Iconify icon="carbon:user-service" />
+                                        Service: {service?.number} (v{service?.version})
+                                    </Tooltip>
+                                </MenuItem>
+                            ))}
+                        </MenuList>
+                    </CustomPopover >
+                </>,
+                value: 'more'
+            },
+        ] : [],
     ];
 
 
@@ -235,7 +311,7 @@ export function ProjectDetailsView({ projectId }) {
 
     const totalComments = useMemo(() => {
         const tComments = itemById?.projectComments?.length || 0
-        const tListSelectedTracks = !selectedComments ? (listSelectedTracks.filter(
+        const tListSelectedTracks = selectedComments ? (listSelectedTracks.filter(
             (track) => track.action.includes(itemById?.id) && !track.action.includes('comment')
         )?.length || 0) : 0;
         return tComments + tListSelectedTracks;
@@ -281,6 +357,72 @@ export function ProjectDetailsView({ projectId }) {
                 console.error(error);
             }
         }, [userLogged?.data, router]);
+
+
+    const generateMeasurements = useCallback(
+        async () => {
+
+            const arrayDimensions = listItems?.map((i) => {
+                const propertiesJson = filteredDescriptionJson(i.description);
+                const dimensions = propertiesJson?.Size ? extractDimensions(i.description) : i.description ? extractDimensions(i.description) : null;
+                let config = ''
+                if (propertiesJson?.Config?.length > 0 || propertiesJson?.config?.length > 0) {
+                    config = propertiesJson?.Config || propertiesJson?.config;
+                }
+                else if (propertiesJson?.Size?.length > 0 || propertiesJson?.size?.length > 0) {
+                    const array = propertiesJson?.Size?.split(' ') || propertiesJson?.size?.split(' ');
+                    config = array[array.length - 1];
+                }
+                const sku = propertiesJson?.SKU || propertiesJson?.sku;
+                const type = sku?.split(' ')[0] || i?.description.split(' ')[0];
+                return {
+                    ...i,
+                    type,
+                    dimensions,
+                    config,
+                    first_check: false,
+                    second_check: false,
+                    notes: null,
+                };
+            });
+
+            const project = { ...itemById };
+            delete project.salesOrder;
+            delete project.projectDefaultTasks;
+            delete project.projectAttachments;
+            delete project.projectGuideProducts;
+            delete project.projectMaterials;
+            delete project.projectComments;
+            delete project.projectTasks;
+            delete project.projectHistory;
+            delete project.stageHistory;
+            delete project.currentStage;
+
+            try {
+                const promise = axios.post(`${CONFIG.apiUrl}/measurements/create/measurement/`, {
+                    project: JSON.stringify(project),
+                    items: JSON.stringify(arrayDimensions),
+                    userReporter: JSON.stringify(userLogged?.data),
+                    salesOrder: JSON.stringify(itemById?.salesOrder),
+                    address: itemById?.address,
+                });
+                const response = await promise;
+                toast.promise(promise, {
+                    loading: 'Loading...',
+                    success: `Measurements generated!`,
+                    error: `Error in generating measurements!`,
+                });
+                return response.data;
+
+            }
+            catch (error) {
+                console.error(error);
+            }
+
+            return null;
+
+        }, [listItems, itemById, userLogged?.data]
+    );
 
 
 
@@ -335,6 +477,9 @@ export function ProjectDetailsView({ projectId }) {
                             setOpenValidationDialog(true);
                             setValidationMessage('You need to save the information in the INSTALLATION GUIDE section to perform this action');
                         }
+                        // else if (tab.value === 'more') {
+                        //     morePopover.onOpen();
+                        // }
                     }}
                 />
             ))}
@@ -347,19 +492,20 @@ export function ProjectDetailsView({ projectId }) {
                 <ProjectDetailsToolbar
                     project={itemById}
                     backLink={
-                        localStorage.getItem('backFromProjectDetails') === 'analytics' ? paths.dashboard.general.analytics : 
-                        localStorage.getItem('backFromProjectDetails') === 'calendarDashboard' ? paths.dashboard.general.calendar : paths.dashboard.project.list
+                        localStorage.getItem('backFromProjectDetails') === 'analytics' ? paths.dashboard.general.analytics :
+                            localStorage.getItem('backFromProjectDetails') === 'calendarDashboard' ? paths.dashboard.general.calendar : paths.dashboard.project.list
                     }
                     editLink={paths.dashboard.project.edit(`${itemById?.id}`)}
                     openEdit={tabs.value === 'overview' ? openEdit : tabs.value === 'tasks' ? openEditTask : null}
                     setOpenEdit={tabs.value === 'overview' ? setOpenEdit : tabs.value === 'tasks' ? setOpenEditTask : null}
-                    type={tabs.value === 'overview' ? 'project' : tabs.value === 'tasks' ? 'tasks' : null}
+                    type={tabs.value === 'overview' || tabs.value === 'more' ? 'project' : tabs.value === 'tasks' ? 'tasks' : null}
                     onDelete={() => onDelete(itemById?.id)}
+                    onGenerateMeasurements={() => generateMeasurements()}
                     listPermissions={listPermissions}
                 />
                 {renderTabs}
 
-                {tabs.value === 'overview' &&
+                {(tabs.value === 'overview' || tabs.value === 'more') &&
                     <ProjectDetailsContent
                         project={itemById}
                         refetchProject={refetchProject}

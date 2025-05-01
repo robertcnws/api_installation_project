@@ -65,7 +65,7 @@ export function ProjectDetailsFinancialView({
     const taxTotalSalesOrder = useMemo(() => project?.salesOrder?.tax_total, [project]);
 
     //  Installation
-    const totalSubcontractor = useMemo(() => project?.projectGuideProducts?.reduce(
+    const totalSubcontractor = useMemo(() => project?.projectGuideProducts.filter((p) => !p.deleted)?.reduce(
         (total, item) => total + (item.quantity * item.price), 0
     ), [project]);
 

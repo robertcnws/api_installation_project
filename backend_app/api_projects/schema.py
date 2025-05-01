@@ -235,7 +235,12 @@ class Query(graphene.ObjectType):
     all_project_default_guide_products = graphene.List(ProjectDefaultGuideProductType)
     all_project_task_stages = graphene.List(ProjectTaskStageType)
     all_project_roles = graphene.List(ProjectRoleType)
-    all_projects = graphene.List(ProjectType)
+    # all_projects = graphene.List(ProjectType)
+    all_projects = graphene.Field(
+        graphene.List(ProjectType),
+        page=graphene.Int(default_value=1),
+        page_size=graphene.Int(default_value=50),
+    )
     all_project_users = graphene.List(ProjectUserType)
     all_project_notifications = graphene.List(ProjectNotificationType)
     all_project_tracking = graphene.List(ProjectTrackingType)
@@ -284,8 +289,12 @@ class Query(graphene.ObjectType):
     def resolve_all_project_roles(self, info):
         return list(ProjectRole.objects(is_active=True))
 
-    def resolve_all_projects(self, info):
-        return list(Project.objects.all())
+    # def resolve_all_projects(self, info):
+    #     return list(Project.objects.all().order_by('start_date'))
+    
+    def resolve_all_projects(self, info, page, page_size):
+        skip = (page - 1) * page_size
+        return Project.objects.order_by('start_date').skip(skip).limit(page_size)
 
     def resolve_all_project_users(self, info):
         return list(ProjectUser.objects.all())

@@ -29,6 +29,11 @@ export function ProjectFiltersResult({ filters, onResetPage, totalResults, sx })
     filters.setState({ startDate: null, endDate: null });
   }, [filters, onResetPage]);
 
+  const handleRemoveInstaller = useCallback(() => {
+    onResetPage();
+    filters.setState({ installer: { id: null, name: null } });
+  }, [filters, onResetPage]);
+
   const handleRemoveCustom = useCallback(
     (customType) => {
       onResetPage();
@@ -101,6 +106,17 @@ export function ProjectFiltersResult({ filters, onResetPage, totalResults, sx })
         />
       </FiltersBlock>
 
+      <FiltersBlock
+        label="Installer:"
+        isShow={Boolean(filters.state.installer.id)}
+      >
+        <Chip
+          {...chipProps}
+          label={filters.state.installer.name}
+          onDelete={handleRemoveInstaller}
+        />
+      </FiltersBlock>
+
       <FiltersBlock label="Need Permission:" isShow={Boolean(filters.state.custom.hasPermission)}>
         <Chip {...chipProps} label='Yes' onDelete={() => handleRemoveCustom('hasPermission')} />
       </FiltersBlock>
@@ -110,8 +126,8 @@ export function ProjectFiltersResult({ filters, onResetPage, totalResults, sx })
       </FiltersBlock>
 
       <FiltersBlock label="Stage(s):" isShow={
-        Boolean(filters.state.custom.isPreparation.value || 
-          filters.state.custom.isCoordination.value || 
+        Boolean(filters.state.custom.isPreparation.value ||
+          filters.state.custom.isCoordination.value ||
           filters.state.custom.isPermission.value ||
           filters.state.custom.isInstallation.value ||
           filters.state.custom.isClosing.value)

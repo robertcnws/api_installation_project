@@ -26,7 +26,7 @@ export const useProjectRemindersQuery = (username) => {
     skip: !username,
   });
 
-  const reminders = data?.allProjectReminders || {};
+  const reminders = data?.allProjectReminders || [];
 
   return { loading, error, data: reminders, refetch };
 

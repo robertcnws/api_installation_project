@@ -67,7 +67,7 @@ export function ProjectEditModalUserManagerView({
     const [projectData, setProjectData] = useState({})
 
     useEffect(() => {
-        if (itemById) {
+        if (itemById?.name) {
             setProjectData((prev) => ({
                 ...prev,
                 id: itemById?.id || '',
@@ -79,7 +79,14 @@ export function ProjectEditModalUserManagerView({
                         : null,
             }));
         }
-    }, [itemById, setProjectData, cleanLoadedUsers]);
+    }, [
+        itemById?.name, 
+        itemById?.id,
+        itemById?.number,
+        itemById.userManager,
+        setProjectData, 
+        cleanLoadedUsers
+    ]);
 
     const handleReturnList = useCallback(() => {
         router.push(paths.dashboard.project.list);
@@ -144,7 +151,7 @@ export function ProjectEditModalUserManagerView({
 
 
     useEffect(() => {
-        if (itemById) {
+        if (itemById?.userManager?.id) {
             const validUserManager = cleanLoadedUsers.find(
                 (user) => user.id === itemById?.userManager?.id
             ) || null;
@@ -155,7 +162,15 @@ export function ProjectEditModalUserManagerView({
                 userManager: validUserManager,
             });
         }
-    }, [itemById, userLogged?.data, reset, cleanLoadedUsers]);
+    }, [
+        itemById?.id, 
+        itemById.name, 
+        itemById.number, 
+        itemById?.userManager?.id,
+        userLogged?.data, 
+        reset, 
+        cleanLoadedUsers
+    ]);
 
     const userManager = watch("userManager");
 

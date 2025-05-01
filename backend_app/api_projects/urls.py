@@ -38,6 +38,7 @@ urlpatterns = [
     path('delete/old-notifications/', views.remove_old_notifications, name='remove_old_notifications'),
     path('mark-read/notifications/', views.mark_as_read_notifications, name='mark_as_read_notifications'),
     path('delete/notifications/', views.delete_notifications, name='delete_notifications'),
+    path('download/files/', views.download_s3_archive, name='download_s3_archive'),
     # PROJECT TASKS
     path('create/project/task/', views.create_project_task, name='create_project_task'),
     path('update/project/task/<str:id>/', views.update_project_task, name='update_project_task'),

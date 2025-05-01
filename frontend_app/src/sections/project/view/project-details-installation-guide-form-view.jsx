@@ -309,13 +309,13 @@ export function ProjectDetailsInstallationGuideFormView({
   } = methods;
 
   const isFormValid = useMemo(() => {
-    const areProductsValid = productsData?.every((product) =>
+    const areProductsValid = productsData?.length === 0 || productsData?.every((product) =>
       product?.name?.trim() !== '' &&
       Number(product?.quantity) > 0 &&
       (product?.name?.toLowerCase().includes('mullion') ? Number(product?.price) >= 0 : Number(product?.price) > 0)
     );
 
-    const areMaterialsValid = materials?.every((material) =>
+    const areMaterialsValid = materials?.length === 0 || materials?.every((material) =>
       material?.name.trim() !== '' &&
       Number(material?.quantity) > 0 &&
       Number(material?.cost) > 0
@@ -380,7 +380,7 @@ export function ProjectDetailsInstallationGuideFormView({
   const onSubmit = handleSubmit(async (data) => {
     try {
       const formData = new FormData();
-      formData.append('workScope', data.workScope);
+      // formData.append('workScope', data.workScope);
       formData.append('projectMaterialsOtherNotes', data.otherNotes);
       formData.append('projectGuideProducts', JSON.stringify(productsData));
       formData.append('projectMaterials', JSON.stringify(materials));
@@ -458,9 +458,11 @@ export function ProjectDetailsInstallationGuideFormView({
           value: (
             <>
               <Stack spacing={1} direction="column">
-                <Field.Text multiline rows={4} name="workScope" placeholder="Write your work scope & description here..." />
+                {/* <Field.Text multiline rows={4} name="workScope" placeholder="Write your work scope & description here..." /> */}
+                <Typography variant="body2" sx={{ color: 'text.secondary', textAlign: 'justify' }}>
+                  {project?.workScope || 'No work scope & description provided.'}
+                </Typography>
               </Stack>
-              <br />
               <br />
             </>
           ),
@@ -1125,7 +1127,7 @@ export function ProjectDetailsInstallationGuideFormView({
           variant="contained"
           loading={isSubmitting}
           // disabled={!isFormValid || !isCustomDirty || !allProductsChecked || productsData.length === 0 || materials.length === 0}
-          disabled={!isFormValid || !isCustomDirty || productsData.length === 0 || materials.length === 0}
+          disabled={!isFormValid || !isCustomDirty}
         >
           Save
         </LoadingButton>

@@ -4,6 +4,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from django.utils import timezone
 from django.conf import settings
+from django.http import HttpResponse
 from api_projects.data_util import (
     transform_data_to_mongo,
     transform_dict_to_camelcase,
@@ -19,6 +20,7 @@ from api_projects.s3_utils import (
     generate_default_file_url,
     delete_attachment_from_s3,
     backup_mongo_to_s3,
+    make_s3_archive_stream,
 )
 from api_projects.models import (
     ProjectTracking,
@@ -693,8 +695,10 @@ def create_service(request):
             return default_task.order >= 3 and default_task.service_stage.get('name', '').lower() != 'closing'
         
         for default_task in default_tasks:
+            service_default_task = transform_data_to_mongo(default_task)
+            service_default_task['is_active'] = not active_conditions(default_task)
             info = {
-                'service_default_task': transform_data_to_mongo(default_task),
+                'service_default_task': service_default_task,
                 'status': 'not started',
                 'percentage': 0,
                 'created_time': timezone.now(),
@@ -2405,9 +2409,11 @@ def change_service_properties(request, id):
             include_fields.append('paid')
             properties.append('paid')
             if task_3:
+                task_3['service_default_task']['is_active'] = False
                 task_3['status'] = 'not started'
                 task_3['percentage'] = 0
         elif task_3:
+            task_3['service_default_task']['is_active'] = True
             task_3['status'] = 'in progress'
             task_3['percentage'] = 50
         tasks = [task for task in tasks if str(task['service_default_task']['_id']) != str(task_3['service_default_task']['_id'])]
@@ -2614,7 +2620,7 @@ def remove_date_service(request, id):
     
     
 #############################################
-# REMOVE DATE SERVICE
+# CLOSE SERVICE
 #############################################
 
 @api_view(['POST'])
@@ -2655,3 +2661,23 @@ def close_service(request, id):
         return Response({'message': f'Service {verbose_name} successfully'})
     except Exception as e:
         return Response({'error': str(e)}, status=500)
+    
+    
+#############################################
+# DOWNLOAD ALL FILES IN SERVICE
+#############################################
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def download_s3_archive(request):
+    keys = request.GET.getlist("keys[]")
+    number = request.GET.get("number")
+    stage = request.GET.get("stage")
+    task = request.GET.get("task")
+    if not keys:
+        return Response({"error": "No keys provided"}, status=400)
+    stream, filename, content_type = make_s3_archive_stream(keys, number, stage, task)
+    response = HttpResponse(stream.read(), content_type=content_type)
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    return response

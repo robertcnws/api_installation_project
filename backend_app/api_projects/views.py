@@ -28,6 +28,7 @@ from .s3_utils import (
     generate_default_file_url,
     delete_attachment_from_s3,
     backup_mongo_to_s3,
+    make_s3_archive_stream,
 )
 from .data_util import (
     transform_data_to_mongo,
@@ -136,7 +137,7 @@ def delete_default_task_file(request, projectId, id, folder, file):
         attachment.delete()
         tracking = ProjectTracking(
             user_reporter=user_reporter,
-            action=f'delete default task ({task['project_default_task']['id']} - {task['project_default_task']['name']}) file attachment ',
+            action=f'delete default task ({task['project_default_task']['id']} - {task['project_default_task']['name']}) file attachment in project ({project.id} - {project.name})',
             created_time=timezone.now(),
             managed_data={
                 'data': tracking_info
@@ -3718,6 +3719,27 @@ def quit_project_reminder(request, id):
         'message': 'Projet reminder quited successfully',
         'data': json.loads(reminder.to_json())
     }, status=201)
+    
+    
+#############################################
+# DOWNLOAD ALL FILES IN PROJECT
+#############################################
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def download_s3_archive(request):
+    keys = request.GET.getlist("keys[]")
+    number = request.GET.get("number")
+    stage = request.GET.get("stage")
+    task = request.GET.get("task")
+    if not keys:
+        return Response({"error": "No keys provided"}, status=400)
+    stream, filename, content_type = make_s3_archive_stream(keys, number, stage, task)
+    response = HttpResponse(stream.read(), content_type="application/zip")
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    response['Access-Control-Expose-Headers'] = 'Content-Disposition'
+    return response
     
     
 

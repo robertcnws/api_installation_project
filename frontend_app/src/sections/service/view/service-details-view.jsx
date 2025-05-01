@@ -3,7 +3,7 @@ import { useMemo, useState, useEffect, useCallback } from 'react';
 
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
-import { Button, Dialog, Typography, DialogActions } from '@mui/material';
+import { Box, Button, Dialog, MenuItem, MenuList, Typography, DialogActions } from '@mui/material';
 
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
@@ -11,14 +11,19 @@ import { useRouter } from 'src/routes/hooks';
 import { useTabs } from 'src/hooks/use-tabs';
 import { useBoolean } from 'src/hooks/use-boolean';
 
+import { filteredDescriptionJson } from 'src/utils/project-tasks-utils';
+import { extractDimensions } from 'src/utils/generate-installation-guide-pdf';
+
 import { CONFIG } from 'src/config-global';
 import { DashboardContent } from 'src/layouts/dashboard';
 import { useServiceByIdQuery } from 'src/_mock/__services';
 
 import { Label } from 'src/components/label';
 import { toast } from 'src/components/snackbar';
+import { Iconify } from 'src/components/iconify';
 import { Scrollbar } from 'src/components/scrollbar';
 import { ConfirmDialog } from 'src/components/custom-dialog';
+import { usePopover, CustomPopover } from 'src/components/custom-popover';
 
 import { ServiceDetailsToolbar } from 'src/sections/service/service-details-toolbar';
 import { ServiceDetailsContent } from 'src/sections/service/view/service-details-content';
@@ -43,9 +48,12 @@ export function ServiceDetailsView({ serviceId }) {
 
     const router = useRouter();
 
+    const morePopover = usePopover();
+
     const {
         loadedServices,
         loadedTracks,
+        loadedMeasurements,
     } = useDataContext();
 
     const [openDialogs, setOpenDialogs] = useState({
@@ -69,11 +77,51 @@ export function ServiceDetailsView({ serviceId }) {
 
     const [itemById, setItemById] = useState(fetchedService);
 
+    const associatedMeasurement = useMemo(
+        () => loadedMeasurements?.find(measurement => measurement.service?.id === itemById?.id) || null,
+        [loadedMeasurements, itemById]
+    );
+
     const DETAILS_TABS = [
         { label: 'Overview', value: 'overview' },
         { label: 'Tasks', value: 'tasks' },
         // { label: 'Attachments', value: 'attachments' },
         { label: 'Comments & History', value: 'comments' },
+        ...associatedMeasurement ? [
+            {
+                label: <>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }} onClick={morePopover.onOpen}>
+                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                            More
+                        </Typography>
+                        <Iconify icon="fluent:more-vertical-32-filled" width={16} sx={{ ml: 0.5 }} />
+                    </Box>
+                    <CustomPopover
+                        open={morePopover.open}
+                        anchorEl={morePopover.anchorEl}
+                        onClose={morePopover.onClose}
+                        slotProps={{ arrow: { placement: 'left-top' } }}
+                    >
+                        <MenuList>
+                            <MenuItem
+                                onClick={() => {
+                                    morePopover.onClose();
+                                    localStorage.setItem('measurementId', associatedMeasurement?.id);
+                                    localStorage.setItem('backFromMeasurementDetails', 'service');
+                                    localStorage.setItem('backFromMeasurementDetailsProjectId', '');
+                                    localStorage.setItem('backFromMeasurementDetailsServiceId', itemById?.id);
+                                    router.push(paths.dashboard.measurement.details(associatedMeasurement?.id));
+                                }}
+                            >
+                                <Iconify icon="tdesign:measurement-1" />
+                                Measurements
+                            </MenuItem>
+                        </MenuList>
+                    </CustomPopover >
+                </>,
+                value: 'more'
+            },
+        ] : [],
     ];
 
 
@@ -93,6 +141,10 @@ export function ServiceDetailsView({ serviceId }) {
     const [isSubmiting, setIsSubmiting] = useState(false);
 
     const [serviceType, setServiceType] = useState(itemById?.serviceType);
+
+    const items = useMemo(() => itemById?.issuedProducts, [itemById]);
+
+    const listItems = useMemo(() => items?.filter((product) => product.line_item_type === 'goods'), [items]);
 
     const [listSelectedTracks, setListSelectedTracks] = useState([]);
 
@@ -201,12 +253,12 @@ export function ServiceDetailsView({ serviceId }) {
     const [selectedComments, setSelectedComments] = useState(false);
 
     const totalComments = useMemo(() => {
-            const tComments = itemById?.serviceComments?.length || 0
-            const tListSelectedTracks = !selectedComments ? (listSelectedTracks.filter(
-                (track) => track.action.includes(itemById?.id) && !track.action.includes('comment')
-            )?.length || 0) : 0;
-            return tComments + tListSelectedTracks;
-        }, [itemById, listSelectedTracks, selectedComments]);
+        const tComments = itemById?.serviceComments?.length || 0
+        const tListSelectedTracks = selectedComments ? (listSelectedTracks.filter(
+            (track) => track.action.includes(itemById?.id) && !track.action.includes('comment')
+        )?.length || 0) : 0;
+        return tComments + tListSelectedTracks;
+    }, [itemById, listSelectedTracks, selectedComments]);
 
 
     const totalTasks = useMemo(() => (
@@ -224,6 +276,75 @@ export function ServiceDetailsView({ serviceId }) {
     const [openEditTask, setOpenEditTask] = useState(false);
 
     const tabs = useTabs('overview');
+
+    const generateMeasurements = useCallback(
+        async () => {
+
+            const arrayDimensions = listItems?.map((i) => {
+                const propertiesJson = filteredDescriptionJson(i.description);
+                const dimensions = propertiesJson?.Size ? extractDimensions(i.description) : i.description ? extractDimensions(i.description) : null;
+                let config = ''
+                if (propertiesJson?.Config?.length > 0 || propertiesJson?.config?.length > 0) {
+                    config = propertiesJson?.Config || propertiesJson?.config;
+                }
+                else if (propertiesJson?.Size?.length > 0 || propertiesJson?.size?.length > 0) {
+                    const array = propertiesJson?.Size?.split(' ') || propertiesJson?.size?.split(' ');
+                    config = array[array.length - 1];
+                }
+                const sku = propertiesJson?.SKU || propertiesJson?.sku;
+                const type = sku?.split(' ')[0] || i?.description.split(' ')[0];
+                return {
+                    ...i,
+                    type,
+                    dimensions,
+                    config,
+                    first_check: false,
+                    second_check: false,
+                    notes: null,
+                };
+            });
+
+            const service = { ...itemById };
+            delete service.salesOrder;
+            delete service.serviceDefaultTasks;
+            delete service.serviceAttachments;
+            delete service.serviceComments;
+            delete service.serviceHistory;
+            delete service.stageHistory;
+            delete service.currentStage;
+
+            let salesOrder = { ...itemById?.salesOrder };
+            delete salesOrder.line_items;
+            salesOrder = {
+                ...salesOrder,
+                line_items: listItems
+            };
+
+            try {
+                const promise = axios.post(`${CONFIG.apiUrl}/measurements/create/measurement/`, {
+                    service: JSON.stringify(service),
+                    items: JSON.stringify(arrayDimensions),
+                    userReporter: JSON.stringify(userLogged?.data),
+                    salesOrder: JSON.stringify(salesOrder),
+                    address: itemById?.address,
+                });
+                const response = await promise;
+                toast.promise(promise, {
+                    loading: 'Loading...',
+                    success: `Measurements generated!`,
+                    error: `Error in generating measurements!`,
+                });
+                return response.data;
+
+            }
+            catch (error) {
+                console.error(error);
+            }
+
+            return null;
+
+        }, [listItems, itemById, userLogged?.data]
+    );
 
     const onDelete = useCallback(
         async (id) => {
@@ -346,17 +467,20 @@ export function ServiceDetailsView({ serviceId }) {
                     service={itemById}
                     backLink={
                         localStorage.getItem('backFromServiceDetails') === 'analytics' ? paths.dashboard.general.analytics :
-                            localStorage.getItem('backFromProjectDetails') === 'calendarDashboard' ? paths.dashboard.general.calendar : paths.dashboard.service.list
+                            localStorage.getItem('backFromProjectDetails') === 'calendarDashboard' ? paths.dashboard.general.calendar :
+                                localStorage.getItem('backFromServiceDetails') === 'projectDetails' ?
+                                    paths.dashboard.project.details(localStorage.getItem('projectId')) : paths.dashboard.service.list
                     }
                     editLink={paths.dashboard.service.edit(`${itemById?.id}`)}
                     openEdit={tabs.value === 'overview' ? openEdit : tabs.value === 'tasks' ? openEditTask : null}
                     setOpenEdit={tabs.value === 'overview' ? setOpenEdit : tabs.value === 'tasks' ? setOpenEditTask : null}
-                    type={tabs.value === 'overview' ? 'service' : tabs.value === 'tasks' ? 'tasks' : null}
+                    type={(tabs.value === 'overview' || tabs.value === 'more') ? 'service' : tabs.value === 'tasks' ? 'tasks' : null}
                     onDelete={() => onDelete(itemById?.id)}
+                    onGenerateMeasurements={() => generateMeasurements()}
                 />
                 {renderTabs}
 
-                {tabs.value === 'overview' &&
+                {(tabs.value === 'overview' || tabs.value === 'more') &&
                     <ServiceDetailsContent
                         service={itemById}
                         refetchService={refetchService}

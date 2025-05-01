@@ -1,7 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { Outlet } from 'react-router-dom';
 
-import { verifyPermissions, listRolesAndSubroles } from 'src/utils/check-permissions';
+import { verifyPermissions, listRolesAndSubroles, belongsToWorkingStaff } from 'src/utils/check-permissions';
 
 import { CONFIG } from 'src/config-global';
 import { DashboardLayout } from 'src/layouts/dashboard';
@@ -56,8 +56,9 @@ const ServicePage = lazy(() => import('src/pages/dashboard/service'));
 const ServiceCreatePage = lazy(() => import('src/pages/dashboard/service/new'));
 const ServiceDetailsPage = lazy(() => import('src/pages/dashboard/service/details'));
 // Measurement
-// const ServicePage = lazy(() => import('src/pages/dashboard/service'));
+const MeasurementPage = lazy(() => import('src/pages/dashboard/measurement'));
 const MeasurementCreatePage = lazy(() => import('src/pages/dashboard/measurement/new'));
+const MeasurementDetailsPage = lazy(() => import('src/pages/dashboard/measurement/details'));
 
 // Service Issue
 const ServiceIssueListPage = lazy(() => import('src/pages/dashboard/service-issue/list'));
@@ -555,7 +556,7 @@ export const dashboardRoutes = (listPermissions, user) => [
             ],
           },
         ] : [],
-        ...(user && listRolesAndSubroles(user?.user_role?.name).includes(CONFIG.roles.serviceStaff)) ?
+      ...(user && listRolesAndSubroles(user?.user_role?.name).includes(CONFIG.roles.serviceStaff)) ?
         [
           {
             path: 'service',
@@ -595,42 +596,36 @@ export const dashboardRoutes = (listPermissions, user) => [
             ],
           },
         ] : [],
-        ...(user && listRolesAndSubroles(user?.user_role?.name).includes(CONFIG.roles.installer)) ?
+      ...(user && (
+        belongsToWorkingStaff(user?.user_role?.name)
+      )) ?
         [
           {
             path: 'measurement',
             children: [
               {
-                element: listRolesAndSubroles(
-                  user?.user_role?.name
-                ).includes(
-                  CONFIG.roles.installer
-                ) ? <ServicePage /> : <Page403 />,
+                element: (
+                  belongsToWorkingStaff(user?.user_role?.name)
+                ) ? <MeasurementPage /> : <Page403 />,
                 index: true
               },
               {
                 path: 'list',
-                element: listRolesAndSubroles(
-                  user?.user_role?.name
-                ).includes(
-                  CONFIG.roles.installer
-                ) ? <ServicePage /> : <Page403 />,
+                element: (
+                  belongsToWorkingStaff(user?.user_role?.name)
+                ) ? <MeasurementPage /> : <Page403 />,
               },
               {
                 path: 'new',
-                element: listRolesAndSubroles(
-                  user?.user_role?.name
-                ).includes(
-                  CONFIG.roles.serviceStaff
+                element: (
+                  belongsToWorkingStaff(user?.user_role?.name)
                 ) ? <MeasurementCreatePage /> : <Page403 />,
               },
               {
                 path: ':id/details',
-                element: listRolesAndSubroles(
-                  user?.user_role?.name
-                ).includes(
-                  CONFIG.roles.serviceStaff
-                ) ? <ServiceDetailsPage /> : <Page403 />,
+                element: (
+                  belongsToWorkingStaff(user?.user_role?.name)
+                ) ? <MeasurementDetailsPage /> : <Page403 />,
               }
             ],
           },

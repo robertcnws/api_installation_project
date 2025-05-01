@@ -164,6 +164,23 @@ export function getIconByName(name) {
 
   const mappedIcons = [
     {
+      keywords: ['update', 'measurement'],
+      icon: 'marketeq:measuring-tape',
+      includeFields: [
+        'number',
+        'marks.type',
+        'marks.config',
+        'marks.dimensions',
+        'marks.notes',
+        'project.number',
+        'project.name',
+        'service.number',
+        'service.name',
+        'notes',
+      ],
+      excludeFields: []
+    },
+    {
       keywords: ['update', 'project'],
       icon: 'material-icon-theme:folder-update-open',
       includeFields: [
@@ -511,6 +528,58 @@ export function getIconByName(name) {
         'project_default_task.name',
         'status',
         'percentage',
+      ],
+      excludeFields: []
+    },
+    {
+      keywords: ['create', 'measurement'],
+      icon: 'icon-park:tape-measure',
+      includeFields: [
+        'number',
+        'marks.type',
+        'marks.config',
+        'marks.dimensions',
+        'marks.notes',
+        'project.number',
+        'project.name',
+        'service.number',
+        'service.name',
+        'notes',
+      ],
+      excludeFields: []
+    },
+    {
+      keywords: ['delete', 'mark', 'measurement'],
+      icon: 'emojione-v1:exclamation-question-mark',
+      includeFields: [
+        'type',
+        'config',
+        'dimensions',
+        'notes',
+      ],
+      excludeFields: []
+    },
+    {
+      keywords: ['check', 'mark', 'first', 'measurement'],
+      icon: 'noto-v1:check-mark',
+      includeFields: [
+        'type',
+        'config',
+        'dimensions',
+        'notes',
+        'first_check',
+      ],
+      excludeFields: []
+    },
+    {
+      keywords: ['check', 'mark', 'second', 'measurement'],
+      icon: 'marketeq:check-double',
+      includeFields: [
+        'type',
+        'config',
+        'dimensions',
+        'notes',
+        'second_check',
       ],
       excludeFields: []
     },

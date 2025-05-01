@@ -7,7 +7,6 @@ import { VitePWA } from 'vite-plugin-pwa';
 // ----------------------------------------------------------------------
 
 const PORT = 3030;
-// const HOST = '10.1.10.216';
 const HOST = 'localhost';
 
 export default defineConfig({
@@ -75,5 +74,19 @@ export default defineConfig({
   preview: { 
     port: PORT, 
     host: HOST,
+  },
+  build: {
+    outDir: 'dist',
+    assetsDir: 'static',
+    rollupOptions: {
+      output: {
+        entryFileNames: 'static/js/[name].[hash].js',
+        chunkFileNames: 'static/js/[name].[hash].js',
+        assetFileNames: ({ name }) => {
+          const ext = name?.substring(name.lastIndexOf('.'));
+          return `static/assets/[name].[hash]${ext}`;
+        },
+      },
+    },
   },
 });

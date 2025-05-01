@@ -82,17 +82,6 @@ export function KanbanView({
 
   const { isMobile } = useContext(LoadingContext)
 
-  const widthPercent = useMemo(() => (100 / (loadedServiceStages.length - 1)).toFixed(0) - 0.75, [loadedServiceStages]);
-
-  const cssVars = {
-    '--item-gap': '10px',
-    '--item-radius': '12px',
-    '--column-gap': '12px',
-    '--column-width': !isMobile ? `${widthPercent}%` : '100%',
-    '--column-radius': '16px',
-    '--column-padding': '10px 8px 8px 8px',
-  };
-
   const [defaultTasks, setDefaultTasks] = useState(null);
 
   const tasksBeforeNoMatter = useMemo(() => [
@@ -129,6 +118,20 @@ export function KanbanView({
     () => adaptToKanbanData(defaultTasks, stages),
     [defaultTasks, stages]
   );
+
+  const widthPercent = useMemo(
+    () => (newBoard.initialColumns.length === newBoard.columns.length ?
+      100 / (loadedServiceStages.length - 1) : 100 / newBoard.columns.length).toFixed(0) - 0.75,
+    [loadedServiceStages, newBoard]);
+
+  const cssVars = {
+    '--item-gap': '10px',
+    '--item-radius': '12px',
+    '--column-gap': '12px',
+    '--column-width': !isMobile ? `${widthPercent}%` : '100%',
+    '--column-radius': '16px',
+    '--column-padding': '10px 8px 8px 8px',
+  };
 
   const percentage = useMemo(() => {
     if (newBoard) {
@@ -550,8 +553,11 @@ function adaptToKanbanData(serviceTasks, stages) {
     }
   });
 
+  const newColumns = columns.filter((column) => tasks[column.id].length > 0);
+
   return {
-    columns,
+    columns: newColumns,
+    initialColumns: columns,
     tasks,
   };
 }

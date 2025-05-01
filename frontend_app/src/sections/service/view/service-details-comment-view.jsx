@@ -33,9 +33,9 @@ export const ServiceDetailsCommentView = ({
 
     useEffect(() => {
         if (!selectedComments) {
-            setTracks(listSelectedTracks || []);
-        } else {
             setTracks([]);
+        } else {
+            setTracks(listSelectedTracks || []);
         }
     }, [listSelectedTracks, selectedComments]);
 
@@ -52,7 +52,7 @@ export const ServiceDetailsCommentView = ({
                                     inputProps={{ id: 'row-checkbox-comments', 'aria-label': 'row-checkbox' }}
                                 />
                             }
-                            label="View only comments"
+                            label="View all history"
                         />
                     </Box>
                     <Box sx={{ flexDirection: 'column', gap: 3, ml: 2, maxHeight: isMobile ? '100%' : 430, overflowY: 'auto' }}>

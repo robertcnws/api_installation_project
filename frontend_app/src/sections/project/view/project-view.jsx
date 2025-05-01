@@ -14,6 +14,7 @@ import { useSetState } from 'src/hooks/use-set-state';
 
 import { isInstaller } from 'src/utils/check-permissions';
 import { fIsAfter, fIsBetween } from 'src/utils/format-time';
+import { getProjectInstaller } from 'src/utils/project-tasks-utils';
 
 import { CONFIG } from 'src/config-global';
 import { PROJECT_TYPE_OPTIONS } from 'src/_mock';
@@ -36,6 +37,7 @@ import { KanbanProjectView } from '../kanban-project/view';
 import { ProjectFiltersResult } from '../project-filters-result';
 import { ProjectNewFolderDialog } from '../project-new-folder-dialog';
 import { ProjectEditModalManageStaffView } from './project-edit-modal-manage-staff-view';
+
 
 
 
@@ -73,6 +75,8 @@ export function ProjectView() {
 
   const openDateRange = useBoolean();
 
+  const openInstallerFilter = useBoolean();
+
   const confirm = useBoolean();
 
   const confirmStaff = useBoolean();
@@ -91,12 +95,12 @@ export function ProjectView() {
 
   const [tableData, setTableData] = useState([]);
 
-  useEffect(() => {
-    if (refetchProjects) {
-      refetchProjects();
-    }
-    setTableData(loadedProjects || []);
-  }, [refetchProjects, loadedProjects]);
+  // useEffect(() => {
+  //   if (refetchProjects) {
+  //     refetchProjects();
+  //   }
+  //   setTableData(loadedProjects || []);
+  // }, [refetchProjects, loadedProjects]);
 
   useEffect(() => {
     if (loadedProjects) {
@@ -140,6 +144,10 @@ export function ProjectView() {
     type: [],
     startDate: null,
     endDate: null,
+    installer: {
+      id: null,
+      name: null,
+    },
     custom: {
       hasPermission: false,
       isPreparation: {
@@ -187,7 +195,8 @@ export function ProjectView() {
     filters.state.custom.isInstallation?.value ||
     filters.state.custom.isPermission?.value ||
     filters.state.custom.isClosing?.value ||
-    filters.state.custom.hasComments;
+    filters.state.custom.hasComments ||
+    (!!filters.state.installer.id && !!filters.state.installer.name)
 
   const notFound = (!dataFiltered.length && canReset) || !dataFiltered.length;
 
@@ -277,18 +286,32 @@ export function ProjectView() {
   const handleViewKanban = useCallback(
     (id) => {
       localStorage.setItem('projectId', id);
+      const listData = dataFiltered.map((item) => ({
+        id: item.id,
+        name: item.name,
+        number: item.number,
+        startDate: item.startDate,
+      }));
+      localStorage.setItem('installationFilteredList', JSON.stringify(listData));
       router.push(paths.dashboard.project.kanbanProjectId(id));
     },
-    [router]
+    [router, dataFiltered]  
   );
 
   const handleDetailsView = useCallback(
     (id) => {
       localStorage.setItem('projectId', id);
       localStorage.setItem('backFromProjectDetails', 'projects');
+      const listData = dataFiltered.map((item) => ({
+        id: item.id,
+        name: item.name,
+        number: item.number,
+        startDate: item.startDate,
+      }));
+      localStorage.setItem('installationFilteredList', JSON.stringify(listData));
       router.push(paths.dashboard.project.details(id));
     },
-    [router]
+    [router, dataFiltered]
   );
 
   const renderFilters = (
@@ -300,11 +323,15 @@ export function ProjectView() {
     >
       <ProjectFilters
         filters={filters}
+        loadedUsers={loadedUsers}
         dateError={dateError}
         onResetPage={table.onResetPage}
         openDateRange={openDateRange.value}
         onOpenDateRange={openDateRange.onTrue}
         onCloseDateRange={openDateRange.onFalse}
+        openInstallerFilter={openInstallerFilter.value}
+        onOpenInstallerFilter={openInstallerFilter.onTrue}
+        onCloseInstallerFilter={openInstallerFilter.onFalse}
         options={{ types: PROJECT_TYPE_OPTIONS }}
       />
 
@@ -388,6 +415,7 @@ export function ProjectView() {
                 onOpenConfirmStaff={confirmStaff.onTrue}
                 isWarehouseStaff={isWarehouseStaff}
                 setIsWarehouseStaff={setIsWarehouseStaff}
+                canReset={canReset}
               />
             ) : view === 'grid' ? (
               <ProjectGridView
@@ -481,7 +509,7 @@ export function ProjectView() {
 }
 
 function applyFilter({ inputData, comparator, filters, dateError }) {
-  const { list, name, type, startDate, endDate, custom } = filters;
+  const { list, name, type, startDate, endDate, installer, custom } = filters;
 
   const stabilizedThis = inputData.map((el, index) => [el, index]);
 
@@ -538,6 +566,16 @@ function applyFilter({ inputData, comparator, filters, dateError }) {
         return false;
       });
     }
+  }
+
+  if (installer.id) {
+    inputData = inputData.filter((file) => {
+      const installerId = getProjectInstaller(file, CONFIG)?.id;
+      if (installerId) {
+        return String(installerId) === String(installer.id);
+      }
+      return false;
+    });
   }
 
   if (custom.hasPermission) {

@@ -86,6 +86,7 @@ export function SalesOrderListView() {
     refetchSalesOrders,
     refetchProjects,
     loadedUsers,
+    isLoadingSalesOrders,
   } = useDataContext();
 
   const [listSalesOrders, setListSalesOrders] = useState(null);
@@ -96,12 +97,12 @@ export function SalesOrderListView() {
     }
   }, [refetchProjects]);
 
-  useEffect(() => {
-    if (refetchSalesOrders) {
-      refetchSalesOrders();
-    }
-    setListSalesOrders(loadedSalesOrders?.results);
-  }, [refetchSalesOrders, loadedSalesOrders]);
+  // useEffect(() => {
+  //   if (refetchSalesOrders) {
+  //     refetchSalesOrders();
+  //   }
+  //   setListSalesOrders(loadedSalesOrders?.results);
+  // }, [refetchSalesOrders, loadedSalesOrders]);
 
   useEffect(() => {
     if (loadedSalesOrders) {
@@ -325,7 +326,7 @@ export function SalesOrderListView() {
 
   const [currentSalesOrder, setCurrentSalesOrder] = useState(null);
 
-  if (updating) {
+  if (isLoadingSalesOrders) {
     return (
       <DashboardContent>
         <Box

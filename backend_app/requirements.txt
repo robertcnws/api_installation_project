@@ -23,12 +23,14 @@ dnspython==2.7.0
 # protobuf==5.29.3
 graphene==3.4.3
 graphene-django==3.2.2
+graphene-django-optimizer
 graphene-mongo==0.4.4
 gunicorn==23.0.0
 h11==0.14.0
 kombu==5.4.2
 mongoengine==0.29.1
 packaging==24.2
+Pillow
 prompt_toolkit==3.0.48
 pymongo==4.10.1
 psycopg2==2.9.9

@@ -102,11 +102,11 @@ export function ProjectEditModalInstallationTeamView({
 
 
     useEffect(() => {
-        if (project) {
+        if (project?.id) {
             reset({
-                id: project.id || '',
-                name: project.name || '',
-                number: project.number || '',
+                id: project?.id || '',
+                name: project?.name || '',
+                number: project?.number || '',
                 installer: getProjectInstaller(project, CONFIG) || null,
             });
         }

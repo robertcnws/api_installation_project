@@ -195,7 +195,6 @@ export function ProjectDetailsContent({
                   )}
               </TableCell>
             </TableRow>
-
           )}
 
           {project?.userManager?.name && (

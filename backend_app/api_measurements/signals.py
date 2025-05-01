@@ -25,6 +25,8 @@ def measurement_saved(sender, document, **kwargs):
                 "number": document.number,
                 "customer": document.customer,
                 "salesOrder": document.sales_order,
+                "service": document.service,
+                "project": document.project,
                 "userReporter": document.user_reporter,
                 "userManager": document.user_manager,
                 "phone": document.phone,
@@ -34,6 +36,12 @@ def measurement_saved(sender, document, **kwargs):
                 "isActive": document.is_active,
                 "createdTime": document.created_time,
                 "lastModifiedTime": document.last_modified_time,
+                "firstDate": document.first_date,
+                "checkDate": document.check_date,
+                "firstAssignee": document.first_assignee,
+                "checkAssignee": document.check_assignee,
+                "measurementAttachments": document.measurement_attachments,
+                "generalNotes": document.general_notes,
             }
 
         }
@@ -52,6 +60,8 @@ def measurement_deleted(sender, document, **kwargs):
                 "number": document.number,
                 "customer": document.customer,
                 "salesOrder": document.sales_order,
+                "service": document.service,
+                "project": document.project,
                 "userReporter": document.user_reporter,
                 "userManager": document.user_manager,
                 "phone": document.phone,
@@ -61,6 +71,12 @@ def measurement_deleted(sender, document, **kwargs):
                 "isActive": document.is_active,
                 "createdTime": document.created_time,
                 "lastModifiedTime": document.last_modified_time,
+                "firstDate": document.first_date,
+                "checkDate": document.check_date,
+                "firstAssignee": document.first_assignee,
+                "checkAssignee": document.check_assignee,
+                "measurementAttachments": document.measurement_attachments,
+                "generalNotes": document.general_notes,
             }
         }
     }
@@ -84,6 +100,8 @@ def measurement_by_id_saved(sender, document, **kwargs):
                 "number": document.number,
                 "customer": document.customer,
                 "salesOrder": document.sales_order,
+                "service": document.service,
+                "project": document.project,
                 "userReporter": document.user_reporter,
                 "userManager": document.user_manager,
                 "phone": document.phone,
@@ -93,6 +111,12 @@ def measurement_by_id_saved(sender, document, **kwargs):
                 "isActive": document.is_active,
                 "createdTime": document.created_time,
                 "lastModifiedTime": document.last_modified_time,
+                "firstDate": document.first_date,
+                "checkDate": document.check_date,
+                "firstAssignee": document.first_assignee,
+                "checkAssignee": document.check_assignee,
+                "measurementAttachments": document.measurement_attachments,
+                "generalNotes": document.general_notes,
             }
 
         }
@@ -112,6 +136,8 @@ def measurement_by_id_deleted(sender, document, **kwargs):
                 "number": document.number,
                 "customer": document.customer,
                 "salesOrder": document.sales_order,
+                "service": document.service,
+                "project": document.project,
                 "userReporter": document.user_reporter,
                 "userManager": document.user_manager,
                 "phone": document.phone,
@@ -121,6 +147,12 @@ def measurement_by_id_deleted(sender, document, **kwargs):
                 "isActive": document.is_active,
                 "createdTime": document.created_time,
                 "lastModifiedTime": document.last_modified_time,
+                "firstDate": document.first_date,
+                "checkDate": document.check_date,
+                "firstAssignee": document.first_assignee,
+                "checkAssignee": document.check_assignee,
+                "measurementAttachments": document.measurement_attachments,
+                "generalNotes": document.general_notes,
             }
         }
     }

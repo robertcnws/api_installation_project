@@ -14,6 +14,7 @@ import { useBoolean } from 'src/hooks/use-boolean';
 import { useSetState } from 'src/hooks/use-set-state';
 
 import { fIsAfter, fIsBetween } from 'src/utils/format-time';
+import { getServiceInstaller } from 'src/utils/service-tasks-utils';
 
 import { CONFIG } from 'src/config-global';
 import { PROJECT_TYPE_OPTIONS } from 'src/_mock';
@@ -34,6 +35,7 @@ import { ServiceFilters } from '../service-filters';
 // import { ServiceCalendarView } from '../calendar/view';
 // import { KanbanServiceView } from '../kanban-service/view';
 import { ServiceFiltersResult } from '../service-filters-result';
+
 // import { ServiceNewFolderDialog } from '../service-new-folder-dialog';
 
 // ----------------------------------------------------------------------
@@ -68,6 +70,8 @@ export function ServiceView() {
   const router = useRouter();
 
   const openDateRange = useBoolean();
+
+  const openInstallerFilter = useBoolean();
 
   const confirm = useBoolean();
 
@@ -132,6 +136,10 @@ export function ServiceView() {
     endDate: null,
     byFactory: false,
     notByFactory: false,
+    installer: {
+      id: null,
+      name: null,
+    },
     custom: {
       hasPermission: false,
       isPreparation: {
@@ -165,6 +173,7 @@ export function ServiceView() {
     !!filters.state.name ||
     filters.state.type.length > 0 ||
     (!!filters.state.startDate && !!filters.state.endDate) ||
+    (!!filters.state.installer.id && !!filters.state.installer.name) ||
     filters.state.custom.hasPermission ||
     filters.state.custom.isPreparation?.value ||
     filters.state.custom.isRepair?.value ||
@@ -238,7 +247,7 @@ export function ServiceView() {
     async (id, isClosed) => {
       const promise = axios.post(`${CONFIG.apiUrl}/services/update/service/${id}/close-service/`, {
         userReporter: JSON.stringify(userLogged?.data),
-        isClosed, 
+        isClosed,
       });
 
       await promise;
@@ -256,18 +265,34 @@ export function ServiceView() {
   const handleViewKanban = useCallback(
     (id) => {
       localStorage.setItem('serviceId', id);
+      const listData = dataFiltered.map((item) => ({
+        id: item.id,
+        name: item.name,
+        number: item.number,
+        version: item.version,
+        startDate: item.startDate,
+      }));
+      localStorage.setItem('serviceFilteredList', JSON.stringify(listData));
       router.push(paths.dashboard.service.kanbanServiceId(id));
     },
-    [router]
+    [router, dataFiltered]
   );
 
   const handleDetailsView = useCallback(
     (id) => {
       localStorage.setItem('serviceId', id);
       localStorage.setItem('backFromServiceDetails', 'services');
+      const listData = dataFiltered.map((item) => ({
+        id: item.id,
+        name: item.name,
+        number: item.number,
+        version: item.version,
+        startDate: item.startDate,
+      }));
+      localStorage.setItem('serviceFilteredList', JSON.stringify(listData));
       router.push(paths.dashboard.service.details(id));
     },
-    [router]
+    [router, dataFiltered]
   );
 
   const renderFilters = (
@@ -279,11 +304,15 @@ export function ServiceView() {
     >
       <ServiceFilters
         filters={filters}
+        loadedUsers={loadedUsers}
         dateError={dateError}
         onResetPage={table.onResetPage}
         openDateRange={openDateRange.value}
         onOpenDateRange={openDateRange.onTrue}
         onCloseDateRange={openDateRange.onFalse}
+        openInstallerFilter={openInstallerFilter.value}
+        onOpenInstallerFilter={openInstallerFilter.onTrue}
+        onCloseInstallerFilter={openInstallerFilter.onFalse}
         options={{ types: PROJECT_TYPE_OPTIONS }}
       />
 
@@ -436,7 +465,7 @@ export function ServiceView() {
 }
 
 function applyFilter({ inputData, comparator, filters, dateError }) {
-  const { list, name, type, startDate, endDate, byFactory, notByFactory, custom } = filters;
+  const { list, name, type, startDate, endDate, byFactory, notByFactory, installer, custom } = filters;
 
   const stabilizedThis = inputData.map((el, index) => [el, index]);
 
@@ -512,9 +541,15 @@ function applyFilter({ inputData, comparator, filters, dateError }) {
     inputData = inputData.filter(file => !file.byFactory);
   }
 
-  // if (byFactory && notByFactory) {
-  //   inputData = inputData.filter(file => file.byFactory || !file.byFactory);
-  // }
+  if (installer.id) {
+    inputData = inputData.filter((file) => {
+      const installerId = getServiceInstaller(file, CONFIG)?.id;
+      if (installerId) {
+        return String(installerId) === String(installer.id);
+      }
+      return false;
+    });
+  }
 
   if (custom.hasComments) {
     inputData = inputData.filter(file => file.serviceComments.length > 0);

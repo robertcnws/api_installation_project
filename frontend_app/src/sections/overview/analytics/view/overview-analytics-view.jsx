@@ -71,12 +71,12 @@ export function OverviewAnalyticsView() {
     router.push(paths.dashboard.project.details(reminder.project.id));
   };
 
-  useEffect(() => {
-    if (refetchProjects) {
-      refetchProjects();
-    }
-    setProjects(loadedProjects || []);
-  }, [refetchProjects, loadedProjects]);
+  // useEffect(() => {
+  //   if (refetchProjects) {
+  //     refetchProjects();
+  //   }
+  //   setProjects(loadedProjects || []);
+  // }, [refetchProjects, loadedProjects]);
 
   useEffect(() => {
     if (loadedProjects) {
@@ -162,7 +162,7 @@ export function OverviewAnalyticsView() {
   return (
     <>
       {
-        !projects ? (
+        (!projects?.length === 0 || loadingProjects) ? (
           <Box
             sx={{
               width: '350px',

@@ -7,8 +7,8 @@ import ListItem from '@mui/material/ListItem';
 import Typography from '@mui/material/Typography';
 import { alpha, styled, useTheme } from '@mui/material/styles';
 
-import { isInstaller, listRolesAndSubroles } from 'src/utils/check-permissions';
 import { availableTasks, previousTasksInStatus } from 'src/utils/project-tasks-utils';
+import { isInstaller, isWarehouseStaff, listRolesAndSubroles } from 'src/utils/check-permissions';
 
 import { CONFIG } from 'src/config-global';
 import { varAlpha, stylesMode } from 'src/theme/styles';
@@ -149,11 +149,17 @@ const ItemBase = forwardRef(({
           {(
             listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator) ||
             task?.users_assignees?.some((u) => u.id === userLogged?.data?.id) ||
-            project?.userManager?.id === userLogged?.data?.id
+            project?.userManager?.id === userLogged?.data?.id ||
+            (isWarehouseStaff(userLogged?.data?.user_role?.name) && task?.project_default_task?.project_stage?.name.toLowerCase() === CONFIG.stages.installation.toLowerCase())
           ) && (
               <>
-                {((task && task.status === CONFIG.taskStatus.notStarted && (task?.project_default_task?.order === 1 ||
-                  (project?.hasPermission && task?.project_default_task?.project_stage.name.toLowerCase() === CONFIG.stages.permission.toLowerCase()))) ||
+                {((task && task.status === CONFIG.taskStatus.notStarted && (
+                  task?.project_default_task?.order === 1 ||
+                  (
+                    project?.hasPermission &&
+                    task?.project_default_task?.project_stage.name.toLowerCase() === CONFIG.stages.permission.toLowerCase() &&
+                    !isWarehouseStaff(userLogged?.data?.user_role?.name)
+                  ))) ||
                   (task.beforeNoMatter && task.status === CONFIG.taskStatus.notStarted)) && (
                     <IconButton
                       variant="soft"
@@ -177,13 +183,16 @@ const ItemBase = forwardRef(({
                     </IconButton>
                   )}
                 {(task && task.status !== CONFIG.taskStatus.notStarted && task.status !== 'finished') && (
-                  ((previousTasksInStatus(
-                    task,
-                    project?.projectDefaultTasks,
-                    CONFIG.taskStatus.inProgress,
-                    task?.project_default_task?.project_stage?.name.toLowerCase().indexOf(CONFIG.stages.permission.toLowerCase()) !== -1,
-                    CONFIG
-                  ).length === 0) || (task.beforeNoMatter && task.status === CONFIG.taskStatus.inProgress)) && (
+                  (
+                    (previousTasksInStatus(
+                      task,
+                      project?.projectDefaultTasks,
+                      CONFIG.taskStatus.inProgress,
+                      task?.project_default_task?.project_stage?.name.toLowerCase().indexOf(CONFIG.stages.permission.toLowerCase()) !== -1,
+                      CONFIG
+                    ).length === 0) ||
+                    (task.beforeNoMatter && task.status === CONFIG.taskStatus.inProgress)
+                  ) && (
                     <IconButton
                       variant="soft"
                       color="success"
@@ -386,7 +395,7 @@ const ItemBase = forwardRef(({
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, flexDirection: 'row', gap: 1, justifyContent: 'space-between' }}>
             {renderInfo}
             {availableReminders?.length > 0 && (
-              <Box sx={{ mr: -5}}>
+              <Box sx={{ mr: -5 }}>
                 <AnimatedIcon icon='uil:bell' color='error' />
               </Box>
             )}

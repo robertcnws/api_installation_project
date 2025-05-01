@@ -21,15 +21,15 @@ export function MeasurementCreateView() {
         heading="Create a new measurement"
         links={[
           { name: 'Dashboard', href: paths.dashboard.general.analytics },
-          { name: 'Measurement', href: paths.dashboard.service.list },
+          { name: 'Measurement', href: paths.dashboard.measurement.list },
           { name: 'New measurement' },
         ]}
         sx={{ mb: { xs: 3, md: 5 } }}
         action={
-          <Tooltip title="Close new service form" arrow>
+          <Tooltip title="Close new measurement form" arrow>
             <IconButton
               component={RouterLink}
-              href={paths.dashboard.service.list}
+              href={paths.dashboard.measurement.list}
             >
               <Iconify icon="mingcute:close-fill" />
             </IconButton>

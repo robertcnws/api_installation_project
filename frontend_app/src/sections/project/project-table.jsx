@@ -54,6 +54,7 @@ export function ProjectTable({
   onOpenConfirmStaff,
   isWarehouseStaff,
   setIsWarehouseStaff,
+  canReset,
   ...other
 }) {
   const {
@@ -171,11 +172,12 @@ export function ProjectTable({
           }}
         />
 
-        <TableContainer sx={{ px: { md: 3 } }}>
+        <TableContainer sx={{ px: { md: 3 },  overflowY: 'auto'}}>
           <Table
+            stickyHeader
             size={dense ? 'small' : 'medium'}
             sx={{
-              minWidth: !isMobile ? 960 : 0,
+              minWidth: !isMobile ? !canReset ? 900 : 960 : 0,
               borderCollapse: 'separate',
               borderSpacing: '0 2px',
             }}

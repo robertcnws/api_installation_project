@@ -136,7 +136,7 @@ export function ProjectEditModalDescriptionView({
                                     control={control}
                                     fullWidth
                                     multiline
-                                    rows={3}
+                                    rows={7}
                                     placeholder="Enter description"
                                 />
                             </Box>

@@ -16,6 +16,7 @@ import { varAlpha } from 'src/theme/styles';
 
 import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
+import { ConfirmDialog } from 'src/components/custom-dialog';
 import { usePopover, CustomPopover } from 'src/components/custom-popover';
 import { CustomDateRangePicker } from 'src/components/custom-date-range-picker';
 
@@ -25,12 +26,16 @@ import { LoadingContext } from 'src/auth/context/loading-context';
 
 export function ServiceFilters({
   filters,
+  loadedUsers,
   options,
   dateError,
   onResetPage,
   openDateRange,
   onOpenDateRange,
   onCloseDateRange,
+  openInstallerFilter,
+  onOpenInstallerFilter,
+  onCloseInstallerFilter,
 }) {
 
   const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
@@ -59,7 +64,8 @@ export function ServiceFilters({
     const active = [];
     if (custom.hasComments) active.push('Have comments');
     if (filters.state.startDate && filters.state.endDate) active.push(fDateRangeShortLabel(filters.state.startDate, filters.state.endDate));
-    if (filters.state.name) active.push(`matches: ${filters.state.name}`);
+    if (filters.state.name) active.push(`Matches: ${filters.state.name}`);
+    if (filters.state.installer.id) active.push(`Service Team: ${filters.state.installer.name}`);
     return active.length > 0 ? `${name} Services (${active.join(', ')})` : `${name} services`;
   }, [custom, filters]);
 
@@ -77,6 +83,21 @@ export function ServiceFilters({
       list: typeName,
     });
   }, [filters, onResetPage]);
+
+  const handleFilterInstaller = useCallback(
+    (event) => {
+      const id = event.target.value;
+      onResetPage();
+      const user = loadedUsers.find((u) => u.id === id);
+      filters.setState({
+        installer: {
+          id,
+          name: user?.name || ''
+        }
+      });
+    },
+    [loadedUsers, filters, onResetPage]
+  );
 
   const handleFilterCustom = useCallback((fieldName) => {
     onResetPage();
@@ -171,6 +192,66 @@ export function ServiceFilters({
     popover.onClose();
     filters.setState({ type: [] });
   }, [filters, popover]);
+
+
+  const renderFilterInstaller = (
+    <>
+      <Button
+        color="inherit"
+        onClick={onOpenInstallerFilter}
+        endIcon={
+          <Iconify
+            icon={openInstallerFilter ? 'eva:arrow-ios-upward-fill' : 'eva:arrow-ios-downward-fill'}
+            sx={{ ml: -0.5 }}
+          />
+        }
+      >
+        {!!filters.state.installer.id && !!filters.state.installer.name
+          ? `Service team: ${filters.state.installer.name}`
+          : 'Select service team'}
+      </Button>
+
+      <ConfirmDialog
+        open={openInstallerFilter}
+        onClose={onCloseInstallerFilter}
+        title="Select service team"
+        content={
+          <TextField
+              select
+              value={filters.state.installer.id || ''}
+              onChange={handleFilterInstaller}
+              placeholder="Select service team"
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Iconify icon="eva:search-fill" sx={{ color: 'text.disabled' }} />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{ width: '100%' }}
+            >
+              {loadedUsers.filter((user) => isInstaller(user.userRole.name)).map((user) => (
+                <MenuItem key={user.id} value={user.id}>
+                  {user.name}
+                </MenuItem>
+              ))}
+            </TextField>
+        }
+        action={
+          <Button
+              variant="contained"
+              onClick={() => {
+                onCloseInstallerFilter();
+                filters.setState({ installer: { id: null, name: null } });
+              }}
+              color='warning'
+            >
+              Clear
+            </Button>
+        }
+      />
+    </>
+  );
 
 
   const renderFilterDate = (isRenderCustom = false) => (
@@ -387,47 +468,47 @@ export function ServiceFilters({
               </MenuItem>
 
               {filters.state.list === 'in progress' && [
-              
-              <MenuItem key="stages-divider" sx={{ py: 0 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', py: 0 }}>
-                  <Divider orientation="vertical" flexItem sx={{ color: 'text.disabled' }} >
-                    <ListItemText primary="Stages" />
-                  </Divider>
-                </Box>
-              </MenuItem>,
-              <MenuItem key="stages-preparation" sx={{ py: 0 }} onClick={() => handleFilterCustom('isPreparation')}>
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <ListItemIcon>
-                    <CheckBox
-                      checked={filters.state.custom.isPreparation.value}
-                      onChange={() => handleFilterCustom('isPreparation')}
-                    />
-                  </ListItemIcon>
-                  <ListItemText primary="Preparation Stage" />
-                </Box>
-              </MenuItem>,
-              <MenuItem key="stages-repair" sx={{ py: 0 }} onClick={() => handleFilterCustom('isRepair')}>
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <ListItemIcon>
-                    <CheckBox
-                      checked={filters.state.custom.isRepair.value}
-                      onChange={() => handleFilterCustom('isRepair')}
-                    />
-                  </ListItemIcon>
-                  <ListItemText primary="Repair Stage" />
-                </Box>
-              </MenuItem>,
-              <MenuItem key="stages-closing" sx={{ py: 0 }} onClick={() => handleFilterCustom('isClosing')}>
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <ListItemIcon>
-                    <CheckBox
-                      checked={filters.state.custom.isClosing.value}
-                      onChange={() => handleFilterCustom('isClosing')}
-                    />
-                  </ListItemIcon>
-                  <ListItemText primary="Closing Stage" />
-                </Box>
-              </MenuItem>,
+
+                <MenuItem key="stages-divider" sx={{ py: 0 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', py: 0 }}>
+                    <Divider orientation="vertical" flexItem sx={{ color: 'text.disabled' }} >
+                      <ListItemText primary="Stages" />
+                    </Divider>
+                  </Box>
+                </MenuItem>,
+                <MenuItem key="stages-preparation" sx={{ py: 0 }} onClick={() => handleFilterCustom('isPreparation')}>
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <ListItemIcon>
+                      <CheckBox
+                        checked={filters.state.custom.isPreparation.value}
+                        onChange={() => handleFilterCustom('isPreparation')}
+                      />
+                    </ListItemIcon>
+                    <ListItemText primary="Preparation Stage" />
+                  </Box>
+                </MenuItem>,
+                <MenuItem key="stages-repair" sx={{ py: 0 }} onClick={() => handleFilterCustom('isRepair')}>
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <ListItemIcon>
+                      <CheckBox
+                        checked={filters.state.custom.isRepair.value}
+                        onChange={() => handleFilterCustom('isRepair')}
+                      />
+                    </ListItemIcon>
+                    <ListItemText primary="Repair Stage" />
+                  </Box>
+                </MenuItem>,
+                <MenuItem key="stages-closing" sx={{ py: 0 }} onClick={() => handleFilterCustom('isClosing')}>
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <ListItemIcon>
+                      <CheckBox
+                        checked={filters.state.custom.isClosing.value}
+                        onChange={() => handleFilterCustom('isClosing')}
+                      />
+                    </ListItemIcon>
+                    <ListItemText primary="Closing Stage" />
+                  </Box>
+                </MenuItem>,
               ]}
 
               <MenuItem sx={{ py: 0 }} key="factory-divider">
@@ -437,7 +518,7 @@ export function ServiceFilters({
                   </Divider>
                 </Box>
               </MenuItem>
-              
+
               <MenuItem sx={{ py: 0 }} key="byFactory" onClick={() => handleFilterCustom('byFactory')}>
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
                   <ListItemIcon>
@@ -469,7 +550,7 @@ export function ServiceFilters({
                   </Divider>
                 </Box>
               </MenuItem>
-              
+
               <MenuItem sx={{ py: 0 }} key="hasComments" onClick={() => handleFilterCustom('hasComments')}>
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
                   <ListItemIcon>
@@ -619,7 +700,10 @@ export function ServiceFilters({
 
       <Stack spacing={1} direction="row" alignItems="center" justifyContent="flex-end" flexGrow={1}>
         {!isInstaller(userLogged?.data?.user_role?.name) && (
-          renderFilterDate()
+          <>
+            {renderFilterInstaller}
+            {renderFilterDate()}
+          </>
         )}
         {renderFilterType}
       </Stack>

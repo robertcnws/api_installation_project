@@ -198,24 +198,28 @@ export function ServiceDetailsContentOverview({
             />,
             hasValue: service?.name?.length > 0,
           },
-          {
-            label: 'SO Number',
-            value: salesOrder?.salesorder_number,
-            icon: <Iconify
-              icon="fluent:book-number-24-regular"
-              sx={{ color: 'text.primary' }}
-            />,
-            hasValue: salesOrder?.salesorder_number?.length > 0,
-          },
-          {
-            label: 'REF Number',
-            value: salesOrder?.reference_number ? salesOrder?.reference_number : 'No REF Number',
-            icon: <Iconify
-              icon="carbon:term-reference"
-              sx={{ color: 'text.primary' }}
-            />,
-            hasValue: salesOrder?.reference_number?.length > 0,
-          },
+          ...salesOrder?.salesorder_number?.length > 0 ? [
+            {
+              label: 'SO Number',
+              value: salesOrder?.salesorder_number,
+              icon: <Iconify
+                icon="fluent:book-number-24-regular"
+                sx={{ color: 'text.primary' }}
+              />,
+              hasValue: salesOrder?.salesorder_number?.length > 0,
+            },
+          ] : [],
+          ...salesOrder?.reference_number?.length > 0 ? [
+            {
+              label: 'REF Number',
+              value: salesOrder?.reference_number ? salesOrder?.reference_number : 'No REF Number',
+              icon: <Iconify
+                icon="carbon:term-reference"
+                sx={{ color: 'text.primary' }}
+              />,
+              hasValue: salesOrder?.reference_number?.length > 0,
+            },
+          ] : [],
           {
             label: 'Order Date',
             value: fDate(salesOrder?.date),

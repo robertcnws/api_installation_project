@@ -1,7 +1,13 @@
 # s3_utils.py
 import boto3
 import os
+import sys
 import subprocess
+import io
+import zipfile
+import tarfile
+from pathlib import Path
+from PIL import Image, ImageOps
 from botocore.exceptions import ClientError
 from django.conf import settings
 from datetime import datetime
@@ -22,6 +28,34 @@ def key_exists_in_s3(key):
             return False
         else:
             raise e
+        
+        
+def compress_file(file_obj, max_width=2000, quality=85, format="JPEG"):
+    upload_buffer = io.BytesIO()
+    content_type = file_obj.content_type
+    
+    if content_type.startswith("image/"):
+        img = Image.open(file_obj)
+        img = ImageOps.exif_transpose(img)
+        
+        if format.upper() == "JPEG" and img.mode in ("RGBA", "LA"):
+            background = Image.new("RGB", img.size, (255, 255, 255))
+            background.paste(img, mask=img.split()[3])
+            img = background
+        
+        if img.width > max_width:
+            ratio = max_width / float(img.width)
+            new_height = int(img.height * ratio)
+            img = img.resize((max_width, new_height), Image.LANCZOS)
+        
+        img.save(upload_buffer, format=format, optimize=True, quality=quality)
+        content_type = f"image/{format.lower()}"
+        upload_buffer.seek(0)
+    else:
+        file_obj.seek(0)
+        upload_buffer = file_obj
+    return upload_buffer, content_type
+    
 
 def upload_attachment_to_s3(file_obj, folder=settings.AWS_S3_FOLDER_PROJECTS):
     import uuid
@@ -33,6 +67,9 @@ def upload_attachment_to_s3(file_obj, folder=settings.AWS_S3_FOLDER_PROJECTS):
         key = folder + f"{uuid.uuid4()}.{extension}"
 
     try:
+        file_obj, content_type = compress_file(file_obj)
+        file_obj.content_type = content_type
+        
         s3_client.upload_fileobj(
             file_obj,
             settings.AWS_STORAGE_BUCKET_NAME,
@@ -45,6 +82,65 @@ def upload_attachment_to_s3(file_obj, folder=settings.AWS_S3_FOLDER_PROJECTS):
     except ClientError as e:
         print("Error uploading file to S3:", e)
         return None
+    
+    
+def download_and_compress_s3(keys, number):
+    s3 = boto3.client('s3')
+    downloads_dir = Path.home() / "Downloads"
+    downloads_dir.mkdir(exist_ok=True)
+    
+    ts = datetime.now().strftime("%Y%m%d%H%M%S")
+    if sys.platform.startswith("win"):
+        archive_name = f"files_{number}_{ts}.zip"
+        archive_path = downloads_dir / archive_name
+        with zipfile.ZipFile(archive_path, mode="w", compression=zipfile.ZIP_DEFLATED) as zf:
+            for key in keys:
+                buf = io.BytesIO()
+                try:
+                    s3.download_fileobj(settings.AWS_STORAGE_BUCKET_NAME, key, buf)
+                    buf.seek(0)
+                    zf.writestr(os.path.basename(key), buf.read())
+                except ClientError as e:
+                    print(f"Error descargando {key}: {e}")
+    else:
+        archive_name = f"files_{number}_{ts}.tar.gz"
+        archive_path = downloads_dir / archive_name
+        
+        with tarfile.open(archive_path, mode="w:gz") as tf:
+            for key in keys:
+                buf = io.BytesIO()
+                try:
+                    s3.download_fileobj(settings.AWS_STORAGE_BUCKET_NAME, key, buf)
+                    buf.seek(0)
+                    info = tarfile.TarInfo(name=os.path.basename(key))
+                    data = buf.getvalue()
+                    info.size = len(data)
+                    tf.addfile(tarinfo=info, fileobj=io.BytesIO(data))
+                except ClientError as e:
+                    print(f"Error descargando {key}: {e}")
+    
+    return archive_path
+
+
+def make_s3_archive_stream(keys, number, stage, task):
+    s3 = boto3.client('s3')
+    buf = io.BytesIO()
+    ts = datetime.now().strftime("%Y%m%d%H%M%S")
+    filename = f"files_{number}_{ts}"
+    if stage:
+        filename += f"_{stage}"
+    if task:
+        filename += f"_{task}"
+    filename += ".zip"
+    with zipfile.ZipFile(buf, mode="w", compression=zipfile.ZIP_DEFLATED) as zf:
+        for key in keys:
+            file_buf = io.BytesIO()
+            s3.download_fileobj(settings.AWS_STORAGE_BUCKET_NAME, key, file_buf)
+            file_buf.seek(0)
+            zf.writestr(os.path.basename(key), file_buf.read())
+    buf.seek(0)
+    content_type = "application/zip"
+    return buf, filename, content_type
     
     
 def generate_default_file_url(object_key):

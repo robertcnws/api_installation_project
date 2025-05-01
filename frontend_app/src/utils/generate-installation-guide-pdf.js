@@ -477,8 +477,10 @@ export function combineByName(arr) {
 
 export function extractDimensions(text) {
     const patterns = [
-        // Formato estándar: 36.0" x 48.0" o 36.0x48.0 o 36.0 x 48.0 (con o sin comillas)
-        /(\d+(?:\.\d+)?)(?:["])?\s*[xX]\s*(\d+(?:\.\d+)?)(?:["])?/,
+        // // Formato estándar: 36.0" x 48.0" o 36.0x48.0 o 36.0 x 48.0 (con o sin comillas)
+        // /(\d+(?:\.\d+)?)(?:["])?\s*[xX]\s*(\d+(?:\.\d+)?)(?:["])?/,
+        // 1) decimal o fracción (como "36", "36.5", "36 3/4", "3/8"), opcional comilla, separador X, luego lo mismo, y luego opcional sufijo de letras
+        /(\d+(?:\.\d+)?(?:\s+\d+\/\d+)?)(?:["”])?\s*[xX]\s*(\d+(?:\.\d+)?(?:\s+\d+\/\d+)?)(?:["”])?(?:\s*[A-Za-z]+)?/,
         // Variante sin 'x', solo con comillas: 36.0" 48.0"
         /(\d+(?:\.\d+)?)(?:["])\s+(\d+(?:\.\d+)?)(?:["])/,
         // Formato con "W=" y "H1=" (que pueden incluir fracciones), por ejemplo: "W=48 X H1=57 1/8"

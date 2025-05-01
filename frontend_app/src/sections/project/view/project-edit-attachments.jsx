@@ -2,6 +2,7 @@ import axios from 'axios';
 import { toast } from 'sonner';
 import { useMemo, useState, useEffect, useCallback } from 'react';
 
+import { LoadingButton } from '@mui/lab';
 import { Box, Grid, Paper, Button, Divider } from '@mui/material';
 
 import { useBoolean } from 'src/hooks/use-boolean';
@@ -46,6 +47,7 @@ export function ProjectEditAttachments({
     });
   }, [displayFiles, loadedStages, project]);
 
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const [fileToRemove, setFileToRemove] = useState(null);
   const confirm = useBoolean();
@@ -149,6 +151,42 @@ export function ProjectEditAttachments({
     refetchProject?.();
   };
 
+  const handleDownloadAllFiles = useCallback(async (files, stage) => {
+    setIsDownloading(true);
+    try {
+      const response = await axios.get(`${CONFIG.apiUrl}/projects/download/files/`, {
+        params: { 'keys[]': files, number: project.number, stage },
+        paramsSerializer: p => files
+          .map(f => `keys[]=${encodeURIComponent(f)}`)
+          .concat([`number=${project.number}`, `stage=${stage}`])
+          .join('&'),
+        responseType: 'blob',
+      });
+
+      const contentDisposition = response.headers['content-disposition'];
+
+      console.log('response.headers:', response.headers);
+      let fileName = 'download.zip';
+      if (contentDisposition) {
+        const fileNameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
+        if (fileNameMatch && fileNameMatch.length > 1) {
+          fileName = fileNameMatch[1];
+        }
+      }
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      setIsDownloading(false);
+    } catch (error) {
+      console.error('Error al descargar el archivo:', error);
+    }
+  }, [project]);
+
   const handleAddFiles = async (stageId = null) => {
     if (newFiles.length === 0) return;
     try {
@@ -247,6 +285,23 @@ export function ProjectEditAttachments({
                             </Button>
                           </Box>
                         )}
+                      {initialFiles?.filter((file) => file?.current_stage?.id === project?.currentStage?.id)?.length > 0 && (
+                        <Box sx={{ mb: 1 }}>
+                          <LoadingButton
+                            loading={isDownloading}
+                            color="info"
+                            variant="outlined"
+                            disabled={initialFiles?.filter((file) => file?.current_stage?.id === project?.currentStage?.id)?.length === 0}
+                            onClick={() => {
+                              const files = initialFiles?.filter((file) => file?.current_stage?.id === project?.currentStage?.id)?.map((file) => file.file);
+                              handleDownloadAllFiles(files, project?.currentStage?.name);
+                            }}
+                          >
+                            <Iconify icon="line-md:download-loop" />
+                            Download
+                          </LoadingButton>
+                        </Box>
+                      )}
                     </Box>
                   </Grid>
                   <Grid item xs={8} sm={10}>
@@ -373,6 +428,21 @@ export function ProjectEditAttachments({
                                 <Iconify icon="material-symbols:attach-file-add" />
                                 Add
                               </Button>
+                            )}
+                            {initialFiles?.filter((file) => file?.current_stage?.id === mappedFile.stageId)?.length > 0 && (
+                              <LoadingButton
+                                loading={isDownloading}
+                                color="info"
+                                variant="outlined"
+                                disabled={initialFiles?.filter((file) => file?.current_stage?.id === mappedFile.stageId)?.length === 0}
+                                onClick={() => {
+                                  const files = initialFiles?.filter((file) => file?.current_stage?.id === mappedFile.stageId)?.map((file) => file.file);
+                                  handleDownloadAllFiles(files, mappedFile.stageName);
+                                }}
+                                sx={{ p: 0, mt: 1 }}
+                              >
+                                <Iconify icon="line-md:download-loop" />
+                              </LoadingButton>
                             )}
                           </Box>
                         ) : null
