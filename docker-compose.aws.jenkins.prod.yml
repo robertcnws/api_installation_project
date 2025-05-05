@@ -1,0 +1,15 @@
+services:
+  aws_jenkins:
+    build:
+      context: ./jenkins
+      dockerfile: Dockerfile.aws.jenkins.prod
+    container_name: aws_jenkins
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    networks:
+      - net_installation
+
+networks:
+  net_installation:
+    driver: bridge

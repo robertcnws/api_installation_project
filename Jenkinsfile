@@ -1,0 +1,76 @@
+pipeline {
+  agent any
+  
+  environment {
+    AWS_ECR_REGISTRY         = "324037323031.dkr.ecr.us-east-2.amazonaws.com/nws"
+    BACKEND_IMAGE            = "${AWS_ECR_REGISTRY}/installation_projects_backend"
+    FRONTEND_IMAGE           = "${AWS_ECR_REGISTRY}/installation_projects_frontend"
+    AWS_DEFAULT_REGION       = "us-east-2"
+    AWS_FRONTEND_ENV_CRED_ID = "aws-frontend"
+    AWS_CLUSTER              = "api-dealerportal-cluster"
+    AWS_FRONTEND_SERVICE     = "installation-project-frontend-service"
+    AWS_BACKEND_SERVICE      = "installation-project-backend-service"
+  }
+
+  stages {
+    stage('Checkout') {
+      steps {
+        checkout scm
+      }
+    }
+
+    stage('Build & Push Backend') {
+      when {
+        changeset "**/backend_app/**"
+      }
+      steps {
+        dir('backend_app') {
+          sh """
+            docker-compose -f docker-compose.aws.backend.prod.yml build
+            docker tag api_installation_project-aws_backend_app:latest $BACKEND_IMAGE:latest
+            aws ecr get-login-password \
+              | docker login --username AWS --password-stdin $AWS_ECR_REGISTRY
+            docker push $BACKEND_IMAGE:latest
+          """
+        }
+      }
+    }
+
+    stage('Build & Push Frontend') {
+      when {
+        changeset "**/frontend_app/**"
+      }
+      steps {
+        dir('frontend_app') {
+          withCredentials([file(credentialsId: env.AWS_FRONTEND_ENV_CRED_ID, variable: 'ENV_FILE')]) {
+            sh 'cp $ENV_FILE .env'
+          }
+          sh """
+            docker-compose -f docker-compose.aws.frontend.prod.yml build
+            docker tag api_installation_project-aws_frontend_app:latest $FRONTEND_IMAGE:latest
+            aws ecr get-login-password \
+              | docker login --username AWS --password-stdin $AWS_ECR_REGISTRY
+            docker push $FRONTEND_IMAGE:latest
+          """
+        }
+      }
+    }
+
+    stage('Deploy to ECS') {
+      when {
+        anyOf {
+          changeset "**/backend_app/**"
+          changeset "**/frontend_app/**"
+        }
+      }
+      steps {
+        script {
+          sh """
+            aws ecs update-service --cluster $AWS_CLUSTER --service $AWS_BACKEND_SERVICE  --force-new-deployment
+            aws ecs update-service --cluster $AWS_CLUSTER --service $AWS_FRONTEND_SERVICE --force-new-deployment
+          """
+        }
+      }
+    }
+  }
+}
