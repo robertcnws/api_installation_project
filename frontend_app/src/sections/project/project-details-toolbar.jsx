@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { useMemo, useState, useEffect, useCallback } from 'react';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
@@ -97,16 +97,20 @@ export function ProjectDetailsToolbar({
   }, []);
 
   useEffect(() => {
-    if (loadedMeasurements?.length > 0) {
-      const measurement = loadedMeasurements.find(m => m.project?.id === project?.id);
-      setAssociatedMeasurement(measurement);
+    if (loadedMeasurements && loadedMeasurements?.length > 0) {
+      const measurement = loadedMeasurements?.find(m => m.project?.id === project?.id);
+      if (measurement && measurement?.id) {
+        setAssociatedMeasurement(measurement);
+      }
     }
   }, [loadedMeasurements, project]);
 
   useEffect(() => {
-    if (loadedServices?.length > 0) {
+    if (loadedServices && loadedServices?.length > 0) {
       const services = loadedServices.filter(s => s.salesOrder?.salesorder_id === project?.salesOrder?.salesorder_id);
-      setAssociatedServices(services);
+      if (services && services?.length > 0) {
+        setAssociatedServices(services);
+      } 
     }
   }, [loadedServices, project]);
 
@@ -298,8 +302,7 @@ export function ProjectDetailsToolbar({
 
         {(type === 'project' || type === 'tasks') && (
           <>
-            {(listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.installer) ||
-              listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.serviceStaff) ||
+            {(listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.serviceStaff) ||
               listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.projectManager)) && (
                 <Tooltip title='Generate Measurements' arrow>
                   <IconButton
@@ -346,7 +349,7 @@ export function ProjectDetailsToolbar({
                 </IconButton>
               </Tooltip>
             )}
-            {(verifyPermissions(
+            {/* {(verifyPermissions(
               listPermissions,
               CONFIG.permissions.system,
               CONFIG.permissions.moduleProjects,
@@ -385,7 +388,7 @@ export function ProjectDetailsToolbar({
                     <Iconify icon="solar:pen-bold" />
                   </IconButton>
                 </Tooltip>
-              )}
+              )} */}
             {(verifyPermissions(
               listPermissions,
               CONFIG.permissions.system,
@@ -535,10 +538,10 @@ export function ProjectDetailsToolbar({
         content={
           <>
             {associatedServices?.length > 0 && (
-              <Typography variant="body2" color="error" sx={{ mb: 1 }}>
+              <Typography variant="body2" color="error" sx={{ mb: 1 }} key={`associatedServices-${project?.id}`}>
                 This installation already has {associatedServices?.length} associated services:
                 {associatedServices?.map((service, index) => (
-                  <>
+                  <React.Fragment key={`associatedService-${index}`}>
                     <br key={`br-${index}`}/>
                     <Link
                       key={index}
@@ -557,7 +560,7 @@ export function ProjectDetailsToolbar({
                     >
                       {service?.name} (version: {service?.version})
                     </Link>
-                  </>
+                  </React.Fragment>
                 ))}
               </Typography>
             )}

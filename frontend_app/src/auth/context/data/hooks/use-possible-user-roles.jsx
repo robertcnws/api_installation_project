@@ -8,7 +8,7 @@ export function usePossibleUserRoles(userRoles, userLogged) {
             const possibleRoles = listRolesAndSubroles(userLogged?.data?.user_role?.name).filter(
                 (role) => role !== userLogged?.data?.user_role?.name
             );
-            return userRoles.filter((role) => possibleRoles.includes(role.name));
+            return userRoles?.filter((role) => possibleRoles.includes(role.name));
         }
         return userRoles;
     }, [userRoles, userLogged]);

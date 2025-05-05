@@ -70,6 +70,7 @@ const GET_ALL_PROJECTS = gql`
       userManager
       userReporter
       usersAssignees
+      userInstaller
       allProductsMarked
       allWindowsMarked
       allScrewMarked
@@ -112,6 +113,7 @@ const GET_PROJECT_BY_ID = gql`
       userManager
       userReporter
       usersAssignees
+      userInstaller
       allProductsMarked
       allWindowsMarked
       allScrewMarked

@@ -10,9 +10,9 @@ export const useServices = () => useContext(ServicesContext);
 
 export function ServicesProvider({ children }) {
   const { data: services = [], refetch: refetchServices, loading: loadingServices, error: errorServices } = useServicesQuery();
-  const { loadedUsers } = useAuth();
+  const { loadedUsers, userLogged } = useAuth();
 
-  const loadedServices = useTypedServices(services, loadedUsers);
+  const loadedServices = useTypedServices(services, loadedUsers, userLogged);
 
   const value = useMemo(() => ({ 
     loadedServices, 

@@ -82,6 +82,7 @@ class ProjectType(MongoengineObjectType):
     stage_history = GenericScalar()
     user_reporter = GenericScalar()
     users_assignees = GenericScalar()
+    user_installer = GenericScalar()
     current_stage = GenericScalar()
     project_attachments = GenericScalar()
     project_tasks = GenericScalar()
@@ -156,6 +157,11 @@ class ProjectType(MongoengineObjectType):
         project_guide_products = self.project_guide_products or []
         project_guide_products = serialize_datetime(project_guide_products)
         return dynamic_field_to_json(project_guide_products)
+    
+    def resolve_user_installer(self, info):
+        user_installer = self.user_installer or {}
+        user_installer = serialize_datetime(user_installer)
+        return dynamic_field_to_json(user_installer)
     
 
 class ProjectUserType(MongoengineObjectType):

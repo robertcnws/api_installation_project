@@ -82,12 +82,12 @@ export function MultiFilePreview({
     >
       {renderFirstNode}
 
-      {files.map((file) => {
+      {files.map((file, index) => {
         const { name, size } = fileData(file);
 
         if (thumbnail) {
           return (
-            <Box component="li" key={name} sx={{ display: 'inline-flex' }}>
+            <Box component="li" key={`${name}-${index}`} sx={{ display: 'inline-flex' }}>
               <FileThumbnail
                 tooltip
                 imageView
@@ -100,6 +100,7 @@ export function MultiFilePreview({
                     CONFIG.permissions.operationRemoveFile
                   ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)
                     || (moduleType && moduleType === 'issued' && listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.serviceStaff))
+                    || (moduleType && moduleType === 'repair' && listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.installer))
                   ) ?
                     () => onRemove?.(file) : null
                 }
@@ -111,6 +112,7 @@ export function MultiFilePreview({
                     CONFIG.permissions.operationDownloadFile
                   ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)
                     || (moduleType && moduleType === 'issued' && listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.serviceStaff))
+                    || (moduleType && moduleType === 'repair' && listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.installer))
                   ) ?
                     () => onDownload?.(file) : null
                 }

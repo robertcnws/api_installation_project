@@ -587,7 +587,7 @@ export function ServiceDetailsContent({
                     <Typography
                       variant="caption"
                       color="text.secondary"
-                      sx={{ width: 60}}
+                      sx={{ width: 60 }}
                     >
                       <b>Repaired?</b>
                     </Typography>
@@ -1301,34 +1301,36 @@ export function ServiceDetailsContent({
   return (
     <>
       <Grid container spacing={3}>
-        {!isInstaller(userLogged?.data?.user_role?.name) && (
-          <>
-            <Grid xs={12} md={8}>
+        {/* {!isInstaller(userLogged?.data?.user_role?.name) && ( */}
+        <>
+          <Grid xs={12} md={8}>
+            {!isInstaller(userLogged?.data?.user_role?.name) && (
               <Grid xs={12} md={12}>
                 <Box sx={{ mb: 1, width: '100%', mt: -4 }}>
                   {renderStages}
                 </Box>
               </Grid>
-              <Grid xs={12} md={12}>
-                <Box sx={{ display: 'flex', flexDirection: !isMobile ? 'row' : 'column', gap: 1, mb: 1, mt: -3 }}>
-                  {renderMainContent}
-                  {renderDescription}
-                </Box>
-              </Grid>
-              <Grid xs={12} md={12}>
-                <Box sx={{ display: 'flex', flexDirection: !isMobile ? 'row' : 'column', gap: 1, mb: 1, mt: -3, width: '100%' }}>
-                  {renderIssuedProducts}
-                </Box>
-              </Grid>
-
-            </Grid>
-            <Grid xs={12} md={4}>
-              <Box sx={{ mb: 1, width: '100%', mt: -2.5, ml: -3 }}>
-                {renderOverview}
+            )}
+            <Grid xs={12} md={12}>
+              <Box sx={{ display: 'flex', flexDirection: !isMobile ? 'row' : 'column', gap: 1, mb: 1, mt: -3 }}>
+                {renderMainContent}
+                {renderDescription}
               </Box>
             </Grid>
-          </>
-        )}
+            <Grid xs={12} md={12}>
+              <Box sx={{ display: 'flex', flexDirection: !isMobile ? 'row' : 'column', gap: 1, mb: 1, mt: -3, width: '100%' }}>
+                {renderIssuedProducts}
+              </Box>
+            </Grid>
+
+          </Grid>
+          <Grid xs={12} md={4}>
+            <Box sx={{ mb: 1, width: '100%', mt: -2.5, ml: -3 }}>
+              {renderOverview}
+            </Box>
+          </Grid>
+        </>
+        {/* )} */}
 
       </Grid >
       <ServiceEditModalUserManagerView

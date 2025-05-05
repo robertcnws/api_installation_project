@@ -4,6 +4,7 @@ import { useMemo, useState, useEffect, useContext, useCallback } from 'react';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import ToggleButton from '@mui/material/ToggleButton';
+import { Box, Typography, LinearProgress } from '@mui/material';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 
 import { paths } from 'src/routes/paths';
@@ -47,11 +48,14 @@ export function ProjectView() {
 
   const { isMobile } = useContext(LoadingContext);
 
+  
+
   localStorage.setItem('backFromProjectDetails', 'projects');
 
   const {
     loadedProjects,
     refetchProjects,
+    loadingProjects,
     loadedUsers,
     loadedProjectPermissions,
     loadedStages,
@@ -60,7 +64,13 @@ export function ProjectView() {
     refetchSalesOrders,
   } = useDataContext();
 
-  const table = useTable({ defaultRowsPerPage: 10, defaultDense: true, defaultOrder: 'asc', defaultOrderBy: 'startDate' });
+  const table = useTable({
+    defaultCurrentPage: parseInt(localStorage.getItem('projectPage'), 10) || 0,
+    defaultRowsPerPage: parseInt(localStorage.getItem('projectRowsPerPage'), 10) || 10,
+    defaultDense: true,
+    defaultOrder: 'asc',
+    defaultOrderBy: 'startDate'
+  });
 
   const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
 
@@ -139,16 +149,16 @@ export function ProjectView() {
   }, []);
 
   const filters = useSetState({
-    list: 'in progress',
-    name: '',
-    type: [],
-    startDate: null,
-    endDate: null,
-    installer: {
+    list: localStorage.getItem('projectFilterList') || 'in progress',
+    name: localStorage.getItem('projectFilterName') || '',
+    type: JSON.parse(localStorage.getItem('projectFilterType')) || [],
+    startDate: localStorage.getItem('projectFilterStartDate') || null,
+    endDate: localStorage.getItem('projectFilterEndDate') || null,
+    installer: JSON.parse(localStorage.getItem('projectFilterInstaller')) || {
       id: null,
       name: null,
     },
-    custom: {
+    custom: JSON.parse(localStorage.getItem('projectFilterCustom')) || {
       hasPermission: false,
       isPreparation: {
         name: 'preparation',
@@ -295,7 +305,7 @@ export function ProjectView() {
       localStorage.setItem('installationFilteredList', JSON.stringify(listData));
       router.push(paths.dashboard.project.kanbanProjectId(id));
     },
-    [router, dataFiltered]  
+    [router, dataFiltered]
   );
 
   const handleDetailsView = useCallback(
@@ -369,141 +379,166 @@ export function ProjectView() {
     />
   );
 
+  const [titleLinearProgress, setTitleLinearProgress] = useState('Loading installations data...');
+
+  
+
   return (
     <>
-      <DashboardContent>
-        {/* <Stack direction="row" alignItems="center" justifyContent="space-between">
-          <Typography variant="h4">Project Manager</Typography>
-          <Button
-            variant="contained"
-            startIcon={<Iconify icon="fluent-mdl2:activate-orders" />}
-            onClick={handleSalesOrders}
+      {
+        (loadingProjects) ? (
+          <Box
+            sx={{
+              width: '350px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: '80vh',
+              margin: 'auto'
+            }}
           >
-            Go to Sales Orders
-          </Button>
-        </Stack> */}
-        {/* <Divider sx={{ borderStyle: 'dashed', mb: 1 }} /> */}
-
-        <Stack spacing={2.5} sx={{ my: { xs: 3, md: 3 } }}>
-          {renderFilters}
-
-          {canReset && renderResults}
-        </Stack>
-
-        {notFound ? (
-          <EmptyContent filled sx={{ py: 10 }} />
+            <Typography variant="body2" sx={{ mb: 1 }}>
+              {titleLinearProgress}
+            </Typography>
+            <LinearProgress
+              key="error"
+              sx={{
+                mb: 2,
+                width: '100%',
+                '& .MuiLinearProgress-bar': {
+                  backgroundColor: 'black',
+                },
+                backgroundColor: '#e0e0e0',
+              }}
+            />
+          </Box>
         ) : (
           <>
-            {view === 'list' ? (
-              <ProjectTable
-                table={table}
-                dataFiltered={dataFiltered}
-                onDeleteRow={handleDeleteItem}
-                onKanbanView={handleViewKanban}
-                onViewRow={handleDetailsView}
-                notFound={notFound}
-                onOpenConfirm={confirm.onTrue}
-                onOpenConfirmAllDescriptions={confirmAllDescriptions.onTrue}
-                loadedUsers={loadedUsers}
-                loadedProjectPermissions={loadedProjectPermissions}
-                loadedStages={finalStages}
-                loadedStagesTask={loadedStagesTask}
-                listPermissions={listPermissions}
-                setTableData={setTableData}
-                refetchProjects={refetchProjects}
-                loadedProjects={loadedProjects}
-                onOpenConfirmStaff={confirmStaff.onTrue}
-                isWarehouseStaff={isWarehouseStaff}
-                setIsWarehouseStaff={setIsWarehouseStaff}
-                canReset={canReset}
-              />
-            ) : view === 'grid' ? (
-              <ProjectGridView
-                table={table}
-                dataFiltered={dataFiltered}
-                onDeleteItem={handleDeleteItem}
-                onKanbanView={handleViewKanban}
-                onViewRow={handleDetailsView}
-                onOpenConfirm={confirm.onTrue}
-                onOpenConfirmAllDescriptions={confirmAllDescriptions.onTrue}
-                loadedUsers={loadedUsers}
-                loadedProjectPermissions={loadedProjectPermissions}
-                loadedStages={finalStages}
-                loadedStagesTask={loadedStagesTask}
-                listPermissions={listPermissions}
-                setTableData={setTableData}
-                refetchProjects={refetchProjects}
-                onOpenConfirmStaff={confirmStaff.onTrue}
-                isWarehouseStaff={isWarehouseStaff}
-                setIsWarehouseStaff={setIsWarehouseStaff}
-              />
-            ) : view === 'calendar' ? (
-              <ProjectCalendarView projects={dataFiltered} isOnlyWeek={false} />
-            ) : (
-              <KanbanProjectView projects={dataFiltered} refetchProjects={refetchProjects} />
-            )}
+            <DashboardContent>
+
+              <Stack spacing={2.5} sx={{ my: { xs: 3, md: 3 } }}>
+                {renderFilters}
+
+                {canReset && renderResults}
+              </Stack>
+
+              {notFound ? (
+                <EmptyContent filled sx={{ py: 10 }} />
+              ) : (
+                <>
+                  {view === 'list' ? (
+                    <ProjectTable
+                      table={table}
+                      dataFiltered={dataFiltered}
+                      onDeleteRow={handleDeleteItem}
+                      onKanbanView={handleViewKanban}
+                      onViewRow={handleDetailsView}
+                      notFound={notFound}
+                      onOpenConfirm={confirm.onTrue}
+                      onOpenConfirmAllDescriptions={confirmAllDescriptions.onTrue}
+                      loadedUsers={loadedUsers}
+                      loadedProjectPermissions={loadedProjectPermissions}
+                      loadedStages={finalStages}
+                      loadedStagesTask={loadedStagesTask}
+                      listPermissions={listPermissions}
+                      setTableData={setTableData}
+                      refetchProjects={refetchProjects}
+                      loadedProjects={loadedProjects}
+                      onOpenConfirmStaff={confirmStaff.onTrue}
+                      isWarehouseStaff={isWarehouseStaff}
+                      setIsWarehouseStaff={setIsWarehouseStaff}
+                      canReset={canReset}
+                    />
+                  ) : view === 'grid' ? (
+                    <ProjectGridView
+                      table={table}
+                      dataFiltered={dataFiltered}
+                      onDeleteItem={handleDeleteItem}
+                      onKanbanView={handleViewKanban}
+                      onViewRow={handleDetailsView}
+                      onOpenConfirm={confirm.onTrue}
+                      onOpenConfirmAllDescriptions={confirmAllDescriptions.onTrue}
+                      loadedUsers={loadedUsers}
+                      loadedProjectPermissions={loadedProjectPermissions}
+                      loadedStages={finalStages}
+                      loadedStagesTask={loadedStagesTask}
+                      listPermissions={listPermissions}
+                      setTableData={setTableData}
+                      refetchProjects={refetchProjects}
+                      onOpenConfirmStaff={confirmStaff.onTrue}
+                      isWarehouseStaff={isWarehouseStaff}
+                      setIsWarehouseStaff={setIsWarehouseStaff}
+                    />
+                  ) : view === 'calendar' ? (
+                    <ProjectCalendarView projects={dataFiltered} isOnlyWeek={false} />
+                  ) : (
+                    <KanbanProjectView projects={dataFiltered} refetchProjects={refetchProjects} />
+                  )}
+                </>
+              )}
+            </DashboardContent>
+
+            <ProjectNewFolderDialog open={upload.value} onClose={upload.onFalse} />
+
+
+            <ProjectEditModalManageStaffView
+              isWarehouseStaff={isWarehouseStaff}
+              open={confirmStaff.value}
+              onClose={confirmStaff.onFalse}
+              loadedUsers={loadedUsers}
+              loadedProjectPermissions={loadedProjectPermissions}
+              tableSelected={table.selected}
+              table={table}
+            />
+
+            <ConfirmDialog
+              open={confirm.value}
+              onClose={confirm.onFalse}
+              title="Delete"
+              content={
+                <>
+                  Are you sure want to delete <strong> {table.selected.length} </strong> installation project(s)?
+                </>
+              }
+              action={
+                <Button
+                  variant="contained"
+                  color="error"
+                  onClick={() => {
+                    handleDeleteItems();
+                    confirm.onFalse();
+                  }}
+                >
+                  Delete
+                </Button>
+              }
+            />
+
+            <ConfirmDialog
+              open={confirmAllDescriptions.value}
+              onClose={confirmAllDescriptions.onFalse}
+              title="Update All Descriptions"
+              content={
+                <>
+                  Are you sure want to update all descriptions in <strong> {table.selected.length} </strong> installation project(s)?
+                </>
+              }
+              action={
+                <Button
+                  variant="contained"
+                  color="warning"
+                  onClick={() => {
+                    handleUpdateAllDescriptions();
+                    confirmAllDescriptions.onFalse();
+                  }}
+                >
+                  Update
+                </Button>
+              }
+            />
           </>
         )}
-      </DashboardContent>
-
-      <ProjectNewFolderDialog open={upload.value} onClose={upload.onFalse} />
-
-
-      <ProjectEditModalManageStaffView
-        isWarehouseStaff={isWarehouseStaff}
-        open={confirmStaff.value}
-        onClose={confirmStaff.onFalse}
-        loadedUsers={loadedUsers}
-        loadedProjectPermissions={loadedProjectPermissions}
-        tableSelected={table.selected}
-        table={table}
-      />
-
-      <ConfirmDialog
-        open={confirm.value}
-        onClose={confirm.onFalse}
-        title="Delete"
-        content={
-          <>
-            Are you sure want to delete <strong> {table.selected.length} </strong> installation project(s)?
-          </>
-        }
-        action={
-          <Button
-            variant="contained"
-            color="error"
-            onClick={() => {
-              handleDeleteItems();
-              confirm.onFalse();
-            }}
-          >
-            Delete
-          </Button>
-        }
-      />
-
-      <ConfirmDialog
-        open={confirmAllDescriptions.value}
-        onClose={confirmAllDescriptions.onFalse}
-        title="Update All Descriptions"
-        content={
-          <>
-            Are you sure want to update all descriptions in <strong> {table.selected.length} </strong> installation project(s)?
-          </>
-        }
-        action={
-          <Button
-            variant="contained"
-            color="warning"
-            onClick={() => {
-              handleUpdateAllDescriptions();
-              confirmAllDescriptions.onFalse();
-            }}
-          >
-            Update
-          </Button>
-        }
-      />
     </>
   );
 }

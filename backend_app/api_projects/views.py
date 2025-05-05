@@ -2533,6 +2533,7 @@ def change_installer_project(request, id):
         sorted_tasks = sorted(all_tasks, key=lambda x: x['project_default_task']['order'], reverse=True)
         
         project.project_default_tasks = sorted_tasks
+        project.user_installer = installer if installer else project.user_installer
         project.save()
         
         tracking = ProjectTracking(

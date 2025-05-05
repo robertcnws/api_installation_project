@@ -182,7 +182,6 @@ function NavSubList({ data, subheader, sx, ...other }) {
                 title={item.title}
                 path={item.path}
                 active={item.path === removeLastSlash(pathname)}
-                onclick={item.onClick}
               />
             </NavLi>
           )

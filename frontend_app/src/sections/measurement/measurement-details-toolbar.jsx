@@ -78,6 +78,8 @@ export function MeasurementDetailsToolbar({
     );
   }, [measurementFilteredList, searchText]);
 
+  console.log('searchedMeasurementFilteredList', searchedMeasurementFilteredList);
+
   return (
     <>
       {/* <Divider sx={{ borderStyle: 'dashed', mb: 1 }} /> */}
@@ -90,13 +92,21 @@ export function MeasurementDetailsToolbar({
         /> */}
         <Box sx={{ display: 'flex', flexDirection: 'column' }}>
           <Typography variant="h6">
-            MEASUREMENTS ({measurement?.number}) FOR {measurement?.service?.number ? 'SERVICE # ' : 'INSTALLATION # '} {
-              measurement?.service?.number ? `${measurement?.service?.number}-${measurement?.service?.version}` : measurement?.project?.number
+            MEASUREMENTS ({measurement?.number}) FOR {
+            measurement?.service?.number ? 'SERVICE # ' : measurement?.project?.number ? 'INSTALLATION # ' : 'CUSTOMER '
+            } {
+              measurement?.service?.number ? `${measurement?.service?.number}-${measurement?.service?.version}` : 
+              measurement?.project?.number ? `${measurement?.project?.number}` : measurement?.customer?.name
             }
           </Typography>
           <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'left' }}>
             {indexInMeasurementFilteredList - 1 >= 0 && (
-              <Tooltip title={`Previous measurement: ${measurementFilteredList?.[indexInMeasurementFilteredList - 1]?.number}`} arrow>
+              <Tooltip
+                title={`
+                    Previous measurement: ${measurementFilteredList?.[indexInMeasurementFilteredList - 1]?.number} ${' '}
+                    (${measurementFilteredList?.[indexInMeasurementFilteredList - 1]?.customerName})`
+                }
+                arrow>
                 <IconButton
                   sx={{
                     '&:hover': {
@@ -115,7 +125,12 @@ export function MeasurementDetailsToolbar({
               </Tooltip>
             )}
             {indexInMeasurementFilteredList + 1 < measurementFilteredList?.length && (
-              <Tooltip title={`Next measurement: ${measurementFilteredList?.[indexInMeasurementFilteredList + 1]?.number}`} arrow>
+              <Tooltip
+                title={`
+                  Next measurement: ${measurementFilteredList?.[indexInMeasurementFilteredList + 1]?.number} ${' '}
+                  (${measurementFilteredList?.[indexInMeasurementFilteredList + 1]?.customerName})
+                  `}
+                arrow>
                 <IconButton
                   sx={{
                     '&:hover': {
@@ -185,8 +200,8 @@ export function MeasurementDetailsToolbar({
                       <Tooltip
                         title={
                           <Typography variant="body2" color="background.neutral" sx={{ mb: 0 }}>
-                              Measurement: {m?.number}
-                            </Typography>
+                            Measurement: {m?.number} ({m?.customeName})
+                          </Typography>
                         }
                         placement="right"
                         arrow
@@ -194,7 +209,7 @@ export function MeasurementDetailsToolbar({
                         <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'left', gap: 2 }}>
                           <Iconify icon="grommet-icons:services" />
                           <Typography variant="body2" sx={{ ml: 1 }}>
-                            {m?.number}
+                            {m?.number} ({m?.customerName})
                           </Typography>
                         </Box>
                       </Tooltip>

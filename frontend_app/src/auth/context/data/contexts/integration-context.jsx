@@ -24,7 +24,7 @@ export function IntegrationProvider({ children }) {
   const [loadedPermissions, setLoadedPermissions] = useState(permissions);
 
   useEffect(() => {
-    if (permissions?.results) {
+    if (permissions?.results?.length > 0) {
       setLoadedPermissions(permissions);
     }
   }, [permissions]);

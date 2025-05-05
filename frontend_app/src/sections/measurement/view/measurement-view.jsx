@@ -4,6 +4,7 @@ import { useMemo, useState, useEffect, useContext, useCallback } from 'react';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import ToggleButton from '@mui/material/ToggleButton';
+import { Box, Typography, LinearProgress } from '@mui/material';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 
 import { paths } from 'src/routes/paths';
@@ -12,6 +13,8 @@ import { RouterLink } from 'src/routes/components';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 import { useSetState } from 'src/hooks/use-set-state';
+
+import { listRolesAndSubroles } from 'src/utils/check-permissions';
 
 import { CONFIG } from 'src/config-global';
 import { DashboardContent } from 'src/layouts/dashboard';
@@ -30,6 +33,8 @@ import { MeasurementFilters } from '../measurement-filters';
 import { MeasurementFiltersResult } from '../measurement-filters-result';
 
 
+
+
 // ----------------------------------------------------------------------
 
 export function MeasurementView() {
@@ -41,6 +46,7 @@ export function MeasurementView() {
   const {
     loadedMeasurements,
     refetchMeasurements,
+    loadingMeasurements,
   } = useDataContext();
 
   const table = useTable({ defaultRowsPerPage: 10, defaultDense: true, defaultOrder: 'desc', defaultOrderBy: 'firstDate' });
@@ -185,7 +191,7 @@ export function MeasurementView() {
     async (id, isClosed) => {
       const promise = axios.post(`${CONFIG.apiUrl}/measurements/update/measurement/${id}/close-measurement/`, {
         userReporter: JSON.stringify(userLogged?.data),
-        isClosed, 
+        isClosed,
       });
 
       await promise;
@@ -206,6 +212,7 @@ export function MeasurementView() {
       const listData = dataFiltered.map((item) => ({
         id: item.id,
         number: item.number,
+        customerName: item.salesOrder?.customer_name || item.customer.name,
       }));
       localStorage.setItem('measurementFilteredList', JSON.stringify(listData));
       router.push(paths.dashboard.measurement.details(id));
@@ -248,16 +255,19 @@ export function MeasurementView() {
 
       </ToggleButtonGroup>
 
-      <Button
-        component={RouterLink}
-        href={paths.dashboard.measurement.new}
-        // color="inherit"
-        // variant="outlined"
-        variant="contained"
-        startIcon={<Iconify icon="mingcute:add-line" />}
-      >
-        New
-      </Button>
+      {listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.serviceStaff) && (
+
+        <Button
+          component={RouterLink}
+          href={paths.dashboard.measurement.new}
+          // color="inherit"
+          // variant="outlined"
+          variant="contained"
+          startIcon={<Iconify icon="mingcute:add-line" />}
+        >
+          New
+        </Button>
+      )}
 
     </Stack>
   );
@@ -270,94 +280,115 @@ export function MeasurementView() {
     />
   );
 
+  const [titleLinearProgress, setTitleLinearProgress] = useState('Loading measurements data...');
+
   return (
     <>
-      <DashboardContent>
-        {/* <Stack direction="row" alignItems="center" justifyContent="space-between">
-          <Typography variant="h4">Measurement Manager</Typography>
-          <Button
-            variant="contained"
-            startIcon={<Iconify icon="fluent-mdl2:activate-orders" />}
-            onClick={handleSalesOrders}
-          >
-            Go to Sales Orders
-          </Button>
-        </Stack> */}
-        {/* <Divider sx={{ borderStyle: 'dashed', mb: 1 }} /> */}
-
-        <Stack spacing={2.5} sx={{ my: { xs: 3, md: 3 } }}>
-          {renderFilters}
-
-          {canReset && renderResults}
-        </Stack>
-
-        {notFound ? (
-          <EmptyContent filled sx={{ py: 10 }} />
-        ) : (
-          <>
-            {view === 'list' && (
-              <MeasurementTable
-                table={table}
-                dataFiltered={dataFiltered}
-                onDeleteRow={handleDeleteItem}
-                onCloseRow={handleCloseItem}
-                onViewRow={handleDetailsView}
-                notFound={notFound}
-                onOpenConfirm={confirm.onTrue}
-                setTableData={setTableData}
-              />
-              // ) : view === 'grid' ? (
-              //   <MeasurementGridView
-              //     table={table}
-              //     dataFiltered={dataFiltered}
-              //     onDeleteItem={handleDeleteItem}
-              //     onKanbanView={handleViewKanban}
-              //     onViewRow={handleDetailsView}
-              //     onOpenConfirm={confirm.onTrue}
-              //     loadedUsers={loadedUsers}
-              //     loadedMeasurementPermissions={loadedMeasurementPermissions}
-              //     loadedMeasurementStages={finalStages}
-              //     loadedMeasurementStagesTask={loadedMeasurementStagesTask}
-              //     listPermissions={listPermissions}
-              //     setTableData={setTableData}
-              //     refetchMeasurements={refetchMeasurements}
-              //     onOpenConfirmStaff={confirmStaff.onTrue}
-              //     isWarehouseStaff={isWarehouseStaff}
-              //     setIsWarehouseStaff={setIsWarehouseStaff}
-              //   />
-              // ) : view === 'calendar' ? (
-              //   <MeasurementCalendarView measurements={dataFiltered} isOnlyWeek={false} />
-              // ) : (
-              //   <KanbanMeasurementView measurements={dataFiltered} refetchMeasurements={refetchMeasurements} />
-            )}
-          </>
-        )}
-      </DashboardContent>
-
-      {/* <MeasurementNewFolderDialog open={upload.value} onClose={upload.onFalse} /> */}
-
-      <ConfirmDialog
-        open={confirm.value}
-        onClose={confirm.onFalse}
-        title="Delete"
-        content={
-          <>
-            Are you sure want to delete <strong> {table.selected.length} </strong> measurement(s)?
-          </>
-        }
-        action={
-          <Button
-            variant="contained"
-            color="error"
-            onClick={() => {
-              handleDeleteItems();
-              confirm.onFalse();
+      {
+        (loadingMeasurements) ? (
+          <Box
+            sx={{
+              width: '350px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: '80vh',
+              margin: 'auto'
             }}
           >
-            Delete
-          </Button>
-        }
-      />
+            <Typography variant="body2" sx={{ mb: 1 }}>
+              {titleLinearProgress}
+            </Typography>
+            <LinearProgress
+              key="error"
+              sx={{
+                mb: 2,
+                width: '100%',
+                '& .MuiLinearProgress-bar': {
+                  backgroundColor: 'black',
+                },
+                backgroundColor: '#e0e0e0',
+              }}
+            />
+          </Box>
+        ) : (
+          <>
+            <DashboardContent>
+
+              <Stack spacing={2.5} sx={{ my: { xs: 3, md: 3 } }}>
+                {renderFilters}
+
+                {canReset && renderResults}
+              </Stack>
+
+              {notFound ? (
+                <EmptyContent filled sx={{ py: 10 }} />
+              ) : (
+                <>
+                  {view === 'list' && (
+                    <MeasurementTable
+                      table={table}
+                      dataFiltered={dataFiltered}
+                      onDeleteRow={handleDeleteItem}
+                      onCloseRow={handleCloseItem}
+                      onViewRow={handleDetailsView}
+                      notFound={notFound}
+                      onOpenConfirm={confirm.onTrue}
+                      setTableData={setTableData}
+                    />
+                    // ) : view === 'grid' ? (
+                    //   <MeasurementGridView
+                    //     table={table}
+                    //     dataFiltered={dataFiltered}
+                    //     onDeleteItem={handleDeleteItem}
+                    //     onKanbanView={handleViewKanban}
+                    //     onViewRow={handleDetailsView}
+                    //     onOpenConfirm={confirm.onTrue}
+                    //     loadedUsers={loadedUsers}
+                    //     loadedMeasurementPermissions={loadedMeasurementPermissions}
+                    //     loadedMeasurementStages={finalStages}
+                    //     loadedMeasurementStagesTask={loadedMeasurementStagesTask}
+                    //     listPermissions={listPermissions}
+                    //     setTableData={setTableData}
+                    //     refetchMeasurements={refetchMeasurements}
+                    //     onOpenConfirmStaff={confirmStaff.onTrue}
+                    //     isWarehouseStaff={isWarehouseStaff}
+                    //     setIsWarehouseStaff={setIsWarehouseStaff}
+                    //   />
+                    // ) : view === 'calendar' ? (
+                    //   <MeasurementCalendarView measurements={dataFiltered} isOnlyWeek={false} />
+                    // ) : (
+                    //   <KanbanMeasurementView measurements={dataFiltered} refetchMeasurements={refetchMeasurements} />
+                  )}
+                </>
+              )}
+            </DashboardContent>
+
+            <ConfirmDialog
+              open={confirm.value}
+              onClose={confirm.onFalse}
+              title="Delete"
+              content={
+                <>
+                  Are you sure want to delete <strong> {table.selected.length} </strong> measurement(s)?
+                </>
+              }
+              action={
+                <Button
+                  variant="contained"
+                  color="error"
+                  onClick={() => {
+                    handleDeleteItems();
+                    confirm.onFalse();
+                  }}
+                >
+                  Delete
+                </Button>
+              }
+            />
+          </>
+        )}
     </>
   );
 }

@@ -10,8 +10,8 @@ import { Box, Tooltip, ListItem, IconButton } from '@mui/material';
 import { useBoolean } from 'src/hooks/use-boolean';
 
 import { fDate } from 'src/utils/format-time';
-import { listRolesAndSubroles } from 'src/utils/check-permissions';
 import { filteredDescription } from 'src/utils/service-tasks-utils';
+import { isInstaller, listRolesAndSubroles } from 'src/utils/check-permissions';
 
 import { CONFIG } from 'src/config-global';
 
@@ -137,7 +137,7 @@ export function ServiceDetailsContentComponent({
             />,
             hasValue: service?.salesOrder?.date?.length > 0,
           },
-          {
+          ...(!isInstaller(userLogged?.data?.user_role?.name)) ? [{
             label: `${items?.length} Product(s), 
                         Total Qty: ${items?.reduce((total, product) => total + product.quantity, 0)}`,
             icon: <Iconify
@@ -186,8 +186,7 @@ export function ServiceDetailsContentComponent({
                 )}
               </>
             ),
-
-          },
+          }] : [],
         ].map((item) => (
           <Stack key={item.label} spacing={1.5} direction="row">
             {item?.icon}

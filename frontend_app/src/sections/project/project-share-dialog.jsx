@@ -84,7 +84,7 @@ export function ProjectShareDialog({
 const hasChanges = useMemo(() => JSON.stringify(usersAssignees) !== JSON.stringify(projectData?.usersAssignees), [usersAssignees, projectData?.usersAssignees]);
 
   useEffect(() => {
-    if (!open && projectData?.usersAssignees) {
+    if (!open && projectData?.usersAssignees?.length > 0) {
       reset({ usersAssignees: projectData?.usersAssignees || [] });
     }
     // reset(defaultValues);

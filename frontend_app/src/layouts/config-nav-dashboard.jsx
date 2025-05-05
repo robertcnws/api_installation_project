@@ -1,7 +1,7 @@
 
 import { paths } from 'src/routes/paths';
 
-import { isServiceStaff, listRolesAndSubroles, belongsToWorkingStaff } from 'src/utils/check-permissions';
+import { isInstaller, isServiceStaff, listRolesAndSubroles, belongsToWorkingStaff } from 'src/utils/check-permissions';
 
 import { CONFIG } from 'src/config-global';
 
@@ -96,7 +96,7 @@ export const navData = () => [
           ],
         },
       ] : []),
-      ...(userLogged && listRolesAndSubroles(userLogged?.data.user_role.name).includes(CONFIG.roles.serviceStaff) ? [
+      ...(userLogged && belongsToWorkingStaff(userLogged?.data.user_role.name) ? [
         {
           title: 'Services',
           path: paths.dashboard.service.root,
@@ -106,14 +106,16 @@ export const navData = () => [
               title: 'List',
               path: paths.dashboard.service.list,
             },
-            {
-              title: 'Create',
-              path: paths.dashboard.service.new
-            },
+            ...((userLogged && !isInstaller(userLogged?.data?.user_role?.name)) ? [
+              {
+                title: 'Create',
+                path: paths.dashboard.service.new
+              },
+            ] : []),
           ],
         },
       ] : []),
-      ...(userLogged && belongsToWorkingStaff(userLogged?.user_role?.name) ? [
+      ...((userLogged && belongsToWorkingStaff(userLogged?.data?.user_role?.name)) ? [
         {
           title: 'Measurements',
           path: paths.dashboard.measurement.root,
@@ -123,10 +125,12 @@ export const navData = () => [
               title: 'List',
               path: paths.dashboard.measurement.list,
             },
-            {
-              title: 'Create',
-              path: paths.dashboard.measurement.new
-            },
+            ...((userLogged && !isInstaller(userLogged?.data?.user_role?.name)) ? [
+              {
+                title: 'Create',
+                path: paths.dashboard.measurement.new
+              },
+            ] : []),
           ],
         },
       ] : []),

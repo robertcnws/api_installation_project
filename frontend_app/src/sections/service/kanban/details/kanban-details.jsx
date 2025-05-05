@@ -484,7 +484,7 @@ export function KanbanDetails({
         <Box sx={{ display: 'flex' }}>
           <Box sx={{ display: 'flex', flexDirection: 'column' }}>
             <StyledLabel>Attachments</StyledLabel>
-            {(listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) && (
+            {(listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.installer)) && (
               <Tooltip title="Add Files" sx={{ width: 40 }}>
                 <span>
                   <Button
@@ -500,7 +500,7 @@ export function KanbanDetails({
             )}
           </Box>
           {(task?.service_task_attachments?.length === 0 &&
-            !listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) && (
+            !listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.installer)) && (
               <Typography variant="subtitle2" sx={{
                 ml: 0,
                 mt: 0,
@@ -518,6 +518,7 @@ export function KanbanDetails({
             id={service?.id}
             name={service?.name}
             type='services'
+            moduleType={task?.service_default_task?.name.toLowerCase().includes('issue') ? 'issued' : 'repair'}
           />
         </Box>
       )}

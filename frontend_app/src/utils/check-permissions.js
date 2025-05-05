@@ -67,7 +67,9 @@ export const isWarehouseStaff = (role) => role?.toLowerCase().indexOf(CONFIG.rol
 export const isFinancialStaff = (role) => role?.toLowerCase().indexOf(CONFIG.roles.financialStaff.toLowerCase()) !== -1;
 export const isServiceStaff = (role) => role?.toLowerCase().indexOf(CONFIG.roles.serviceStaff.toLowerCase()) !== -1;
 
-export const belongsToWorkingStaff = (role) => isSuperAdmin(role) || isAdministrator(role) || isInstaller(role) || isWarehouseStaff(role) || isServiceStaff(role);
+export const belongsToWorkingStaff = (role) => (
+  isSuperAdmin(role) || isAdministrator(role) || isWarehouseStaff(role) || isServiceStaff(role) || isInstaller(role)
+);
 
 export const createDefaultPermissions = (role) => {
   const data = {};

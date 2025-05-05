@@ -45,7 +45,7 @@ export const generateMeasurementReport = ({ measurement, empty }) => {
     doc.text("Client Name:", margin + 15, lineY + initialReportY, null, null, "center");
     if (!empty) {
         doc.setFont("helvetica", "normal");
-        const clientName = measurement?.salesOrder?.customer_name || measurement?.client?.name || 'N/A';
+        const clientName = measurement?.salesOrder?.customer_name || measurement?.customer?.name || 'N/A';
         doc.text(clientName, margin + 31, lineY + initialReportY, null, null, "left");
     }
     doc.line(
@@ -62,7 +62,7 @@ export const generateMeasurementReport = ({ measurement, empty }) => {
         doc.setFont("helvetica", "normal");
         const phoneNumber = (measurement?.salesOrder?.customer || measurement?.salesOrder?.contact_person_details)?.phone ||
             (measurement?.salesOrder?.customer || measurement?.salesOrder?.contact_person_details)?.mobile ||
-            measurement?.phone || measurement?.client?.phone || 'N/A';
+            measurement?.phone || measurement?.customer?.phone || 'N/A';
         doc.text(phoneNumber, margin + (pageWidth * 0.6) + 25, lineY + initialReportY, null, null, "left");
     }
     doc.line(

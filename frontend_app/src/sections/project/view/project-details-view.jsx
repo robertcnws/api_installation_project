@@ -3,7 +3,7 @@ import { useMemo, useState, useEffect, useCallback } from 'react';
 
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
-import { Box, Tooltip, MenuItem, MenuList, Typography } from '@mui/material';
+import { Box, Tooltip, MenuItem, MenuList, Typography, LinearProgress } from '@mui/material';
 
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
@@ -11,8 +11,8 @@ import { useRouter } from 'src/routes/hooks';
 import { useTabs } from 'src/hooks/use-tabs';
 
 import { fDate } from 'src/utils/format-time';
-import { filteredDescriptionJson } from 'src/utils/project-tasks-utils';
 import { extractDimensions } from 'src/utils/generate-installation-guide-pdf';
+import { getProjectInstaller, filteredDescriptionJson } from 'src/utils/project-tasks-utils';
 import { isInstaller, isFinancialStaff, isWarehouseStaff, listRolesAndSubroles } from 'src/utils/check-permissions';
 
 import { CONFIG } from 'src/config-global';
@@ -145,21 +145,25 @@ export function ProjectDetailsView({ projectId }) {
                         slotProps={{ arrow: { placement: 'left-top' } }}
                     >
                         <MenuList>
-                            <MenuItem
-                                onClick={() => {
-                                    morePopover.onClose();
-                                    localStorage.setItem('measurementId', associatedMeasurement?.id);
-                                    localStorage.setItem('backFromMeasurementDetails', 'project');
-                                    localStorage.setItem('backFromMeasurementDetailsProjectId', itemById?.id);
-                                    localStorage.setItem('backFromMeasurementDetailsServiceId', '');
-                                    router.push(paths.dashboard.measurement.details(associatedMeasurement?.id));
-                                }}
-                            >
-                                <Iconify icon="tdesign:measurement-1" />
-                                Measurements
-                            </MenuItem>
+                            {associatedMeasurement && associatedMeasurement?.id && (
+                                <MenuItem
+                                    key='measurements'
+                                    onClick={() => {
+                                        morePopover.onClose();
+                                        localStorage.setItem('measurementId', associatedMeasurement?.id);
+                                        localStorage.setItem('backFromMeasurementDetails', 'project');
+                                        localStorage.setItem('backFromMeasurementDetailsProjectId', itemById?.id);
+                                        localStorage.setItem('backFromMeasurementDetailsServiceId', '');
+                                        router.push(paths.dashboard.measurement.details(associatedMeasurement?.id));
+                                    }}
+                                >
+                                    <Iconify icon="tdesign:measurement-1" />
+                                    Measurements
+                                </MenuItem>
+                            )}
                             {associatedServices?.length > 0 && associatedServices?.map((service) => (
                                 <MenuItem
+                                    key={service?.id}
                                     onClick={() => {
                                         morePopover.onClose();
                                         localStorage.setItem('serviceId', service?.id);
@@ -182,8 +186,12 @@ export function ProjectDetailsView({ projectId }) {
                                         placement="right"
                                         arrow
                                     >
-                                        <Iconify icon="carbon:user-service" />
-                                        Service: {service?.number} (v{service?.version})
+                                        <Box component="span" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                            <Iconify icon="carbon:user-service" />
+                                            <Typography component="span" variant="body2">
+                                                Service: {service?.number} (v{service?.version})
+                                            </Typography>
+                                        </Box>
                                     </Tooltip>
                                 </MenuItem>
                             ))}
@@ -208,7 +216,7 @@ export function ProjectDetailsView({ projectId }) {
     // }, [refetchProject, fetchedProject]);
 
     useEffect(() => {
-        if (fetchedProject) {
+        if (fetchedProject && fetchedProject?.id) {
             setItemById(fetchedProject);
         }
     }, [fetchedProject]);
@@ -401,6 +409,7 @@ export function ProjectDetailsView({ projectId }) {
             try {
                 const promise = axios.post(`${CONFIG.apiUrl}/measurements/create/measurement/`, {
                     project: JSON.stringify(project),
+                    installer: JSON.stringify(getProjectInstaller(itemById, CONFIG)),
                     items: JSON.stringify(arrayDimensions),
                     userReporter: JSON.stringify(userLogged?.data),
                     salesOrder: JSON.stringify(itemById?.salesOrder),
@@ -486,162 +495,196 @@ export function ProjectDetailsView({ projectId }) {
         </Tabs>
     );
 
+    const [titleLinearProgress, setTitleLinearProgress] = useState(`Loading data from installation ${item?.name}...`);
+
     return (
         <>
-            <DashboardContent>
-                <ProjectDetailsToolbar
-                    project={itemById}
-                    backLink={
-                        localStorage.getItem('backFromProjectDetails') === 'analytics' ? paths.dashboard.general.analytics :
-                            localStorage.getItem('backFromProjectDetails') === 'calendarDashboard' ? paths.dashboard.general.calendar : paths.dashboard.project.list
-                    }
-                    editLink={paths.dashboard.project.edit(`${itemById?.id}`)}
-                    openEdit={tabs.value === 'overview' ? openEdit : tabs.value === 'tasks' ? openEditTask : null}
-                    setOpenEdit={tabs.value === 'overview' ? setOpenEdit : tabs.value === 'tasks' ? setOpenEditTask : null}
-                    type={tabs.value === 'overview' || tabs.value === 'more' ? 'project' : tabs.value === 'tasks' ? 'tasks' : null}
-                    onDelete={() => onDelete(itemById?.id)}
-                    onGenerateMeasurements={() => generateMeasurements()}
-                    listPermissions={listPermissions}
-                />
-                {renderTabs}
-
-                {(tabs.value === 'overview' || tabs.value === 'more') &&
-                    <ProjectDetailsContent
-                        project={itemById}
-                        refetchProject={refetchProject}
-                        setOpenEdit={setOpenEdit}
-                        listPermissions={listPermissions}
-                        openDialogs={openDialogs}
-                        setOpenDialogs={setOpenDialogs}
-                    />
-                }
-
-                {(tabs.value === 'tasks' && itemById?.userManager?.username) &&
-                    <ProjectDetailsTaskView
-                        project={itemById}
-                        refetchProject={refetchProject}
-                        tasks={tasks ?? []}
-                        hasPermission={itemById?.hasPermission}
-                        listPermissions={listPermissions}
-                    />
-                }
-
-                {(tabs.value === 'attachments' && itemById?.userManager?.username) &&
-                    <ProjectDetailsAttachmentView
-                        project={itemById}
-                        refetchProject={refetchProject}
-                        listPermissions={listPermissions}
-                        openDialogs={openDialogs}
-                        setOpenDialogs={setOpenDialogs}
-                    />
-                }
-
-                {(tabs.value === 'releaseForm' && itemById?.userManager?.username) && (
-                    !isInstaller(userLogged?.data?.user_role?.name) ? (
-                        <ProjectDetailsReleaseFormView
-                            project={itemById}
-                            refetchProject={refetchProject}
-                            listPermissions={listPermissions}
-                            openDialogs={openDialogs}
-                            setOpenDialogs={setOpenDialogs}
+            {
+                (!itemById?.id) ? (
+                    <Box
+                        sx={{
+                            width: '350px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            height: '80vh',
+                            margin: 'auto'
+                        }}
+                    >
+                        <Typography variant="body2" sx={{ mb: 1 }}>
+                            {titleLinearProgress}
+                        </Typography>
+                        <LinearProgress
+                            key="error"
+                            sx={{
+                                mb: 2,
+                                width: '100%',
+                                '& .MuiLinearProgress-bar': {
+                                    backgroundColor: 'black',
+                                },
+                                backgroundColor: '#e0e0e0',
+                            }}
                         />
-                    ) : (
-                        <ProjectDetailsReleaseFormInstallerView
-                            project={itemById}
-                            refetchProject={refetchProject}
-                            listPermissions={listPermissions}
-                            openDialogs={openDialogs}
-                            setOpenDialogs={setOpenDialogs}
+                    </Box>
+                ) : (
+                    <>
+                        <DashboardContent>
+                            <ProjectDetailsToolbar
+                                project={itemById}
+                                backLink={
+                                    localStorage.getItem('backFromProjectDetails') === 'analytics' ? paths.dashboard.general.analytics :
+                                        localStorage.getItem('backFromProjectDetails') === 'calendarDashboard' ? paths.dashboard.general.calendar : paths.dashboard.project.list
+                                }
+                                editLink={paths.dashboard.project.edit(`${itemById?.id}`)}
+                                openEdit={tabs.value === 'overview' ? openEdit : tabs.value === 'tasks' ? openEditTask : null}
+                                setOpenEdit={tabs.value === 'overview' ? setOpenEdit : tabs.value === 'tasks' ? setOpenEditTask : null}
+                                type={tabs.value === 'overview' || tabs.value === 'more' ? 'project' : tabs.value === 'tasks' ? 'tasks' : null}
+                                onDelete={() => onDelete(itemById?.id)}
+                                onGenerateMeasurements={() => generateMeasurements()}
+                                listPermissions={listPermissions}
+                            />
+                            {renderTabs}
+
+                            {(tabs.value === 'overview' || tabs.value === 'more') &&
+                                <ProjectDetailsContent
+                                    project={itemById}
+                                    refetchProject={refetchProject}
+                                    setOpenEdit={setOpenEdit}
+                                    listPermissions={listPermissions}
+                                    openDialogs={openDialogs}
+                                    setOpenDialogs={setOpenDialogs}
+                                />
+                            }
+
+                            {(tabs.value === 'tasks' && itemById?.userManager?.username) &&
+                                <ProjectDetailsTaskView
+                                    project={itemById}
+                                    refetchProject={refetchProject}
+                                    tasks={tasks ?? []}
+                                    hasPermission={itemById?.hasPermission}
+                                    listPermissions={listPermissions}
+                                />
+                            }
+
+                            {(tabs.value === 'attachments' && itemById?.userManager?.username) &&
+                                <ProjectDetailsAttachmentView
+                                    project={itemById}
+                                    refetchProject={refetchProject}
+                                    listPermissions={listPermissions}
+                                    openDialogs={openDialogs}
+                                    setOpenDialogs={setOpenDialogs}
+                                />
+                            }
+
+                            {(tabs.value === 'releaseForm' && itemById?.userManager?.username) && (
+                                !isInstaller(userLogged?.data?.user_role?.name) ? (
+                                    <ProjectDetailsReleaseFormView
+                                        project={itemById}
+                                        refetchProject={refetchProject}
+                                        listPermissions={listPermissions}
+                                        openDialogs={openDialogs}
+                                        setOpenDialogs={setOpenDialogs}
+                                    />
+                                ) : (
+                                    <ProjectDetailsReleaseFormInstallerView
+                                        project={itemById}
+                                        refetchProject={refetchProject}
+                                        listPermissions={listPermissions}
+                                        openDialogs={openDialogs}
+                                        setOpenDialogs={setOpenDialogs}
+                                    />
+                                ))}
+
+                            {(tabs.value === 'installationGuide' && itemById?.userManager?.username) && (
+                                !isInstaller(userLogged?.data?.user_role?.name) ? (
+                                    <ProjectDetailsInstallationGuideFormView
+                                        project={itemById}
+                                        refetchProject={refetchProject}
+                                        listPermissions={listPermissions}
+                                        openDialogs={openDialogs}
+                                        setOpenDialogs={setOpenDialogs}
+                                        loadedDefaultGuideProducts={loadedDefaultGuideProducts}
+                                    />
+                                ) : (
+                                    <ProjectDetailsInstallationGuideFormInstallerView
+                                        project={itemById}
+                                        refetchProject={refetchProject}
+                                        listPermissions={listPermissions}
+                                        openDialogs={openDialogs}
+                                        setOpenDialogs={setOpenDialogs}
+                                        loadedDefaultGuideProducts={loadedDefaultGuideProducts}
+                                    />
+                                ))}
+
+                            {(tabs.value === 'financial' &&
+                                itemById?.userManager?.username &&
+                                itemById?.projectGuideProducts?.length > 0 &&
+                                itemById?.projectMaterials?.length > 0
+                            ) &&
+                                <ProjectDetailsFinancialView
+                                    project={itemById}
+                                    refetchProject={refetchProject}
+                                    listPermissions={listPermissions}
+                                    openDialogs={openDialogs}
+                                    setOpenDialogs={setOpenDialogs}
+                                />
+                            }
+
+                            {(tabs.value === 'comments' && itemById?.userManager?.username) &&
+                                <ProjectDetailsCommentView
+                                    project={itemById}
+                                    refetchProject={refetchProject}
+                                    listPermissions={listPermissions}
+                                    listSelectedTracks={listSelectedTracks.filter((track) => track.action.includes(itemById?.id))}
+                                    selectedComments={selectedComments}
+                                    setSelectedComments={setSelectedComments}
+                                />
+                            }
+
+                        </DashboardContent>
+                        <ProjectEditModalView open={openEdit} onClose={() => setOpenEdit(false)} project={itemById} />
+                        <ProjectEditModalTaskView open={openEditTask} onClose={() => setOpenEditTask(false)} projectId={itemById?.id} />
+                        <ProjectEditModalAddressView
+                            isEdit={itemById?.address}
+                            projectId={itemById?.id}
+                            open={openDialogs.address}
+                            onClose={() => setOpenDialogs({ ...openDialogs, address: false })}
                         />
-                    ))}
-
-                {(tabs.value === 'installationGuide' && itemById?.userManager?.username) && (
-                    !isInstaller(userLogged?.data?.user_role?.name) ? (
-                        <ProjectDetailsInstallationGuideFormView
-                            project={itemById}
-                            refetchProject={refetchProject}
-                            listPermissions={listPermissions}
-                            openDialogs={openDialogs}
-                            setOpenDialogs={setOpenDialogs}
-                            loadedDefaultGuideProducts={loadedDefaultGuideProducts}
+                        <ProjectEditModalPhoneNumberView
+                            isEdit={itemById?.salesOrder?.customer?.phone || itemById?.salesOrder?.customer?.mobile}
+                            projectId={itemById?.id}
+                            open={openDialogs.phoneNumber}
+                            onClose={() => setOpenDialogs({ ...openDialogs, phoneNumber: false })}
                         />
-                    ) : (
-                        <ProjectDetailsInstallationGuideFormInstallerView
-                            project={itemById}
-                            refetchProject={refetchProject}
-                            listPermissions={listPermissions}
-                            openDialogs={openDialogs}
-                            setOpenDialogs={setOpenDialogs}
-                            loadedDefaultGuideProducts={loadedDefaultGuideProducts}
+                        <ProjectEditModalRefNumberView
+                            isEdit={itemById?.address}
+                            projectId={itemById?.id}
+                            open={openDialogs.refNumber}
+                            onClose={() => setOpenDialogs({ ...openDialogs, refNumber: false })}
                         />
-                    ))}
+                        <ProjectEditModalDescriptionView
+                            project={itemById}
+                            open={openDialogs.description}
+                            onClose={() => setOpenDialogs({ ...openDialogs, description: false })}
+                        />
 
-                {(tabs.value === 'financial' &&
-                    itemById?.userManager?.username &&
-                    itemById?.projectGuideProducts?.length > 0 &&
-                    itemById?.projectMaterials?.length > 0
-                ) &&
-                    <ProjectDetailsFinancialView
-                        project={itemById}
-                        refetchProject={refetchProject}
-                        listPermissions={listPermissions}
-                        openDialogs={openDialogs}
-                        setOpenDialogs={setOpenDialogs}
-                    />
-                }
-
-                {(tabs.value === 'comments' && itemById?.userManager?.username) &&
-                    <ProjectDetailsCommentView
-                        project={itemById}
-                        refetchProject={refetchProject}
-                        listPermissions={listPermissions}
-                        listSelectedTracks={listSelectedTracks.filter((track) => track.action.includes(itemById?.id))}
-                        selectedComments={selectedComments}
-                        setSelectedComments={setSelectedComments}
-                    />
-                }
-
-            </DashboardContent>
-            <ProjectEditModalView open={openEdit} onClose={() => setOpenEdit(false)} project={itemById} />
-            <ProjectEditModalTaskView open={openEditTask} onClose={() => setOpenEditTask(false)} projectId={itemById?.id} />
-            <ProjectEditModalAddressView
-                isEdit={itemById?.address}
-                projectId={itemById?.id}
-                open={openDialogs.address}
-                onClose={() => setOpenDialogs({ ...openDialogs, address: false })}
-            />
-            <ProjectEditModalPhoneNumberView
-                isEdit={itemById?.salesOrder?.customer?.phone || itemById?.salesOrder?.customer?.mobile}
-                projectId={itemById?.id}
-                open={openDialogs.phoneNumber}
-                onClose={() => setOpenDialogs({ ...openDialogs, phoneNumber: false })}
-            />
-            <ProjectEditModalRefNumberView
-                isEdit={itemById?.address}
-                projectId={itemById?.id}
-                open={openDialogs.refNumber}
-                onClose={() => setOpenDialogs({ ...openDialogs, refNumber: false })}
-            />
-            <ProjectEditModalDescriptionView
-                project={itemById}
-                open={openDialogs.description}
-                onClose={() => setOpenDialogs({ ...openDialogs, description: false })}
-            />
-
-            <ConfirmDialog
-                open={openValidationDialog}
-                onClose={() => {
-                    setOpenValidationDialog(false)
-                    tabs.onChange(null, 'overview')
-                }}
-                title={`Invalid Action to reach: ${tabs.value}`}
-                maxWidth="xs"
-                content={
-                    <Typography variant="body2">
-                        <b>{validationMessage}</b>
-                    </Typography>
-                }
-            />
+                        <ConfirmDialog
+                            open={openValidationDialog}
+                            onClose={() => {
+                                setOpenValidationDialog(false)
+                                tabs.onChange(null, 'overview')
+                            }}
+                            title={`Invalid Action to reach: ${tabs.value}`}
+                            maxWidth="xs"
+                            content={
+                                <Typography variant="body2">
+                                    <b>{validationMessage}</b>
+                                </Typography>
+                            }
+                        />
+                    </>
+                )}
         </>
     );
 }

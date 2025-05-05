@@ -10,7 +10,7 @@ import { Box, Chip, Table, Button, Avatar, Tooltip, TableRow, ListItem, TableBod
 import { useBoolean } from 'src/hooks/use-boolean';
 
 import { fDate } from 'src/utils/format-time';
-import { isInstaller, listRolesAndSubroles } from 'src/utils/check-permissions';
+import { listRolesAndSubroles } from 'src/utils/check-permissions';
 import { generateMeasurementReport } from 'src/utils/generate-measurement-report';
 
 import { CONFIG } from 'src/config-global';
@@ -73,8 +73,21 @@ export function MeasurementDetailsContent({
   const confirmRemove = useBoolean();
 
   useEffect(() => {
-    if (measurement?.marks) {
+    if (measurement?.marks?.length > 0) {
       setCurrentMarks(measurement.marks);
+    }
+    else {
+      setCurrentMarks([
+        {
+          type: '',
+          config: '',
+          dimensions: [0, 0],
+          notes: '',
+          line_item_id: '0',
+          first_check: false,
+          second_check: false,
+        }
+      ]);
     }
   }, [measurement]);
 
@@ -660,7 +673,7 @@ export function MeasurementDetailsContent({
   return (
     <>
       <Grid container spacing={3}>
-        {!isInstaller(userLogged?.data?.user_role?.name) && (
+        {/* {!isInstaller(userLogged?.data?.user_role?.name) && ( */}
           <>
             <Grid xs={12} md={8}>
               <Grid xs={12} md={12}>
@@ -680,7 +693,7 @@ export function MeasurementDetailsContent({
               </Box>
             </Grid>
           </>
-        )}
+        {/* )} */}
       </Grid >
       <ConfirmDialog
         open={confirmRemove.value}

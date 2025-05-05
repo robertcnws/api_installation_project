@@ -4,6 +4,7 @@ import { useMemo, useState, useEffect, useContext, useCallback } from 'react';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import ToggleButton from '@mui/material/ToggleButton';
+import { Box, Typography, LinearProgress } from '@mui/material';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 
 import { paths } from 'src/routes/paths';
@@ -14,6 +15,7 @@ import { useBoolean } from 'src/hooks/use-boolean';
 import { useSetState } from 'src/hooks/use-set-state';
 
 import { fIsAfter, fIsBetween } from 'src/utils/format-time';
+import { listRolesAndSubroles } from 'src/utils/check-permissions';
 import { getServiceInstaller } from 'src/utils/service-tasks-utils';
 
 import { CONFIG } from 'src/config-global';
@@ -36,6 +38,7 @@ import { ServiceFilters } from '../service-filters';
 // import { KanbanServiceView } from '../kanban-service/view';
 import { ServiceFiltersResult } from '../service-filters-result';
 
+
 // import { ServiceNewFolderDialog } from '../service-new-folder-dialog';
 
 // ----------------------------------------------------------------------
@@ -49,6 +52,7 @@ export function ServiceView() {
   const {
     loadedServices,
     refetchServices,
+    loadingServices,
     loadedUsers,
     loadedServiceStages,
     // loadedServiceStagesTask,
@@ -56,7 +60,13 @@ export function ServiceView() {
     // refetchSalesOrders,
   } = useDataContext();
 
-  const table = useTable({ defaultRowsPerPage: 10, defaultDense: true, defaultOrder: 'asc', defaultOrderBy: 'startDate' });
+  const table = useTable({ 
+    defaultCurrentPage: parseInt(localStorage.getItem('servicePage'), 10) || 0,
+    defaultRowsPerPage: parseInt(localStorage.getItem('serviceRowsPerPage'), 10) || 10,
+    defaultDense: true, 
+    defaultOrder: 'asc', 
+    defaultOrderBy: 'startDate' 
+  });
 
   const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
 
@@ -129,18 +139,18 @@ export function ServiceView() {
   }, []);
 
   const filters = useSetState({
-    list: 'in progress',
-    name: '',
-    type: [],
-    startDate: null,
-    endDate: null,
-    byFactory: false,
-    notByFactory: false,
-    installer: {
+    list: localStorage.getItem('serviceFilterList') || 'in progress',
+    name: localStorage.getItem('serviceFilterName') || '',
+    type: JSON.parse(localStorage.getItem('serviceFilterType')) || [],
+    startDate: localStorage.getItem('serviceFilterStartDate') || null,
+    endDate: localStorage.getItem('serviceFilterEndDate') || null,
+    byFactory: localStorage.getItem('serviceFilterByFactory') === 'true' || false,
+    notByFactory: localStorage.getItem('serviceFilterNotByFactory') === 'true' || false,
+    installer: JSON.parse(localStorage.getItem('serviceFilterInstaller')) || {
       id: null,
       name: null,
     },
-    custom: {
+    custom: JSON.parse(localStorage.getItem('serviceFilterCustom')) || {
       hasPermission: false,
       isPreparation: {
         name: 'preparation',
@@ -339,16 +349,20 @@ export function ServiceView() {
 
       </ToggleButtonGroup>
 
-      <Button
-        component={RouterLink}
-        href={paths.dashboard.service.new}
-        // color="inherit"
-        // variant="outlined"
-        variant="contained"
-        startIcon={<Iconify icon="mingcute:add-line" />}
-      >
-        New
-      </Button>
+      {listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.serviceStaff) && (
+
+        <Button
+          component={RouterLink}
+          href={paths.dashboard.service.new}
+          // color="inherit"
+          // variant="outlined"
+          variant="contained"
+          startIcon={<Iconify icon="mingcute:add-line" />}
+        >
+          New
+        </Button>
+
+      )}
 
     </Stack>
   );
@@ -361,105 +375,126 @@ export function ServiceView() {
     />
   );
 
+  const [titleLinearProgress, setTitleLinearProgress] = useState('Loading services data...');
+
   return (
     <>
-      <DashboardContent>
-        {/* <Stack direction="row" alignItems="center" justifyContent="space-between">
-          <Typography variant="h4">Service Manager</Typography>
-          <Button
-            variant="contained"
-            startIcon={<Iconify icon="fluent-mdl2:activate-orders" />}
-            onClick={handleSalesOrders}
-          >
-            Go to Sales Orders
-          </Button>
-        </Stack> */}
-        {/* <Divider sx={{ borderStyle: 'dashed', mb: 1 }} /> */}
-
-        <Stack spacing={2.5} sx={{ my: { xs: 3, md: 3 } }}>
-          {renderFilters}
-
-          {canReset && renderResults}
-        </Stack>
-
-        {notFound ? (
-          <EmptyContent filled sx={{ py: 10 }} />
-        ) : (
-          <>
-            {view === 'list' && (
-              <ServiceTable
-                table={table}
-                dataFiltered={dataFiltered}
-                onDeleteRow={handleDeleteItem}
-                onCloseRow={handleCloseItem}
-                // onKanbanView={handleViewKanban}
-                onViewRow={handleDetailsView}
-                notFound={notFound}
-                onOpenConfirm={confirm.onTrue}
-                loadedUsers={loadedUsers}
-                // loadedServicePermissions={loadedServicePermissions}
-                loadedServiceStages={finalStages}
-                // loadedServiceStagesTask={loadedServiceStagesTask}
-                // listPermissions={listPermissions}
-                setTableData={setTableData}
-                refetchServices={refetchServices}
-                loadedServices={loadedServices}
-              // onOpenConfirmStaff={confirmStaff.onTrue}
-              // isWarehouseStaff={isWarehouseStaff}
-              // setIsWarehouseStaff={setIsWarehouseStaff}
-              />
-              // ) : view === 'grid' ? (
-              //   <ServiceGridView
-              //     table={table}
-              //     dataFiltered={dataFiltered}
-              //     onDeleteItem={handleDeleteItem}
-              //     onKanbanView={handleViewKanban}
-              //     onViewRow={handleDetailsView}
-              //     onOpenConfirm={confirm.onTrue}
-              //     loadedUsers={loadedUsers}
-              //     loadedServicePermissions={loadedServicePermissions}
-              //     loadedServiceStages={finalStages}
-              //     loadedServiceStagesTask={loadedServiceStagesTask}
-              //     listPermissions={listPermissions}
-              //     setTableData={setTableData}
-              //     refetchServices={refetchServices}
-              //     onOpenConfirmStaff={confirmStaff.onTrue}
-              //     isWarehouseStaff={isWarehouseStaff}
-              //     setIsWarehouseStaff={setIsWarehouseStaff}
-              //   />
-              // ) : view === 'calendar' ? (
-              //   <ServiceCalendarView services={dataFiltered} isOnlyWeek={false} />
-              // ) : (
-              //   <KanbanServiceView services={dataFiltered} refetchServices={refetchServices} />
-            )}
-          </>
-        )}
-      </DashboardContent>
-
-      {/* <ServiceNewFolderDialog open={upload.value} onClose={upload.onFalse} /> */}
-
-      <ConfirmDialog
-        open={confirm.value}
-        onClose={confirm.onFalse}
-        title="Delete"
-        content={
-          <>
-            Are you sure want to delete <strong> {table.selected.length} </strong> service(s)?
-          </>
-        }
-        action={
-          <Button
-            variant="contained"
-            color="error"
-            onClick={() => {
-              handleDeleteItems();
-              confirm.onFalse();
+      {
+        (loadingServices) ? (
+          <Box
+            sx={{
+              width: '350px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: '80vh',
+              margin: 'auto'
             }}
           >
-            Delete
-          </Button>
-        }
-      />
+            <Typography variant="body2" sx={{ mb: 1 }}>
+              {titleLinearProgress}
+            </Typography>
+            <LinearProgress
+              key="error"
+              sx={{
+                mb: 2,
+                width: '100%',
+                '& .MuiLinearProgress-bar': {
+                  backgroundColor: 'black',
+                },
+                backgroundColor: '#e0e0e0',
+              }}
+            />
+          </Box>
+        ) : (
+          <>
+            <DashboardContent>
+
+              <Stack spacing={2.5} sx={{ my: { xs: 3, md: 3 } }}>
+                {renderFilters}
+
+                {canReset && renderResults}
+              </Stack>
+
+              {notFound ? (
+                <EmptyContent filled sx={{ py: 10 }} />
+              ) : (
+                <>
+                  {view === 'list' && (
+                    <ServiceTable
+                      table={table}
+                      dataFiltered={dataFiltered}
+                      onDeleteRow={handleDeleteItem}
+                      onCloseRow={handleCloseItem}
+                      // onKanbanView={handleViewKanban}
+                      onViewRow={handleDetailsView}
+                      notFound={notFound}
+                      onOpenConfirm={confirm.onTrue}
+                      loadedUsers={loadedUsers}
+                      // loadedServicePermissions={loadedServicePermissions}
+                      loadedServiceStages={finalStages}
+                      // loadedServiceStagesTask={loadedServiceStagesTask}
+                      // listPermissions={listPermissions}
+                      setTableData={setTableData}
+                      refetchServices={refetchServices}
+                      loadedServices={loadedServices}
+                    // onOpenConfirmStaff={confirmStaff.onTrue}
+                    // isWarehouseStaff={isWarehouseStaff}
+                    // setIsWarehouseStaff={setIsWarehouseStaff}
+                    />
+                    // ) : view === 'grid' ? (
+                    //   <ServiceGridView
+                    //     table={table}
+                    //     dataFiltered={dataFiltered}
+                    //     onDeleteItem={handleDeleteItem}
+                    //     onKanbanView={handleViewKanban}
+                    //     onViewRow={handleDetailsView}
+                    //     onOpenConfirm={confirm.onTrue}
+                    //     loadedUsers={loadedUsers}
+                    //     loadedServicePermissions={loadedServicePermissions}
+                    //     loadedServiceStages={finalStages}
+                    //     loadedServiceStagesTask={loadedServiceStagesTask}
+                    //     listPermissions={listPermissions}
+                    //     setTableData={setTableData}
+                    //     refetchServices={refetchServices}
+                    //     onOpenConfirmStaff={confirmStaff.onTrue}
+                    //     isWarehouseStaff={isWarehouseStaff}
+                    //     setIsWarehouseStaff={setIsWarehouseStaff}
+                    //   />
+                    // ) : view === 'calendar' ? (
+                    //   <ServiceCalendarView services={dataFiltered} isOnlyWeek={false} />
+                    // ) : (
+                    //   <KanbanServiceView services={dataFiltered} refetchServices={refetchServices} />
+                  )}
+                </>
+              )}
+            </DashboardContent>
+
+            <ConfirmDialog
+              open={confirm.value}
+              onClose={confirm.onFalse}
+              title="Delete"
+              content={
+                <>
+                  Are you sure want to delete <strong> {table.selected.length} </strong> service(s)?
+                </>
+              }
+              action={
+                <Button
+                  variant="contained"
+                  color="error"
+                  onClick={() => {
+                    handleDeleteItems();
+                    confirm.onFalse();
+                  }}
+                >
+                  Delete
+                </Button>
+              }
+            />
+          </>
+        )}
     </>
   );
 }

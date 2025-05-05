@@ -3,6 +3,9 @@ import { useMemo, useState, useEffect, useContext, useCallback } from "react";
 import { Box, Checkbox, FormControlLabel } from "@mui/material";
 
 import { fIsAfter } from "src/utils/format-time";
+import { listRolesAndSubroles } from "src/utils/check-permissions";
+
+import { CONFIG } from "src/config-global";
 
 import { ServiceDetailsCommentList } from "src/sections/service/service-details-comment-list";
 import { ServiceDetailsCommentInput } from "src/sections/service/service-details-comment-input";
@@ -18,6 +21,8 @@ export const ServiceDetailsCommentView = ({
 }) => {
 
     const { isMobile } = useContext(LoadingContext);
+
+    const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
 
     const comments = useMemo(() => service?.serviceComments, [service]);
 
@@ -43,18 +48,20 @@ export const ServiceDetailsCommentView = ({
         <>
             {(comments?.length > 0 || listSelectedTracks?.length > 0) && (
                 <>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0, mt: -5, mb: 2 }}>
-                        <FormControlLabel
-                            control={
-                                <Checkbox
-                                    checked={selectedComments}
-                                    onClick={onSelectComments}
-                                    inputProps={{ id: 'row-checkbox-comments', 'aria-label': 'row-checkbox' }}
-                                />
-                            }
-                            label="View all history"
-                        />
-                    </Box>
+                    {listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator) && (
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0, mt: -5, mb: 2 }}>
+                            <FormControlLabel
+                                control={
+                                    <Checkbox
+                                        checked={selectedComments}
+                                        onClick={onSelectComments}
+                                        inputProps={{ id: 'row-checkbox-comments', 'aria-label': 'row-checkbox' }}
+                                    />
+                                }
+                                label="View all history"
+                            />
+                        </Box>
+                    )}
                     <Box sx={{ flexDirection: 'column', gap: 3, ml: 2, maxHeight: isMobile ? '100%' : 430, overflowY: 'auto' }}>
                         <ServiceDetailsCommentList
                             comments={sortedComments}

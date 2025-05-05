@@ -556,26 +556,18 @@ export const dashboardRoutes = (listPermissions, user) => [
             ],
           },
         ] : [],
-      ...(user && listRolesAndSubroles(user?.user_role?.name).includes(CONFIG.roles.serviceStaff)) ?
+      ...(user && belongsToWorkingStaff(user?.user_role?.name)) ?
         [
           {
             path: 'service',
             children: [
               {
-                element: listRolesAndSubroles(
-                  user?.user_role?.name
-                ).includes(
-                  CONFIG.roles.serviceStaff
-                ) ? <ServicePage /> : <Page403 />,
+                element: belongsToWorkingStaff(user?.user_role?.name) ? <ServicePage /> : <Page403 />,
                 index: true
               },
               {
                 path: 'list',
-                element: listRolesAndSubroles(
-                  user?.user_role?.name
-                ).includes(
-                  CONFIG.roles.serviceStaff
-                ) ? <ServicePage /> : <Page403 />,
+                element: belongsToWorkingStaff(user?.user_role?.name) ? <ServicePage /> : <Page403 />,
               },
               {
                 path: 'new',
@@ -587,11 +579,7 @@ export const dashboardRoutes = (listPermissions, user) => [
               },
               {
                 path: ':id/details',
-                element: listRolesAndSubroles(
-                  user?.user_role?.name
-                ).includes(
-                  CONFIG.roles.serviceStaff
-                ) ? <ServiceDetailsPage /> : <Page403 />,
+                element: belongsToWorkingStaff(user?.user_role?.name) ? <ServiceDetailsPage /> : <Page403 />,
               }
             ],
           },

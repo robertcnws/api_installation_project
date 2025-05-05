@@ -82,6 +82,7 @@ export function ServiceFilters({
     filters.setState({
       list: typeName,
     });
+    localStorage.setItem('serviceFilterList', typeName);
   }, [filters, onResetPage]);
 
   const handleFilterInstaller = useCallback(
@@ -95,6 +96,7 @@ export function ServiceFilters({
           name: user?.name || ''
         }
       });
+      localStorage.setItem('serviceFilterInstaller', JSON.stringify({ id, name: user?.name || '' }));
     },
     [loadedUsers, filters, onResetPage]
   );
@@ -115,6 +117,7 @@ export function ServiceFilters({
           },
         },
       });
+      localStorage.setItem('serviceFilterCustom', JSON.stringify({ ...filters.state.custom, [fieldName]: { value, name } }));
     } else if (fieldName === 'hasComments') {
       const hasComments = !filters.state.custom.hasComments;
       filters.setState({
@@ -123,18 +126,21 @@ export function ServiceFilters({
           hasComments,
         },
       });
+      localStorage.setItem('serviceFilterCustom', JSON.stringify({ ...filters.state.custom, hasComments }));
     }
     else if (fieldName === 'byFactory') {
       const byFactory = !filters.state.byFactory;
       filters.setState({
         byFactory,
       });
+      localStorage.setItem('serviceFilterByFactory', byFactory);
     }
     else if (fieldName === 'notByFactory') {
       const byFactory = !filters.state.notByFactory;
       filters.setState({
         notByFactory: byFactory,
       });
+      localStorage.setItem('serviceFilterNotByFactory', byFactory);
     }
 
     setCustomFilterName(createCustomFilterName());
@@ -145,6 +151,7 @@ export function ServiceFilters({
     (event) => {
       onResetPage();
       filters.setState({ name: event.target.value });
+      localStorage.setItem('serviceFilterName', event.target.value);
     },
     [filters, onResetPage]
   );
@@ -153,6 +160,7 @@ export function ServiceFilters({
     (newValue) => {
       onResetPage();
       filters.setState({ startDate: newValue });
+      localStorage.setItem('serviceFilterStartDate', newValue);
     },
     [filters, onResetPage]
   );
@@ -160,6 +168,7 @@ export function ServiceFilters({
   const handleFilterEndDate = useCallback(
     (newValue) => {
       filters.setState({ endDate: newValue });
+      localStorage.setItem('serviceFilterEndDate', newValue);
     },
     [filters]
   );
@@ -171,19 +180,7 @@ export function ServiceFilters({
         : [...filters.state.type, newValue];
 
       filters.setState({ type: checked });
-    },
-    [filters]
-  );
-
-  const handleFilterIsPreparation = useCallback(
-    (newValue) => {
-      filters.setState(prev => ({
-        ...prev,
-        custom: {
-          ...prev.custom,
-          isPreparation: { value: newValue },
-        }
-      }));
+      localStorage.setItem('serviceFilterType', JSON.stringify(checked));
     },
     [filters]
   );
@@ -191,6 +188,7 @@ export function ServiceFilters({
   const handleResetType = useCallback(() => {
     popover.onClose();
     filters.setState({ type: [] });
+    localStorage.setItem('serviceFilterType', JSON.stringify([]));
   }, [filters, popover]);
 
 

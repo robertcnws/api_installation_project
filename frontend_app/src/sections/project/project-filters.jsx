@@ -97,18 +97,12 @@ export function ProjectFilters({
     setCustomFilterName(createCustomFilterName());
   }, [createCustomFilterName]);
 
-  const hasSomeCustomFilter = useMemo(() => Object.values(custom).some((value) => {
-    if (typeof value === 'object') {
-      return Object.values(value).some((v) => v);
-    }
-    return value;
-  }), [custom]);
-
   const handleFilterTypeList = useCallback((typeName) => {
     onResetPage();
     filters.setState({
       list: typeName,
     });
+    localStorage.setItem('projectFilterList', typeName);
   }, [filters, onResetPage]);
 
   const handleFilterCustom = useCallback((fieldName) => {
@@ -121,6 +115,7 @@ export function ProjectFilters({
           hasPermission,
         },
       });
+      localStorage.setItem('projectFilterCustom', JSON.stringify({ ...filters.state.custom, hasPermission }));
     } else if (fieldName === 'isPreparation' ||
       fieldName === 'isCoordination' ||
       fieldName === 'isInstallation' ||
@@ -137,6 +132,7 @@ export function ProjectFilters({
           },
         },
       });
+      localStorage.setItem('projectFilterCustom', JSON.stringify({ ...filters.state.custom, [fieldName]: { value, name } }));
     } else if (fieldName === 'hasComments') {
       const hasComments = !filters.state.custom.hasComments;
       filters.setState({
@@ -145,8 +141,8 @@ export function ProjectFilters({
           hasComments,
         },
       });
+      localStorage.setItem('projectFilterCustom', JSON.stringify({ ...filters.state.custom, hasComments }));
     }
-
     setCustomFilterName(createCustomFilterName());
   }, [filters, createCustomFilterName, onResetPage, setCustomFilterName]);
 
@@ -162,6 +158,7 @@ export function ProjectFilters({
           name: user?.name || ''
         }
       });
+      localStorage.setItem('projectFilterInstaller', JSON.stringify({ id, name: user?.name || '' }));
     },
     [loadedUsers, filters, onResetPage]
   );
@@ -171,6 +168,7 @@ export function ProjectFilters({
     (event) => {
       onResetPage();
       filters.setState({ name: event.target.value });
+      localStorage.setItem('projectFilterName', event.target.value);
     },
     [filters, onResetPage]
   );
@@ -179,6 +177,7 @@ export function ProjectFilters({
     (newValue) => {
       onResetPage();
       filters.setState({ startDate: newValue });
+      localStorage.setItem('projectFilterStartDate', newValue);
     },
     [filters, onResetPage]
   );
@@ -186,6 +185,7 @@ export function ProjectFilters({
   const handleFilterEndDate = useCallback(
     (newValue) => {
       filters.setState({ endDate: newValue });
+      localStorage.setItem('projectFilterEndDate', newValue);
     },
     [filters]
   );
@@ -197,32 +197,7 @@ export function ProjectFilters({
         : [...filters.state.type, newValue];
 
       filters.setState({ type: checked });
-    },
-    [filters]
-  );
-
-  const handleFilterHasPermission = useCallback(
-    (newValue) => {
-      filters.setState(prev => ({
-        ...prev,
-        custom: {
-          ...prev.custom,
-          hasPermission: newValue,
-        }
-      }));
-    },
-    [filters]
-  );
-
-  const handleFilterIsPreparation = useCallback(
-    (newValue) => {
-      filters.setState(prev => ({
-        ...prev,
-        custom: {
-          ...prev.custom,
-          isPreparation: { value: newValue },
-        }
-      }));
+      localStorage.setItem('projectFilterType', JSON.stringify(checked));
     },
     [filters]
   );
@@ -230,6 +205,7 @@ export function ProjectFilters({
   const handleResetType = useCallback(() => {
     popover.onClose();
     filters.setState({ type: [] });
+    localStorage.setItem('projectFilterType', JSON.stringify([]));
   }, [filters, popover]);
 
 
@@ -282,6 +258,7 @@ export function ProjectFilters({
             onClick={() => {
               onCloseInstallerFilter();
               filters.setState({ installer: { id: null, name: null } });
+              localStorage.removeItem('projectFilterInstaller');
             }}
             color='warning'
           >

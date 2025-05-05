@@ -3,7 +3,7 @@ import { useMemo, useState, useEffect, useCallback } from 'react';
 
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
-import { Box, Button, Dialog, MenuItem, MenuList, Typography, DialogActions } from '@mui/material';
+import { Box, Button, Dialog, MenuItem, MenuList, Typography, DialogActions, LinearProgress } from '@mui/material';
 
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
@@ -11,6 +11,7 @@ import { useRouter } from 'src/routes/hooks';
 import { useTabs } from 'src/hooks/use-tabs';
 import { useBoolean } from 'src/hooks/use-boolean';
 
+import { getServiceInstaller } from 'src/utils/service-tasks-utils';
 import { filteredDescriptionJson } from 'src/utils/project-tasks-utils';
 import { extractDimensions } from 'src/utils/generate-installation-guide-pdf';
 
@@ -39,6 +40,7 @@ import { useDataContext } from 'src/auth/context/data/data-context';
 import { ServiceEditModalNotesView } from '../service-edit-modal-notes-view';
 import { ServiceDetailsContentOverview } from '../service-details-content-overview';
 import { ServiceEditModalAttachmentsView } from '../service-edit-modal-attachments-view';
+
 
 // ----------------------------------------------------------------------
 
@@ -150,13 +152,13 @@ export function ServiceDetailsView({ serviceId }) {
 
 
     useEffect(() => {
-        if (fetchedService) {
+        if (fetchedService && fetchedService?.id) {
             setItemById(fetchedService);
         }
     }, [fetchedService]);
 
     useEffect(() => {
-        if (loadedTracks) {
+        if (loadedTracks && loadedTracks?.length > 0) {
             setListSelectedTracks(loadedTracks);
         }
     }, [loadedTracks]);
@@ -323,6 +325,7 @@ export function ServiceDetailsView({ serviceId }) {
             try {
                 const promise = axios.post(`${CONFIG.apiUrl}/measurements/create/measurement/`, {
                     service: JSON.stringify(service),
+                    installer: JSON.stringify(getServiceInstaller(itemById, CONFIG)),
                     items: JSON.stringify(arrayDimensions),
                     userReporter: JSON.stringify(userLogged?.data),
                     salesOrder: JSON.stringify(salesOrder),
@@ -460,139 +463,173 @@ export function ServiceDetailsView({ serviceId }) {
         </Tabs>
     );
 
+    const [titleLinearProgress, setTitleLinearProgress] = useState(`Loading data from service ${item?.name}...`);
+
     return (
         <>
-            <DashboardContent>
-                <ServiceDetailsToolbar
-                    service={itemById}
-                    backLink={
-                        localStorage.getItem('backFromServiceDetails') === 'analytics' ? paths.dashboard.general.analytics :
-                            localStorage.getItem('backFromProjectDetails') === 'calendarDashboard' ? paths.dashboard.general.calendar :
-                                localStorage.getItem('backFromServiceDetails') === 'projectDetails' ?
-                                    paths.dashboard.project.details(localStorage.getItem('projectId')) : paths.dashboard.service.list
-                    }
-                    editLink={paths.dashboard.service.edit(`${itemById?.id}`)}
-                    openEdit={tabs.value === 'overview' ? openEdit : tabs.value === 'tasks' ? openEditTask : null}
-                    setOpenEdit={tabs.value === 'overview' ? setOpenEdit : tabs.value === 'tasks' ? setOpenEditTask : null}
-                    type={(tabs.value === 'overview' || tabs.value === 'more') ? 'service' : tabs.value === 'tasks' ? 'tasks' : null}
-                    onDelete={() => onDelete(itemById?.id)}
-                    onGenerateMeasurements={() => generateMeasurements()}
-                />
-                {renderTabs}
-
-                {(tabs.value === 'overview' || tabs.value === 'more') &&
-                    <ServiceDetailsContent
-                        service={itemById}
-                        refetchService={refetchService}
-                        setOpenEdit={setOpenEdit}
-                        openDialogs={openDialogs}
-                        setOpenDialogs={setOpenDialogs}
-                        openSalesOrderModal={openSalesOrderModal}
-                        handleChangeProperties={handleChangeProperties}
-                    />
-                }
-
-                {(tabs.value === 'tasks' && itemById?.userManager?.username) &&
-                    <ServiceDetailsTaskView
-                        service={itemById}
-                        refetchService={refetchService}
-                        tasks={tasks ?? []}
-                    />
-                }
-
-                {(tabs.value === 'attachments' && itemById?.userManager?.username) &&
-                    <ServiceDetailsAttachmentView
-                        service={itemById}
-                        refetchService={refetchService}
-                        openDialogs={openDialogs}
-                        setOpenDialogs={setOpenDialogs}
-                    />
-                }
-
-                {(tabs.value === 'comments' && itemById?.userManager?.username) &&
-                    <ServiceDetailsCommentView
-                        service={itemById}
-                        refetchService={refetchService}
-                        listSelectedTracks={listSelectedTracks.filter((track) => track.action.includes(itemById?.id))}
-                        selectedComments={selectedComments}
-                        setSelectedComments={setSelectedComments}
-                    />
-                }
-
-            </DashboardContent>
-
-            <ServiceEditModalAddressView
-                isEdit={itemById?.address}
-                serviceId={itemById?.id}
-                open={openDialogs.address}
-                onClose={() => setOpenDialogs({ ...openDialogs, address: false })}
-            />
-            <ServiceEditModalPhoneNumberView
-                isEdit={itemById?.salesOrder?.customer?.phone || itemById?.salesOrder?.customer?.mobile}
-                serviceId={itemById?.id}
-                open={openDialogs.phoneNumber}
-                onClose={() => setOpenDialogs({ ...openDialogs, phoneNumber: false })}
-            />
-            <ServiceEditModalRefNumberView
-                isEdit={itemById?.address}
-                serviceId={itemById?.id}
-                open={openDialogs.refNumber}
-                onClose={() => setOpenDialogs({ ...openDialogs, refNumber: false })}
-            />
-
-            <ServiceEditModalNotesView
-                service={itemById}
-                open={openDialogs.editNotes}
-                onClose={() => setOpenDialogs({ ...openDialogs, editNotes: false })}
-            />
-
-            <ServiceEditModalAttachmentsView
-                service={itemById}
-                open={openDialogs.editAttachments}
-                onClose={() => setOpenDialogs({ ...openDialogs, editAttachments: false })}
-            />
-
-            <ConfirmDialog
-                open={openValidationDialog}
-                onClose={() => {
-                    setOpenValidationDialog(false)
-                    tabs.onChange(null, 'overview')
-                }}
-                title={`Invalid Action to reach: ${tabs.value}`}
-                maxWidth="xs"
-                content={
-                    <Typography variant="body2">
-                        <b>{validationMessage}</b>
-                    </Typography>
-                }
-            />
-
-            <Dialog open={openSalesOrderModal.value} onClose={openSalesOrderModal.onFalse} fullWidth maxWidth="lg">
-                <Scrollbar style={{ height: '70%' }}>
-                    <ServiceDetailsContentOverview
-                        salesOrder={selectedSalesOrder}
-                        setSomeItemsSelected={setSomeItemsSelected}
-                        setAllIssuesCompleted={setAllIssuesCompleted}
-                        selectedListItems={selectedListItems}
-                        setSelectedListItems={setSelectedListItems}
-                        service={itemById}
-                        serviceType={serviceType}
-                        setServiceType={setServiceType}
-                    />
-                </Scrollbar>
-                <DialogActions>
-                    <Button
-                        variant="contained"
-                        disabled={!someItemsSelected || !allIssuesCompleted}
-                        onClick={handleUpdateService}
+            {
+                (!itemById?.id) ? (
+                    <Box
+                        sx={{
+                            width: '350px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            height: '80vh',
+                            margin: 'auto'
+                        }}
                     >
-                        Update Service
-                    </Button>
-                    <Button variant="outlined" onClick={openSalesOrderModal.onFalse}>
-                        Close
-                    </Button>
-                </DialogActions>
-            </Dialog>
+                        <Typography variant="body2" sx={{ mb: 1 }}>
+                            {titleLinearProgress}
+                        </Typography>
+                        <LinearProgress
+                            key="error"
+                            sx={{
+                                mb: 2,
+                                width: '100%',
+                                '& .MuiLinearProgress-bar': {
+                                    backgroundColor: 'black',
+                                },
+                                backgroundColor: '#e0e0e0',
+                            }}
+                        />
+                    </Box>
+                ) : (
+                    <>
+                        <DashboardContent>
+                            <ServiceDetailsToolbar
+                                service={itemById}
+                                backLink={
+                                    localStorage.getItem('backFromServiceDetails') === 'analytics' ? paths.dashboard.general.analytics :
+                                        localStorage.getItem('backFromProjectDetails') === 'calendarDashboard' ? paths.dashboard.general.calendar :
+                                            localStorage.getItem('backFromServiceDetails') === 'projectDetails' ?
+                                                paths.dashboard.project.details(localStorage.getItem('projectId')) : paths.dashboard.service.list
+                                }
+                                editLink={paths.dashboard.service.edit(`${itemById?.id}`)}
+                                openEdit={tabs.value === 'overview' ? openEdit : tabs.value === 'tasks' ? openEditTask : null}
+                                setOpenEdit={tabs.value === 'overview' ? setOpenEdit : tabs.value === 'tasks' ? setOpenEditTask : null}
+                                type={(tabs.value === 'overview' || tabs.value === 'more') ? 'service' : tabs.value === 'tasks' ? 'tasks' : null}
+                                onDelete={() => onDelete(itemById?.id)}
+                                onGenerateMeasurements={() => generateMeasurements()}
+                            />
+                            {renderTabs}
+
+                            {(tabs.value === 'overview' || tabs.value === 'more') &&
+                                <ServiceDetailsContent
+                                    service={itemById}
+                                    refetchService={refetchService}
+                                    setOpenEdit={setOpenEdit}
+                                    openDialogs={openDialogs}
+                                    setOpenDialogs={setOpenDialogs}
+                                    openSalesOrderModal={openSalesOrderModal}
+                                    handleChangeProperties={handleChangeProperties}
+                                />
+                            }
+
+                            {(tabs.value === 'tasks' && itemById?.userManager?.username) &&
+                                <ServiceDetailsTaskView
+                                    service={itemById}
+                                    refetchService={refetchService}
+                                    tasks={tasks ?? []}
+                                />
+                            }
+
+                            {(tabs.value === 'attachments' && itemById?.userManager?.username) &&
+                                <ServiceDetailsAttachmentView
+                                    service={itemById}
+                                    refetchService={refetchService}
+                                    openDialogs={openDialogs}
+                                    setOpenDialogs={setOpenDialogs}
+                                />
+                            }
+
+                            {(tabs.value === 'comments' && itemById?.userManager?.username) &&
+                                <ServiceDetailsCommentView
+                                    service={itemById}
+                                    refetchService={refetchService}
+                                    listSelectedTracks={listSelectedTracks.filter((track) => track.action.includes(itemById?.id))}
+                                    selectedComments={selectedComments}
+                                    setSelectedComments={setSelectedComments}
+                                />
+                            }
+
+                        </DashboardContent>
+
+                        <ServiceEditModalAddressView
+                            isEdit={itemById?.address}
+                            serviceId={itemById?.id}
+                            open={openDialogs.address}
+                            onClose={() => setOpenDialogs({ ...openDialogs, address: false })}
+                        />
+                        <ServiceEditModalPhoneNumberView
+                            isEdit={itemById?.salesOrder?.customer?.phone || itemById?.salesOrder?.customer?.mobile}
+                            serviceId={itemById?.id}
+                            open={openDialogs.phoneNumber}
+                            onClose={() => setOpenDialogs({ ...openDialogs, phoneNumber: false })}
+                        />
+                        <ServiceEditModalRefNumberView
+                            isEdit={itemById?.address}
+                            serviceId={itemById?.id}
+                            open={openDialogs.refNumber}
+                            onClose={() => setOpenDialogs({ ...openDialogs, refNumber: false })}
+                        />
+
+                        <ServiceEditModalNotesView
+                            service={itemById}
+                            open={openDialogs.editNotes}
+                            onClose={() => setOpenDialogs({ ...openDialogs, editNotes: false })}
+                        />
+
+                        <ServiceEditModalAttachmentsView
+                            service={itemById}
+                            open={openDialogs.editAttachments}
+                            onClose={() => setOpenDialogs({ ...openDialogs, editAttachments: false })}
+                        />
+
+                        <ConfirmDialog
+                            open={openValidationDialog}
+                            onClose={() => {
+                                setOpenValidationDialog(false)
+                                tabs.onChange(null, 'overview')
+                            }}
+                            title={`Invalid Action to reach: ${tabs.value}`}
+                            maxWidth="xs"
+                            content={
+                                <Typography variant="body2">
+                                    <b>{validationMessage}</b>
+                                </Typography>
+                            }
+                        />
+
+                        <Dialog open={openSalesOrderModal.value} onClose={openSalesOrderModal.onFalse} fullWidth maxWidth="lg">
+                            <Scrollbar style={{ height: '70%' }}>
+                                <ServiceDetailsContentOverview
+                                    salesOrder={selectedSalesOrder}
+                                    setSomeItemsSelected={setSomeItemsSelected}
+                                    setAllIssuesCompleted={setAllIssuesCompleted}
+                                    selectedListItems={selectedListItems}
+                                    setSelectedListItems={setSelectedListItems}
+                                    service={itemById}
+                                    serviceType={serviceType}
+                                    setServiceType={setServiceType}
+                                />
+                            </Scrollbar>
+                            <DialogActions>
+                                <Button
+                                    variant="contained"
+                                    disabled={!someItemsSelected || !allIssuesCompleted}
+                                    onClick={handleUpdateService}
+                                >
+                                    Update Service
+                                </Button>
+                                <Button variant="outlined" onClick={openSalesOrderModal.onFalse}>
+                                    Close
+                                </Button>
+                            </DialogActions>
+                        </Dialog>
+                    </>
+                )}
         </>
     );
 }

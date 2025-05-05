@@ -3,7 +3,7 @@ import { useMemo, useState, useEffect, useCallback } from 'react';
 
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
-import { Typography } from '@mui/material';
+import { Box, Typography, LinearProgress } from '@mui/material';
 
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
@@ -261,39 +261,71 @@ export function MeasurementDetailsView({ measurementId }) {
         </Tabs>
     );
 
+    const [titleLinearProgress, setTitleLinearProgress] = useState(`Loading data from service ${item?.number}...`);
+
     return (
         <>
-            <DashboardContent>
-                <MeasurementDetailsToolbar
-                    measurement={itemById}
-                    backLink={
-                        localStorage.getItem('backFromMeasurementDetails') === 'analytics' ? paths.dashboard.general.analytics :
-                            localStorage.getItem('backFromMeasurementDetails') === 'project' ?
-                                paths.dashboard.project.details(localStorage.getItem('backFromMeasurementDetailsProjectId')) :
-                                localStorage.getItem('backFromMeasurementDetails') === 'service' ?
-                                    paths.dashboard.service.details(localStorage.getItem('backFromMeasurementDetailsServiceId')) :
-                                    paths.dashboard.measurement.list
-                    }
-                    editLink={paths.dashboard.measurement.edit(`${itemById?.id}`)}
-                    openEdit={tabs.value === 'overview' ? openEdit : tabs.value === 'tasks' ? openEditTask : null}
-                    setOpenEdit={tabs.value === 'overview' ? setOpenEdit : tabs.value === 'tasks' ? setOpenEditTask : null}
-                    type={tabs.value === 'overview' ? 'measurement' : tabs.value === 'tasks' ? 'tasks' : null}
-                    onDelete={() => onDelete(itemById?.id)}
-                />
-                {renderTabs}
+            {
+                (!itemById?.id) ? (
+                    <Box
+                        sx={{
+                            width: '350px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            height: '80vh',
+                            margin: 'auto'
+                        }}
+                    >
+                        <Typography variant="body2" sx={{ mb: 1 }}>
+                            {titleLinearProgress}
+                        </Typography>
+                        <LinearProgress
+                            key="error"
+                            sx={{
+                                mb: 2,
+                                width: '100%',
+                                '& .MuiLinearProgress-bar': {
+                                    backgroundColor: 'black',
+                                },
+                                backgroundColor: '#e0e0e0',
+                            }}
+                        />
+                    </Box>
+                ) : (
+                    <>
+                        <DashboardContent>
+                            <MeasurementDetailsToolbar
+                                measurement={itemById}
+                                backLink={
+                                    localStorage.getItem('backFromMeasurementDetails') === 'analytics' ? paths.dashboard.general.analytics :
+                                        localStorage.getItem('backFromMeasurementDetails') === 'project' ?
+                                            paths.dashboard.project.details(localStorage.getItem('backFromMeasurementDetailsProjectId')) :
+                                            localStorage.getItem('backFromMeasurementDetails') === 'service' ?
+                                                paths.dashboard.service.details(localStorage.getItem('backFromMeasurementDetailsServiceId')) :
+                                                paths.dashboard.measurement.list
+                                }
+                                editLink={paths.dashboard.measurement.edit(`${itemById?.id}`)}
+                                openEdit={tabs.value === 'overview' ? openEdit : tabs.value === 'tasks' ? openEditTask : null}
+                                setOpenEdit={tabs.value === 'overview' ? setOpenEdit : tabs.value === 'tasks' ? setOpenEditTask : null}
+                                type={tabs.value === 'overview' ? 'measurement' : tabs.value === 'tasks' ? 'tasks' : null}
+                                onDelete={() => onDelete(itemById?.id)}
+                            />
+                            {renderTabs}
 
-                {tabs.value === 'overview' &&
-                    <MeasurementDetailsContent
-                        measurement={itemById}
-                        refetchMeasurement={refetchMeasurement}
-                        setOpenEdit={setOpenEdit}
-                        openDialogs={openDialogs}
-                        setOpenDialogs={setOpenDialogs}
-                        openSalesOrderModal={openSalesOrderModal}
-                    />
-                }
+                            {tabs.value === 'overview' &&
+                                <MeasurementDetailsContent
+                                    measurement={itemById}
+                                    refetchMeasurement={refetchMeasurement}
+                                    setOpenEdit={setOpenEdit}
+                                    openDialogs={openDialogs}
+                                    setOpenDialogs={setOpenDialogs}
+                                    openSalesOrderModal={openSalesOrderModal}
+                                />
+                            }
 
-                {/* {(tabs.value === 'tasks' && itemById?.userManager?.username) &&
+                            {/* {(tabs.value === 'tasks' && itemById?.userManager?.username) &&
                     <MeasurementDetailsTaskView
                         measurement={itemById}
                         refetchMeasurement={refetchMeasurement}
@@ -301,81 +333,83 @@ export function MeasurementDetailsView({ measurementId }) {
                     />
                 } */}
 
-                {(tabs.value === 'attachments') &&
-                    <MeasurementDetailsAttachmentView
-                        measurement={itemById}
-                        refetchMeasurement={refetchMeasurement}
-                        openDialogs={openDialogs}
-                        setOpenDialogs={setOpenDialogs}
-                    />
-                }
+                            {(tabs.value === 'attachments') &&
+                                <MeasurementDetailsAttachmentView
+                                    measurement={itemById}
+                                    refetchMeasurement={refetchMeasurement}
+                                    openDialogs={openDialogs}
+                                    setOpenDialogs={setOpenDialogs}
+                                />
+                            }
 
-                {(tabs.value === 'comments') &&
-                    <MeasurementDetailsCommentView
-                        measurement={itemById}
-                        refetchMeasurement={refetchMeasurement}
-                        listSelectedTracks={listSelectedTracks.filter((track) => track.action.includes(itemById?.id))}
-                        selectedComments={selectedComments}
-                        setSelectedComments={setSelectedComments}
-                    />
-                }
+                            {(tabs.value === 'comments') &&
+                                <MeasurementDetailsCommentView
+                                    measurement={itemById}
+                                    refetchMeasurement={refetchMeasurement}
+                                    listSelectedTracks={listSelectedTracks.filter((track) => track.action.includes(itemById?.id))}
+                                    selectedComments={selectedComments}
+                                    setSelectedComments={setSelectedComments}
+                                />
+                            }
 
-            </DashboardContent>
+                        </DashboardContent>
 
-            <ConfirmDialog
-                open={openValidationDialog}
-                onClose={() => {
-                    setOpenValidationDialog(false)
-                    tabs.onChange(null, 'overview')
-                }}
-                title={`Invalid Action to reach: ${tabs.value}`}
-                maxWidth="xs"
-                content={
-                    <Typography variant="body2">
-                        <b>{validationMessage}</b>
-                    </Typography>
-                }
-            />
-            <MeasurementEditModalDatesView
-                isFirstDate={openDialogs.firstDate}
-                isCheckDate={openDialogs.checkDate}
-                measurement={itemById}
-                open={openDialogs.firstDate || openDialogs.checkDate}
-                onClose={() => {
-                    setOpenDialogs((prev) => ({ ...prev, firstDate: false, checkDate: false }));
-                }}
-            />
-            <MeasurementEditModalUserManagerView
-                isFirstAssignee={openDialogs.firstAssignee}
-                isCheckAssignee={openDialogs.checkAssignee}
-                measurement={itemById}
-                open={openDialogs.firstAssignee || openDialogs.checkAssignee}
-                onClose={() => {
-                    setOpenDialogs((prev) => ({ ...prev, firstAssignee: false, checkAssignee: false }));
-                }}
-            />
-            <MeasurementEditModalGeneralNotesView
-                measurement={itemById}
-                refetchMeasurement={refetchMeasurement}
-                open={openDialogs.generalNotes}
-                onClose={() => {
-                    setOpenDialogs((prev) => ({ ...prev, generalNotes: false }));
-                }}
-            />
-            <MeasurementEditModalAddressView
-                measurement={itemById}
-                open={openDialogs.address}
-                onClose={() => {
-                    setOpenDialogs((prev) => ({ ...prev, address: false }));
-                }}
-            />
-            <MeasurementEditModalPhoneNumberView
-                measurement={itemById}
-                open={openDialogs.phoneNumber}
-                onClose={() => {
-                    setOpenDialogs((prev) => ({ ...prev, phoneNumber: false }));
-                }}
-            />
+                        <ConfirmDialog
+                            open={openValidationDialog}
+                            onClose={() => {
+                                setOpenValidationDialog(false)
+                                tabs.onChange(null, 'overview')
+                            }}
+                            title={`Invalid Action to reach: ${tabs.value}`}
+                            maxWidth="xs"
+                            content={
+                                <Typography variant="body2">
+                                    <b>{validationMessage}</b>
+                                </Typography>
+                            }
+                        />
+                        <MeasurementEditModalDatesView
+                            isFirstDate={openDialogs.firstDate}
+                            isCheckDate={openDialogs.checkDate}
+                            measurement={itemById}
+                            open={openDialogs.firstDate || openDialogs.checkDate}
+                            onClose={() => {
+                                setOpenDialogs((prev) => ({ ...prev, firstDate: false, checkDate: false }));
+                            }}
+                        />
+                        <MeasurementEditModalUserManagerView
+                            isFirstAssignee={openDialogs.firstAssignee}
+                            isCheckAssignee={openDialogs.checkAssignee}
+                            measurement={itemById}
+                            open={openDialogs.firstAssignee || openDialogs.checkAssignee}
+                            onClose={() => {
+                                setOpenDialogs((prev) => ({ ...prev, firstAssignee: false, checkAssignee: false }));
+                            }}
+                        />
+                        <MeasurementEditModalGeneralNotesView
+                            measurement={itemById}
+                            refetchMeasurement={refetchMeasurement}
+                            open={openDialogs.generalNotes}
+                            onClose={() => {
+                                setOpenDialogs((prev) => ({ ...prev, generalNotes: false }));
+                            }}
+                        />
+                        <MeasurementEditModalAddressView
+                            measurement={itemById}
+                            open={openDialogs.address}
+                            onClose={() => {
+                                setOpenDialogs((prev) => ({ ...prev, address: false }));
+                            }}
+                        />
+                        <MeasurementEditModalPhoneNumberView
+                            measurement={itemById}
+                            open={openDialogs.phoneNumber}
+                            onClose={() => {
+                                setOpenDialogs((prev) => ({ ...prev, phoneNumber: false }));
+                            }}
+                        />
+                    </>
+                )}
         </>
     );
 }

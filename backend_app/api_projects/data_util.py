@@ -6,6 +6,7 @@ from collections import defaultdict
 from .models import ProjectNotification, ProjectNotificationUser
 from api_authorization.models import LoginUser
 import json
+import random
 
 def transform_data_to_mongo(data, exclude_fields=None, include_fields=None):
     if isinstance(data, dict):
@@ -67,8 +68,16 @@ def dynamic_field_to_json(data):
 
 
 def create_entity_number(salesorder_number, prefix='P'):
-    number = salesorder_number.split('-')[1]
+    if salesorder_number is not None:
+        number = salesorder_number.split('-')[1]
+    else:
+        number = generate_code()
     return f'{prefix}-{number}'
+
+
+def generate_code():
+    n = random.randint(1, 9999)
+    return f"C{n:04d}"
 
 
 def create_default_task_number(order):

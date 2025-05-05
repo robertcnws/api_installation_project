@@ -115,7 +115,7 @@ export function ProjectEditModalInstallationTeamView({
     const [filteredUsers, setFilteredUsers] = useState([]);
 
     useEffect(() => {
-        if (project) {
+        if (project && project?.userManager?.id && cleanLoadedUsers?.length > 0) {
             setFilteredUsers(cleanLoadedUsers.filter(
                 user => user.id !== project?.userManager?.id &&
                     user.userRole.name.toLowerCase().indexOf(CONFIG.roles.installer.toLowerCase()) !== -1

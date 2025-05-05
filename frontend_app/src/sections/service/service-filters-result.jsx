@@ -6,6 +6,7 @@ import { fDateRangeShortLabel } from 'src/utils/format-time';
 
 import { chipProps, FiltersBlock, FiltersResult } from 'src/components/filters-result';
 
+
 // ----------------------------------------------------------------------
 
 export function ServiceFiltersResult({ filters, onResetPage, totalResults, sx }) {
@@ -13,6 +14,7 @@ export function ServiceFiltersResult({ filters, onResetPage, totalResults, sx })
   const handleRemoveKeyword = useCallback(() => {
     onResetPage();
     filters.setState({ name: '' });
+    localStorage.removeItem('serviceFilterName');
   }, [filters, onResetPage]);
 
   const handleRemoveTypes = useCallback(
@@ -20,6 +22,7 @@ export function ServiceFiltersResult({ filters, onResetPage, totalResults, sx })
       const newValue = filters.state.type.filter((item) => item !== inputValue);
       onResetPage();
       filters.setState({ type: newValue });
+      localStorage.setItem('serviceFilterType', JSON.stringify(newValue));
     },
     [filters, onResetPage]
   );
@@ -27,21 +30,26 @@ export function ServiceFiltersResult({ filters, onResetPage, totalResults, sx })
   const handleRemoveDate = useCallback(() => {
     onResetPage();
     filters.setState({ startDate: null, endDate: null });
+    localStorage.removeItem('serviceFilterStartDate');
+    localStorage.removeItem('serviceFilterEndDate');
   }, [filters, onResetPage]);
 
   const handleRemoveByFactory = useCallback(() => {
     onResetPage();
     filters.setState({ byFactory: false });
+    localStorage.removeItem('serviceFilterByFactory');
   }, [filters, onResetPage]);
 
   const handleRemoveNotByFactory = useCallback(() => {
     onResetPage();
     filters.setState({ notByFactory: false });
+    localStorage.removeItem('serviceFilterNotByFactory');
   }, [filters, onResetPage]);
 
   const handleRemoveInstaller = useCallback(() => {
     onResetPage();
     filters.setState({ installer: { id: null, name: null } });
+    localStorage.removeItem('serviceFilterInstaller');
   }, [filters, onResetPage]);
 
   const handleRemoveCustom = useCallback(
@@ -51,33 +59,60 @@ export function ServiceFiltersResult({ filters, onResetPage, totalResults, sx })
         filters.setState((prevState) => ({
           custom: { ...prevState.custom, hasComments: false }
         }));
+        localStorage.setItem('serviceFilterCustom', JSON.stringify({ ...filters.state.custom, hasComments: false }));
       }
       else if (customType === 'isPreparation') {
         filters.setState((prevState) => ({
           custom: { ...prevState.custom, isPreparation: { value: false, name: 'preparation' } }
         }));
+        localStorage.setItem('serviceFilterCustom', JSON.stringify({ ...filters.state.custom, isPreparation: { value: false, name: 'preparation' } }));
       }
       else if (customType === 'isRepair') {
         filters.setState((prevState) => ({
           custom: { ...prevState.custom, isRepair: { value: false, name: 'repair' } }
         }));
+        localStorage.setItem('serviceFilterCustom', JSON.stringify({ ...filters.state.custom, isRepair: { value: false, name: 'repair' } }));
       }
       else if (customType === 'isClosing') {
         filters.setState((prevState) => ({
           custom: { ...prevState.custom, isClosing: { value: false, name: 'closing' } }
         }));
+        localStorage.setItem('serviceFilterCustom', JSON.stringify({ ...filters.state.custom, isClosing: { value: false, name: 'closing' } }));
       }
     }, [filters, onResetPage]);
 
 
   const handleReset = useCallback(() => {
     onResetPage();
-    filters.onResetState();
+    localStorage.removeItem('serviceFilterName');
+    localStorage.removeItem('serviceFilterType');
+    localStorage.removeItem('serviceFilterStartDate');
+    localStorage.removeItem('serviceFilterEndDate');
+    localStorage.removeItem('serviceFilterInstaller');
+    localStorage.removeItem('serviceFilterCustom');
+    localStorage.removeItem('serviceFilterByFactory');
+    localStorage.removeItem('serviceFilterNotByFactory');
+    filters.setState({
+      name: '',
+      type: [],
+      startDate: null,
+      endDate: null,
+      installer: { id: null, name: null },
+      byFactory: false,
+      notByFactory: false,
+      custom: {
+        hasPermission: false,
+        isPreparation: { name: 'preparation', value: false },
+        isRepair: { name: 'repair', value: false },
+        isClosing: { name: 'closing', value: false },
+        hasComments: false
+      }
+    });
   }, [filters, onResetPage]);
 
 
   return (
-    <FiltersResult totalResults={totalResults} onReset={handleReset} sx={sx}>
+    <FiltersResult totalResults={totalResults} onReset={() => handleReset()} sx={sx}>
       <FiltersBlock label="Status:" isShow={!!filters.state.type.length}>
         {filters.state.type.map((item) => (
           <Chip

@@ -1,4 +1,5 @@
-import { useContext } from 'react';
+import { useEffect, useContext } from 'react';
+import { useLocation } from 'react-router-dom';
 
 import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
@@ -182,6 +183,36 @@ export const CustomFooter = () => {
 
   const { isMobile } = useContext(LoadingContext);
 
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    // console.log('pathname', pathname);
+    if (!pathname.includes('installation')) {
+      localStorage.removeItem('projectPage');
+      localStorage.removeItem('projectRowsPerPage');
+      localStorage.removeItem('projectFilterList');
+      localStorage.removeItem('projectFilterName');
+      localStorage.removeItem('projectFilterType');
+      localStorage.removeItem('projectFilterStartDate');
+      localStorage.removeItem('projectFilterEndDate');
+      localStorage.removeItem('projectFilterInstaller');
+      localStorage.removeItem('projectFilterCustom');
+    }
+    if (!pathname.includes('service')) {
+      localStorage.removeItem('servicePage');
+      localStorage.removeItem('serviceRowsPerPage');
+      localStorage.removeItem('serviceFilterList');
+      localStorage.removeItem('serviceFilterName');
+      localStorage.removeItem('serviceFilterType');
+      localStorage.removeItem('serviceFilterStartDate');
+      localStorage.removeItem('serviceFilterEndDate');
+      localStorage.removeItem('serviceFilterInstaller');
+      localStorage.removeItem('serviceFilterCustom');
+      localStorage.removeItem('serviceFilterByFactory');
+      localStorage.removeItem('serviceFilterNotByFactory');
+    }
+  }, [pathname]);
+
   return (
     <Box
       sx={{
@@ -205,12 +236,12 @@ export const CustomFooter = () => {
             sx={{ fontSize: '12px', fontWeight: 'bold' }}
           >
             © {currentYear}{' '}
-          { isMobile
-            ? 'NWS Home. All rights reserved.'
-            : 'NWS Home. New Window System. All rights reserved.'}
+            {isMobile
+              ? 'NWS Home. All rights reserved.'
+              : 'NWS Home. New Window System. All rights reserved.'}
           </Typography>
         </Grid>
-        
+
         {/* <Grid item xs={12} sm={6}>
           <Stack
             direction="row"

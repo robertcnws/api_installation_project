@@ -98,16 +98,15 @@ export function KanbanView({
       }));
       if (isInstaller(userLogged?.data?.user_role?.name)) {
         const selectedTasks = initialTasks.filter(
-          (task) => task.service_default_task.service_stage.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
+          (task) => task.service_default_task.service_stage.name.toLowerCase().indexOf(CONFIG.stages.repair.toLowerCase()) !== -1
         );
         const finalTasks = selectedTasks.filter(
-          (task) => task.service_default_task.name.toLowerCase().includes('start') ||
-            task.service_default_task.name.toLowerCase().includes('finish')
+          (task) => task.service_default_task.name.toLowerCase().includes('make')
         );
-        const withUsersTasks = finalTasks.filter(
-          (task) => task.users_assignees.length > 0
-        );
-        setDefaultTasks(withUsersTasks);
+        // const withUsersTasks = finalTasks.filter(
+        //   (task) => task.users_assignees.length > 0
+        // );
+        setDefaultTasks(finalTasks);
       } else {
         setDefaultTasks(initialTasks);
       }

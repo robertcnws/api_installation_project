@@ -3,6 +3,11 @@ import React, { useMemo, useContext, createContext } from 'react';
 
 import { useMeasurementsQuery } from 'src/_mock/__measurements';
 
+import { useAuth } from './user-context';
+import { useServices } from './service-context';
+import { useProjects } from './project-context';
+import { useFilteredMeasurements } from '../hooks/use-filtered-measurements';
+
 const MeasurementsContext = createContext();
 export const useMeasurements = () => useContext(MeasurementsContext);
 
@@ -13,6 +18,10 @@ export function MeasurementsProvider({ children }) {
     loading: loadingMeasurements,
     error: errorMeasurements
   } = useMeasurementsQuery();
+
+  const { loadedProjects } = useProjects();
+  const { loadedServices } = useServices();
+  const { userLogged } = useAuth();
 
   const memoMeasurements = useMemo(() => measurements || [], [measurements]);
 
@@ -30,7 +39,14 @@ export function MeasurementsProvider({ children }) {
     [memoMeasurements]
   );
 
-  const loadedMeasurements = useMemo(() => sortedMeasurements, [sortedMeasurements]);
+  const finalMeasurements = useMemo(() => sortedMeasurements, [sortedMeasurements]);
+
+  const loadedMeasurements = useFilteredMeasurements(
+    finalMeasurements,
+    loadedProjects,
+    loadedServices,
+    userLogged,
+  );
 
   const value = useMemo(() => ({
     loadedMeasurements,

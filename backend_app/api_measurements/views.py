@@ -35,58 +35,73 @@ def create_measurement(request):
     try:
         project = None
         service = None
+        sales_order = None
+        items = None
+        address = None
+        installer = None
+        customer = None
+        
         user_reporter = json.loads(data.get('userReporter', None))
+        
         if data.get('project', None) is not None:
             project = json.loads(data.get('project', None))
         if data.get('service', None) is not None:
             service = json.loads(data.get('service', None))
-        sales_order = json.loads(data.get('salesOrder', None))
-        items = json.loads(data.get('items', None))
-        address = data.get('address', None)
+        if data.get('salesOrder', None) is not None:
+            sales_order = json.loads(data.get('salesOrder', None))
+        if data.get('items', None) is not None:
+            items = json.loads(data.get('items', None))
+        if data.get('address', None) is not None:
+            address = data.get('address', None)
+        if data.get('installer', None) is not None:
+            installer = json.loads(data.get('installer', None)) if data.get('installer') else None
+        if data.get('customer', None) is not None:
+            customer = json.loads(data.get('customer', None)) if data.get('customer') else None
+            address = customer.get('address', None) if customer.get('address') else address
         
         is_new = True
         
-        measurement = Measurement.objects.filter(
-            sales_order__salesorder_id=sales_order['salesorder_id'],
-            is_active=True
-        ).first()
-        
-        check_assignee = None
-        
-        if project:
-            obj_project = Project.objects.filter(id=project['id']).first()
-            if obj_project:
-                users_assignees = obj_project.users_assignees or []
-                check_assignee = next((user for user in users_assignees if user.get('userRole', None).get('name', '').lower() == 'installer'), None)
-        elif service:
-            obj_service = Service.objects.filter(id=service['id']).first()
-            if obj_service:
-                users_assignees = obj_service.users_service_team or obj_service.users_assignees or []
-                check_assignee = next((user for user in users_assignees if user.get('userRole', None).get('name', '').lower() == 'installer'), None)
+        if sales_order is not None:
+            measurement = Measurement.objects.filter(
+                sales_order__salesorder_id=sales_order.get('salesorder_id', None),
+                is_active=True
+            ).first()
+            
+        else:
+            measurement = Measurement.objects.filter(
+                customer__email=customer.get('email', None),
+                is_active=True
+            ).first()
         
         if measurement:
             is_new = False
             measurement.user_reporter = user_reporter
             measurement.project = project if project else None
             measurement.service = service if service else None
-            measurement.check_assignee = check_assignee
-            measurement.sales_order = sales_order
-            measurement.address = address
-            measurement.marks = items
+            measurement.check_assignee = installer if installer else measurement.check_assignee
+            measurement.sales_order = sales_order if sales_order else measurement.sales_order
+            measurement.address = address if address else measurement.address
+            measurement.marks = items if items else measurement.marks
+            measurement.customer = customer if customer else measurement.customer
             measurement.is_active = True
             measurement.last_modified_time = timezone.now()
             
         else:
+            number = create_entity_number(
+                sales_order.get('salesorder_number', None) if sales_order else None, 
+                prefix='MR'
+            )
             measurement = Measurement(
-                number=create_entity_number(sales_order.get('salesorder_number'), prefix='MR'),
+                number=number,
                 user_reporter=user_reporter,
                 project=project if project else None,
                 service=service if service else None,
-                check_assignee=check_assignee,
-                sales_order=sales_order,
+                check_assignee=installer if installer else None,
+                sales_order=sales_order if sales_order else None,
                 address=address,
-                marks=items,
+                marks=items if items else [],
                 is_active=True,
+                customer=customer if customer else None,
                 created_time=timezone.now(),
                 last_modified_time=timezone.now(),
             )
@@ -95,8 +110,8 @@ def create_measurement(request):
         
         tracking_info = transform_data_to_mongo(measurement)
         action = 'update' if not is_new else 'create'
-        obj_name = 'project' if project else 'service' if service else 'measurement'
-        obj = project if project else service if service else measurement
+        obj_name = 'project' if project else 'service' if service else 'customer'
+        obj = project if project else service if service else customer
         
         tracking = ProjectTracking(
             user_reporter=user_reporter,

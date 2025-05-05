@@ -142,6 +142,7 @@ class Project(Document):
     stage_history = ListField(DynamicField(), default=list, null=True)
     user_reporter = DynamicField(null=True)
     users_assignees = ListField(DynamicField(), default=list, null=True)
+    user_installer = DynamicField(null=True)
     start_date = DateTimeField(null=True)
     end_date = DateTimeField(null=True)
     current_stage = DynamicField(null=True)
@@ -177,6 +178,7 @@ class Project(Document):
             'is_active', 
             'user_reporter', 
             'users_assignees', 
+            'user_installer',
             'current_stage', 
             'sales_order',
             'start_date',

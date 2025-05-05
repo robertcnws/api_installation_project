@@ -290,8 +290,7 @@ export function ServiceDetailsToolbar({
 
         {(type === 'service' || type === 'tasks') && (
           <>
-            {(listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.installer) ||
-              listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.serviceStaff) ||
+            {(listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.serviceStaff) ||
               listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.projectManager)) && (
                 <Tooltip title='Generate Measurements' arrow>
                   <IconButton

@@ -111,7 +111,7 @@ export function ProjectFileDetails({
   // }, [refetchItemById, itemById]);
 
   useEffect(() => {
-    if (itemById) {
+    if (itemById && itemById?.id) {
       setProjectData((prev) => ({
         ...prev,
         id: itemById?.id || '',
@@ -268,7 +268,7 @@ export function ProjectFileDetails({
 
 
   useEffect(() => {
-    if (itemById) {
+    if (itemById && itemById?.id) {
       reset({
         id: itemById.id || '',
         name: itemById.name || '',

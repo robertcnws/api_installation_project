@@ -24,6 +24,7 @@ export function KanbanDetailsTaskAttachments({
     id,
     name,
     type,
+    moduleType,
     listPermissions,
 }) {
     const { isMobile } = useContext(LoadingContext);
@@ -160,8 +161,9 @@ export function KanbanDetailsTaskAttachments({
                                     onDownload={handleDownloadFile}
                                     listPermissions={listPermissions}
                                     isProject={false}
+                                    moduleType={moduleType}
                                     lastNode={
-                                        (listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) ? (
+                                        (listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.installer)) ? (
                                             <UploadBox sx={{ ml: displayFiles.length === 0 ? 2 : 0, width: 75, height: 75 }} onDrop={(files) => {
                                                 if (files && files.length) {
                                                     const uniqueFiles = files.filter((file) =>

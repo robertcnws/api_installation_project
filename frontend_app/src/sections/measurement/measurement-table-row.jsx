@@ -252,7 +252,7 @@ export function MeasurementTableRow({
                 ...(details.value && { fontWeight: 'fontWeightBold' }),
               }}
             >
-              {row?.salesOrder?.customer_name}
+              {row?.salesOrder?.customer_name || row?.customer?.name}
             </Typography>
           </Stack>
         </TableCell>
@@ -278,7 +278,7 @@ export function MeasurementTableRow({
                     ...(details.value && { fontWeight: 'fontWeightBold' }),
                   }}
                 >
-                  {row?.project?.id ? `Installation: ${row?.project?.number}` : row?.service?.id ? `Service: ${row?.service?.number}` : 'No Service/Project'}
+                  {row?.project?.id ? `Installation: ${row?.project?.number}` : row?.service?.id ? `Service: ${row?.service?.number}` : 'No Installation/Service'}
                 </Typography>
               </Stack>
             </TableCell>

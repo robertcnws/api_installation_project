@@ -13,6 +13,7 @@ export function ProjectFiltersResult({ filters, onResetPage, totalResults, sx })
   const handleRemoveKeyword = useCallback(() => {
     onResetPage();
     filters.setState({ name: '' });
+    localStorage.removeItem('projectFilterName');
   }, [filters, onResetPage]);
 
   const handleRemoveTypes = useCallback(
@@ -20,6 +21,7 @@ export function ProjectFiltersResult({ filters, onResetPage, totalResults, sx })
       const newValue = filters.state.type.filter((item) => item !== inputValue);
       onResetPage();
       filters.setState({ type: newValue });
+      localStorage.setItem('projectFilterType', JSON.stringify(newValue));
     },
     [filters, onResetPage]
   );
@@ -27,11 +29,14 @@ export function ProjectFiltersResult({ filters, onResetPage, totalResults, sx })
   const handleRemoveDate = useCallback(() => {
     onResetPage();
     filters.setState({ startDate: null, endDate: null });
+    localStorage.removeItem('projectFilterStartDate');
+    localStorage.removeItem('projectFilterEndDate');
   }, [filters, onResetPage]);
 
   const handleRemoveInstaller = useCallback(() => {
     onResetPage();
     filters.setState({ installer: { id: null, name: null } });
+    localStorage.removeItem('projectFilterInstaller');
   }, [filters, onResetPage]);
 
   const handleRemoveCustom = useCallback(
@@ -41,43 +46,72 @@ export function ProjectFiltersResult({ filters, onResetPage, totalResults, sx })
         filters.setState((prevState) => ({
           custom: { ...prevState.custom, hasPermission: false }
         }));
+        localStorage.setItem('projectFilterCustom', JSON.stringify({ ...filters.state.custom, hasPermission: false }));
       }
       else if (customType === 'hasComments') {
         filters.setState((prevState) => ({
           custom: { ...prevState.custom, hasComments: false }
         }));
+        localStorage.setItem('projectFilterCustom', JSON.stringify({ ...filters.state.custom, hasComments: false }));
       }
       else if (customType === 'isPreparation') {
         filters.setState((prevState) => ({
           custom: { ...prevState.custom, isPreparation: { value: false, name: 'preparation' } }
         }));
+        localStorage.setItem('projectFilterCustom', JSON.stringify({ ...filters.state.custom, isPreparation: { value: false, name: 'preparation' } }));
       }
       else if (customType === 'isCoordination') {
         filters.setState((prevState) => ({
           custom: { ...prevState.custom, isCoordination: { value: false, name: 'coordination' } }
         }));
+        localStorage.setItem('projectFilterCustom', JSON.stringify({ ...filters.state.custom, isCoordination: { value: false, name: 'coordination' } }));
       }
       else if (customType === 'isPermission') {
         filters.setState((prevState) => ({
           custom: { ...prevState.custom, isPermission: { value: false, name: 'permission' } }
         }));
+        localStorage.setItem('projectFilterCustom', JSON.stringify({ ...filters.state.custom, isPermission: { value: false, name: 'permission' } }));
       }
       else if (customType === 'isInstallation') {
         filters.setState((prevState) => ({
           custom: { ...prevState.custom, isInstallation: { value: false, name: 'installation' } }
         }));
+        localStorage.setItem('projectFilterCustom', JSON.stringify({ ...filters.state.custom, isInstallation: { value: false, name: 'installation' } }));
       }
       else if (customType === 'isClosing') {
         filters.setState((prevState) => ({
           custom: { ...prevState.custom, isClosing: { value: false, name: 'closing' } }
         }));
+        localStorage.setItem('projectFilterCustom', JSON.stringify({ ...filters.state.custom, isClosing: { value: false, name: 'closing' } }));
       }
     }, [filters, onResetPage]);
 
 
   const handleReset = useCallback(() => {
     onResetPage();
-    filters.onResetState();
+    localStorage.removeItem('projectFilterName');
+    localStorage.removeItem('projectFilterType');
+    localStorage.removeItem('projectFilterStartDate');
+    localStorage.removeItem('projectFilterEndDate');
+    localStorage.removeItem('projectFilterInstaller');
+    localStorage.removeItem('projectFilterCustom');
+    filters.setState({
+      list: 'in progress',
+      name: '',
+      type: [],
+      startDate: null,
+      endDate: null,
+      installer: { id: null, name: null },
+      custom: {
+        hasPermission: false,
+        isPreparation: { name: 'preparation', value: false },
+        isCoordination: { name: 'coordination', value: false },
+        isInstallation: { name: 'installation', value: false },
+        isPermission: { name: 'permission', value: false },
+        isClosing: { name: 'closing', value: false },
+        hasComments: false,
+      }
+    });
   }, [filters, onResetPage]);
 
 

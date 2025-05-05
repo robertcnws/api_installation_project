@@ -67,14 +67,14 @@ export const getProjectInstaller = (project, CONFIG) => {
     const users = project?.projectDefaultTasks?.filter(
         (task) => task.project_default_task.project_stage.name === CONFIG.stages.installation &&
             task.project_default_task.name.toLowerCase().includes('start')
-    )[0]?.users_assignees
+    )[0]?.users_assignees 
 
     const installer = users?.filter(
         (user) => {
             const objRole = user?.userRole || user?.user_role;
             return objRole.name.toLowerCase().includes(CONFIG.roles.installer.toLowerCase())
         }
-    )[0];
+    )[0] || project?.userInstaller;
 
     return installer;
 };

@@ -246,11 +246,11 @@ export function ProjectTable({
                   page={table.page}
                   rowsPerPage={table.rowsPerPage}
                   handleChangePage={(event, newPage) => {
-                    localStorage.setItem('salesOrderPage', newPage);
+                    localStorage.setItem('projectPage', newPage);
                     table.onChangePage(event, newPage);
                   }}
                   handleChangeRowsPerPage={(event) => {
-                    localStorage.setItem('salesOrderRowsPerPage', event.target.value);
+                    localStorage.setItem('projectRowsPerPage', event.target.value);
                     table.onChangeRowsPerPage(event);
                   }}
                   dense={table.dense}
