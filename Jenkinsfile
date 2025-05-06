@@ -68,6 +68,23 @@ pipeline {
       }
     }
 
+    stage('Install Frontend Dependencies') {
+      agent { label 'docker' }
+      when {
+        anyOf {
+          expression { !fileExists('frontend_app/node_modules') }
+          changeset "frontend_app/package.json"
+          changeset "frontend_app/package-lock.json"
+        }
+      }
+      steps {
+        dir('frontend_app') {
+          echo "⇒ Installing dependencies (npm ci)…"
+          sh 'npm ci'
+        }
+      }
+    }
+
     stage('Build & Push Frontend') {
         when { changeset "**/frontend_app/**" }
         agent { label 'docker' }
@@ -76,11 +93,8 @@ pipeline {
             withCredentials([file(credentialsId: env.AWS_FRONTEND_ENV_CRED_ID, variable: 'ENV_FILE')]) {
                 sh 'cp $ENV_FILE .env'
             }
-
-            sh 'npm ci'
             sh 'npm run lint -- --fix'
             sh 'npm run build'
-
             sh """
                 docker-compose -f docker-compose.aws.frontend.prod.yml build
                 docker tag api_installation_project-aws_frontend_app:latest $FRONTEND_IMAGE:latest
