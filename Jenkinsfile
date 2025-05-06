@@ -33,7 +33,7 @@ pipeline {
     stage('Smoke Test Docker') {
       agent { label 'docker' }
       steps {
-        echo "🔍 Probando Docker en este agente..."
+        echo "🔍 Testing Docker from this agent..."
         sh 'docker version'
         sh 'docker info'
       }
