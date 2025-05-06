@@ -36,6 +36,7 @@ pipeline {
         echo "🔍 Testing Docker from this agent..."
         sh 'docker version'
         sh 'docker info'
+        sh 'docker-compose version'
       }
     }
 
