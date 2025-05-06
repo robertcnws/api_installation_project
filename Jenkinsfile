@@ -30,6 +30,14 @@ pipeline {
       }
     }
 
+    stage('Verify agent groups') {
+        agent { label 'docker' }
+        steps {
+            sh 'echo "Users: $(id -un)"'
+            sh 'echo "Groups: $(id -Gn)"'
+        }
+    }
+
     stage('Smoke Test Docker') {
       agent { label 'docker' }
       steps {
