@@ -127,7 +127,6 @@ export const generateMeasurementReport = ({ measurement, empty }) => {
         lineY + initialReportY + 29,
     );
 
-
     // Table Header
     const tableHeaderY = lineY + initialReportY + 33;
 

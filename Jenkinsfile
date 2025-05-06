@@ -5,6 +5,10 @@ pipeline {
   }
 
   agent any
+
+  tools {
+    nodejs 'node20'   
+  }
   
   environment {
     AWS_ECR_REGISTRY         = "324037323031.dkr.ecr.us-east-2.amazonaws.com/nws"
