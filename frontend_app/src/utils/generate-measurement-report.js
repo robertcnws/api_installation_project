@@ -171,7 +171,6 @@ export const generateMeasurementReport = ({ measurement, empty }) => {
         });
     }
 
-
     doc.autoTable({
         startY: tableHeaderY,
         startX: margin + 5,
