@@ -104,6 +104,7 @@ export const generateReleaseFormReport = ({ project }) => {
         "By Signing this you agree there are no installation issues pending, the customer(s) above have inspected the window(s)/door(s) for quality of product, completeness of order, quality of installation performed and agree all the marked items above have been completed in a satisfactory manner.",
         180 
     );
+    
     doc.text(firstText, 102, doc.lastAutoTable.finalY + 45, { align: "center" });
     
     doc.setFont("helvetica", "bold");
