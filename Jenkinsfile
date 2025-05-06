@@ -27,7 +27,6 @@ pipeline {
       agent any
       steps {
         checkout scm
-        stash name: 'source', includes: '**'
       }
     }
 
@@ -57,8 +56,6 @@ pipeline {
         label 'docker' 
       }
       steps {
-        deleteDir()
-        unstash 'source'
         dir('backend_app') {
           sh """
             docker-compose -f docker-compose.aws.backend.prod.yml build
@@ -71,45 +68,25 @@ pipeline {
       }
     }
 
-    stage('Install Frontend Dependencies') {
-      
-      when {
-        anyOf {
-          expression { !fileExists('frontend_app/node_modules') }
-          changeset "frontend_app/package.json"
-          changeset "frontend_app/package-lock.json"
-        }
-      }
-      agent { label 'docker' }
-      steps {
-        deleteDir()
-        unstash 'source'
-        dir('frontend_app') {
-          echo "⇒ Installing dependencies (npm ci)…"
-          sh 'npm ci'
-        }
-      }
-    }
-
     stage('Build & Push Frontend') {
         when { changeset "**/frontend_app/**" }
         agent { label 'docker' }
         steps {
-            deleteDir()
-            unstash 'source'
-            unstash 'modules'
             dir('frontend_app') {
-                withCredentials([file(credentialsId: env.AWS_FRONTEND_ENV_CRED_ID, variable: 'ENV_FILE')]) {
-                    sh 'cp $ENV_FILE .env'
-                }
-                sh 'npm run lint -- --fix'
-                sh 'npm run build'
-                sh """
-                    docker-compose -f docker-compose.aws.frontend.prod.yml build
-                    docker tag api_installation_project-aws_frontend_app:latest $FRONTEND_IMAGE:latest
-                    aws ecr get-login-password | docker login --username AWS --password-stdin $AWS_ECR_REGISTRY
-                    docker push $FRONTEND_IMAGE:latest
-                """
+            withCredentials([file(credentialsId: env.AWS_FRONTEND_ENV_CRED_ID, variable: 'ENV_FILE')]) {
+                sh 'cp $ENV_FILE .env'
+            }
+
+            sh 'npm ci'
+            sh 'npm run lint -- --fix'
+            sh 'npm run build'
+
+            sh """
+                docker-compose -f docker-compose.aws.frontend.prod.yml build
+                docker tag api_installation_project-aws_frontend_app:latest $FRONTEND_IMAGE:latest
+                aws ecr get-login-password | docker login --username AWS --password-stdin $AWS_ECR_REGISTRY
+                docker push $FRONTEND_IMAGE:latest
+            """
             }
         }
     }
