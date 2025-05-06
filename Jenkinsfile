@@ -49,6 +49,12 @@ pipeline {
       when {
         changeset "**/frontend_app/**"
       }
+      agent {
+        docker {
+            image 'node:20-alpine'
+            args '-u root'
+        }
+     }
       steps {
         dir('frontend_app') {
           withCredentials([file(credentialsId: env.AWS_FRONTEND_ENV_CRED_ID, variable: 'ENV_FILE')]) {

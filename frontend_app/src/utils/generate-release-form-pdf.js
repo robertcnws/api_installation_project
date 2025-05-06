@@ -97,10 +97,6 @@ export const generateReleaseFormReport = ({ project }) => {
         theme: "grid",
     });
 
-    // Signature Section
-    // doc.text("Customer Name & Signature: __________________________", 14, doc.lastAutoTable.finalY + 20);
-    // doc.text("Date Signed: ______________", 140, doc.lastAutoTable.finalY + 20);
-
     // Disclaimer
     doc.setFontSize(9);
 
