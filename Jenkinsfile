@@ -27,8 +27,8 @@ pipeline {
       agent any
       steps {
         checkout scm
+        stash name: 'source', includes: '**'
       }
-      stash name: 'source', includes: '**'
     }
 
     stage('Verify agent groups') {
