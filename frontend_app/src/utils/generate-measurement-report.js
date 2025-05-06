@@ -209,6 +209,7 @@ export const generateMeasurementReport = ({ measurement, empty }) => {
     // General Notes
 
     const generalNotesY = tableHeaderY + (statusDetails.length + 1) * 10 + 7;
+    
     const usableWidth = pageWidth - margin * 2 - 10; 
     
     doc.setFontSize(12);
