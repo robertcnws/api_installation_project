@@ -27,6 +27,7 @@ pipeline {
       agent any
       steps {
         checkout scm
+        stash name: 'source', includes: '**'
       }
     }
 
@@ -56,6 +57,7 @@ pipeline {
         label 'docker' 
       }
       steps {
+        unstash 'source'
         dir('backend_app') {
           sh """
             docker-compose -f docker-compose.aws.backend.prod.yml build
@@ -69,7 +71,7 @@ pipeline {
     }
 
     stage('Install Frontend Dependencies') {
-      agent { label 'docker' }
+      
       when {
         anyOf {
           expression { !fileExists('frontend_app/node_modules') }
@@ -77,7 +79,9 @@ pipeline {
           changeset "frontend_app/package-lock.json"
         }
       }
+      agent { label 'docker' }
       steps {
+        unstash 'source'
         dir('frontend_app') {
           echo "⇒ Installing dependencies (npm ci)…"
           sh 'npm ci'
@@ -89,6 +93,7 @@ pipeline {
         when { changeset "**/frontend_app/**" }
         agent { label 'docker' }
         steps {
+            unstash 'source'
             dir('frontend_app') {
             withCredentials([file(credentialsId: env.AWS_FRONTEND_ENV_CRED_ID, variable: 'ENV_FILE')]) {
                 sh 'cp $ENV_FILE .env'
