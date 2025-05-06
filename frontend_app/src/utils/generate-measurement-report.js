@@ -151,6 +151,7 @@ export const generateMeasurementReport = ({ measurement, empty }) => {
             ])
         })
     }
+    
     else {
         ABC.split('').forEach((item, index) => {
             const mark = item || 'N/A';

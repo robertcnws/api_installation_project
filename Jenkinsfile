@@ -49,20 +49,19 @@ pipeline {
       when {
         changeset "**/frontend_app/**"
       }
-      agent {
-        docker {
-            image 'node:20-alpine'
-            args '-u root'
-        }
-     }
+      
       steps {
         dir('frontend_app') {
           withCredentials([file(credentialsId: env.AWS_FRONTEND_ENV_CRED_ID, variable: 'ENV_FILE')]) {
             sh 'cp $ENV_FILE .env'
           }
-          sh 'npm ci'
-          sh 'npm run lint -- --fix'
-          sh 'npm run build'
+          script {
+            docker.image('node:16-alpine').inside('-u root') {
+                sh 'npm ci'
+                sh 'npm run lint -- --fix'
+                sh 'npm run build'
+            }
+          }
           sh """
             docker-compose -f docker-compose.aws.frontend.prod.yml build
             docker tag api_installation_project-aws_frontend_app:latest $FRONTEND_IMAGE:latest
