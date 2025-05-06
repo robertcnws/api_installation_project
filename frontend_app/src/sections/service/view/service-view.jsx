@@ -413,7 +413,6 @@ export function ServiceView() {
 
               <Stack spacing={2.5} sx={{ my: { xs: 3, md: 3 } }}>
                 {renderFilters}
-                
                 {canReset && renderResults}
               </Stack>
 

@@ -11,7 +11,7 @@ pipeline {
     BACKEND_IMAGE            = "${AWS_ECR_REGISTRY}/installation_projects_backend"
     FRONTEND_IMAGE           = "${AWS_ECR_REGISTRY}/installation_projects_frontend"
     AWS_DEFAULT_REGION       = "us-east-2"
-    AWS_FRONTEND_ENV_CRED_ID = "aws-frontend"
+    AWS_FRONTEND_ENV_CRED_ID = "AWS_FRONTEND_ENV_CRED_ID"
     AWS_CLUSTER              = "api-dealerportal-cluster"
     AWS_FRONTEND_SERVICE     = "installation-project-frontend-service"
     AWS_BACKEND_SERVICE      = "installation-project-backend-service"
@@ -64,21 +64,34 @@ pipeline {
       }
     }
 
-    stage('Deploy to ECS') {
-      when {
-        anyOf {
-          changeset "**/backend_app/**"
-          changeset "**/frontend_app/**"
+    stage('Deploy Backend') {
+        when {
+        changeset "**/backend_app/**"
         }
-      }
-      steps {
-        script {
-          sh """
-            aws ecs update-service --cluster $AWS_CLUSTER --service $AWS_BACKEND_SERVICE  --force-new-deployment
-            aws ecs update-service --cluster $AWS_CLUSTER --service $AWS_FRONTEND_SERVICE --force-new-deployment
-          """
+        steps {
+        echo "→ There are changes in backend_app, redeploy backend"
+        sh """
+            aws ecs update-service \
+            --cluster $AWS_CLUSTER \
+            --service $AWS_BACKEND_SERVICE \
+            --force-new-deployment
+        """
         }
-      }
+    }
+
+    stage('Deploy Frontend') {
+        when {
+        changeset "**/frontend_app/**"
+        }
+        steps {
+        echo "→ There are changes in frontend_app, redeploy frontend"
+        sh """
+            aws ecs update-service \
+            --cluster $AWS_CLUSTER \
+            --service $AWS_FRONTEND_SERVICE \
+            --force-new-deployment
+        """
+        }
     }
   }
 }
