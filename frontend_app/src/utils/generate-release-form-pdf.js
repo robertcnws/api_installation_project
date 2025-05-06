@@ -13,7 +13,7 @@ export const generateReleaseFormReport = ({ project }) => {
     doc.addImage(logoBase64, 'PNG', margin, margin, logoWidth, logoHeight);
 
     // Title
-    
+
     doc.setFontSize(16);
     doc.setFont("helvetica", "bold");
     doc.text("NEW WINDOW SYSTEM", 170, 10, null, null, "center");
@@ -22,6 +22,7 @@ export const generateReleaseFormReport = ({ project }) => {
     doc.text("INSTALLATION FINAL RELEASE FORM", 105, 25, null, null, "center");
 
     // Project Details
+    
     doc.setFontSize(12);
 
     const customerName = (project?.salesOrder?.customer || project?.salesOrder?.contact_person_details)?.customer_name || project?.salesOrder?.customer_name;
