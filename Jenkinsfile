@@ -57,6 +57,7 @@ pipeline {
         label 'docker' 
       }
       steps {
+        deleteDir()
         unstash 'source'
         dir('backend_app') {
           sh """
@@ -74,6 +75,7 @@ pipeline {
         when { changeset "**/frontend_app/**" }
         agent { label 'docker' }
         steps {
+            deleteDir()
             unstash 'source'
             dir('frontend_app') {
             withCredentials([file(credentialsId: env.AWS_FRONTEND_ENV_CRED_ID, variable: 'ENV_FILE')]) {
