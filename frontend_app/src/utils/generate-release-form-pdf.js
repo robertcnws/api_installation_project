@@ -13,6 +13,7 @@ export const generateReleaseFormReport = ({ project }) => {
     doc.addImage(logoBase64, 'PNG', margin, margin, logoWidth, logoHeight);
 
     // Title
+    
     doc.setFontSize(16);
     doc.setFont("helvetica", "bold");
     doc.text("NEW WINDOW SYSTEM", 170, 10, null, null, "center");
