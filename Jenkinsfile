@@ -22,6 +22,7 @@ pipeline {
   }
 
   stages {
+    
     stage('Checkout') {
       agent { 
         label 'docker' 
@@ -52,33 +53,26 @@ pipeline {
     }
 
     stage('Build & Push Frontend') {
-      when {
-        changeset "**/frontend_app/**"
-      }
-      agent { 
-        label 'docker' 
-      }
-      steps {
-        dir('frontend_app') {
-          script {
-            docker.image('node:20-alpine').inside('-u root') {
-                withCredentials([file(credentialsId: env.AWS_FRONTEND_ENV_CRED_ID, variable: 'ENV_FILE')]) {
-                    sh 'cp $ENV_FILE .env'
-                }
-                sh 'npm ci'
-                sh 'npm run lint -- --fix'
-                sh 'npm run build'
+        when { changeset "**/frontend_app/**" }
+        agent { label 'docker' }
+        steps {
+            dir('frontend_app') {
+            withCredentials([file(credentialsId: env.AWS_FRONTEND_ENV_CRED_ID, variable: 'ENV_FILE')]) {
+                sh 'cp $ENV_FILE .env'
             }
-          }
-          sh """
-            docker-compose -f docker-compose.aws.frontend.prod.yml build
-            docker tag api_installation_project-aws_frontend_app:latest $FRONTEND_IMAGE:latest
-            aws ecr get-login-password \
-              | docker login --username AWS --password-stdin $AWS_ECR_REGISTRY
-            docker push $FRONTEND_IMAGE:latest
-          """
+
+            sh 'npm ci'
+            sh 'npm run lint -- --fix'
+            sh 'npm run build'
+
+            sh """
+                docker-compose -f docker-compose.aws.frontend.prod.yml build
+                docker tag api_installation_project-aws_frontend_app:latest $FRONTEND_IMAGE:latest
+                aws ecr get-login-password | docker login --username AWS --password-stdin $AWS_ECR_REGISTRY
+                docker push $FRONTEND_IMAGE:latest
+            """
+            }
         }
-      }
     }
 
     stage('Deploy Backend') {
