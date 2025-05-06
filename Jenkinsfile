@@ -41,7 +41,7 @@ pipeline {
     stage('Smoke Test Docker') {
       agent { label 'docker' }
       steps {
-        echo "🔍 Testing Docker from this agent..."
+        echo "🔍 Testing Docker from this agent in EC2..."
         sh 'docker version'
         sh 'docker info'
         sh 'docker-compose version'
