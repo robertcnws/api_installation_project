@@ -4,7 +4,7 @@ pipeline {
     githubPush()
   }
 
-  agent any
+  agent none
 
   tools {
     nodejs 'node20'   
@@ -23,6 +23,9 @@ pipeline {
 
   stages {
     stage('Checkout') {
+      agent { 
+        label 'docker' 
+      }
       steps {
         checkout scm
       }
@@ -31,6 +34,9 @@ pipeline {
     stage('Build & Push Backend') {
       when {
         changeset "**/backend_app/**"
+      }
+      agent { 
+        label 'docker' 
       }
       steps {
         dir('backend_app') {
@@ -49,7 +55,9 @@ pipeline {
       when {
         changeset "**/frontend_app/**"
       }
-      
+      agent { 
+        label 'docker' 
+      }
       steps {
         dir('frontend_app') {
           script {
@@ -77,14 +85,17 @@ pipeline {
         when {
             changeset "**/backend_app/**"
         }
+        agent { 
+            label 'docker' 
+        }
         steps {
-        echo "→ There are changes in backend_app, redeploy backend"
-        sh """
-            aws ecs update-service \
-            --cluster $AWS_CLUSTER \
-            --service $AWS_BACKEND_SERVICE \
-            --force-new-deployment
-        """
+            echo "→ There are changes in backend_app, redeploy backend"
+            sh """
+                aws ecs update-service \
+                --cluster $AWS_CLUSTER \
+                --service $AWS_BACKEND_SERVICE \
+                --force-new-deployment
+            """
         }
     }
 
@@ -92,14 +103,17 @@ pipeline {
         when {
         changeset "**/frontend_app/**"
         }
+        agent { 
+            label 'docker' 
+        }
         steps {
-        echo "→ There are changes in frontend_app, redeploy frontend"
-        sh """
-            aws ecs update-service \
-            --cluster $AWS_CLUSTER \
-            --service $AWS_FRONTEND_SERVICE \
-            --force-new-deployment
-        """
+            echo "→ There are changes in frontend_app, redeploy frontend"
+            sh """
+                aws ecs update-service \
+                --cluster $AWS_CLUSTER \
+                --service $AWS_FRONTEND_SERVICE \
+                --force-new-deployment
+            """
         }
     }
   }
