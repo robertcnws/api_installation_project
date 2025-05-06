@@ -52,11 +52,11 @@ pipeline {
       
       steps {
         dir('frontend_app') {
-          withCredentials([file(credentialsId: env.AWS_FRONTEND_ENV_CRED_ID, variable: 'ENV_FILE')]) {
-            sh 'cp $ENV_FILE .env'
-          }
           script {
-            docker.image('node:16-alpine').inside('-u root') {
+            docker.image('node:20-alpine').inside('-u root') {
+                withCredentials([file(credentialsId: env.AWS_FRONTEND_ENV_CRED_ID, variable: 'ENV_FILE')]) {
+                    sh 'cp $ENV_FILE .env'
+                }
                 sh 'npm ci'
                 sh 'npm run lint -- --fix'
                 sh 'npm run build'
@@ -75,7 +75,7 @@ pipeline {
 
     stage('Deploy Backend') {
         when {
-        changeset "**/backend_app/**"
+            changeset "**/backend_app/**"
         }
         steps {
         echo "→ There are changes in backend_app, redeploy backend"
