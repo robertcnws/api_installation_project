@@ -22,13 +22,20 @@ pipeline {
   }
 
   stages {
-    
+
     stage('Checkout') {
-      agent { 
-        label 'docker' 
-      }
+      agent any
       steps {
         checkout scm
+      }
+    }
+
+    stage('Smoke Test Docker') {
+      agent { label 'docker' }
+      steps {
+        echo "🔍 Probando Docker en este agente..."
+        sh 'docker version'
+        sh 'docker info'
       }
     }
 
