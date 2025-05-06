@@ -23,11 +23,12 @@ pipeline {
 
   stages {
 
-    stage('Checkout') {
+    stage('Checkout & Stash') {
       agent any
       steps {
         checkout scm
       }
+      stash name: 'source', includes: '**'
     }
 
     stage('Verify agent groups') {
@@ -56,6 +57,7 @@ pipeline {
         label 'docker' 
       }
       steps {
+        unstash 'source'
         dir('backend_app') {
           sh """
             docker-compose -f ../docker-compose.aws.backend.prod.yml build
@@ -72,6 +74,7 @@ pipeline {
         when { changeset "**/frontend_app/**" }
         agent { label 'docker' }
         steps {
+            unstash 'source'
             dir('frontend_app') {
             withCredentials([file(credentialsId: env.AWS_FRONTEND_ENV_CRED_ID, variable: 'ENV_FILE')]) {
                 sh 'cp $ENV_FILE .env'
