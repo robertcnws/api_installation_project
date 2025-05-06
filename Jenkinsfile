@@ -58,7 +58,7 @@ pipeline {
       steps {
         dir('backend_app') {
           sh """
-            docker-compose -f docker-compose.aws.backend.prod.yml build
+            docker-compose -f ../docker-compose.aws.backend.prod.yml build
             docker tag api_installation_project-aws_backend_app:latest $BACKEND_IMAGE:latest
             aws ecr get-login-password \
               | docker login --username AWS --password-stdin $AWS_ECR_REGISTRY
@@ -82,7 +82,7 @@ pipeline {
             sh 'npm run build'
 
             sh """
-                docker-compose -f docker-compose.aws.frontend.prod.yml build
+                docker-compose -f ../docker-compose.aws.frontend.prod.yml build
                 docker tag api_installation_project-aws_frontend_app:latest $FRONTEND_IMAGE:latest
                 aws ecr get-login-password | docker login --username AWS --password-stdin $AWS_ECR_REGISTRY
                 docker push $FRONTEND_IMAGE:latest
