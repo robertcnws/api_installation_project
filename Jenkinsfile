@@ -50,6 +50,24 @@ pipeline {
       }
     }
 
+    stage('Login to ECR') {
+      agent { label 'docker' }
+      steps {
+        withCredentials([[
+          $class: 'AmazonWebServicesCredentialsBinding',
+          credentialsId: 'aws-ecr-creds'
+        ]]) {
+          sh '''
+            aws_pw=$(docker run --rm \
+              -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
+              -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
+              amazon/aws-cli ecr get-login-password --region $AWS_DEFAULT_REGION)
+            echo "$aws_pw" | docker login --username AWS --password-stdin $AWS_ECR_REGISTRY
+          '''
+        }
+      }
+    }
+
     stage('Build & Push Backend') {
       when {
         changeset "**/backend_app/**"
@@ -61,11 +79,6 @@ pipeline {
         deleteDir()
         unstash 'source'
         dir('backend_app') {
-
-          sh """
-            aws_pw=\$(docker run --rm amazon/aws-cli ecr get-login-password --region $AWS_DEFAULT_REGION)
-            echo \"\$aws_pw\" | docker login --username AWS --password-stdin $AWS_ECR_REGISTRY
-          """
 
           sh """
             docker-compose -f ../docker-compose.aws.backend.prod.yml build
@@ -90,11 +103,6 @@ pipeline {
             sh 'npm ci'
             sh 'npm run lint -- --fix'
             sh 'npm run build'
-
-            sh """
-                aws_pw=\$(docker run --rm amazon/aws-cli ecr get-login-password --region $AWS_DEFAULT_REGION)
-                echo \"\$aws_pw\" | docker login --username AWS --password-stdin $AWS_ECR_REGISTRY
-            """
 
             sh """
                 docker-compose -f ../docker-compose.aws.frontend.prod.yml build
