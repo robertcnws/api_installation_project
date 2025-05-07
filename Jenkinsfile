@@ -151,4 +151,35 @@ pipeline {
     }
   }  
 
+  post {
+    success {
+      script {
+        if (currentBuild.changeSets.any { it.items.size() > 0 }) {
+          // enviamos el correo
+          emailext (
+            subject: "Build #${env.BUILD_NUMBER} - Cambios detectados",
+            body: """
+              Build has completed successfully #${env.BUILD_NUMBER}  
+              Project: ${env.JOB_NAME}  
+              URL: ${env.BUILD_URL}  
+
+              Changes detected:
+              ${currentBuild.changeSets.collect { cs ->
+                  cs.items.collect { "- ${it.author} : ${it.msg}" }.join("\n")
+                }.join("\n")}
+            """
+            // to: "equipo@tudominio.com"
+          )
+        }
+      }
+    }
+    failure {
+      emailext (
+        subject: "Build #${env.BUILD_NUMBER} failed",
+        body: "Build has failed. More info in ${env.BUILD_URL}"
+        // to: "equipo@tudominio.com"
+      )
+    }
+  }
+
 }    
