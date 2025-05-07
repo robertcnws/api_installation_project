@@ -1,5 +1,4 @@
 pipeline {
-
   triggers {
     githubPush()
   }
@@ -7,9 +6,9 @@ pipeline {
   agent none
 
   tools {
-    nodejs 'node20'   
+    nodejs 'node20'
   }
-  
+
   environment {
     AWS_ECR_REGISTRY         = "324037323031.dkr.ecr.us-east-2.amazonaws.com/nws"
     BACKEND_IMAGE            = "${AWS_ECR_REGISTRY}/installation_projects_backend"
@@ -23,7 +22,6 @@ pipeline {
   }
 
   stages {
-
     stage('Checkout & Stash') {
       agent any
       steps {
@@ -33,11 +31,11 @@ pipeline {
     }
 
     stage('Verify agent groups') {
-        agent { label 'docker' }
-        steps {
-            sh 'echo "Users: $(id -un)"'
-            sh 'echo "Groups: $(id -Gn)"'
-        }
+      agent { label 'docker' }
+      steps {
+        sh 'echo "Users: $(id -un)"'
+        sh 'echo "Groups: $(id -Gn)"'
+      }
     }
 
     stage('Smoke Test Docker') {
@@ -69,17 +67,12 @@ pipeline {
     }
 
     stage('Build & Push Backend') {
-      when {
-        changeset "**/backend_app/**"
-      }
-      agent { 
-        label 'docker' 
-      }
+      when { changeset "**/backend_app/**" }
+      agent { label 'docker' }
       steps {
         deleteDir()
         unstash 'source'
         dir('backend_app') {
-
           sh """
             docker-compose -f ../docker-compose.aws.backend.prod.yml build
             docker tag "${JENKINS_HOOK}_aws_backend_app:latest" "${BACKEND_IMAGE}:latest"
@@ -90,72 +83,72 @@ pipeline {
     }
 
     stage('Build & Push Frontend') {
-        when { changeset "**/frontend_app/**" }
-        agent { label 'docker' }
-        steps {
-            deleteDir()
-            unstash 'source'
-            dir('frontend_app') {
-            withCredentials([file(credentialsId: env.AWS_FRONTEND_ENV_CRED_ID, variable: 'ENV_FILE')]) {
-                sh 'cp $ENV_FILE .env'
-            }
-
-            sh 'npm ci'
-            sh 'npm run lint -- --fix'
-            sh 'npm run build'
-
-            sh """
-                docker-compose -f ../docker-compose.aws.frontend.prod.yml build
-                docker tag "${JENKINS_HOOK}_aws_frontend_app:latest" "${FRONTEND_IMAGE}:latest"
-                docker push "${FRONTEND_IMAGE}:latest"
-            """
-            }
+      when { changeset "**/frontend_app/**" }
+      agent { label 'docker' }
+      steps {
+        deleteDir()
+        unstash 'source'
+        dir('frontend_app') {
+          withCredentials([file(credentialsId: env.AWS_FRONTEND_ENV_CRED_ID, variable: 'ENV_FILE')]) {
+            sh 'cp $ENV_FILE .env'
+          }
+          sh 'npm ci'
+          sh 'npm run lint -- --fix'
+          sh 'npm run build'
+          sh """
+            docker-compose -f ../docker-compose.aws.frontend.prod.yml build
+            docker tag "${JENKINS_HOOK}_aws_frontend_app:latest" "${FRONTEND_IMAGE}:latest"
+            docker push "${FRONTEND_IMAGE}:latest"
+          """
         }
+      }
     }
 
     stage('Deploy Backend') {
-        when { changeset "**/backend_app/**" }
-        agent { label 'docker' }
-        steps {
-            echo "→ There are changes in backend_app, redeploy backend"
-            withCredentials([[ 
-                $class: 'AmazonWebServicesCredentialsBinding', 
-                credentialsId: 'aws-ecr-creds' 
-            ]]) {
-                sh '''
-                    docker run --rm \
-                    -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
-                    -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
-                    -e AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION \
-                    amazon/aws-cli ecs update-service \
-                        --cluster $AWS_CLUSTER \
-                        --service $AWS_BACKEND_SERVICE \
-                        --force-new-deployment
-                '''
-            }
+      when { changeset "**/backend_app/**" }
+      agent { label 'docker' }
+      steps {
+        echo "→ There are changes in backend_app, redeploy backend"
+        withCredentials([[
+          $class: 'AmazonWebServicesCredentialsBinding',
+          credentialsId: 'aws-ecr-creds'
+        ]]) {
+          sh '''
+            docker run --rm \
+              -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
+              -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
+              -e AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION \
+              amazon/aws-cli ecs update-service \
+                --cluster $AWS_CLUSTER \
+                --service $AWS_BACKEND_SERVICE \
+                --force-new-deployment
+          '''
         }
+      }
     }
 
     stage('Deploy Frontend') {
-        when { changeset "**/frontend_app/**" }
-        agent { label 'docker' }
-        steps {
-            echo "→ There are changes in frontend_app, redeploy frontend"
-            withCredentials([[ 
-                $class: 'AmazonWebServicesCredentialsBinding', 
-                credentialsId: 'aws-ecr-creds' 
-            ]]) {
-                sh '''
-                    docker run --rm \
-                    -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
-                    -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
-                    -e AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION \
-                    amazon/aws-cli ecs update-service \
-                        --cluster $AWS_CLUSTER \
-                        --service $AWS_FRONTEND_SERVICE \
-                        --force-new-deployment
-                '''
-            }
+      when { changeset "**/frontend_app/**" }
+      agent { label 'docker' }
+      steps {
+        echo "→ There are changes in frontend_app, redeploy frontend"
+        withCredentials([[
+          $class: 'AmazonWebServicesCredentialsBinding',
+          credentialsId: 'aws-ecr-creds'
+        ]]) {
+          sh '''
+            docker run --rm \
+              -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
+              -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
+              -e AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION \
+              amazon/aws-cli ecs update-service \
+                --cluster $AWS_CLUSTER \
+                --service $AWS_FRONTEND_SERVICE \
+                --force-new-deployment
+          '''
         }
+      }
     }
-}
+  }  
+
+}    
