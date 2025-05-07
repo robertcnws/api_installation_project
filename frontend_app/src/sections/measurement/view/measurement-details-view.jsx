@@ -261,7 +261,7 @@ export function MeasurementDetailsView({ measurementId }) {
         </Tabs>
     );
 
-    const [titleLinearProgress, setTitleLinearProgress] = useState(`Loading data from service ${item?.number}...`);
+    const [titleLinearProgress, setTitleLinearProgress] = useState(`Loading data from measurement ${item?.number ? item?.number : ''}...`);
 
     return (
         <>

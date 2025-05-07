@@ -495,7 +495,7 @@ export function ProjectDetailsView({ projectId }) {
         </Tabs>
     );
 
-    const [titleLinearProgress, setTitleLinearProgress] = useState(`Loading data from installation ${item?.name}...`);
+    const [titleLinearProgress, setTitleLinearProgress] = useState(`Loading data from installation ${item?.name ? item?.name : ''}...`);
 
     return (
         <>
