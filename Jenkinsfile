@@ -167,6 +167,7 @@ pipeline {
                   cs.items.collect { "- ${it.author} : ${it.msg}" }.join("\n")
                 }.join("\n")}
             """,
+            from: 'Jenkins NWS CI/CD <nnws15815@gmail.com>',
             to: '$DEFAULT_RECIPIENTS',
             // to: "equipo@tudominio.com"
           )
@@ -177,6 +178,7 @@ pipeline {
       emailext (
         subject: "Build #${env.BUILD_NUMBER} failed",
         body: "Build has failed. More info in ${env.BUILD_URL}",
+        from: 'Jenkins NWS CI/CD <nnws15815@gmail.com>',
         to: '$DEFAULT_RECIPIENTS',
         // to: "equipo@tudominio.com"
       )
