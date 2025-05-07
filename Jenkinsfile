@@ -66,6 +66,13 @@ pipeline {
       }
     }
 
+    stage('Prune Docker') {
+      agent { label 'docker' }
+      steps {
+        sh 'docker system prune -af || true'
+      }
+    }
+
     stage('Build & Push Backend') {
       when { changeset "**/backend_app/**" }
       agent { label 'docker' }
