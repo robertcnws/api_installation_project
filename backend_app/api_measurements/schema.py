@@ -8,6 +8,8 @@ from .models import (
 )
 from api_projects.data_util import serialize_datetime, dynamic_field_to_json
 from bson import ObjectId
+from django.utils import timezone
+from datetime import timezone as dt_timezone
 
 
 @convert_mongoengine_field.register(DynamicField)
@@ -21,9 +23,7 @@ def convert_dynamic_field(field, registry=None, executor=None):
 class MeasurementType(MongoengineObjectType):
     class Meta:
         model = Measurement
-        
-    created_time = graphene.String()
-    last_modified_time = graphene.String()
+    
     sales_order = GenericScalar()
     customer = GenericScalar()
     service = GenericScalar()
@@ -37,18 +37,40 @@ class MeasurementType(MongoengineObjectType):
     check_assignee = GenericScalar()
     measurement_attachments = GenericScalar()
     color = GenericScalar()
+    created_time = graphene.String()
+    last_modified_time = graphene.String()
     
     def resolve_created_time(self, info):
-        return self.created_time.strftime('%Y-%m-%d %H:%M:%S')
+        dt = self.created_time
+        if timezone.is_naive(dt):
+            dt = timezone.make_aware(dt, dt_timezone.utc) 
+        local_dt = timezone.localtime(dt)  
+        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
     
     def resolve_last_modified_time(self, info):
-        return self.last_modified_time.strftime('%Y-%m-%d %H:%M:%S')
+        dt = self.last_modified_time
+        if timezone.is_naive(dt):
+            dt = timezone.make_aware(dt, dt_timezone.utc) 
+        local_dt = timezone.localtime(dt)  
+        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
     
     def resolve_first_date(self, info):
-        return self.first_date.strftime('%Y-%m-%d %H:%M:%S') if self.first_date else None
+        dt = self.first_date
+        if dt is not None:
+            if timezone.is_naive(dt):
+                dt = timezone.make_aware(dt, dt_timezone.utc) 
+            local_dt = timezone.localtime(dt)  
+            return local_dt.strftime('%Y-%m-%d %H:%M:%S')
+        return None
     
     def resolve_check_date(self, info):
-        return self.check_date.strftime('%Y-%m-%d %H:%M:%S') if self.check_date else None
+        dt = self.check_date
+        if dt is not None:
+            if timezone.is_naive(dt):
+                dt = timezone.make_aware(dt, dt_timezone.utc) 
+            local_dt = timezone.localtime(dt)  
+            return local_dt.strftime('%Y-%m-%d %H:%M:%S')
+        return None
     
     def resolve_sales_order(self, info):
         sales_order = self.sales_order or {}
@@ -104,7 +126,6 @@ class MeasurementType(MongoengineObjectType):
         color = self.color or {}
         color = serialize_datetime(color)
         return dynamic_field_to_json(color)
-    
     
 
 class Query(graphene.ObjectType):

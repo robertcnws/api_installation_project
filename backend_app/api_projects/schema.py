@@ -21,6 +21,8 @@ from .models import (
 from api_authorization.models import LoginUser
 from .data_util import serialize_datetime, dynamic_field_to_json
 from bson import ObjectId
+from django.utils import timezone
+from datetime import timezone as dt_timezone
 
 @convert_mongoengine_field.register(DynamicField)
 def convert_dynamic_field(field, registry=None, executor=None):
@@ -32,28 +34,115 @@ def convert_dynamic_field(field, registry=None, executor=None):
 class ProjectPermissionsType(MongoengineObjectType):
     class Meta:
         model = ProjectPermissions
+        
+    created_time = graphene.String()
+    last_modified_time = graphene.String()
+    
+    def resolve_created_time(self, info):
+        dt = self.created_time
+        if timezone.is_naive(dt):
+            dt = timezone.make_aware(dt, dt_timezone.utc) 
+        local_dt = timezone.localtime(dt)  
+        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
+    
+    def resolve_last_modified_time(self, info):
+        dt = self.last_modified_time
+        if timezone.is_naive(dt):
+            dt = timezone.make_aware(dt, dt_timezone.utc) 
+        local_dt = timezone.localtime(dt)  
+        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
 
 class ProjectStageType(MongoengineObjectType):
     class Meta:
         model = ProjectStage
         
+    created_time = graphene.String()
+    last_modified_time = graphene.String()
+    
+    def resolve_created_time(self, info):
+        dt = self.created_time
+        if timezone.is_naive(dt):
+            dt = timezone.make_aware(dt, dt_timezone.utc) 
+        local_dt = timezone.localtime(dt)  
+        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
+    
+    def resolve_last_modified_time(self, info):
+        dt = self.last_modified_time
+        if timezone.is_naive(dt):
+            dt = timezone.make_aware(dt, dt_timezone.utc) 
+        local_dt = timezone.localtime(dt)  
+        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
+        
 class ProjectDefaultGuideProductType(MongoengineObjectType):
     class Meta:
         model = ProjectDefaultGuideProduct
+    
+    created_time = graphene.String()
+    last_modified_time = graphene.String()
+    
+    def resolve_created_time(self, info):
+        dt = self.created_time
+        if timezone.is_naive(dt):
+            dt = timezone.make_aware(dt, dt_timezone.utc) 
+        local_dt = timezone.localtime(dt)  
+        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
+    
+    def resolve_last_modified_time(self, info):
+        dt = self.last_modified_time
+        if timezone.is_naive(dt):
+            dt = timezone.make_aware(dt, dt_timezone.utc) 
+        local_dt = timezone.localtime(dt)  
+        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
         
 class ProjectTaskStageType(MongoengineObjectType):
     class Meta:
         model = ProjectTaskStage
+    
+    created_time = graphene.String()
+    last_modified_time = graphene.String()
+    
+    def resolve_created_time(self, info):
+        dt = self.created_time
+        if timezone.is_naive(dt):
+            dt = timezone.make_aware(dt, dt_timezone.utc) 
+        local_dt = timezone.localtime(dt)  
+        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
+    
+    def resolve_last_modified_time(self, info):
+        dt = self.last_modified_time
+        if timezone.is_naive(dt):
+            dt = timezone.make_aware(dt, dt_timezone.utc) 
+        local_dt = timezone.localtime(dt)  
+        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
 
 class ProjectRoleType(MongoengineObjectType):
     class Meta:
         model = ProjectRole
+        
+    created_time = graphene.String()
+    last_modified_time = graphene.String()
+    
+    def resolve_created_time(self, info):
+        dt = self.created_time
+        if timezone.is_naive(dt):
+            dt = timezone.make_aware(dt, dt_timezone.utc) 
+        local_dt = timezone.localtime(dt)  
+        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
+    
+    def resolve_last_modified_time(self, info):
+        dt = self.last_modified_time
+        if timezone.is_naive(dt):
+            dt = timezone.make_aware(dt, dt_timezone.utc) 
+        local_dt = timezone.localtime(dt)  
+        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
         
 
 class ProjectRemainder(MongoengineObjectType):
     class Meta:
         model = ProjectReminder
         
+    created_time = graphene.String()
+    last_modified_time = graphene.String()
     project = GenericScalar()
     project_default_task = GenericScalar()
     user_reporter = GenericScalar()
@@ -72,6 +161,20 @@ class ProjectRemainder(MongoengineObjectType):
         user_reporter = self.user_reporter or {}
         user_reporter = serialize_datetime(user_reporter)
         return dynamic_field_to_json(user_reporter)
+    
+    def resolve_created_time(self, info):
+        dt = self.created_time
+        if timezone.is_naive(dt):
+            dt = timezone.make_aware(dt, dt_timezone.utc) 
+        local_dt = timezone.localtime(dt)  
+        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
+    
+    def resolve_last_modified_time(self, info):
+        dt = self.last_modified_time
+        if timezone.is_naive(dt):
+            dt = timezone.make_aware(dt, dt_timezone.utc) 
+        local_dt = timezone.localtime(dt)  
+        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
     
 
 class ProjectType(MongoengineObjectType):
@@ -92,6 +195,22 @@ class ProjectType(MongoengineObjectType):
     project_comments = GenericScalar()
     project_materials = GenericScalar()
     project_guide_products = GenericScalar()
+    created_time = graphene.String()
+    last_modified_time = graphene.String()
+    
+    def resolve_created_time(self, info):
+        dt = self.created_time
+        if timezone.is_naive(dt):
+            dt = timezone.make_aware(dt, dt_timezone.utc) 
+        local_dt = timezone.localtime(dt)  
+        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
+    
+    def resolve_last_modified_time(self, info):
+        dt = self.last_modified_time
+        if timezone.is_naive(dt):
+            dt = timezone.make_aware(dt, dt_timezone.utc) 
+        local_dt = timezone.localtime(dt)  
+        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
     
     def resolve_sales_order(self, info):
         sales_order = self.sales_order or {}
@@ -167,10 +286,44 @@ class ProjectType(MongoengineObjectType):
 class ProjectUserType(MongoengineObjectType):
     class Meta:
         model = ProjectUser
+    
+    created_time = graphene.String()
+    last_modified_time = graphene.String()
+    
+    def resolve_created_time(self, info):
+        dt = self.created_time
+        if timezone.is_naive(dt):
+            dt = timezone.make_aware(dt, dt_timezone.utc) 
+        local_dt = timezone.localtime(dt)  
+        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
+    
+    def resolve_last_modified_time(self, info):
+        dt = self.last_modified_time
+        if timezone.is_naive(dt):
+            dt = timezone.make_aware(dt, dt_timezone.utc) 
+        local_dt = timezone.localtime(dt)  
+        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
         
 class ProjectNotificationType(MongoengineObjectType):
     class Meta:
         model = ProjectNotification
+    
+    created_time = graphene.String()
+    last_modified_time = graphene.String()
+    
+    def resolve_created_time(self, info):
+        dt = self.created_time
+        if timezone.is_naive(dt):
+            dt = timezone.make_aware(dt, dt_timezone.utc) 
+        local_dt = timezone.localtime(dt)  
+        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
+    
+    def resolve_last_modified_time(self, info):
+        dt = self.last_modified_time
+        if timezone.is_naive(dt):
+            dt = timezone.make_aware(dt, dt_timezone.utc) 
+        local_dt = timezone.localtime(dt)  
+        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
         
 class ProjectNotificationUserType(MongoengineObjectType):
     class Meta:
@@ -178,6 +331,22 @@ class ProjectNotificationUserType(MongoengineObjectType):
         
     notification = GenericScalar()
     user = GenericScalar()
+    created_time = graphene.String()
+    last_modified_time = graphene.String()
+    
+    def resolve_created_time(self, info):
+        dt = self.created_time
+        if timezone.is_naive(dt):
+            dt = timezone.make_aware(dt, dt_timezone.utc) 
+        local_dt = timezone.localtime(dt)  
+        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
+    
+    def resolve_last_modified_time(self, info):
+        dt = self.last_modified_time
+        if timezone.is_naive(dt):
+            dt = timezone.make_aware(dt, dt_timezone.utc) 
+        local_dt = timezone.localtime(dt)  
+        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
     
     def resolve_notification(self, info):
         notification = self.notification or {}
@@ -204,7 +373,11 @@ class ProjectTrackingType(MongoengineObjectType):
     user_reporter = GenericScalar()
     
     def resolve_created_time(self, info):
-        return self.created_time.strftime('%Y-%m-%d %H:%M:%S')
+        dt = self.created_time
+        if timezone.is_naive(dt):
+            dt = timezone.make_aware(dt, dt_timezone.utc) 
+        local_dt = timezone.localtime(dt)  
+        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
     
     def resolve_managed_data(self, info):
         managed_data = self.managed_data or {}
@@ -224,10 +397,18 @@ class ProjectDefaultTaskType(MongoengineObjectType):
     project_stage = GenericScalar()
     
     def resolve_created_time(self, info):
-        return self.created_time.strftime('%Y-%m-%d %H:%M:%S')
+        dt = self.created_time
+        if timezone.is_naive(dt):
+            dt = timezone.make_aware(dt, dt_timezone.utc) 
+        local_dt = timezone.localtime(dt)  
+        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
     
     def resolve_last_modified_time(self, info):
-        return self.last_modified_time.strftime('%Y-%m-%d %H:%M:%S')
+        dt = self.last_modified_time
+        if timezone.is_naive(dt):
+            dt = timezone.make_aware(dt, dt_timezone.utc) 
+        local_dt = timezone.localtime(dt)  
+        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
     
     def resolve_project_stage(self, info):
         project_stage = self.project_stage or {}

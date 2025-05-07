@@ -1,5 +1,6 @@
 from bson.objectid import ObjectId
 from django.utils import timezone
+from datetime import timezone as dt_timezone
 from datetime import datetime
 from dateutil import parser
 from collections import defaultdict
@@ -49,7 +50,10 @@ def transform_dict_to_camelcase(data):
 
 def serialize_datetime(value):
     if isinstance(value, datetime):
-        return value.isoformat()
+        if timezone.is_naive(value):
+            value = timezone.make_aware(value, dt_timezone.utc) 
+        local_dt = timezone.localtime(value)  
+        return local_dt.isoformat()
     elif isinstance(value, dict):
         return {key: serialize_datetime(val) for key, val in value.items()}
     elif isinstance(value, list):

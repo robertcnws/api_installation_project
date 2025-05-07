@@ -12,6 +12,8 @@ from .models import (
 from api_authorization.models import LoginUser
 from api_projects.data_util import serialize_datetime, dynamic_field_to_json
 from bson import ObjectId
+from django.utils import timezone
+from datetime import timezone as dt_timezone
 
 @convert_mongoengine_field.register(DynamicField)
 def convert_dynamic_field(field, registry=None, executor=None):
@@ -24,25 +26,67 @@ def convert_dynamic_field(field, registry=None, executor=None):
 class ServiceIssueType(MongoengineObjectType):
     class Meta:
         model = ServiceIssue
+    
+    created_time = graphene.String()
+    last_modified_time = graphene.String()
+    
+    def resolve_created_time(self, info):
+        dt = self.created_time
+        if timezone.is_naive(dt):
+            dt = timezone.make_aware(dt, dt_timezone.utc) 
+        local_dt = timezone.localtime(dt)  
+        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
+    
+    def resolve_last_modified_time(self, info):
+        dt = self.last_modified_time
+        if timezone.is_naive(dt):
+            dt = timezone.make_aware(dt, dt_timezone.utc) 
+        local_dt = timezone.localtime(dt)  
+        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
         
 
 class ServiceStageType(MongoengineObjectType):
     class Meta:
         model = ServiceStage
         
+    created_time = graphene.String()
+    last_modified_time = graphene.String()
+    
+    def resolve_created_time(self, info):
+        dt = self.created_time
+        if timezone.is_naive(dt):
+            dt = timezone.make_aware(dt, dt_timezone.utc) 
+        local_dt = timezone.localtime(dt)  
+        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
+    
+    def resolve_last_modified_time(self, info):
+        dt = self.last_modified_time
+        if timezone.is_naive(dt):
+            dt = timezone.make_aware(dt, dt_timezone.utc) 
+        local_dt = timezone.localtime(dt)  
+        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
+        
 
 class ServiceDefaultTaskType(MongoengineObjectType):
     class Meta:
         model = ServiceDefaultTask
+    service_stage = GenericScalar()
     created_time = graphene.String()
     last_modified_time = graphene.String()
-    service_stage = GenericScalar()
     
     def resolve_created_time(self, info):
-        return self.created_time.strftime('%Y-%m-%d %H:%M:%S')
+        dt = self.created_time
+        if timezone.is_naive(dt):
+            dt = timezone.make_aware(dt, dt_timezone.utc) 
+        local_dt = timezone.localtime(dt)  
+        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
     
     def resolve_last_modified_time(self, info):
-        return self.last_modified_time.strftime('%Y-%m-%d %H:%M:%S')
+        dt = self.last_modified_time
+        if timezone.is_naive(dt):
+            dt = timezone.make_aware(dt, dt_timezone.utc) 
+        local_dt = timezone.localtime(dt)  
+        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
     
     def resolve_service_stage(self, info):
         service_stage = self.service_stage or {}
@@ -69,7 +113,22 @@ class ServiceType(MongoengineObjectType):
     users_service_team = GenericScalar()
     service_place = GenericScalar()
     created_by = GenericScalar()
+    created_time = graphene.String()
+    last_modified_time = graphene.String()
     
+    def resolve_created_time(self, info):
+        dt = self.created_time
+        if timezone.is_naive(dt):
+            dt = timezone.make_aware(dt, dt_timezone.utc) 
+        local_dt = timezone.localtime(dt)  
+        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
+    
+    def resolve_last_modified_time(self, info):
+        dt = self.last_modified_time
+        if timezone.is_naive(dt):
+            dt = timezone.make_aware(dt, dt_timezone.utc) 
+        local_dt = timezone.localtime(dt)  
+        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
     
     def resolve_client(self, info):
         client = self.client or {}
@@ -145,7 +204,6 @@ class ServiceType(MongoengineObjectType):
         created_by = self.created_by or {}
         created_by = serialize_datetime(created_by)
         return dynamic_field_to_json(created_by)
-    
     
 
 class Query(graphene.ObjectType):

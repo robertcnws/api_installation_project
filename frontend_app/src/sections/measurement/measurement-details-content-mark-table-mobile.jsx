@@ -331,15 +331,17 @@ export function MeasurementDetailsContentMarkTableMobile({
                                                                     </IconButton>
                                                                 </span>
                                                             </Tooltip>
-                                                            <Tooltip title="Remove" placement="top" arrow>
-                                                                <IconButton size="small" onClick={() => {
-                                                                    setSelectedMark(mark);
-                                                                    setSelectedMarkIndex(index);
-                                                                    confirmRemove.onTrue();
-                                                                }}>
-                                                                    <Iconify icon="eva:minus-fill" width={20} height={20} color={theme.palette.error.main} />
-                                                                </IconButton>
-                                                            </Tooltip>
+                                                            {currentMarks.length > 1 && (
+                                                                <Tooltip title="Remove" placement="top" arrow>
+                                                                    <IconButton size="small" onClick={() => {
+                                                                        setSelectedMark(mark);
+                                                                        setSelectedMarkIndex(index);
+                                                                        confirmRemove.onTrue();
+                                                                    }}>
+                                                                        <Iconify icon="eva:minus-fill" width={20} height={20} color={theme.palette.error.main} />
+                                                                    </IconButton>
+                                                                </Tooltip>
+                                                            )}
                                                         </>
                                                     )}
                                                 </Box>
