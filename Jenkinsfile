@@ -114,39 +114,50 @@ pipeline {
     }
 
     stage('Deploy Backend') {
-        when {
-            changeset "**/backend_app/**"
-        }
-        agent { 
-            label 'docker' 
-        }
+        when { changeset "**/backend_app/**" }
+        agent { label 'docker' }
         steps {
             echo "→ There are changes in backend_app, redeploy backend"
-            sh """
-                aws ecs update-service \
-                --cluster $AWS_CLUSTER \
-                --service $AWS_BACKEND_SERVICE \
-                --force-new-deployment
-            """
+            withCredentials([[ 
+                $class: 'AmazonWebServicesCredentialsBinding', 
+                credentialsId: 'aws-ecr-creds' 
+            ]]) 
+            {
+                sh '''
+                    docker run --rm \
+                    -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
+                    -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
+                    -e AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION \
+                    amazon/aws-cli ecs update-service \
+                        --cluster $AWS_CLUSTER \
+                        --service $AWS_BACKEND_SERVICE \
+                        --force-new-deployment
+                '''
+            }
         }
     }
 
     stage('Deploy Frontend') {
-        when {
-        changeset "**/frontend_app/**"
-        }
-        agent { 
-            label 'docker' 
-        }
+        when { changeset "**/frontend_app/**" }
+        agent { label 'docker' }
         steps {
             echo "→ There are changes in frontend_app, redeploy frontend"
-            sh """
-                aws ecs update-service \
-                --cluster $AWS_CLUSTER \
-                --service $AWS_FRONTEND_SERVICE \
-                --force-new-deployment
-            """
+            withCredentials([[ 
+                $class: 'AmazonWebServicesCredentialsBinding', 
+                credentialsId: 'aws-ecr-creds' 
+            ]]) 
+            {
+                sh '''
+                    docker run --rm \
+                    -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
+                    -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
+                    -e AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION \
+                    amazon/aws-cli ecs update-service \
+                        --cluster $AWS_CLUSTER \
+                        --service $AWS_FRONTEND_SERVICE \
+                        --force-new-deployment
+                '''
+            }
         }
     }
-  }
 }
