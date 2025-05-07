@@ -19,6 +19,7 @@ pipeline {
     AWS_CLUSTER              = "api-dealerportal-cluster"
     AWS_FRONTEND_SERVICE     = "installation-project-frontend-service"
     AWS_BACKEND_SERVICE      = "installation-project-backend-service"
+    JENKINS_HOOK             = "api-installation-repository-hook"
   }
 
   stages {
@@ -62,10 +63,10 @@ pipeline {
         dir('backend_app') {
           sh """
             docker-compose -f ../docker-compose.aws.backend.prod.yml build
-            docker tag api_installation_project-aws_backend_app:latest $BACKEND_IMAGE:latest
+            docker tag "${JENKINS_HOOK}_aws_backend_app:latest" "${BACKEND_IMAGE}:latest"
             aws ecr get-login-password \
               | docker login --username AWS --password-stdin $AWS_ECR_REGISTRY
-            docker push $BACKEND_IMAGE:latest
+            docker push "${BACKEND_IMAGE}:latest"
           """
         }
       }
@@ -88,9 +89,9 @@ pipeline {
 
             sh """
                 docker-compose -f ../docker-compose.aws.frontend.prod.yml build
-                docker tag api_installation_project-aws_frontend_app:latest $FRONTEND_IMAGE:latest
+                docker tag "${JENKINS_HOOK}_aws_frontend_app:latest" "${FRONTEND_IMAGE}:latest"
                 aws ecr get-login-password | docker login --username AWS --password-stdin $AWS_ECR_REGISTRY
-                docker push $FRONTEND_IMAGE:latest
+                docker push "${FRONTEND_IMAGE}:latest"
             """
             }
         }
