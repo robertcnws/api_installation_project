@@ -61,11 +61,15 @@ pipeline {
         deleteDir()
         unstash 'source'
         dir('backend_app') {
+
+          sh """
+            aws_pw=\$(docker run --rm amazon/aws-cli ecr get-login-password --region $AWS_DEFAULT_REGION)
+            echo \"\$aws_pw\" | docker login --username AWS --password-stdin $AWS_ECR_REGISTRY
+          """
+
           sh """
             docker-compose -f ../docker-compose.aws.backend.prod.yml build
             docker tag "${JENKINS_HOOK}_aws_backend_app:latest" "${BACKEND_IMAGE}:latest"
-            aws ecr get-login-password \
-              | docker login --username AWS --password-stdin $AWS_ECR_REGISTRY
             docker push "${BACKEND_IMAGE}:latest"
           """
         }
@@ -88,9 +92,13 @@ pipeline {
             sh 'npm run build'
 
             sh """
+                aws_pw=\$(docker run --rm amazon/aws-cli ecr get-login-password --region $AWS_DEFAULT_REGION)
+                echo \"\$aws_pw\" | docker login --username AWS --password-stdin $AWS_ECR_REGISTRY
+            """
+
+            sh """
                 docker-compose -f ../docker-compose.aws.frontend.prod.yml build
                 docker tag "${JENKINS_HOOK}_aws_frontend_app:latest" "${FRONTEND_IMAGE}:latest"
-                aws ecr get-login-password | docker login --username AWS --password-stdin $AWS_ECR_REGISTRY
                 docker push "${FRONTEND_IMAGE}:latest"
             """
             }
