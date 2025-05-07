@@ -121,8 +121,7 @@ pipeline {
             withCredentials([[ 
                 $class: 'AmazonWebServicesCredentialsBinding', 
                 credentialsId: 'aws-ecr-creds' 
-            ]]) 
-            {
+            ]]) {
                 sh '''
                     docker run --rm \
                     -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
@@ -145,8 +144,7 @@ pipeline {
             withCredentials([[ 
                 $class: 'AmazonWebServicesCredentialsBinding', 
                 credentialsId: 'aws-ecr-creds' 
-            ]]) 
-            {
+            ]]) {
                 sh '''
                     docker run --rm \
                     -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
