@@ -463,7 +463,7 @@ export function ServiceDetailsView({ serviceId }) {
         </Tabs>
     );
 
-    const [titleLinearProgress, setTitleLinearProgress] = useState(`Loading data from service ${item?.name ? item?.name : ''}...`);
+    const [titleLinearProgress, setTitleLinearProgress] = useState(`Loading data from service ${item?.name}...`);
 
     return (
         <>
