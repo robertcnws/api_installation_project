@@ -167,10 +167,7 @@ pipeline {
                   cs.items.collect { "- ${it.author} : ${it.msg}" }.join("\n")
                 }.join("\n")}
             """,
-            recipientProviders: [
-                [$class: 'DevelopersRecipientProvider'],
-                [$class: 'RequesterRecipientProvider']
-            ]
+            to: '$DEFAULT_RECIPIENTS',
             // to: "equipo@tudominio.com"
           )
         }
@@ -179,7 +176,8 @@ pipeline {
     failure {
       emailext (
         subject: "Build #${env.BUILD_NUMBER} failed",
-        body: "Build has failed. More info in ${env.BUILD_URL}"
+        body: "Build has failed. More info in ${env.BUILD_URL}",
+        to: '$DEFAULT_RECIPIENTS',
         // to: "equipo@tudominio.com"
       )
     }
