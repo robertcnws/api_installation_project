@@ -94,7 +94,7 @@ const ItemBase = forwardRef(({
 
   const possibleTasks = useMemo(() => initialTasks.concat(extraTasks), [initialTasks, extraTasks]);
 
-  const isAvailableTask = useMemo(() => possibleTasks?.some((t) => t.project_default_task.id === task.project_default_task.id), [possibleTasks, task]);
+  const isAvailableTask = useMemo(() => possibleTasks?.some((t) => t?.project_default_task?.id === task?.project_default_task?.id), [possibleTasks, task]);
 
   useEffect(() => {
     if (!stateProps?.dragOverlay) {
@@ -126,17 +126,17 @@ const ItemBase = forwardRef(({
   const renderPriority = (
     <Iconify
       icon={
-        (task.priority === 'low' && 'solar:double-alt-arrow-down-bold-duotone') ||
-        (task.priority === 'medium' && 'solar:double-alt-arrow-right-bold-duotone') ||
+        (task?.priority === 'low' && 'solar:double-alt-arrow-down-bold-duotone') ||
+        (task?.priority === 'medium' && 'solar:double-alt-arrow-right-bold-duotone') ||
         'solar:double-alt-arrow-up-bold-duotone'
       }
       sx={{
         top: 4,
         right: 4,
         position: 'absolute',
-        ...(task.priority === 'low' && { color: 'info.main' }),
-        ...(task.priority === 'medium' && { color: 'warning.main' }),
-        ...(task.priority === 'high' && { color: 'error.main' }),
+        ...(task?.priority === 'low' && { color: 'info.main' }),
+        ...(task?.priority === 'medium' && { color: 'warning.main' }),
+        ...(task?.priority === 'high' && { color: 'error.main' }),
       }}
       onClick={onClick}
     />
@@ -290,7 +290,7 @@ const ItemBase = forwardRef(({
 
         <Box
           component="span"
-          key={`${project.id}-${task?.project_default_task.id}-percentage`}
+          key={`${project?.id}-${task?.project_default_task.id}-percentage`}
           sx={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -326,7 +326,7 @@ const ItemBase = forwardRef(({
           </Label>
         </Box>
 
-        {(task?.project_default_task.has_attachments) && (
+        {(task?.project_default_task?.has_attachments) && (
           <>
             <Iconify width={16} icon="eva:attach-2-fill" sx={{ mr: 0.25 }} />
             <Box component="span">
@@ -347,12 +347,12 @@ const ItemBase = forwardRef(({
       disablePadding
       className={itemWrapClassName}
       sx={{
-        ...(!!stateProps?.transition && { transition: stateProps.transition }),
+        ...(!!stateProps?.transition && { transition: stateProps?.transition }),
         ...(!!stateProps?.transform && {
-          '--translate-x': `${Math.round(stateProps.transform.x)}px`,
-          '--translate-y': `${Math.round(stateProps.transform.y)}px`,
-          '--scale-x': `${stateProps.transform.scaleX}`,
-          '--scale-y': `${stateProps.transform.scaleY}`,
+          '--translate-x': `${Math.round(stateProps?.transform.x)}px`,
+          '--translate-y': `${Math.round(stateProps?.transform.y)}px`,
+          '--scale-x': `${stateProps?.transform.scaleX}`,
+          '--scale-y': `${stateProps?.transform.scaleY}`,
         }),
       }}
     >
@@ -389,7 +389,7 @@ const ItemBase = forwardRef(({
             }}
             onClick={onClick}
           >
-            {task.name}
+            {task?.name}
           </Typography>
 
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, flexDirection: 'row', gap: 1, justifyContent: 'space-between' }}>

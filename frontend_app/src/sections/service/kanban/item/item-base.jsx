@@ -91,7 +91,7 @@ const ItemBase = forwardRef(({
 
   const possibleTasks = useMemo(() => initialTasks.concat(extraTasks), [initialTasks, extraTasks]);
 
-  const isAvailableTask = useMemo(() => possibleTasks?.some((t) => t.service_default_task.id === task.service_default_task.id), [possibleTasks, task]);
+  const isAvailableTask = useMemo(() => possibleTasks?.some((t) => t?.service_default_task?.id === task?.service_default_task?.id), [possibleTasks, task]);
 
   const attachedTasks = useMemo(() => service?.serviceDefaultTasks?.filter((t) => t.service_default_task?.has_attachments) || [], [service]);
   const maxOrderAttachedTask = useMemo(() => attachedTasks?.reduce((max, t) => {
@@ -131,17 +131,17 @@ const ItemBase = forwardRef(({
   const renderPriority = (
     <Iconify
       icon={
-        (task.priority === 'low' && 'solar:double-alt-arrow-down-bold-duotone') ||
-        (task.priority === 'medium' && 'solar:double-alt-arrow-right-bold-duotone') ||
+        (task?.priority === 'low' && 'solar:double-alt-arrow-down-bold-duotone') ||
+        (task?.priority === 'medium' && 'solar:double-alt-arrow-right-bold-duotone') ||
         'solar:double-alt-arrow-up-bold-duotone'
       }
       sx={{
         top: 4,
         right: 4,
         position: 'absolute',
-        ...(task.priority === 'low' && { color: 'info.main' }),
-        ...(task.priority === 'medium' && { color: 'warning.main' }),
-        ...(task.priority === 'high' && { color: 'error.main' }),
+        ...(task?.priority === 'low' && { color: 'info.main' }),
+        ...(task?.priority === 'medium' && { color: 'warning.main' }),
+        ...(task?.priority === 'high' && { color: 'error.main' }),
       }}
       onClick={onClick}
     />
@@ -160,7 +160,7 @@ const ItemBase = forwardRef(({
                 {/* {((task && task.status === CONFIG.taskStatus.notStarted && (task?.service_default_task?.order === 1 ||
                   (service?.hasPermission && task?.service_default_task?.service_stage.name.toLowerCase() === CONFIG.stages.permission.toLowerCase()))) ||
                   (task.beforeNoMatter && task.status === CONFIG.taskStatus.notStarted)) && ( */}
-                {((task && task.status === CONFIG.taskStatus.notStarted)) && (
+                {((task && task?.status === CONFIG.taskStatus.notStarted)) && (
                     <IconButton
                       variant="soft"
                       color="default"
@@ -176,13 +176,13 @@ const ItemBase = forwardRef(({
                         },
                       }}
                       // disabled={!task || task.status !== CONFIG.taskStatus.notStarted || task?.users_assignees?.length === 0}
-                      disabled={!task || task.status !== CONFIG.taskStatus.notStarted}
+                      disabled={!task || task?.status !== CONFIG.taskStatus.notStarted}
                       onClick={() => handleManageTask('start')}
                     >
                       <Iconify icon="vaadin:start-cog" sx={{ width: 15, height: 15 }} /> Start
                     </IconButton>
                   )}
-                {(task && task.status !== CONFIG.taskStatus.notStarted && task.status !== 'finished') && (
+                {(task && task?.status !== CONFIG.taskStatus.notStarted && task?.status !== 'finished') && (
                   
                     <IconButton
                       variant="soft"
@@ -213,7 +213,7 @@ const ItemBase = forwardRef(({
                   //   <Label color='error' sx={{ fontSize: '8px', mr: -3 }}>Finish previous tasks</Label>
                   // )
                 )}
-                {(task && task.status === 'finished' && listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) && (
+                {(task && task?.status === 'finished' && listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) && (
                   <IconButton
                     variant="soft"
                     color="warning"
@@ -280,7 +280,7 @@ const ItemBase = forwardRef(({
 
         <Box
           component="span"
-          key={`${service.id}-${task?.service_default_task.id}-percentage`}
+          key={`${service?.id}-${task?.service_default_task.id}-percentage`}
           sx={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -316,7 +316,7 @@ const ItemBase = forwardRef(({
           </Label>
         </Box>
 
-        {(task?.service_default_task.has_attachments) && (
+        {(task?.service_default_task?.has_attachments) && (
           <>
             <Iconify width={16} icon="eva:attach-2-fill" sx={{ mr: 0.25 }} />
             <Box component="span">
@@ -341,12 +341,12 @@ const ItemBase = forwardRef(({
       disablePadding
       className={itemWrapClassName}
       sx={{
-        ...(!!stateProps?.transition && { transition: stateProps.transition }),
+        ...(!!stateProps?.transition && { transition: stateProps?.transition }),
         ...(!!stateProps?.transform && {
-          '--translate-x': `${Math.round(stateProps.transform.x)}px`,
-          '--translate-y': `${Math.round(stateProps.transform.y)}px`,
-          '--scale-x': `${stateProps.transform.scaleX}`,
-          '--scale-y': `${stateProps.transform.scaleY}`,
+          '--translate-x': `${Math.round(stateProps?.transform.x)}px`,
+          '--translate-y': `${Math.round(stateProps?.transform.y)}px`,
+          '--scale-x': `${stateProps?.transform?.scaleX}`,
+          '--scale-y': `${stateProps?.transform?.scaleY}`,
         }),
       }}
     >
@@ -370,7 +370,7 @@ const ItemBase = forwardRef(({
           {renderPriority}
 
           <Typography variant="subtitle2" sx={{ mb: 2, width: '70%' }} onClick={onClick}>
-            {task.name}
+            {task?.name}
           </Typography>
 
           {renderInfo}
