@@ -166,7 +166,7 @@ pipeline {
               ${currentBuild.changeSets.collect { cs ->
                   cs.items.collect { "- ${it.author} : ${it.msg}" }.join("\n")
                 }.join("\n")}
-            """
+            """,
             recipientProviders: [
                 [$class: 'DevelopersRecipientProvider'],
                 [$class: 'RequesterRecipientProvider']
