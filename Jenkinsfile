@@ -56,13 +56,20 @@ pipeline {
           credentialsId: 'aws-ecr-creds'
         ]]) {
           sh '''
-            aws_pw=$(docker run --rm \
+            docker run --rm \
               -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
               -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
-              amazon/aws-cli ecr get-login-password --region $AWS_DEFAULT_REGION)
-            echo "$aws_pw" | docker login --username AWS --password-stdin $AWS_ECR_REGISTRY
+              amazon/aws-cli ecr get-login-password --region $AWS_DEFAULT_REGION \
+            | docker login --username AWS --password-stdin $AWS_ECR_REGISTRY
           '''
         }
+      }
+    }
+
+    stage('Prune Docker') {
+      agent { label 'docker' }
+      steps {
+        sh 'docker system prune -af || true'
       }
     }
 
