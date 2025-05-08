@@ -15,7 +15,6 @@ const GET_ALL_DEFAULT_MATERIALS = gql`
       quantity
       isPackaged
       packageQuantity
-      defaultGuideProducts
     }
   }
 `;

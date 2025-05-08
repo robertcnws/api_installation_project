@@ -519,7 +519,6 @@ class ProjectDefaultMaterial(Document):
     quantity = IntField(default=0)
     is_packaged = BooleanField(default=False, null=True)
     package_quantity = IntField(default=0, null=True)
-    default_guide_products = ListField(DynamicField(), default=list, null=True)
     is_active = BooleanField(default=True)
     created_time = DateTimeField(default=timezone.now, null=True)
     last_modified_time = DateTimeField(default=timezone.now, null=True)
@@ -527,7 +526,7 @@ class ProjectDefaultMaterial(Document):
     meta = {
         'collection': 'project_default_material',
         'indexes': [
-            'name', 'created_time', 'last_modified_time', 'is_active', 'is_packaged', 'package_quantity', 'default_guide_products'
+            'name', 'created_time', 'last_modified_time', 'is_active'
         ],
         'verbose_name': 'Project Default Material',
         'verbose_name_plural': 'Project Default Materials'

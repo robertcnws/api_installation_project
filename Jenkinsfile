@@ -194,14 +194,15 @@ pipeline {
                     
                     <h2>Commits included:</h2>
                     <div class="changelog">
-                      ${CHANGES, showPaths=true, format:
-                        '<div class="commit">' +
-                          '<span class="commit-author">[%an]</span> ' +
-                          '<a href="https://your.git.server/commit/%H">%h</a><br/>' +
-                          '<span class="commit-message">%m</span><br/>' +
-                          '<small class="commit-paths">%p</small>' +
-                        '</div>'
-                      }
+                      \${CHANGES, showPaths=true, format:
+                          '<div style="margin-bottom:8px">'
+                          + '<strong>%an</strong> '
+                          + '<a href="https://git.example.com/commit/%H">%h</a><br/>'
+                          + '%m<br/>'
+                          + '<small>%p</small>'
+                          + '</div>'
+                        }
+                      <div class="commit">  
                     </div>
                   </div>
                   <div class="footer">
@@ -225,6 +226,4 @@ pipeline {
       )
     }
   }
-
-
-}    
+}   
