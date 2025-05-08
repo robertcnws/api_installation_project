@@ -3010,6 +3010,7 @@ def edit_default_guide_product(request, id):
         product.price = price
         product.description = description
         product.order = order
+        product.last_modified_time = timezone.now()
         product.save()
         tracking_info = transform_data_to_mongo(product)
         tracking = ProjectTracking(
@@ -3752,23 +3753,26 @@ def download_s3_archive(request):
 @permission_classes([AllowAny])
 def create_default_material(request):
     data = request.data
-    user_reporter = data.get('userReporter', None)
+    user_reporter = json.loads(data.get('userReporter', None))
     try:
         name = data.get('name')
         description = data.get('description')
-        order = data.get('order', 0)
         price = data.get('price', 0)
+        quantity = data.get('quantity', 0)
+        is_packaged = data.get('isPackaged', False)
+        package_quantity = data.get('packageQuantity', 0)
+        default_guide_products = json.loads(data.get('defaultGuideProducts', '[]'))
         material = ProjectDefaultMaterial.objects(name=name).first()
         if material:
             return Response({'error': 'Default material already exists'}, status=404)
-        material = ProjectDefaultMaterial.objects(order=order).first()
-        if material:
-            return Response({'error': 'Default material with this order already exists'}, status=404)
         material = ProjectDefaultMaterial(
             name=name,
-            order=order,
             price=price,    
             description=description,
+            quantity=quantity,
+            is_packaged=is_packaged,
+            package_quantity=package_quantity,
+            default_guide_products=default_guide_products,
             created_time=timezone.now(),
             last_modified_time=timezone.now()
         )
@@ -3802,25 +3806,32 @@ def create_default_material(request):
 @permission_classes([AllowAny])
 def edit_default_material(request, id):
     data = request.data
-    user_reporter = data.get('userReporter', None)
+    user_reporter = json.loads(data.get('userReporter', None))
     try:
         name = data.get('name')
         description = data.get('description')
-        order = data.get('order', 0)
         price = data.get('price', 0)
+        quantity = data.get('quantity', 0)
+        is_packaged = data.get('isPackaged', False)
+        package_quantity = data.get('packageQuantity', 0)
+        default_guide_products = json.loads(data.get('defaultGuideProducts', '[]'))
+        
         material = ProjectDefaultMaterial.objects(name=name).first()
+        
         if material and str(material.id) != id:
             return Response({'error': 'Default material already exists'}, status=404)
-        material = ProjectDefaultMaterial.objects(order=order).first()
-        if material and str(material.id) != id:
-            return Response({'error': 'Default material with this order already exists'}, status=404)
+        
         material = ProjectDefaultMaterial.objects(id=id).first()
         if not material:
-            return Response({'error': 'Stage not found'}, status=404)
+            return Response({'error': 'Material not found'}, status=404)
         material.name = name
         material.price = price
         material.description = description
-        material.order = order
+        material.quantity = quantity
+        material.is_packaged = is_packaged
+        material.package_quantity = package_quantity
+        material.default_guide_products = default_guide_products
+        material.last_modified_time = timezone.now()
         material.save()
         tracking_info = transform_data_to_mongo(material)
         tracking = ProjectTracking(

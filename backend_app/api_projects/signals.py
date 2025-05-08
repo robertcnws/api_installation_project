@@ -38,6 +38,7 @@ def project_default_material_saved(sender, document, **kwargs):
                 "quantity": document.quantity,
                 "isPackaged": document.is_packaged,
                 "packageQuantity": document.package_quantity,
+                "defaultGuideProducts": document.default_guide_products,
             }
 
         }
@@ -62,6 +63,7 @@ def project_default_material_deleted(sender, document, **kwargs):
                 "quantity": document.quantity,
                 "isPackaged": document.is_packaged,
                 "packageQuantity": document.package_quantity,
+                "defaultGuideProducts": document.default_guide_products,
             }
         }
     }
