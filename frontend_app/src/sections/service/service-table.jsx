@@ -80,7 +80,9 @@ export function ServiceTable({
     { id: 'startDate', label: 'Date & Duration' },
     { id: 'number', label: 'Number' },
     { id: 'byFactory', label: 'By Factory?' },
+    { id: 'installedByUs', label: 'Installed By Us?' },
     { id: 'name', label: 'Name' },
+    { id: 'createdTime', label: 'Created At' },
     { id: 'currentStage', label: 'Stage' },
     ...((loadedServiceStages || []).map((stage) => ({
       id: stage.id,

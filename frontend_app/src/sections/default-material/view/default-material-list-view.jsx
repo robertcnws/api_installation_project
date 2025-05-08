@@ -44,16 +44,13 @@ import {
 import { LoadingContext } from 'src/auth/context/loading-context';
 import { useDataContext } from 'src/auth/context/data/data-context';
 
-import { StageTableRow } from '../stage-table-row';
-import { StageTableToolbar } from '../stage-table-toolbar';
-import { StageTableFiltersResult } from '../stage-table-filters-result';
-
-
-
+import { DefaultMaterialTableRow } from '../default-material-table-row';
+import { DefaultMaterialTableToolbar } from '../default-material-table-toolbar';
+import { DefaultMaterialTableFiltersResult } from '../default-material-table-filters-result';
 
 // ----------------------------------------------------------------------
 
-const STATUS_OPTIONS = [{ value: 'all', label: 'All Stages' }].concat([
+const STATUS_OPTIONS = [{ value: 'all', label: 'All Default Materials' }].concat([
   { value: 'active', label: 'Active' },
   { value: 'inactive', label: 'Inactive' },
 ]);
@@ -69,13 +66,13 @@ const getValidTabValue = (options, currentValue) => options.some(
 
 // ----------------------------------------------------------------------
 
-export function StageListView() {
+export function DefaultMaterialListView() {
 
   const { isMobile } = useContext(LoadingContext);
 
   const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
 
-  const { loadedStages, loadingStages, errorStages, refetchStages } = useDataContext();
+  const { loadedDefaultMaterials, loadingDefaultMaterials, errorDefaultMaterials, refetchDefaultMaterials } = useDataContext();
 
   const [updating, setUpdating] = useState(false);
 
@@ -83,14 +80,14 @@ export function StageListView() {
 
   const TABLE_HEAD = [
     { id: 'name', label: 'Name' },
-    { id: 'order', label: 'Order' },
+    { id: 'price', label: 'Price' },
     { id: 'status', label: 'Status' },
     { id: 'description', label: 'Description' },
     { id: '' },
   ];
 
   const TABLE_HEAD_MOBILE = [
-    { id: 'info', label: 'Stages' },
+    { id: 'info', label: 'Materials' },
     { id: '' },
   ];
 
@@ -102,7 +99,7 @@ export function StageListView() {
 
   const [tableData, setTableData] = useState([]);
 
-  const filters = useSetState({ name: '', status: localStorage.getItem('stageStatus') || 'all' });
+  const filters = useSetState({ name: '', status: localStorage.getItem('defaultMaterialStatus') || 'all' });
 
   const collapse = useBoolean(
     filters.state.status === 'active' || filters.state.status === 'inactive'
@@ -116,7 +113,7 @@ export function StageListView() {
     localStorage.removeItem('routeByOrder');
     localStorage.removeItem('routeByShipment');
     localStorage.removeItem('routeByShipmentBySku');
-    localStorage.removeItem('currentStageId');
+    localStorage.removeItem('currentDefaultMaterialId');
   }, []);
 
 
@@ -133,30 +130,24 @@ export function StageListView() {
 
 
   useEffect(() => {
-    if (refetchStages) {
-      refetchStages();
+    if (refetchDefaultMaterials) {
+      refetchDefaultMaterials();
     }
-    setTableData(loadedStages || []);
-  }, [refetchStages, loadedStages]);
+    setTableData(loadedDefaultMaterials || []);
+  }, [refetchDefaultMaterials, loadedDefaultMaterials]);
 
   useEffect(() => {
-    if (loadedStages) {
-      setTableData(loadedStages);
+    if (loadedDefaultMaterials) {
+      setTableData(loadedDefaultMaterials);
     }
-  }, [loadedStages]);
+  }, [loadedDefaultMaterials]);
 
   useEffect(() => {
-    const socket = new WebSocket(`wss://${CONFIG.apiHost}/api/projects/ws/stages/`);
-    // socket.onopen = () => {
-    //   console.log('WebSocket connected');
-    // };
+    const socket = new WebSocket(`wss://${CONFIG.apiHost}/api/projects/ws/default-materials/`);
     socket.onerror = (errorEvent) => {
       console.dir(errorEvent);
       console.error('WebSocket error (toString):', errorEvent.toString());
     };
-    // socket.onclose = (e) => {
-    //   console.log('WebSocket closed', e);
-    // };
     socket.onmessage = (event) => {
       const message = JSON.parse(event.data);
       if (message.type === 'created' || message.type === 'updated') {
@@ -198,7 +189,7 @@ export function StageListView() {
   const handleDeleteRow = useCallback(
     async (id) => {
       try {
-        await axios.delete(`${CONFIG.apiUrl}/projects/delete/stage/${id}/`, {
+        await axios.delete(`${CONFIG.apiUrl}/projects/delete/default-material/${id}/`, {
           data: {
             userReporter: userLogged?.data,
           }
@@ -209,7 +200,7 @@ export function StageListView() {
         toast.success('Delete success!');
       } catch (error) {
         console.error(error);
-        toast.error('Error deleting the stage');
+        toast.error('Error deleting the default guide product');
       }
     },
     [dataInPage.length, table, tableData, userLogged?.data]
@@ -217,7 +208,7 @@ export function StageListView() {
 
   const handleDeleteRows = useCallback(async () => {
     try {
-      await axios.delete(`${CONFIG.apiUrl}/projects/delete/stages/`, {
+      await axios.delete(`${CONFIG.apiUrl}/projects/delete/default-materials/`, {
         data: {
           ids: table.selected,
           userReporter: userLogged?.data,
@@ -236,21 +227,21 @@ export function StageListView() {
       toast.success('Delete success!');
     } catch (error) {
       console.error(error);
-      toast.error('Error deleting the stages');
+      toast.error('Error deleting the default guide products');
     }
   }, [dataFiltered.length, dataInPage.length, table, tableData, userLogged?.data]);
 
   const handleEditRow = useCallback(
     (id) => {
-      localStorage.setItem('currentStageId', id);
-      router.push(paths.dashboard.stage.edit(id));
+      localStorage.setItem('currentDefaultMaterialId', id);
+      router.push(paths.dashboard.defaultMaterial.edit(id));
     },
     [router]
   );
 
   const handleReturnList = useCallback(
     () => {
-      router.push(paths.dashboard.stage.list);
+      router.push(paths.dashboard.defaultMaterial.list);
     },
     [router]
   );
@@ -278,13 +269,13 @@ export function StageListView() {
       localStorage.removeItem('routeByOrder');
       localStorage.removeItem('routeByShipment');
       localStorage.removeItem('routeByShipmentBySku');
-      localStorage.setItem('stageStatus', filters.state.status);
-      router.push(paths.dashboard.stage.details(id));
+      localStorage.setItem('defaultMaterialStatus', filters.state.status);
+      router.push(paths.dashboard.defaultMaterial.details(id));
     },
     [router, filters]
   );
 
-  if (loadingStages) {
+  if (loadingDefaultMaterials) {
     return (
       <DashboardContent>
         <Box display="flex" alignItems="center" mb={5}>
@@ -296,12 +287,12 @@ export function StageListView() {
     );
   }
 
-  if (errorStages) {
+  if (errorDefaultMaterials) {
     return (
       <DashboardContent>
         <Box display="flex" alignItems="center" mb={5}>
           <Alert severity="error" sx={{ borderRadius: 0 }}>
-            <Typography>Error fetching items: {errorStages.message}</Typography>
+            <Typography>Error fetching items: {errorDefaultMaterials.message}</Typography>
           </Alert>
         </Box>
       </DashboardContent>
@@ -348,19 +339,19 @@ export function StageListView() {
           // heading="List"
           links={[
             { name: 'Dashboard', href: paths.dashboard.general.analytics },
-            { name: 'Installation Stage', href: paths.dashboard.stage.root },
+            { name: 'Default Material', href: paths.dashboard.defaultMaterial.root },
             { name: 'List' },
           ]}
           action={
             <Button
               component={RouterLink}
-              href={paths.dashboard.stage.new}
+              href={paths.dashboard.defaultMaterial.new}
               // color="inherit"
               // variant="outlined"
               variant="contained"
               startIcon={<Iconify icon="mingcute:add-line" />}
             >
-              New Installation Stage
+              New Default Material
             </Button>
           }
           sx={{ mb: { xs: 3, md: 5 } }}
@@ -419,7 +410,7 @@ export function StageListView() {
             </Box>
           </Box>
 
-          <StageTableToolbar
+          <DefaultMaterialTableToolbar
             filters={filters}
             onResetPage={table.onResetPage}
             options={{ values: STATUS_OPTIONS.map((option) => option.label) }}
@@ -427,15 +418,15 @@ export function StageListView() {
             headersCSV={headersCSV}
             setUpdating={setUpdating}
             setTitleLinearProgress={setTitleLinearProgress}
-            title={filters.state.status === 'all' ? 'All STages' :
-              filters.state.status === 'active' ? 'Active Stages' :
-                filters.state.status === 'inactive' ? 'Inactive Stages' :
+            title={filters.state.status === 'all' ? 'All Default Materials' :
+              filters.state.status === 'active' ? 'Active Default Materials' :
+                filters.state.status === 'inactive' ? 'Inactive Default Materials' :
                   filters.state.status
             }
           />
 
           {canReset && (
-            <StageTableFiltersResult
+            <DefaultMaterialTableFiltersResult
               filters={filters}
               totalResults={dataFiltered.length}
               onResetPage={table.onResetPage}
@@ -488,7 +479,7 @@ export function StageListView() {
                           table.page * table.rowsPerPage + table.rowsPerPage
                         )
                         .map((row) => (
-                          <StageTableRow
+                          <DefaultMaterialTableRow
                             key={row.id}
                             row={row}
                             selected={table.selected.includes(row.id)}
@@ -543,7 +534,7 @@ export function StageListView() {
         title="Delete"
         content={
           <>
-            Are you sure want to delete <strong> {table.selected.length} </strong> stages?
+            Are you sure want to delete <strong> {table.selected.length} </strong> default materials?
           </>
         }
         action={

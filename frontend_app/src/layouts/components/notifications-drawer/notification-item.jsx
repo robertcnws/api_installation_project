@@ -239,24 +239,6 @@ export function NotificationItem({ notification, drawer }) {
         )}>
         See in {projectExists ? 'Details' : 'List'}
       </Label>
-      {notification.notification.module === 'zoho_shipment' && (
-        <Label variant="outlined" color="success" sx={{ cursor: 'pointer' }} onClick={() => handleLink(notification.notification.module, 'listBySku')}>
-          See in SKUs
-        </Label>
-      )}
-      {(notification.notification.module === 'zoho_item' ||
-        notification.notification.module === 'system_timeline' ||
-        notification.notification.module === 'senitron_item_assets') && (
-          <Label variant="outlined" sx={{ cursor: 'pointer' }} onClick={() => handleLink(notification.notification.module, 'analytics')}>
-            See in Analytics
-          </Label>
-        )}
-      {(notification.notification.module === 'zoho_shipment' ||
-        notification.notification.module === 'senitron_item_assets_logs') && (
-          <Label variant="outlined" color="error" sx={{ cursor: 'pointer' }} onClick={() => handleLink(notification.notification.module, 'liveMonitor')}>
-            See in Live Monitor
-          </Label>
-        )}
     </Stack>
   );
 

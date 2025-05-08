@@ -9,10 +9,63 @@ from .models import (
     ProjectTracking,
     ProjectDefaultGuideProduct,
     ProjectReminder,
+    ProjectDefaultMaterial,
 )
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 import json
+
+
+##########################################################################
+# ProjectDefaultMaterial
+##########################################################################
+
+def project_default_material_saved(sender, document, **kwargs):
+    created = kwargs.get('created', False)
+    channel_layer = get_channel_layer()
+    event = {
+        'type': 'project_default_material_update',
+        'message': {
+            'type': 'created' if created else 'updated',
+            "item": {
+                "id": str(document.id),
+                "name": document.name,
+                "description": document.description,
+                "price": document.price,
+                "isActive": document.is_active,
+                "createdTime": document.created_time,
+                "lastModifiedTime": document.last_modified_time,
+                "quantity": document.quantity,
+                "isPackaged": document.is_packaged,
+                "packageQuantity": document.package_quantity,
+            }
+
+        }
+    }
+    async_to_sync(channel_layer.group_send)('project_default_material', serialize_datetime(event))
+    
+
+def project_default_material_deleted(sender, document, **kwargs):
+    channel_layer = get_channel_layer()
+    event = {
+        'type': 'project_default_material_update',
+        'message': {
+            'type': 'deleted',
+            "item": {
+                "id": str(document.id),
+                "name": document.name,
+                "description": document.description,
+                "price": document.price,
+                "isActive": document.is_active,
+                "createdTime": document.created_time,
+                "lastModifiedTime": document.last_modified_time,
+                "quantity": document.quantity,
+                "isPackaged": document.is_packaged,
+                "packageQuantity": document.package_quantity,
+            }
+        }
+    }
+    async_to_sync(channel_layer.group_send)('project_default_material', serialize_datetime(event))
 
 
 ##########################################################################
@@ -559,3 +612,5 @@ signals.post_save.connect(project_default_guide_product_saved, sender=ProjectDef
 signals.post_delete.connect(project_default_guide_product_deleted, sender=ProjectDefaultGuideProduct)
 signals.post_save.connect(project_reminder_saved, sender=ProjectReminder)
 signals.post_delete.connect(project_reminder_deleted, sender=ProjectReminder)
+signals.post_save.connect(project_default_material_saved, sender=ProjectDefaultMaterial)
+signals.post_delete.connect(project_default_material_deleted, sender=ProjectDefaultMaterial)

@@ -57,6 +57,7 @@ const ICONS = {
   serviceTask: icon('ic-service-task'),
   calendarOverview: icon('ic-calendar-overview'),
   measurement: icon('ic-measurements'),
+  defaultMaterial: icon('ic-material'),
 };
 
 const userLogged = JSON.parse(sessionStorage.getItem('userLogged'));
@@ -178,6 +179,22 @@ export const navData = () => [
                 {
                   title: 'Create',
                   path: paths.dashboard.defaultGuideProduct.new
+                },
+              ],
+            },
+            {
+              title: 'Default Materials',
+              path: paths.dashboard.defaultMaterial.root,
+              icon: ICONS.defaultMaterial,
+              open: true,
+              children: [
+                {
+                  title: 'List',
+                  path: paths.dashboard.defaultMaterial.root,
+                },
+                {
+                  title: 'Create',
+                  path: paths.dashboard.defaultMaterial.new
                 },
               ],
             },

@@ -117,6 +117,13 @@ export const paths = {
       details: (id) => `${ROOTS.DASHBOARD_CONFIG}/default-guide-product/${id}`,
       edit: (id) => `${ROOTS.DASHBOARD_CONFIG}/default-guide-product/${id}/edit`,
     },
+    defaultMaterial: {
+      root: `${ROOTS.DASHBOARD_CONFIG}/default-material`,
+      list: `${ROOTS.DASHBOARD_CONFIG}/default-material/list`,
+      new: `${ROOTS.DASHBOARD_CONFIG}/default-material/new`,
+      details: (id) => `${ROOTS.DASHBOARD_CONFIG}/default-material/${id}`,
+      edit: (id) => `${ROOTS.DASHBOARD_CONFIG}/default-material/${id}/edit`,
+    },
     stage: {
       root: `${ROOTS.DASHBOARD_CONFIG}/stage`,
       list: `${ROOTS.DASHBOARD_CONFIG}/stage/list`,

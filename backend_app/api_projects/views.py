@@ -22,6 +22,7 @@ from .models import (
     ProjectNotificationUser,
     ProjectDefaultGuideProduct,
     ProjectReminder,
+    ProjectDefaultMaterial,
 )
 from .s3_utils import (
     upload_attachment_to_s3, 
@@ -3741,6 +3742,184 @@ def download_s3_archive(request):
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     response['Access-Control-Expose-Headers'] = 'Content-Disposition'
     return response
+
+
+#############################################
+# CREATE DEFAULT MATERIAL
+#############################################
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def create_default_material(request):
+    data = request.data
+    user_reporter = data.get('userReporter', None)
+    try:
+        name = data.get('name')
+        description = data.get('description')
+        order = data.get('order', 0)
+        price = data.get('price', 0)
+        material = ProjectDefaultMaterial.objects(name=name).first()
+        if material:
+            return Response({'error': 'Default material already exists'}, status=404)
+        material = ProjectDefaultMaterial.objects(order=order).first()
+        if material:
+            return Response({'error': 'Default material with this order already exists'}, status=404)
+        material = ProjectDefaultMaterial(
+            name=name,
+            order=order,
+            price=price,    
+            description=description,
+            created_time=timezone.now(),
+            last_modified_time=timezone.now()
+        )
+        material.save()
+        tracking_info = transform_data_to_mongo(material)
+        tracking = ProjectTracking(
+            user_reporter=user_reporter,
+            action=f'create default material ({tracking_info["id"]} - {tracking_info["name"]})',
+            created_time=timezone.now(),
+            managed_data={
+                'data': tracking_info
+            },
+        )
+        tracking.save()
+        if user_reporter:
+            module='default_materials'
+            info=f'has created new default material {material.name}'
+            info_id=material.id
+            type='create_default_material'
+            create_notification(module, info_id, info, type, user_reporter['username'])
+        return Response({'message': 'Default material created successfully'})
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+    
+    
+#############################################
+# EDIT DEFAULT MATERIAL
+#############################################
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def edit_default_material(request, id):
+    data = request.data
+    user_reporter = data.get('userReporter', None)
+    try:
+        name = data.get('name')
+        description = data.get('description')
+        order = data.get('order', 0)
+        price = data.get('price', 0)
+        material = ProjectDefaultMaterial.objects(name=name).first()
+        if material and str(material.id) != id:
+            return Response({'error': 'Default material already exists'}, status=404)
+        material = ProjectDefaultMaterial.objects(order=order).first()
+        if material and str(material.id) != id:
+            return Response({'error': 'Default material with this order already exists'}, status=404)
+        material = ProjectDefaultMaterial.objects(id=id).first()
+        if not material:
+            return Response({'error': 'Stage not found'}, status=404)
+        material.name = name
+        material.price = price
+        material.description = description
+        material.order = order
+        material.save()
+        tracking_info = transform_data_to_mongo(material)
+        tracking = ProjectTracking(
+            user_reporter=user_reporter,
+            action=f'update default material ({tracking_info["id"]} - {tracking_info["name"]})',
+            created_time=timezone.now(),
+            managed_data={
+                'data': tracking_info
+            },
+        )
+        tracking.save()
+        if user_reporter:
+            module='default_materials'
+            info=f'has updated default material {material.name}'
+            info_id=material.id
+            type='update_default_material'
+            create_notification(module, info_id, info, type, user_reporter['username'])
+        return Response({'message': 'Default material updated successfully'})
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+    
+
+#############################################
+# DELETE DEFAULT MATERIAL
+#############################################
+
+@api_view(['DELETE'])
+@permission_classes([AllowAny])
+def delete_default_material(request, id):
+    data = request.data
+    user_reporter = data.get('userReporter', None)
+    try:
+        material = ProjectDefaultMaterial.objects(id=id).first()
+        if not material:
+            return Response({'error': 'Default material not found'}, status=404)
+        tracking_info = transform_data_to_mongo(material)
+        
+        tracking = ProjectTracking(
+            user_reporter=user_reporter,
+            action=f'delete default material ({tracking_info["id"]} - {tracking_info["name"]})',
+            created_time=timezone.now(),
+            managed_data={
+                'data': tracking_info
+            },
+        )
+        tracking.save()
+        
+        if user_reporter:
+            module='default_materials'
+            info=f'has deleted default material {material.name}'
+            info_id=material.id
+            type='delete_default_material'
+            create_notification(module, info_id, info, type, user_reporter['username'])
+            
+        material.delete()
+        
+        return Response({'message': 'Default material deleted successfully'})
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+    
+#############################################
+# DELETE DEFAULT MATERIAL
+#############################################
+
+@api_view(['DELETE'])
+@permission_classes([AllowAny])
+def delete_default_materials(request):
+    data = request.data
+    ids = data.get('ids', [])
+    user_reporter = data.get('userReporter', None)
+    try:
+        materials = ProjectDefaultMaterial.objects(id__in=ids).all()
+        if not materials:
+            return Response({'error': 'Default materials not found'}, status=404)
+        tracking_info = [transform_data_to_mongo(p) for p in materials]
+        
+        tracking = ProjectTracking(
+            user_reporter=user_reporter,
+            action=f'delete list default materials',
+            created_time=timezone.now(),
+            managed_data={
+                'data': tracking_info
+            },
+        )
+        tracking.save()
+        
+        if user_reporter:
+            module='default_materials'
+            info=f'has deleted {len(ids)} default materials'
+            info_id='list'
+            type='delete_default_materials'
+            create_notification(module, info_id, info, type, user_reporter['username'])
+            
+        ProjectDefaultMaterial.objects(id__in=ids).delete()
+        
+        return Response({'message': 'Default materials deleted successfully'})
+    
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
     
     
 

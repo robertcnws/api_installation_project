@@ -17,6 +17,7 @@ from .models import (
     ProjectDefaultTask,
     ProjectDefaultGuideProduct,
     ProjectReminder,
+    ProjectDefaultMaterial,
 )
 from api_authorization.models import LoginUser
 from .data_util import serialize_datetime, dynamic_field_to_json
@@ -30,6 +31,29 @@ def convert_dynamic_field(field, registry=None, executor=None):
         description=getattr(field, 'help_text', ''),
         required=field.required
     )
+    
+
+class ProjectDefaultMaterialType(MongoengineObjectType):
+    class Meta:
+        model = ProjectDefaultMaterial
+        
+    created_time = graphene.String()
+    last_modified_time = graphene.String()
+    
+    def resolve_created_time(self, info):
+        dt = self.created_time
+        if timezone.is_naive(dt):
+            dt = timezone.make_aware(dt, dt_timezone.utc) 
+        local_dt = timezone.localtime(dt)  
+        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
+    
+    def resolve_last_modified_time(self, info):
+        dt = self.last_modified_time
+        if timezone.is_naive(dt):
+            dt = timezone.make_aware(dt, dt_timezone.utc) 
+        local_dt = timezone.localtime(dt)  
+        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
+    
         
 class ProjectPermissionsType(MongoengineObjectType):
     class Meta:
@@ -452,6 +476,8 @@ class Query(graphene.ObjectType):
         username=graphene.String(required=True), 
     )
     
+    all_project_default_materials = graphene.List(ProjectDefaultMaterialType)
+    
     def resolve_all_project_reminders(self, info, username=None):
         if username:
             try:
@@ -526,5 +552,8 @@ class Query(graphene.ObjectType):
             return ProjectUser.objects.get(username=username)
         except Exception:
             return None
+        
+    def resolve_all_project_default_materials(self, info):
+        return list(ProjectDefaultMaterial.objects(is_active=True))
 
 schema = graphene.Schema(query=Query)

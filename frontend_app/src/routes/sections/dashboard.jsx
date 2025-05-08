@@ -51,6 +51,9 @@ const UserRoleDefaultCreatePage = lazy(() => import('src/pages/dashboard/user-ro
 // Default Guide Product
 const DefaultGuideProductListPage = lazy(() => import('src/pages/dashboard/default-guide-product/list'));
 const DefaultGuideProductCreatePage = lazy(() => import('src/pages/dashboard/default-guide-product/new'));
+// Default Material
+const DefaultMaterialListPage = lazy(() => import('src/pages/dashboard/default-material/list'));
+const DefaultMaterialCreatePage = lazy(() => import('src/pages/dashboard/default-material/new'));
 // Service
 const ServicePage = lazy(() => import('src/pages/dashboard/service'));
 const ServiceCreatePage = lazy(() => import('src/pages/dashboard/service/new'));
@@ -364,6 +367,43 @@ export const dashboardRoutes = (listPermissions, user) => [
                 ).includes(
                   CONFIG.roles.superadmin
                 ) ? <DefaultGuideProductCreatePage /> : <Page403 />
+              },
+            ],
+          },
+          {
+            path: 'config/default-material',
+            children: [
+              {
+                element: listRolesAndSubroles(
+                  user?.user_role?.name
+                ).includes(
+                  CONFIG.roles.superadmin
+                ) ? <DefaultMaterialListPage /> : <Page403 />,
+                index: true
+              },
+              {
+                path: 'list',
+                element: listRolesAndSubroles(
+                  user?.user_role?.name
+                ).includes(
+                  CONFIG.roles.superadmin
+                ) ? <DefaultMaterialListPage /> : <Page403 />
+              },
+              {
+                path: 'new',
+                element: listRolesAndSubroles(
+                  user?.user_role?.name
+                ).includes(
+                  CONFIG.roles.superadmin
+                ) ? <DefaultMaterialCreatePage /> : <Page403 />
+              },
+              {
+                path: ':id/edit',
+                element: listRolesAndSubroles(
+                  user?.user_role?.name
+                ).includes(
+                  CONFIG.roles.superadmin
+                ) ? <DefaultMaterialCreatePage /> : <Page403 />
               },
             ],
           },

@@ -88,7 +88,7 @@ export function DefaultGuideProductListView() {
   ];
 
   const TABLE_HEAD_MOBILE = [
-    { id: 'info', label: 'SKUs' },
+    { id: 'info', label: 'Guide Products' },
     { id: '' },
   ];
 

@@ -70,6 +70,12 @@ urlpatterns = [
     path('delete/default-guide-product/<str:id>/', views.delete_default_guide_product, name='delete_default_guide_product'),
     path('delete/default-guide-products/', views.delete_default_guide_products, name='delete_default_guide_products'),
     path('remove/project/<str:projectId>/guide-product/<str:id>/', views.remove_guide_product_project, name='remove_guide_product_project'),
+    # PROJECT DEFAULT GUIDE PRODUCTS
+    path('create/default-material/', views.create_default_material, name='create_default_guide_product'),
+    path('edit/default-material/<str:id>/', views.edit_default_material, name='edit_default_guide_product'),
+    path('delete/default-material/<str:id>/', views.delete_default_material, name='delete_default_guide_product'),
+    path('delete/default-materials/', views.delete_default_materials, name='delete_default_guide_products'),
+    # path('remove/project/<str:projectId>/material/<str:id>/', views.remove_material_project, name='remove_material_project'),
     # DOWNLOAD BACKUP
     path('download/backup/', views.download_mongo_db, name='download_mongo_db'),
     # GET FILE URL FROM AWS S3

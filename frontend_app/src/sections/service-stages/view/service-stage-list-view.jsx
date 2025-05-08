@@ -90,7 +90,7 @@ export function ServiceStageListView() {
   ];
 
   const TABLE_HEAD_MOBILE = [
-    { id: 'info', label: 'SKUs' },
+    { id: 'info', label: 'Service Stages' },
     { id: '' },
   ];
 

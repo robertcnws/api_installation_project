@@ -510,3 +510,27 @@ class ProjectReminder(Document):
 
     def __str__(self):
         return self.project.name
+    
+    
+class ProjectDefaultMaterial(Document):
+    name = StringField(max_length=255, required=True)
+    description = StringField(max_length=255, null=True)
+    price = FloatField(default=0.0)
+    quantity = IntField(default=0)
+    is_packaged = BooleanField(default=False, null=True)
+    package_quantity = IntField(default=0, null=True)
+    is_active = BooleanField(default=True)
+    created_time = DateTimeField(default=timezone.now, null=True)
+    last_modified_time = DateTimeField(default=timezone.now, null=True)
+    
+    meta = {
+        'collection': 'project_default_material',
+        'indexes': [
+            'name', 'created_time', 'last_modified_time', 'is_active'
+        ],
+        'verbose_name': 'Project Default Material',
+        'verbose_name_plural': 'Project Default Materials'
+    }
+
+    def __str__(self):
+        return self.name

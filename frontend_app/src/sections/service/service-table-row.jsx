@@ -237,7 +237,16 @@ export function ServiceTableRow({
         </TableCell>
 
         <TableCell
+          // onClick={handleClick} 
           onClick={onViewRow}
+          sx={{
+            whiteSpace: 'nowrap',
+            cursor: 'pointer',
+            fontWeight: row?.endDate ? ((fIsAfter(today, dayjs(row?.endDate).format('YYYY-MM-DD')) && (
+              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
+              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.repair.toLowerCase()) !== -1
+            )) ? 'fontWeightBold' : 'inherit') : 'inherit',
+          }}
         >
           <Label color={
             row?.byFactory ? 'success' : 'error'
@@ -251,6 +260,23 @@ export function ServiceTableRow({
               // onClick={handleClick} 
               onClick={onViewRow}
               sx={{
+                whiteSpace: 'nowrap',
+                cursor: 'pointer',
+                fontWeight: row?.endDate ? ((fIsAfter(today, dayjs(row?.endDate).format('YYYY-MM-DD')) && (
+                  row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
+                  row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.repair.toLowerCase()) !== -1
+                )) ? 'fontWeightBold' : 'inherit') : 'inherit',
+              }}
+            >
+              <Label color={
+                row?.serviceType === 'installed_by_us' ? 'success' : 'error'
+              }>{row?.serviceType === 'installed_by_us' ? 'YES' : 'NO'}</Label>
+
+            </TableCell>
+            <TableCell
+              // onClick={handleClick} 
+              onClick={onViewRow}
+              sx={{
                 cursor: 'pointer',
                 maxWidth: 200,
                 fontWeight: row?.endDate ? ((fIsAfter(today, dayjs(row?.endDate).format('YYYY-MM-DD')) && (
@@ -260,6 +286,20 @@ export function ServiceTableRow({
               }}
             >
               {row?.name}
+            </TableCell>
+            <TableCell
+              // onClick={handleClick} 
+              onClick={onViewRow}
+              sx={{
+                cursor: 'pointer',
+                maxWidth: 200,
+                fontWeight: row?.endDate ? ((fIsAfter(today, dayjs(row?.endDate).format('YYYY-MM-DD')) && (
+                  row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
+                  row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.repair.toLowerCase()) !== -1
+                )) ? 'fontWeightBold' : 'inherit') : 'inherit',
+              }}
+            >
+              {fDate(row?.createdTime)}
             </TableCell>
             <TableCell
               // onClick={handleClick} 

@@ -504,7 +504,9 @@ export function ServiceDetailsView({ serviceId }) {
                                     localStorage.getItem('backFromServiceDetails') === 'analytics' ? paths.dashboard.general.analytics :
                                         localStorage.getItem('backFromProjectDetails') === 'calendarDashboard' ? paths.dashboard.general.calendar :
                                             localStorage.getItem('backFromServiceDetails') === 'projectDetails' ?
-                                                paths.dashboard.project.details(localStorage.getItem('projectId')) : paths.dashboard.service.list
+                                                paths.dashboard.project.details(localStorage.getItem('projectId')) :
+                                                localStorage.getItem('backFromServiceDetails') === 'measurements' ?
+                                                    paths.dashboard.measurement.list : paths.dashboard.service.list
                                 }
                                 editLink={paths.dashboard.service.edit(`${itemById?.id}`)}
                                 openEdit={tabs.value === 'overview' ? openEdit : tabs.value === 'tasks' ? openEditTask : null}

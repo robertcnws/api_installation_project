@@ -90,7 +90,7 @@ export function StageTaskListView() {
   ];
 
   const TABLE_HEAD_MOBILE = [
-    { id: 'info', label: 'SKUs' },
+    { id: 'info', label: 'Task Stages' },
     { id: '' },
   ];
 

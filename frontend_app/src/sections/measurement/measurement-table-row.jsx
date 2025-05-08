@@ -19,6 +19,7 @@ import { useCopyToClipboard } from 'src/hooks/use-copy-to-clipboard';
 
 import { fDate } from 'src/utils/format-time';
 import { listRolesAndSubroles } from 'src/utils/check-permissions';
+import { paths } from 'src/routes/paths';
 
 import { CONFIG } from 'src/config-global';
 import { varAlpha } from 'src/theme/styles';
@@ -29,6 +30,8 @@ import { ConfirmDialog } from 'src/components/custom-dialog';
 import { usePopover, CustomPopover } from 'src/components/custom-popover';
 
 import { LoadingContext } from 'src/auth/context/loading-context';
+import { Label } from 'src/components/label';
+import { useRouter } from 'src/routes/hooks';
 
 // import { ProjectShareDialog } from './project-share-dialog';
 // import { ProjectFileDetails } from './project-file-details';
@@ -49,35 +52,9 @@ export function MeasurementTableRow({
   onViewRow,
 }) {
 
-  const [rowUpdated, setRowUpdated] = useState(null);
-
   const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
 
-  const today = dayjs().format('YYYY-MM-DD');
-
-  // const endDate = dayjs(row?.endDate).format('YYYY-MM-DD');
-
-  // console.log('now', today);
-  // console.log('endDate', endDate);
-  // console.log('fIsAfter', fIsAfter(now, endDate));
-
-  // useEffect(() => {
-  //   if (item) {
-  //     setRow(item);
-  //   }
-  // }, [item]);
-
-  // useEffect(() => {
-  //   if (refetchProject) {
-  //     refetchProject();
-  //   } 
-  // }, [refetchProject]);
-
-  // useEffect(() => {
-  //   if (project) {
-  //     setRow(project);
-  //   }
-  // }, [project]);
+  const router = useRouter();
 
   const theme = useTheme();
 
@@ -85,23 +62,31 @@ export function MeasurementTableRow({
 
   const { copy } = useCopyToClipboard();
 
-  const [inviteEmail, setInviteEmail] = useState('');
-
-  const favorite = useBoolean(row?.isFavorited);
-
   const details = useBoolean();
 
-  const share = useBoolean();
-
   const confirm = useBoolean();
+
+  const confirmCustomerAssociated = useBoolean();
 
   const confirmClose = useBoolean();
 
   const popover = usePopover();
 
-  const handleChangeInvite = useCallback((event) => {
-    setInviteEmail(event.target.value);
-  }, []);
+  const handleSeeAssociated = useCallback(() => {
+    if (row?.project?.id ) {
+      localStorage.setItem('projectId', row?.project?.id);
+      localStorage.setItem('backFromProjectDetails', 'measurements');
+      router.push(paths.dashboard.project.details(row?.project?.id));
+    }
+    else if (row?.service?.id) {
+      localStorage.setItem('serviceId', row?.service?.id);
+      localStorage.setItem('backFromServiceDetails', 'measurements');
+      router.push(paths.dashboard.service.details(row?.service?.id));
+    }
+    else  {
+      confirmCustomerAssociated.onTrue();
+    }
+  }, [router, row, confirmCustomerAssociated]);
 
   const handleClick = useDoubleClick({
     click: () => {
@@ -260,27 +245,42 @@ export function MeasurementTableRow({
         {!isMobile && (
           <>
             <TableCell
-              onClick={onViewRow}
+              onClick={handleSeeAssociated}
               sx={{
                 whiteSpace: 'nowrap',
                 cursor: 'pointer',
                 fontWeight: 'inherit',
               }}
             >
-              <Stack direction="row" alignItems="center" spacing={2}>
-
-                <Typography
-                  noWrap
-                  variant="inherit"
-                  sx={{
-                    maxWidth: 360,
-                    cursor: 'pointer',
-                    ...(details.value && { fontWeight: 'fontWeightBold' }),
-                  }}
-                >
-                  {row?.project?.id ? `Installation: ${row?.project?.number}` : row?.service?.id ? `Service: ${row?.service?.number}` : 'No Installation/Service'}
-                </Typography>
-              </Stack>
+              <Tooltip title="Click to see details..." arrow>
+                <Stack direction="row" alignItems="center" spacing={2}>
+                  <Typography
+                    noWrap
+                    variant="inherit"
+                    sx={{
+                      maxWidth: 360,
+                      cursor: 'pointer',
+                      ...(details.value && { fontWeight: 'fontWeightBold' }),
+                    }}
+                  >
+                    <Label
+                      variant="soft"
+                      color={
+                        row?.project?.id ? 'success' :
+                          row?.service?.id ? 'warning' :
+                            'default'
+                      }
+                      sx={{ cursor: 'pointer' }}
+                    >
+                      {
+                        row?.project?.id ? `Installation: ${row?.project?.number}` :
+                          row?.service?.id ? `Service: ${row?.service?.number}` :
+                            'To Customer'
+                      }
+                    </Label>
+                  </Typography>
+                </Stack>
+              </Tooltip>
             </TableCell>
 
             <TableCell
@@ -375,6 +375,31 @@ export function MeasurementTableRow({
           </Button>
         }
       />
+
+      <ConfirmDialog
+        open={confirmCustomerAssociated.value}
+        onClose={confirmCustomerAssociated.onFalse}
+        title="Customer Associated"
+        content={
+          <>
+            <Typography variant="body2" sx={{ mb: 1 }}>
+              {row?.number} is associated with a customer.
+            </Typography>
+            <Stack direction="column" spacing={1}>
+              <Typography variant="caption">
+                Name: <b>{row?.customer?.name}</b>
+              </Typography>
+              <Typography variant="caption">
+                Address: <b>{row?.customer?.address}</b>
+              </Typography>
+              <Typography variant="caption">
+                Phone: <b>{row?.customer?.phone}</b>
+              </Typography>
+            </Stack>
+          </>
+        }
+      />
+
     </>
   );
 }

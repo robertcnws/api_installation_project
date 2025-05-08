@@ -11,7 +11,7 @@ import { Box, Chip, Table, Radio, Button, Switch, Tooltip, TableRow, ListItem, T
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
-import { fDate, fIsAfter, fDuration } from 'src/utils/format-time';
+import { fDate, fIsAfter, fDuration, fDateTime } from 'src/utils/format-time';
 import { getServiceInstaller } from 'src/utils/service-tasks-utils';
 import { filteredDescriptionJson } from 'src/utils/project-tasks-utils';
 import { isInstaller, listRolesAndSubroles } from 'src/utils/check-permissions';
@@ -1030,6 +1030,24 @@ export function ServiceDetailsContent({
         >
           {listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator) ? service?.serviceAttachments?.length > 0 ? 'Edit' : 'Add' : ''} Files
         </Label>
+      </Box>
+      <Box sx={{ display: 'flex', flexDirection: 'row', gap: 2, }}>
+        <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, mt: 0, mb: -1, textAlign: 'right' }}>
+          <Typography variant="caption" color="text.primary" sx={{ mt: 0.3 }}>
+            Created:
+          </Typography>
+          <Label variant="filled" sx={{ bgcolor: 'whitesmoke', color: 'text.primary' }}>
+            {fDateTime(service?.createdTime)}
+          </Label>
+        </Box>
+        <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, mt: 0, mb: -1, textAlign: 'right' }}>
+          <Typography variant="caption" color="text.primary" sx={{ mt: 0.3 }}>
+            Updated:
+          </Typography>
+          <Label variant="filled" sx={{ bgcolor: 'whitesmoke', color: 'text.primary' }}>
+            {fDateTime(service?.lastModifiedTime)}
+          </Label>
+        </Box>
       </Box>
     </Card>
   );

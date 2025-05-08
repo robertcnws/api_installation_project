@@ -10,6 +10,7 @@ from .consumers import (
     ProjectTrackingConsumer,
     ProjectDefaultGuideProductConsumer,
     ProjectReminderConsumer,
+    ProjectDefaultMaterialConsumer,
 )
 
 websocket_urlpatterns = [
@@ -22,4 +23,5 @@ websocket_urlpatterns = [
     path('api/projects/ws/project/<str:project_id>/', ProjectByIdConsumer.as_asgi(), name='ws_project_by_id'),
     path('api/projects/ws/default-guide-products/', ProjectDefaultGuideProductConsumer.as_asgi(), name='ws_default_guide_products'),
     path('api/projects/ws/project-reminders/', ProjectReminderConsumer.as_asgi(), name='ws_project_reminders'),
+    path('api/projects/ws/default-materials/', ProjectDefaultMaterialConsumer.as_asgi(), name='ws_default_materials'),
 ]

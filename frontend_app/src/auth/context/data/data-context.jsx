@@ -17,6 +17,7 @@ import { useProjectReminders, ProjectRemindersProvider } from './contexts/projec
 import { useProjectPermissions, ProjectPermissionsProvider } from './contexts/project-permission-context';
 import { useServiceDefaultTasks, ServiceDefaultTasksProvider } from './contexts/service-default-task-context';
 import { useDefaultGuideProducts, DefaultGuideProductsProvider } from './contexts/default-guide-product-context';
+import { useDefaultMaterials, DefaultMaterialsProvider } from './contexts/default-material-context';
 
 const DataContext = createContext();
 export const useDataContext = () => useContext(DataContext);
@@ -34,17 +35,19 @@ export function DataProvider({ children }) {
                       <ProjectRemindersProvider>
                         <DefaultTasksProvider>
                           <DefaultGuideProductsProvider>
+                            <DefaultMaterialsProvider>
                               <ServiceStagesProvider>
                                 <ServiceDefaultTasksProvider>
                                   <ServiceIssuesProvider>
-                                        <TracksProvider>
-                                          <IntegrationProvider>
-                                            <CombineProviders>{children}</CombineProviders>
-                                          </IntegrationProvider>
-                                        </TracksProvider>
+                                    <TracksProvider>
+                                      <IntegrationProvider>
+                                        <CombineProviders>{children}</CombineProviders>
+                                      </IntegrationProvider>
+                                    </TracksProvider>
                                   </ServiceIssuesProvider>
                                 </ServiceDefaultTasksProvider>
                               </ServiceStagesProvider>
+                            </DefaultMaterialsProvider>
                           </DefaultGuideProductsProvider>
                         </DefaultTasksProvider>
                       </ProjectRemindersProvider>
