@@ -39,6 +39,7 @@ class ProjectDefaultMaterialType(MongoengineObjectType):
         
     created_time = graphene.String()
     last_modified_time = graphene.String()
+    default_guide_products = GenericScalar()
     
     def resolve_created_time(self, info):
         dt = self.created_time
@@ -53,6 +54,11 @@ class ProjectDefaultMaterialType(MongoengineObjectType):
             dt = timezone.make_aware(dt, dt_timezone.utc) 
         local_dt = timezone.localtime(dt)  
         return local_dt.strftime('%Y-%m-%d %H:%M:%S')
+    
+    def resolve_default_guide_products(self, info):
+        default_guide_products = self.default_guide_products or []
+        default_guide_products = serialize_datetime(default_guide_products)
+        return dynamic_field_to_json(default_guide_products)
     
         
 class ProjectPermissionsType(MongoengineObjectType):

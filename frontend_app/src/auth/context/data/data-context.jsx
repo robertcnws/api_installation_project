@@ -81,6 +81,7 @@ function CombineProviders({ children }) {
   const { loadedServiceStages, refetchServiceStages } = useServiceStages();
   const { loadedServiceDefaultTasks, refetchServiceDefaultTasks } = useServiceDefaultTasks();
   const { loadedServiceIssues, refetchServiceIssues } = useServiceIssues();
+  const { loadedDefaultMaterials, refetchDefaultMaterials, loadingDefaultMaterials, errorDefaultMaterials } = useDefaultMaterials();
 
   // console.log('loadedPermissions', loadedPermissions);
   
@@ -147,6 +148,10 @@ function CombineProviders({ children }) {
     errorMeasurements,
     listPermissions,
     isLoadingSalesOrders,
+    loadedDefaultMaterials,
+    refetchDefaultMaterials,
+    loadingDefaultMaterials,
+    errorDefaultMaterials,
   }), [
     userLogged,
     loadedUsers,
@@ -210,6 +215,10 @@ function CombineProviders({ children }) {
     errorMeasurements,
     listPermissions,
     isLoadingSalesOrders,
+    loadedDefaultMaterials,
+    refetchDefaultMaterials,
+    loadingDefaultMaterials,
+    errorDefaultMaterials,
   ]);
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>;
