@@ -167,8 +167,7 @@ pipeline {
             subject: "✅ Build #${env.BUILD_NUMBER} Success – ${env.JOB_NAME}",
             to: '$DEFAULT_RECIPIENTS',
             from: 'Jenkins NWS CI/CD <nnws15815@gmail.com>',
-            body: """
-              <!DOCTYPE html>
+            body: '''<!DOCTYPE html>
               <html>
                 <head>
                   <style>
@@ -185,7 +184,7 @@ pipeline {
                 <body>
                   <!-- encabezado con logo -->
                   <div class="header">
-                    Jenkins CI Notification
+                    Jenkins CI/CD Notification
                   </div>
                   <div class="content">
                     <h1>Build #${env.BUILD_NUMBER} – Success 🎉</h1>
@@ -194,14 +193,14 @@ pipeline {
                     
                     <h2>Commits included:</h2>
                     <div class="changelog">
-                      \${CHANGES, showPaths=true, format:
-                          '<div style="margin-bottom:8px">'
-                          + '<strong>%an</strong> '
-                          + '<a href="https://git.example.com/commit/%H">%h</a><br/>'
-                          + '%m<br/>'
-                          + '<small>%p</small>'
-                          + '</div>'
-                        }
+                      ${CHANGES, showPaths=true, format:
+                        '<div style="margin-bottom:8px">'
+                        + '<strong>%an</strong> '
+                        + '<a href="https://git.example.com/commit/%H">%h</a><br/>'
+                        + '%m<br/>'
+                        + '<small>%p</small>'
+                        + '</div>'
+                      }
                       <div class="commit">  
                     </div>
                   </div>
@@ -211,7 +210,7 @@ pipeline {
                   </div>
                 </body>
               </html>
-            """
+            '''
           )
         }
       }
