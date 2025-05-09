@@ -32,17 +32,21 @@ class ServiceIssueType(MongoengineObjectType):
     
     def resolve_created_time(self, info):
         dt = self.created_time
-        if timezone.is_naive(dt):
-            dt = timezone.make_aware(dt, dt_timezone.utc) 
-        local_dt = timezone.localtime(dt)  
-        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
+        if dt is not None:
+            if timezone.is_naive(dt):
+                dt = timezone.make_aware(dt, dt_timezone.utc) 
+            local_dt = timezone.localtime(dt)  
+            return local_dt.strftime('%Y-%m-%d %H:%M:%S')
+        return None
     
     def resolve_last_modified_time(self, info):
         dt = self.last_modified_time
-        if timezone.is_naive(dt):
-            dt = timezone.make_aware(dt, dt_timezone.utc) 
-        local_dt = timezone.localtime(dt)  
-        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
+        if dt is not None:
+            if timezone.is_naive(dt):
+                dt = timezone.make_aware(dt, dt_timezone.utc) 
+            local_dt = timezone.localtime(dt)  
+            return local_dt.strftime('%Y-%m-%d %H:%M:%S')
+        return None
         
 
 class ServiceStageType(MongoengineObjectType):
@@ -54,17 +58,21 @@ class ServiceStageType(MongoengineObjectType):
     
     def resolve_created_time(self, info):
         dt = self.created_time
-        if timezone.is_naive(dt):
-            dt = timezone.make_aware(dt, dt_timezone.utc) 
-        local_dt = timezone.localtime(dt)  
-        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
+        if dt is not None:
+            if timezone.is_naive(dt):
+                dt = timezone.make_aware(dt, dt_timezone.utc) 
+            local_dt = timezone.localtime(dt)  
+            return local_dt.strftime('%Y-%m-%d %H:%M:%S')
+        return None
     
     def resolve_last_modified_time(self, info):
         dt = self.last_modified_time
-        if timezone.is_naive(dt):
-            dt = timezone.make_aware(dt, dt_timezone.utc) 
-        local_dt = timezone.localtime(dt)  
-        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
+        if dt is not None:
+            if timezone.is_naive(dt):
+                dt = timezone.make_aware(dt, dt_timezone.utc) 
+            local_dt = timezone.localtime(dt)  
+            return local_dt.strftime('%Y-%m-%d %H:%M:%S')
+        return None
         
 
 class ServiceDefaultTaskType(MongoengineObjectType):
@@ -76,17 +84,21 @@ class ServiceDefaultTaskType(MongoengineObjectType):
     
     def resolve_created_time(self, info):
         dt = self.created_time
-        if timezone.is_naive(dt):
-            dt = timezone.make_aware(dt, dt_timezone.utc) 
-        local_dt = timezone.localtime(dt)  
-        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
+        if dt is not None:
+            if timezone.is_naive(dt):
+                dt = timezone.make_aware(dt, dt_timezone.utc) 
+            local_dt = timezone.localtime(dt)  
+            return local_dt.strftime('%Y-%m-%d %H:%M:%S')
+        return None
     
     def resolve_last_modified_time(self, info):
         dt = self.last_modified_time
-        if timezone.is_naive(dt):
-            dt = timezone.make_aware(dt, dt_timezone.utc) 
-        local_dt = timezone.localtime(dt)  
-        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
+        if dt is not None:
+            if timezone.is_naive(dt):
+                dt = timezone.make_aware(dt, dt_timezone.utc) 
+            local_dt = timezone.localtime(dt)  
+            return local_dt.strftime('%Y-%m-%d %H:%M:%S')
+        return None
     
     def resolve_service_stage(self, info):
         service_stage = self.service_stage or {}
@@ -118,17 +130,21 @@ class ServiceType(MongoengineObjectType):
     
     def resolve_created_time(self, info):
         dt = self.created_time
-        if timezone.is_naive(dt):
-            dt = timezone.make_aware(dt, dt_timezone.utc) 
-        local_dt = timezone.localtime(dt)  
-        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
+        if dt is not None:
+            if timezone.is_naive(dt):
+                dt = timezone.make_aware(dt, dt_timezone.utc) 
+            local_dt = timezone.localtime(dt)  
+            return local_dt.strftime('%Y-%m-%d %H:%M:%S')
+        return None
     
     def resolve_last_modified_time(self, info):
         dt = self.last_modified_time
-        if timezone.is_naive(dt):
-            dt = timezone.make_aware(dt, dt_timezone.utc) 
-        local_dt = timezone.localtime(dt)  
-        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
+        if dt is not None:
+            if timezone.is_naive(dt):
+                dt = timezone.make_aware(dt, dt_timezone.utc) 
+            local_dt = timezone.localtime(dt)  
+            return local_dt.strftime('%Y-%m-%d %H:%M:%S')
+        return None
     
     def resolve_client(self, info):
         client = self.client or {}
