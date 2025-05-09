@@ -192,7 +192,7 @@ pipeline {
                     <h2>Commits included:</h2>
                     <div class="changelog">
                       <ul>
-                        ${CHANGES, showPaths="true", format="<li class='commit'><span class='commit-author'>%an</span> – <em>%m</em> (<code>%h</code>)<br/><small>%p</small></li>"}
+                        ${CHANGES, showPaths="true", format="<li class='commit'><span class='commit-author'>%a</span> – (<code>%r</code>)<br/><pre style='background:#eee;padding:8px;'>%m</pre><br/><small>Files:<br/>%p</small><br/></li>"}
                       </ul>
                     </div>
                   </div>

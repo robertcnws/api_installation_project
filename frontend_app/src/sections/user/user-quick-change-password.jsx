@@ -68,7 +68,7 @@ export function UserQuickChangePasswordForm({ currentUser, open, onClose, isSame
 
   const onSubmit = handleSubmit(async (data) => {
     const { id } = currentUser;
-    console.log('isSameUser', isSameUser);
+    
     const payload = {
       ...data,
       isSameUser: isSameUser ? 'same' : 'different',

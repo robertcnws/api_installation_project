@@ -1034,9 +1034,9 @@ def change_project_installation_guide_form(request, id):
     
     project_guide_products = json.loads(data.get('projectGuideProducts', [])) if data.get('projectGuideProducts') else project.project_guide_products
     
-    deleted_products = [p for p in project.project_guide_products if p.get('deleted', False) == True]
-    
-    project_guide_products.extend(deleted_products)
+    if project.project_guide_products is not None or isinstance(project.project_guide_products, list):
+        deleted_products = [p for p in project.project_guide_products if p.get('deleted', False) == True]
+        project_guide_products.extend(deleted_products)
     
     project.work_scope = work_scope
     project.project_materials_other_notes = other_notes

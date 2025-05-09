@@ -78,8 +78,6 @@ export function MeasurementDetailsToolbar({
     );
   }, [measurementFilteredList, searchText]);
 
-  console.log('searchedMeasurementFilteredList', searchedMeasurementFilteredList);
-
   return (
     <>
       {/* <Divider sx={{ borderStyle: 'dashed', mb: 1 }} /> */}

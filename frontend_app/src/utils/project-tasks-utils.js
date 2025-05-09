@@ -1,3 +1,5 @@
+import stringSimilarity from 'string-similarity';
+
 export const availableTasks = (project, projectTasks, CONFIG) => {
     const initialTasks = projectTasks?.filter((t) => t.project_default_task?.is_active);
     const tasks = initialTasks?.map((t) => ({
@@ -126,3 +128,47 @@ export const previousTasksInStatus = (task, projectTasks, status, inStagePermiss
     const tasks = previousTasks(task, projectTasks, inStagePermission, CONFIG);
     return tasks?.filter((t) => t.status === status);
 }
+
+
+
+/**
+ * @param {Array<Object>} productData        // tu primer array
+ * @param {Array<Object>} loadedDefaultMaterials  // tu segundo array
+ * @returns {Array<Object<{id,name,quantity,ticket,cost,store,notes}>>}
+ */
+export function buildMaterialsReport(productData, loadedDefaultMaterials) {
+    const THRESHOLD = 0.8;
+    const items = loadedDefaultMaterials.flatMap(mat => {
+      const matches = mat.defaultGuideProducts.filter(dgp => {
+        if (productData.some(pd => pd.id === dgp.order)) return true;
+        return productData.some(pd =>
+          stringSimilarity.compareTwoStrings(dgp.name.toLowerCase(), pd.name.toLowerCase()) >= THRESHOLD
+        );
+      });
+      return matches.map(dgp => {
+        const pd = productData.find(pdi =>
+          pdi.id === dgp.order ||
+          stringSimilarity.compareTwoStrings(dgp.name.toLowerCase(), pdi.name.toLowerCase()) >= THRESHOLD
+        );
+        const baseQty = mat.quantity * pd.quantity;
+        const quantity = mat.isPackaged
+          ? Math.ceil(baseQty / mat.packageQuantity)
+          : baseQty;
+        return {
+          id: mat.id,
+          name: mat.name,
+          quantity,
+          ticket: '',
+          cost: mat.price,
+          store: '',
+          notes: pd.notes
+        };
+      });
+    });
+    const grouped = items.reduce((acc, cur) => {
+      if (!acc[cur.id]) acc[cur.id] = { ...cur };
+      else acc[cur.id].quantity += cur.quantity;
+      return acc;
+    }, {});
+    return Object.values(grouped);
+  }

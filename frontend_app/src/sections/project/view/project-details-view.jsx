@@ -58,6 +58,7 @@ export function ProjectDetailsView({ projectId }) {
         loadedProjects,
         listPermissions,
         loadedDefaultGuideProducts,
+        loadedDefaultMaterials,
         loadedTracks,
         loadedMeasurements,
         loadedServices,
@@ -606,6 +607,7 @@ export function ProjectDetailsView({ projectId }) {
                                         openDialogs={openDialogs}
                                         setOpenDialogs={setOpenDialogs}
                                         loadedDefaultGuideProducts={loadedDefaultGuideProducts}
+                                        loadedDefaultMaterials={loadedDefaultMaterials}
                                     />
                                 ) : (
                                     <ProjectDetailsInstallationGuideFormInstallerView

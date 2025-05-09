@@ -164,8 +164,7 @@ export function ProjectEditAttachments({
       });
 
       const contentDisposition = response.headers['content-disposition'];
-
-      console.log('response.headers:', response.headers);
+      
       let fileName = 'download.zip';
       if (contentDisposition) {
         const fileNameMatch = contentDisposition.match(/filename="?([^"]+)"?/);

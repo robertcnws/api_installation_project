@@ -170,7 +170,7 @@ export function ProjectEditTaskAttachments({
           const updated = updatedProject?.projectDefaultTasks.find(
             (t) => t.project_default_task.id === task.project_default_task.id
           );
-          console.log('updatedTask', updated);
+          
           setTask((prev) => {
             const updatedTask = { ...prev };
             updatedTask.project_task_attachments = updatedProject?.projectDefaultTasks.find(

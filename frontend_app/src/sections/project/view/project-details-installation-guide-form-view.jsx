@@ -1,4 +1,5 @@
 import axios from 'axios';
+import stringSimilarity from 'string-similarity';
 import { z as zod } from 'zod';
 import isEqual from 'lodash.isequal';
 import { useForm, useWatch } from 'react-hook-form';
@@ -18,6 +19,7 @@ import { useBoolean } from 'src/hooks/use-boolean';
 import { fCurrency } from 'src/utils/format-number';
 import { listRolesAndSubroles } from 'src/utils/check-permissions';
 import { combineByName, createScopeArray, generateInstallationGuideFormReport } from 'src/utils/generate-installation-guide-pdf';
+import { buildMaterialsReport } from 'src/utils/project-tasks-utils';
 
 import { CONFIG } from 'src/config-global';
 
@@ -31,8 +33,6 @@ import { LoadingContext } from 'src/auth/context/loading-context';
 import { ProjectEditModalNotesView } from './project-edit-modal-notes-view';
 import { ProjectDetailsContentOverview } from '../project-details-content-overview';
 
-
-
 // ----------------------------------------------------------------------
 
 export function ProjectDetailsInstallationGuideFormView({
@@ -42,6 +42,7 @@ export function ProjectDetailsInstallationGuideFormView({
   openDialogs,
   setOpenDialogs,
   loadedDefaultGuideProducts,
+  loadedDefaultMaterials,
 }) {
 
   useEffect(() => {
@@ -71,20 +72,12 @@ export function ProjectDetailsInstallationGuideFormView({
     openNotes.onTrue();
   };
 
+  
+
   const [materials, setMaterials] = useState(
     project?.projectMaterials.length > 0 ?
       combineByName(project?.projectMaterials) :
-      [
-        {
-          id: 1,
-          name: '',
-          quantity: 1,
-          ticket: '',
-          cost: 0,
-          store: '',
-          notes: '',
-        }
-      ],
+      [],
   );
 
   const [productsData, setProductsData] = useState([]);
@@ -97,8 +90,6 @@ export function ProjectDetailsInstallationGuideFormView({
         isNew: false,
         checked: item?.checked || false,
       }));
-
-      console.log('project?.projectGuideProducts', project?.projectGuideProducts);
 
       const lastItems = items.map((item) => {
         const product = project?.projectGuideProducts?.find((p) => p.id === item.id);
@@ -118,8 +109,6 @@ export function ProjectDetailsInstallationGuideFormView({
 
       const joinedItems = [...lastItems, ...newItems];
 
-      console.log('joinedItems', joinedItems);
-
       const finalItems = joinedItems.filter((item) => !item.deleted);
 
       setProductsData(combineByName(finalItems.sort((a, b) => a.id - b.id)));
@@ -138,6 +127,7 @@ export function ProjectDetailsInstallationGuideFormView({
     }
   }, [project, productsData, materials]);
 
+  
 
   useEffect(() => {
     const socket = new WebSocket(`wss://${CONFIG.apiHost}/api/projects/ws/project/${project?.id}/`);
@@ -176,6 +166,14 @@ export function ProjectDetailsInstallationGuideFormView({
       }
     };
   }, [project]);
+
+  useEffect(() => {
+    if (project?.projectMaterials?.length === 0) {
+      const arrayMaterials = buildMaterialsReport(productsData, loadedDefaultMaterials);
+      setMaterials(arrayMaterials);
+    }
+  }, [project?.projectMaterials, loadedDefaultMaterials, productsData]);
+
 
   const totalPrice = useMemo(() => (
     productsData?.reduce((acc, product) => acc + (product.price * product.quantity || 0), 0)
@@ -751,7 +749,7 @@ export function ProjectDetailsInstallationGuideFormView({
                                   <IconButton
                                     variant="outlined"
                                     color='default'
-                                    onClick={() => handleCheckProduct(product.id)} 
+                                    onClick={() => handleCheckProduct(product.id)}
                                     sx={{
                                       '&:hover': {
                                         boxShadow: 'none',

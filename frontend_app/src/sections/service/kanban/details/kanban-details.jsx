@@ -138,8 +138,7 @@ export function KanbanDetails({
 
         const attachmentType = task?.service_default_task?.name.toLowerCase().includes('issue')
           ? 'issued' : 'repair';
-
-        console.log('attachmentType', attachmentType);
+          
 
         formData.append('attachmentType', attachmentType);
 

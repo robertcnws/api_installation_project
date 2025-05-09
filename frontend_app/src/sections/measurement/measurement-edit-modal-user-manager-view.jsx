@@ -105,8 +105,6 @@ export function MeasurementEditModalUserManagerView({
         const field = isFirstAssignee ? 'firstAssignee' : 'checkAssignee';
         formData.append(field, JSON.stringify(measurementData[field]));
 
-        console.log('formData', formData.get(field));
-
         const promise = axios.post(`${CONFIG.apiUrl}/measurements/update/measurement/${measurement.id}/change-assignee/`, formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',

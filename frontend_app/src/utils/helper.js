@@ -759,7 +759,7 @@ export function filterManagedData(managedData, includeFields = [], excludeFields
 }
 
 export function removeKeysBySubstring(obj, filters = ['id']) {
-  console.log('obj', obj);
+  
   if (Array.isArray(obj)) {
     return obj.map(item => removeKeysBySubstring(item, filters));
   }
