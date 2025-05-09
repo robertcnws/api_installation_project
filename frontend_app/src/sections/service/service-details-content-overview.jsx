@@ -3,7 +3,7 @@ import { useRef, useMemo, useState, useEffect, useContext, useCallback } from 'r
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import ListItemText from '@mui/material/ListItemText';
-import { Box, Radio, TextField, RadioGroup, FormControlLabel } from '@mui/material';
+import { Box, Radio, TextField, RadioGroup, FormControlLabel, Switch, ListItem, Chip, Autocomplete } from '@mui/material';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
@@ -22,6 +22,7 @@ import { useDataContext } from 'src/auth/context/data/data-context';
 import { ServiceDetailsContentOverviewTableIssues } from './service-details-content-overview-table-issues';
 import { ServiceDetailsContentOverviewModalService } from './service-details-content-overview-modal-service';
 import { ServiceDetailsContentOverviewTableIssuesMobile } from './service-details-content-overview-table-issues-mobile';
+import { SERVICE_PLACE_OPTIONS } from './view/service-details-content';
 
 
 
@@ -40,6 +41,12 @@ export function ServiceDetailsContentOverview({
   setServiceFiles,
   serviceNotes,
   setServiceNotes,
+  serviceAddress,
+  setServiceAddress,
+  serviceBooleanValues,
+  setServiceBooleanValues,
+  servicePlace,
+  setServicePlace,
   handleClickRemoveFile,
   handleDownloadFile,
 }) {
@@ -255,6 +262,102 @@ export function ServiceDetailsContentOverview({
             />,
             hasValue: true,
           },
+          {
+            label: 'Has To Pay?',
+            value: <Switch
+              checked={serviceBooleanValues?.hasToPay}
+              name="hasToPay"
+              onChange={(e) => {
+                setServiceBooleanValues((prev) => ({ ...prev, hasToPay: e.target.checked }));
+              }}
+              sx={{ maxWidth: 56, mt: -1 }}
+            />,
+            icon: <Iconify
+              icon="material-symbols:paid-outline"
+              sx={{ color: 'text.primary' }}
+            />,
+            hasValue: true,
+          },
+          {
+            label: 'By Factory?',
+            value: <Switch
+              checked={serviceBooleanValues?.byFactory}
+              name="byFactory"
+              onChange={(e) => {
+                setServiceBooleanValues((prev) => ({ ...prev, byFactory: e.target.checked }));
+              }}
+              sx={{ maxWidth: 56, mt: -1 }}
+            />,
+            icon: <Iconify
+              icon="lucide:factory"
+              sx={{ color: 'text.primary' }}
+            />,
+            hasValue: true,
+          },
+          {
+            label: 'Service Place',
+            value: <Box
+              sx={{
+                width: 200,
+              }}
+            >
+              <Autocomplete
+                sx={{ width: '100%' }}
+                value={servicePlace || null}
+                onChange={(e, newValue) => {
+                  setServicePlace(newValue);
+                }}
+                options={SERVICE_PLACE_OPTIONS}
+                getOptionLabel={(option) => option.name || ''}
+                isOptionEqualToValue={(option, value) => option.id === value.id}
+                renderOption={(props, i) => (
+                  <ListItem {...props} key={`${i.id}-option`}>
+                    {i.name}
+                  </ListItem>
+                )}
+                renderTags={(selected, getTagProps) =>
+                  selected.map((p, i) => (
+                    <Chip
+                      {...getTagProps({ i })}
+                      key={p.id}
+                      size="small"
+                      variant="soft"
+                      label={p.name}
+                    />
+                  ))
+                }
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    variant="outlined"
+                    InputProps={{
+                      ...params.InputProps,
+                      sx: {
+                        height: '37px',
+                        '& input': {
+                          padding: '0 8px',
+                          height: '37px',
+                          lineHeight: '37px'
+                        }
+                      }
+                    }}
+                    InputLabelProps={{
+                      shrink: true,
+                      sx: {
+                        top: '-10px',
+                        transform: 'translate(14px, 0px) scale(0.75)'
+                      }
+                    }}
+                  />
+                )}
+              />
+            </Box>,
+            icon: <Iconify
+              icon="mdi:place-outline"
+              sx={{ color: 'text.primary' }}
+            />,
+            hasValue: true,
+          },
 
         ].map((item, index) => (
           <Stack key={item?.label || index} spacing={1.5} direction="row">
@@ -276,7 +379,9 @@ export function ServiceDetailsContentOverview({
           </Stack>
         ))}
       </Box>
-      {!service && (
+
+      {servicePlace?.id === 1 && (
+
         <Box sx={{
           p: 3,
           gap: 1,
@@ -284,20 +389,45 @@ export function ServiceDetailsContentOverview({
           flexDirection: !isMobile ? 'row' : 'column',
           ml: !isMobile ? 2 : 0,
           mt: 0,
+          mb: -2,
           overflow: 'auto',
           justifyContent: 'flex-start',
         }}>
           <TextField
-            name="notes"
-            label="Notes"
-            value={serviceNotes || ''}
-            onChange={(e) => setServiceNotes(e.target.value)}
-            multiline
-            rows={2}
+            name="address"
+            label="Address"
+            value={serviceAddress || ''}
+            onChange={(e) => setServiceAddress(e.target.value)}
             sx={{
-              minWidth: !isMobile ? serviceFiles.length === 0 ? 1040 : 1040 - (serviceFiles.length * 80) : '100%',
+              minWidth: '100%',
             }}
           />
+        </Box>
+
+      )}
+
+      <Box sx={{
+        p: 3,
+        gap: 1,
+        display: 'flex',
+        flexDirection: !isMobile ? 'row' : 'column',
+        ml: !isMobile ? 2 : 0,
+        mt: 0,
+        overflow: 'auto',
+        justifyContent: 'flex-start',
+      }}>
+        <TextField
+          name="notes"
+          label="Notes"
+          value={serviceNotes || service?.serviceNotes || ''}
+          onChange={(e) => setServiceNotes(e.target.value)}
+          multiline
+          rows={2}
+          sx={{
+            minWidth: !isMobile ? (!service ? serviceFiles.length === 0 ? 1040 : 1040 - (serviceFiles.length * 80) : '100%') : '100%',
+          }}
+        />
+        {!service && (
           <MultiFilePreview
             key='preview-issued-attachments'
             thumbnail
@@ -338,8 +468,9 @@ export function ServiceDetailsContentOverview({
               ) : null
             }
           />
-        </Box>
-      )}
+        )}
+      </Box>
+
       <Box sx={{
         p: 3,
         gap: 1,

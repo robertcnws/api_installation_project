@@ -144,11 +144,36 @@ export function ServiceDetailsView({ serviceId }) {
 
     const [serviceType, setServiceType] = useState(itemById?.serviceType);
 
+    const [serviceNotes, setServiceNotes] = useState(itemById?.notes);
+
+    const [serviceAddress, setServiceAddress] = useState(itemById?.address);
+
+    const [servicePlace, setServicePlace] = useState(itemById?.servicePlace);
+
+    const [serviceBooleanValues, setServiceBooleanValues] = useState({
+        hasToPay: itemById?.hasToPay || false,
+        byFactory: itemById?.byFactory || false,
+    });
+
     const items = useMemo(() => itemById?.issuedProducts, [itemById]);
 
     const listItems = useMemo(() => items?.filter((product) => product.line_item_type === 'goods'), [items]);
 
     const [listSelectedTracks, setListSelectedTracks] = useState([]);
+
+
+    useEffect(() => {
+        if (itemById?.id) {
+            setServiceType(itemById?.serviceType);
+            setServiceNotes(itemById?.notes);
+            setServiceAddress(itemById?.address);
+            setServicePlace(itemById?.servicePlace);
+            setServiceBooleanValues({
+                hasToPay: itemById?.hasToPay || false,
+                byFactory: itemById?.byFactory || false,
+            });
+        }
+    }, [itemById]);
 
 
     useEffect(() => {
@@ -372,6 +397,11 @@ export function ServiceDetailsView({ serviceId }) {
                 salesOrder: selectedSalesOrder,
                 userReporter: userLogged?.data,
                 issuedProducts: selectedListItems.filter((i) => i.selected),
+                hasToPay: serviceBooleanValues?.hasToPay,
+                byFactory: serviceBooleanValues?.byFactory,
+                address: serviceAddress,
+                notes: serviceNotes,
+                servicePlace,
             });
 
             toast.promise(promise, {
@@ -390,7 +420,18 @@ export function ServiceDetailsView({ serviceId }) {
             setIsSubmiting(false);
             console.error(error);
         }
-    }, [selectedSalesOrder, selectedListItems, userLogged, openSalesOrderModal, itemById?.id]);
+    }, [
+        selectedSalesOrder, 
+        selectedListItems, 
+        userLogged, 
+        openSalesOrderModal, 
+        itemById?.id,
+        serviceBooleanValues?.hasToPay,
+        serviceBooleanValues?.byFactory,
+        serviceAddress,
+        servicePlace,
+        serviceNotes,
+    ]);
 
 
     const handleChangeProperties = useCallback(async (property, value) => {
@@ -615,6 +656,14 @@ export function ServiceDetailsView({ serviceId }) {
                                     service={itemById}
                                     serviceType={serviceType}
                                     setServiceType={setServiceType}
+                                    serviceNotes={serviceNotes}
+                                    setServiceNotes={setServiceNotes}
+                                    serviceBooleanValues={serviceBooleanValues}
+                                    setServiceBooleanValues={setServiceBooleanValues}
+                                    serviceAddress={serviceAddress}
+                                    setServiceAddress={setServiceAddress}
+                                    servicePlace={servicePlace}
+                                    setServicePlace={setServicePlace}
                                 />
                             </Scrollbar>
                             <DialogActions>

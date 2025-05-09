@@ -38,7 +38,7 @@ import { ServiceEditModalIssue } from '../service-edit-modal-issue';
 import { ServiceAddModalIssue } from '../service-add-modal-issue copy';
 
 
-const SERVICE_PLACE_OPTIONS = [
+export const SERVICE_PLACE_OPTIONS = [
   { id: 1, name: 'On Site' },
   { id: 2, name: 'On Warehouse' },
 ]

@@ -167,6 +167,8 @@ def list_salesorder_to_service(request):
     if email and email != '':
         params.append(f"email={email}")
     if salesorder_number and salesorder_number != '':
+        if 'SO-' not in salesorder_number:
+            salesorder_number = f'SO-{salesorder_number}'
         params.append(f"salesorder_number={salesorder_number}")    
     params.append(f"is_recent={is_recent}")
     

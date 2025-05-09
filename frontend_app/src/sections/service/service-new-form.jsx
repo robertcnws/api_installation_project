@@ -71,6 +71,11 @@ export function ServiceNewForm({ currentUser }) {
 
   const allDataEmpty = Object.values(dataSearch).every(x => (x === null || x === ''));
 
+  const validateSalesOrderNumber = (salesorderNumber) => {
+    const regex = /^(SO-)?\d{5}$/;
+    return regex.test(salesorderNumber);
+  };
+
   const [salesOrders, setSalesOrders] = useState([]);
 
   const [selectedListItems, setSelectedListItems] = useState([]);
@@ -80,6 +85,15 @@ export function ServiceNewForm({ currentUser }) {
   const [serviceFiles, setServiceFiles] = useState([]);
 
   const [serviceNotes, setServiceNotes] = useState(null);
+
+  const [serviceAddress, setServiceAddress] = useState(null);
+
+  const [servicePlace, setServicePlace] = useState(null);
+
+  const [serviceBooleanValues, setServiceBooleanValues] = useState({
+    hasToPay: false,
+    byFactory: false,
+  });
 
   const [fileToRemove, setFileToRemove] = useState(null);
   const confirm = useBoolean();
@@ -183,9 +197,14 @@ export function ServiceNewForm({ currentUser }) {
     formData.append('salesOrder', JSON.stringify(selectedSalesOrder) || '');
     formData.append('userReporter', JSON.stringify(userLogged?.data) || '');
     formData.append('issuedProducts', JSON.stringify(selectedListItems.filter((item) => item.selected)) || '');
+    formData.append('address', serviceAddress || '');
+    formData.append('hasToPay', serviceBooleanValues.hasToPay || false);
+    formData.append('byFactory', serviceBooleanValues.byFactory || false);
+    formData.append('servicePlace', JSON.stringify(servicePlace) || '');
 
     try {
-      const promise = axios.post(`${CONFIG.apiUrl}/services/create/service/`, formData, {
+      const url = `${CONFIG.apiUrl}/services/create/service/`;
+      const promise = axios.post(url, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -204,6 +223,7 @@ export function ServiceNewForm({ currentUser }) {
       setServiceFiles([]);
       setServiceNotes(null);
 
+
       openSalesOrderModal.onFalse();
 
       router.push(paths.dashboard.service.list);
@@ -212,7 +232,20 @@ export function ServiceNewForm({ currentUser }) {
       setIsSubmiting(false);
       console.error(error);
     }
-  }, [selectedSalesOrder, selectedListItems, userLogged, openSalesOrderModal, router, serviceType, serviceFiles, serviceNotes]);
+  }, [
+    selectedSalesOrder,
+    selectedListItems,
+    userLogged,
+    openSalesOrderModal,
+    router,
+    serviceType,
+    serviceFiles,
+    serviceNotes,
+    serviceAddress,
+    serviceBooleanValues.hasToPay,
+    serviceBooleanValues.byFactory,
+    servicePlace,
+  ]);
 
 
   const handleDownloadFile = (file) => {
@@ -272,6 +305,21 @@ export function ServiceNewForm({ currentUser }) {
                   setIsNotRecent(true);
                   setSalesOrders([]);
                 }}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment
+                      position="end"
+                      onClick={() => {
+                        setDataSearch({ ...dataSearch, companyName: '' })
+                        setIsNotRecent(true);
+                        setSalesOrders([]);
+                      }}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <Iconify icon="jam:close" sx={{ color: 'text.disabled' }} />
+                    </InputAdornment>
+                  ),
+                }}
               />
               <TextField
                 name="firstName"
@@ -282,6 +330,21 @@ export function ServiceNewForm({ currentUser }) {
                   setDataSearch({ ...dataSearch, firstName: e.target.value })
                   setIsNotRecent(true);
                   setSalesOrders([]);
+                }}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment
+                      position="end"
+                      onClick={() => {
+                        setDataSearch({ ...dataSearch, firstName: '' })
+                        setIsNotRecent(true);
+                        setSalesOrders([]);
+                      }}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <Iconify icon="jam:close" sx={{ color: 'text.disabled' }} />
+                    </InputAdornment>
+                  ),
                 }}
               />
               <TextField
@@ -294,6 +357,21 @@ export function ServiceNewForm({ currentUser }) {
                   setIsNotRecent(true);
                   setSalesOrders([]);
                 }}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment
+                      position="end"
+                      onClick={() => {
+                        setDataSearch({ ...dataSearch, lastName: '' })
+                        setIsNotRecent(true);
+                        setSalesOrders([]);
+                      }}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <Iconify icon="jam:close" sx={{ color: 'text.disabled' }} />
+                    </InputAdornment>
+                  ),
+                }}
               />
               <TextField
                 name="phone"
@@ -304,6 +382,21 @@ export function ServiceNewForm({ currentUser }) {
                   setDataSearch({ ...dataSearch, phone: e.target.value })
                   setIsNotRecent(true);
                   setSalesOrders([]);
+                }}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment
+                      position="end"
+                      onClick={() => {
+                        setDataSearch({ ...dataSearch, phone: '' })
+                        setIsNotRecent(true);
+                        setSalesOrders([]);
+                      }}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <Iconify icon="jam:close" sx={{ color: 'text.disabled' }} />
+                    </InputAdornment>
+                  ),
                 }}
               />
             </Box>
@@ -328,19 +421,62 @@ export function ServiceNewForm({ currentUser }) {
                   setIsNotRecent(true);
                   setSalesOrders([]);
                 }}
-              />
-              <TextField
-                name="salesorderNumber"
-                label="Salesorder Number"
-                placeholder='Salesorder Number'
-                // defaultValue={dataSearch.salesorderNumber || ''}
-                value={dataSearch.salesorderNumber || ''}
-                onChange={(e) => {
-                  setDataSearch({ ...dataSearch, salesorderNumber: e.target.value })
-                  setIsNotRecent(true);
-                  setSalesOrders([]);
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment
+                      position="end"
+                      onClick={() => {
+                        setDataSearch({ ...dataSearch, email: '' })
+                        setIsNotRecent(true);
+                        setSalesOrders([]);
+                      }}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <Iconify icon="jam:close" sx={{ color: 'text.disabled' }} />
+                    </InputAdornment>
+                  ),
                 }}
               />
+              <Box sx={{ display: 'flex', alignItems: 'left', flexDirection: 'column', gap: 1, width: '100%' }}>
+                <TextField
+                  sx={{ width: '100%' }}
+                  name="salesorderNumber"
+                  label="Salesorder Number"
+                  placeholder='Salesorder Number'
+                  // defaultValue={dataSearch.salesorderNumber || ''}
+                  value={dataSearch.salesorderNumber || ''}
+                  onChange={(e) => {
+                    setDataSearch({ ...dataSearch, salesorderNumber: e.target.value })
+                    setIsNotRecent(true);
+                    setSalesOrders([]);
+                  }}
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment
+                        position="end"
+                        onClick={() => {
+                          setDataSearch({ ...dataSearch, salesorderNumber: '' })
+                          setIsNotRecent(true);
+                          setSalesOrders([]);
+                        }}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        <Iconify icon="jam:close" sx={{ color: 'text.disabled' }} />
+                      </InputAdornment>
+                    ),
+                  }}
+                  error={!validateSalesOrderNumber(dataSearch.salesorderNumber) && dataSearch.salesorderNumber.length > 0}
+                />
+                {!validateSalesOrderNumber(dataSearch.salesorderNumber) && dataSearch.salesorderNumber.length > 0 && (
+                  <Typography
+                    component='span'
+                    variant='caption'
+                    color='error.main'
+                  >
+                    Sales order number must be <b>5 digits</b> long or start with <b>&lsquo;SO-&lsquo;</b> and <b>5 digits</b> long.
+                  </Typography>
+                )}
+              </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', flexDirection: 'row', gap: 1 }}>
                 <Typography variant='subtitle2' color='text.disabled'>Is recent? </Typography>
                 <Switch
@@ -360,7 +496,10 @@ export function ServiceNewForm({ currentUser }) {
                 type="button"
                 variant="contained"
                 loading={isSubmiting}
-                disabled={allDataEmpty}
+                disabled={
+                  allDataEmpty ||
+                  (dataSearch.salesorderNumber?.length > 0 && !validateSalesOrderNumber(dataSearch.salesorderNumber))
+                }
                 onClick={handleSearch}
               >
                 Search
@@ -380,7 +519,11 @@ export function ServiceNewForm({ currentUser }) {
                   setIsNotRecent(true);
                   setSalesOrders([]);
                 }}
-                disabled={allDataEmpty || isSubmiting}
+                disabled={
+                  allDataEmpty ||
+                  isSubmiting ||
+                  (dataSearch.salesorderNumber?.length > 0 && !validateSalesOrderNumber(dataSearch.salesorderNumber))
+                }
               >
                 Clear Fields
               </Button>
@@ -434,6 +577,12 @@ export function ServiceNewForm({ currentUser }) {
             setServiceFiles={setServiceFiles}
             serviceNotes={serviceNotes}
             setServiceNotes={setServiceNotes}
+            serviceAddress={serviceAddress}
+            setServiceAddress={setServiceAddress}
+            serviceBooleanValues={serviceBooleanValues}
+            setServiceBooleanValues={setServiceBooleanValues}
+            servicePlace={servicePlace}
+            setServicePlace={setServicePlace}
             handleDownloadFile={handleDownloadFile}
             handleClickRemoveFile={handleClickRemoveFile}
           />

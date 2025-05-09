@@ -665,13 +665,18 @@ def create_service(request):
         sales_order = json.loads(data.get('salesOrder', None))
         service_type = data.get('serviceType', None)
         service_notes = data.get('notes', None)
+        service_place = json.loads(data.get('servicePlace', None))
+        has_to_pay_str = data.get('hasToPay', 'false')
+        has_to_pay = True if has_to_pay_str.lower() == 'true' else False
+        by_factory_str = data.get('byFactory', 'false')
+        by_factory = True if by_factory_str.lower() == 'true' else False
+        address = data.get('address', None)
         stage_history = None
         users_assignees = []
         start_date = None
         end_date = None
         # current_stage = None
         service_history = []
-        address = None
         user_manager = responsible
         service_comments = []
         service_default_tasks = []
@@ -756,6 +761,9 @@ def create_service(request):
             service_type=service_type,
             created_by=user_reporter,
             service_notes=service_notes,
+            service_place=service_place,
+            has_to_pay=has_to_pay,
+            by_factory=by_factory,
         )
         
         service.save()
@@ -844,6 +852,7 @@ def update_service(request, id):
     end_date = data.get('endDate', None)
     notes = data.get('notes', None)
     name = data.get('name', data.get('title', None))
+    
     try:
         start_date = start_date if start_date else None
         end_date = end_date if end_date else None
@@ -1599,6 +1608,12 @@ def add_issued_products(request, id):
             return Response({'error': 'Service not found'}, status=404)
         data = request.data
         user_reporter = data.get('userReporter', None)
+        has_to_pay = data.get('hasToPay')
+        by_factory = data.get('byFactory')
+        address = data.get('address')
+        service_place = data.get('servicePlace')
+        notes = data.get('serviceNotes')
+        
         new_issued_products = data.get('issuedProducts', [])
         
         issued_products = service.issued_products if service.issued_products else []
@@ -1614,9 +1629,16 @@ def add_issued_products(request, id):
                 
         service.service_default_tasks = sorted_tasks
         
+        service.has_to_pay = has_to_pay if has_to_pay is not None else service.has_to_pay
+        service.by_factory = by_factory if by_factory is not None else service.by_factory
+        service.address = address if address and len(address) > 0 else service.address
+        service.service_place = service_place if service_place is not None else service.service_place
+        service.service_notes = notes if notes and len(notes) > 0 else service.service_notes
+        
+        
         service.save()
         
-        tracking_info = transform_data_to_mongo(service, include_fields=['id', 'name', 'version', 'issued_products'])
+        tracking_info = transform_data_to_mongo(service, include_fields=['id', 'name', 'version', 'issued_products', 'has_to_pay', 'by_factory', 'address', 'service_place'])
         tracking = ProjectTracking(
             user_reporter=user_reporter,
             action=f'add issued products to service ({tracking_info["id"]} - {tracking_info["name"]})',
