@@ -39,7 +39,7 @@ def login(request):
                     user['_id'] = str(user['_id'])
                 request.session['user_id'] = user['_id']
                 request.session[BACKEND_SESSION_KEY] = 'api_authorization.backends.MongoDBBackend'
-                request.session.set_expiry(0)
+                request.session.set_expiry(24 * 3600)
                 request.session.modified = True
                 logger.info(f'User {username} logged in')
                 tracking = ProjectTracking(

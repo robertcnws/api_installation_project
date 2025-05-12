@@ -56,7 +56,7 @@ export function isValidToken(accessToken) {
 
 export function tokenExpired(exp) {
   const currentTime = Date.now();
-  const gracePeriod = 30 * 60 * 1000;
+  const gracePeriod = 2 * 60 * 60 * 1000;
   const timeLeft = exp * 1000 - currentTime + gracePeriod;
 
   setTimeout(() => {

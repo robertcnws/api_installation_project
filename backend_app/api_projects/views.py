@@ -3931,6 +3931,3 @@ def delete_default_materials(request):
     
     except Exception as e:
         return Response({'error': str(e)}, status=500)
-    
-    
-

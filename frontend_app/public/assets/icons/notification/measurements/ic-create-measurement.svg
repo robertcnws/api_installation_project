@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!-- Generator: Adobe Illustrator 19.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<!-- License: CC0. Made by SVG Repo: https://www.svgrepo.com/svg/282355/measuring-measurement -->
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 512 512" style="enable-background:new 0 0 512 512;" xml:space="preserve">
+<polygon style="fill:#FFBE00;" points="512,118.581 270.553,315.291 242.497,379.163 270.553,412.62 436.544,277.385 
+	436.544,436.544 270.553,436.544 242.497,475.901 270.553,512 281.769,512 297.443,501.543 313.116,512 335.67,512 351.344,501.543 
+	367.017,512 389.571,512 405.245,501.543 420.918,512 443.471,512 459.145,501.543 474.818,512 512,512 "/>
+<polygon style="fill:#FFE074;" points="241.188,436.544 270.553,412.62 270.553,315.291 29.107,512 120.067,512 135.741,501.543 
+	151.414,512 173.968,512 189.642,501.543 205.315,512 227.869,512 243.543,501.543 259.216,512 270.553,512 270.553,436.544 "/>
+<g>
+	<rect x="120.069" y="475.899" style="fill:#FFBE00;" width="31.347" height="36.099"/>
+	<rect x="173.965" y="475.899" style="fill:#FFBE00;" width="31.347" height="36.099"/>
+	<rect x="227.871" y="475.899" style="fill:#FFBE00;" width="31.347" height="36.099"/>
+</g>
+<g>
+	<rect x="281.767" y="475.899" style="fill:#FF9302;" width="31.347" height="36.099"/>
+	<rect x="335.673" y="475.899" style="fill:#FF9302;" width="31.347" height="36.099"/>
+	<rect x="389.569" y="475.899" style="fill:#FF9302;" width="31.347" height="36.099"/>
+	<rect x="443.476" y="475.899" style="fill:#FF9302;" width="31.347" height="36.099"/>
+</g>
+<polygon style="fill:#FC2B32;" points="23.439,400.998 46.878,368.658 46.878,53.901 12.982,32.986 "/>
+<polygon style="fill:#FF5D65;" points="0,53.901 0,368.658 23.439,400.998 23.439,32.986 "/>
+<polygon style="fill:#0089D3;" points="23.439,0 12.982,26.95 23.439,53.901 46.878,53.901 46.878,0 "/>
+<rect style="fill:#63C8EE;" width="23.439" height="53.901"/>
+</svg>

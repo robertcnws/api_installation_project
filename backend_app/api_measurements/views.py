@@ -328,7 +328,7 @@ def delete_measurements(request):
         )
         tracking.save()
         if user_reporter:
-            module='measurememts'
+            module='measurements'
             info=f'has deleted {len(ids)} measurements'
             info_id='list'
             type='delete_measurements'
@@ -449,7 +449,7 @@ def change_date(request, id):
     
     
 #############################################
-# REMOVE DATE SERVICE
+# REMOVE DATE MEASUREMENT
 #############################################
 
 @api_view(['POST'])
@@ -500,7 +500,7 @@ def remove_date(request, id):
         tracking.save()
         
         if user_reporter:
-            module='services'
+            module='measurements'
             info=f'has removed {info} date in measurement {measurement.number}'
             info_id=measurement.id
             type=f'remove_{type_date}_measurement'
