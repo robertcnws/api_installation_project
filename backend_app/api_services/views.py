@@ -716,6 +716,16 @@ def create_service(request):
             }
             service_default_tasks.append(info)
             
+        for default_task in service_default_tasks:
+            if default_task['service_default_task']['order'] == 3:
+                default_task['service_default_task']['is_active'] = has_to_pay
+            if default_task['service_default_task']['order'] == 5:
+                default_task['service_default_task']['is_active'] = by_factory
+            if default_task['service_default_task']['order'] == 6:
+                default_task['service_default_task']['is_active'] = not by_factory
+            if default_task['service_default_task']['order'] == 7:
+                default_task['service_default_task']['is_active'] = not by_factory
+            
         service_attachments = []
         
         for file_obj in files:

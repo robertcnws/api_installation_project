@@ -289,14 +289,18 @@ export function ServiceDetailsView({ serviceId }) {
 
 
     const totalTasks = useMemo(() => (
-        itemById?.serviceDefaultTasks?.filter((task) => task.service_default_task.is_active)?.length
+        itemById?.serviceDefaultTasks?.filter((task) => task.service_default_task?.is_active)?.length
         || 0), [itemById]
     );
 
 
     const tasks = useMemo(() =>
-        itemById?.serviceDefaultTasks?.filter((task) => task.service_default_task.is_active) || [], [itemById]
+        itemById?.serviceDefaultTasks?.filter((task) => task.service_default_task?.is_active) || [], [itemById]
     );
+
+    // console.log('itemById?.serviceDefaultTasks', itemById?.serviceDefaultTasks);
+
+    // console.log('tasks', tasks);
 
     const [openEdit, setOpenEdit] = useState(false);
 
