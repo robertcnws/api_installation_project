@@ -2660,18 +2660,18 @@ def remove_date_service(request, id):
 def close_service(request, id):
     data = request.data
     user_reporter = json.loads(data.get('userReporter', None))
-    isClosed = data.get('isClosed', None)
+    is_closed = data.get('isClosed', None)
     try:
         service = Service.objects(id=id).first()
         if not service:
             return Response({'error': 'Service not found'}, status=404)
         
-        service.is_closed = isClosed
+        service.is_closed = is_closed
                 
         service.save()
         
-        action = 'close' if isClosed else 'reopen'
-        verbose_name = 'closed' if isClosed else 'reopened'
+        action = 'close' if is_closed else 'reopen'
+        verbose_name = 'closed' if is_closed else 'reopened'
         
         tracking = ProjectTracking(
             user_reporter=user_reporter,
@@ -2687,7 +2687,7 @@ def close_service(request, id):
             module='services'
             info=f'has {verbose_name} service {service.name}'
             info_id=service.id
-            type='{action}_service'
+            type=f'{action}_service'
             create_notification(module, info_id, info, type, user_reporter['username'])
             
         return Response({'message': f'Service {verbose_name} successfully'})

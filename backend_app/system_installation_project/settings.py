@@ -341,6 +341,14 @@ TASK_SERVICE_ASSIGN_CREW = env('TASK_SERVICE_ASSIGN_CREW', default='Assign Crew'
 TASK_SERVICE_UPLOAD_ISSUES = env('TASK_SERVICE_UPLOAD_ISSUES', default='Upload Issues')
 TASK_SERVICE_SCHEDULE_DATE = env('TASK_SERVICE_SCHEDULE_DATE', default='Schedule Date')
 
+# USER ROLES
+ROLE_SUPERADMIN = env('ROLE_SUPERADMIN', default='Superadmin')
+ROLE_ADMINISTRATOR = env('ROLE_ADMINISTRATOR', default='Administrator')
+ROLE_INSTALLER =env('ROLE_INSTALLER', default='Installer')
+ROLE_SERVICE_STAFF = env('ROLE_SERVICE_STAFF', default='Service Staff')
+ROLE_WAREHOUSE_STAFF = env('ROLE_WAREHOUSE_STAFF', default='Warehouse Staff')
+ROLE_PROJECT_MANAGER = env('ROLE_PROJECT_MANAGER', default='Project Manager')
+
 # MONGOENGINE
 
 warnings.filterwarnings("ignore", message="MongoClient opened before fork")

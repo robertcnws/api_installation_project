@@ -4,6 +4,7 @@ from graphene_mongo import MongoengineObjectType
 from mongoengine.fields import DynamicField
 from graphene_mongo.converter import convert_mongoengine_field
 from graphene.types.generic import GenericScalar
+from datetime import datetime
 from .models import (
     ProjectStage, 
     ProjectRole, 
@@ -227,6 +228,7 @@ class ProjectType(MongoengineObjectType):
     project_guide_products = GenericScalar()
     created_time = graphene.String()
     last_modified_time = graphene.String()
+    start_date = graphene.DateTime()
     
     def resolve_created_time(self, info):
         dt = self.created_time
@@ -311,7 +313,10 @@ class ProjectType(MongoengineObjectType):
         user_installer = self.user_installer or {}
         user_installer = serialize_datetime(user_installer)
         return dynamic_field_to_json(user_installer)
-    
+
+class ProjectConnection(graphene.ObjectType):
+    edges = graphene.List(ProjectType)
+    next_cursor = graphene.String()
 
 class ProjectUserType(MongoengineObjectType):
     class Meta:
@@ -453,10 +458,15 @@ class Query(graphene.ObjectType):
     all_project_task_stages = graphene.List(ProjectTaskStageType)
     all_project_roles = graphene.List(ProjectRoleType)
     # all_projects = graphene.List(ProjectType)
+    # all_projects = graphene.Field(
+    #     graphene.List(ProjectType),
+    #     page=graphene.Int(default_value=1),
+    #     page_size=graphene.Int(default_value=50),
+    # )
     all_projects = graphene.Field(
-        graphene.List(ProjectType),
-        page=graphene.Int(default_value=1),
-        page_size=graphene.Int(default_value=50),
+        ProjectConnection,
+        after=graphene.String(),
+        first=graphene.Int(default_value=50),
     )
     all_project_users = graphene.List(ProjectUserType)
     all_project_notifications = graphene.List(ProjectNotificationType)
@@ -511,9 +521,18 @@ class Query(graphene.ObjectType):
     # def resolve_all_projects(self, info):
     #     return list(Project.objects.all().order_by('start_date'))
     
-    def resolve_all_projects(self, info, page, page_size):
-        skip = (page - 1) * page_size
-        return Project.objects.order_by('start_date').skip(skip).limit(page_size)
+    # def resolve_all_projects(self, info, page, page_size):
+    #     skip = (page - 1) * page_size
+    #     return Project.objects.order_by('start_date').skip(skip).limit(page_size)
+    
+    def resolve_all_projects(self, info, after=None, first=50):
+        q = Project.objects.order_by('start_date')
+        if after:
+            dt = datetime.fromisoformat(after)
+            q = q.filter(start_date__gt=dt)
+        items = list(q.limit(first))
+        next_cursor = items[-1].start_date.isoformat() if len(items) == first else None
+        return ProjectConnection(edges=items, next_cursor=next_cursor)
 
     def resolve_all_project_users(self, info):
         return list(ProjectUser.objects.all())
