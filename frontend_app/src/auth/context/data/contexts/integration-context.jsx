@@ -34,7 +34,7 @@ export function IntegrationProvider({ children }) {
   //   [loadedProjects]
   // );
 
-  const not_sales_order_ids = loadedProjects.map(p => p.salesOrder.salesorder_id).join(',');
+  const not_sales_order_ids = loadedProjects.map(p => p.salesOrder?.salesorder_id).join(',');
 
   const salesOrdersQueryKey = ['salesOrders', not_sales_order_ids];
   const salesOrdersParams = { not_sales_order_ids };

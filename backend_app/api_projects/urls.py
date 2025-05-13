@@ -3,11 +3,11 @@ from django.urls import path
 from django.conf.urls.static import static
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
-from graphene_django.views import GraphQLView
+from system_installation_project.graphql.orjson_graphql_view import ORJSONGraphQLView
 from .schema import schema
 from . import views
 urlpatterns = [
-    path('graphql/', csrf_exempt(GraphQLView.as_view(graphiql=True, schema=schema))),
+    path('graphql/', csrf_exempt(ORJSONGraphQLView.as_view(graphiql=True, schema=schema))),
     path('delete/file/<str:id>/project/<str:folder>/<str:file>/', views.delete_project_file, name='delete_project_file'),
     path('delete/file/<str:projectId>/project/<str:id>/task/<str:folder>/<str:file>/', views.delete_default_task_file, name='delete_default_task_file'),
     # PROJECTS

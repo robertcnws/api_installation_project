@@ -134,6 +134,15 @@ const GET_ALL_PROJECTS = gql`
   }
   `;
 
+  export const GET_SALES_ORDERS_BY_IDS = gql`
+    query SalesOrdersByIds($ids: [ID!]!) {
+      salesOrdersByIds(ids: $ids) {
+        id
+        sales_order
+      }
+    }
+`;
+
 const GET_PROJECT_BY_ID = gql`
   query GetProjectById($id: String!) {
     projectById(id: $id) {

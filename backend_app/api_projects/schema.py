@@ -33,6 +33,16 @@ def convert_dynamic_field(field, registry=None, executor=None):
         required=field.required
     )
     
+    
+class SalesOrderType(graphene.ObjectType):
+    id = graphene.ID()
+    sales_order = GenericScalar()
+    
+    def resolve_sales_order(self, info):
+        sales_order = self.sales_order or {}
+        sales_order = serialize_datetime(sales_order)
+        return dynamic_field_to_json(sales_order)
+    
 
 class ProjectDefaultMaterialType(MongoengineObjectType):
     class Meta:
@@ -491,6 +501,10 @@ class Query(graphene.ObjectType):
         ProjectUserType, 
         username=graphene.String(required=True), 
     )
+    sales_orders_by_ids = graphene.List(
+        SalesOrderType,
+        ids=graphene.List(graphene.ID, required=True)
+    )
     
     all_project_default_materials = graphene.List(ProjectDefaultMaterialType)
     
@@ -526,6 +540,10 @@ class Query(graphene.ObjectType):
     #     return Project.objects.order_by('start_date').skip(skip).limit(page_size)
     
     def resolve_all_projects(self, info, after=None, first=50):
+        field_node = info.field_nodes[0]  # en lugar de info.field_asts
+        selections = field_node.selection_set.selections
+        requested = [sel.name.value for sel in selections]
+        print("Requested fields:", requested)
         q = Project.objects.order_by('start_date')
         if after:
             dt = datetime.fromisoformat(after)
@@ -580,5 +598,15 @@ class Query(graphene.ObjectType):
         
     def resolve_all_project_default_materials(self, info):
         return list(ProjectDefaultMaterial.objects(is_active=True))
+    
+    def resolve_sales_orders_by_ids(self, info, ids):
+        docs = Project.objects(id__in=ids).only('id', 'sales_order')
+        return [
+            SalesOrderType(
+              id=str(p.id),
+              sales_order=p.sales_order
+            )
+            for p in docs
+        ]
 
 schema = graphene.Schema(query=Query)

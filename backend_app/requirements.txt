@@ -29,6 +29,7 @@ gunicorn==23.0.0
 h11==0.14.0
 kombu==5.4.2
 mongoengine==0.29.1
+orjson
 packaging==24.2
 Pillow
 prompt_toolkit==3.0.48
