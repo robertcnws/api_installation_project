@@ -167,13 +167,13 @@ export function ProjectEditTaskAttachments({
         const updatedProject = respRefetch?.data?.projectById;
 
         if (updatedProject) {
-          const updated = updatedProject?.projectDefaultTasks.find(
+          const updated = updatedProject?.projectDefaultTasks?.find(
             (t) => t.project_default_task.id === task.project_default_task.id
           );
           
           setTask((prev) => {
             const updatedTask = { ...prev };
-            updatedTask.project_task_attachments = updatedProject?.projectDefaultTasks.find(
+            updatedTask.project_task_attachments = updatedProject?.projectDefaultTasks?.find(
               (t) => t.project_default_task.id === task.project_default_task.id
             ).project_task_attachments;
             return updatedTask;

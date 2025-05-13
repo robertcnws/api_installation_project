@@ -558,10 +558,10 @@ function applyFilter({ inputData, comparator, filters, dateError }) {
 
   if (list) {
     if (list === 'in progress') {
-      inputData = inputData.filter((file) => file.currentStage.name.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) === -1);
+      inputData = inputData.filter((file) => file.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) === -1);
     }
     else if (list === 'finished') {
-      inputData = inputData.filter((file) => file.currentStage.name.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) !== -1);
+      inputData = inputData.filter((file) => file.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) !== -1);
     }
   }
 
@@ -596,7 +596,7 @@ function applyFilter({ inputData, comparator, filters, dateError }) {
       const normalizedStageFilters = stageFilters.map(stage => stage.toLowerCase());
       inputData = inputData.filter(file => {
         if (file.currentStage && file.currentStage.name) {
-          return normalizedStageFilters.includes(file.currentStage.name.toLowerCase());
+          return normalizedStageFilters.includes(file.currentStage?.name?.toLowerCase());
         }
         return false;
       });
@@ -631,19 +631,19 @@ function applyFilter({ inputData, comparator, filters, dateError }) {
     inputData = inputData.filter(file => {
       const { currentStage } = file;
       if (currentStage && currentStage.name) {
-        if (custom.isPreparation.value && currentStage.name.toLowerCase().indexOf(custom.isPreparation.name.toLowerCase()) !== -1) {
+        if (custom.isPreparation.value && currentStage?.name?.toLowerCase().indexOf(custom.isPreparation.name.toLowerCase()) !== -1) {
           return true;
         }
-        if (custom.isCoordination.value && currentStage.name.toLowerCase().indexOf(custom.isCoordination.name.toLowerCase()) !== -1) {
+        if (custom.isCoordination.value && currentStage?.name?.toLowerCase().indexOf(custom.isCoordination.name.toLowerCase()) !== -1) {
           return true;
         }
-        if (custom.isInstallation.value && currentStage.name.toLowerCase().indexOf(custom.isInstallation.name.toLowerCase()) !== -1) {
+        if (custom.isInstallation.value && currentStage?.name?.toLowerCase().indexOf(custom.isInstallation.name.toLowerCase()) !== -1) {
           return true;
         }
-        if (custom.isPermission.value && currentStage.name.toLowerCase().indexOf(custom.isPermission.name.toLowerCase()) !== -1) {
+        if (custom.isPermission.value && currentStage?.name?.toLowerCase().indexOf(custom.isPermission.name.toLowerCase()) !== -1) {
           return true;
         }
-        if (custom.isClosing.value && currentStage.name.toLowerCase().indexOf(custom.isClosing.name.toLowerCase()) !== -1) {
+        if (custom.isClosing.value && currentStage?.name?.toLowerCase().indexOf(custom.isClosing.name.toLowerCase()) !== -1) {
           return true;
         }
       }

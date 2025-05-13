@@ -399,11 +399,11 @@ function CombineProviders({ children }) {
 //       finalProjects = sortedProjects.filter((project) =>
 //       (
 //         (
-//           project.currentStage.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1 &&
+//           project.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1 &&
 //           project.usersAssignees.some((user) => user.username === userLogged?.data.username)
 //         ) ||
 //         (
-//           project.currentStage.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 &&
+//           project.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 &&
 //           totalPercentageProjectStage(project, CONFIG.stages.coordination, CONFIG) >= 50 && 
 //           project.usersAssignees.some((user) => user.username === userLogged?.data.username)
 //         )

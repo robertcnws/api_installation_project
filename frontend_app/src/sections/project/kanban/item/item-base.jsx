@@ -88,7 +88,7 @@ const ItemBase = forwardRef(({
 
   const initialTasks = useMemo(() => availableTasks(project, project?.projectDefaultTasks, CONFIG), [project]);
 
-  const extraTasks = useMemo(() => project?.projectDefaultTasks.filter(
+  const extraTasks = useMemo(() => project?.projectDefaultTasks?.filter(
     t => tasksBeforeNoMatter.some(item => item.toLowerCase().includes(t.project_default_task.name.toLowerCase()))
   ), [project, tasksBeforeNoMatter]);
 

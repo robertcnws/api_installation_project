@@ -17,6 +17,7 @@ import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
 import { TableNoData } from 'src/components/table';
 import { Scrollbar } from 'src/components/scrollbar';
+import { useMemo } from 'react';
 
 // ----------------------------------------------------------------------
 
@@ -65,10 +66,10 @@ export function ProjectsStageToday({ title, list, stage, ...other }) {
 }
 
 function Item({ item, sx, stage, router, ...other }) {
-    const tasks = item?.projectDefaultTasks.filter(
+    const tasks = item?.projectDefaultTasks?.filter(
         p => p.project_default_task.project_stage.name.toLowerCase().indexOf(stage.toLowerCase()) !== -1
     );
-    const totals = tasks.reduce((acc, cur) => acc + cur.percentage, 0);
+    const totals = useMemo(() => tasks.reduce((acc, cur) => acc + cur.percentage, 0), [tasks]);
     const percent = totals / tasks.length;
 
     const color = percent === 100 ? 'success.main' :

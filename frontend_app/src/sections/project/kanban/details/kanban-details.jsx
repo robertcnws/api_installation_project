@@ -209,7 +209,7 @@ export function KanbanDetails({
         const updatedProject = respRefetch?.data?.projectById;
 
         if (updatedProject) {
-          const updated = updatedProject?.projectDefaultTasks.find(
+          const updated = updatedProject?.projectDefaultTasks?.find(
             (t) => t.project_default_task.id === task.project_default_task.id
           );
           setNewFiles([]);

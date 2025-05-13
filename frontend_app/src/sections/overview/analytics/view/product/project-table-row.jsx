@@ -29,11 +29,11 @@ export function RenderCellPrice({ params }) {
 export function RenderCellStage({ params, includeNameStage = false }) {
   return (
     <Label variant="soft" color={
-      (params?.row?.currentStage.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 && 'default') ||
-      (params?.row?.currentStage.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 && 'secondary') ||
-      (params?.row?.currentStage.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1 && 'info') ||
-      (params?.row?.currentStage.name.toLowerCase().indexOf(CONFIG.stages.permission.toLowerCase()) !== -1 && 'warning') ||
-      (params?.row?.currentStage.name.toLowerCase().indexOf(CONFIG.stages.closing.toLowerCase()) !== -1 && 'success') ||
+      (params?.row?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 && 'default') ||
+      (params?.row?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 && 'secondary') ||
+      (params?.row?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1 && 'info') ||
+      (params?.row?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.permission.toLowerCase()) !== -1 && 'warning') ||
+      (params?.row?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.closing.toLowerCase()) !== -1 && 'success') ||
       'error'}
     >
       {includeNameStage ? `Stage ${params?.row?.currentStage.name}` : params?.row?.currentStage.name}

@@ -1,227 +1,50 @@
-# myapp/schema.py
 import graphene
 from graphene_mongo import MongoengineObjectType
-from mongoengine.fields import DynamicField
-from graphene_mongo.converter import convert_mongoengine_field
 from graphene.types.generic import GenericScalar
+from graphene_mongo.converter import convert_mongoengine_field
+from mongoengine.fields import DynamicField
+from django.utils import timezone
 from datetime import datetime
 from .models import (
-    ProjectStage, 
-    ProjectRole, 
-    Project, 
+    Project,
+    ProjectDefaultMaterial,
+    ProjectPermissions,
+    ProjectStage,
+    ProjectDefaultGuideProduct,
+    ProjectTaskStage,
+    ProjectRole,
     ProjectUser,
     ProjectNotification,
     ProjectNotificationUser,
-    ProjectPermissions,
-    ProjectTaskStage,
     ProjectTracking,
     ProjectDefaultTask,
-    ProjectDefaultGuideProduct,
     ProjectReminder,
-    ProjectDefaultMaterial,
 )
-from api_authorization.models import LoginUser
-from .data_util import serialize_datetime, dynamic_field_to_json
-from bson import ObjectId
-from django.utils import timezone
-from datetime import timezone as dt_timezone
 
-@convert_mongoengine_field.register(DynamicField)
-def convert_dynamic_field(field, registry=None, executor=None):
-    return graphene.JSONString(
-        description=getattr(field, 'help_text', ''),
-        required=field.required
-    )
-    
-    
-class SalesOrderType(graphene.ObjectType):
-    id = graphene.ID()
-    sales_order = GenericScalar()
-    
-    def resolve_sales_order(self, info):
-        sales_order = self.sales_order or {}
-        sales_order = serialize_datetime(sales_order)
-        return dynamic_field_to_json(sales_order)
-    
+def convert_dynamic_field(field, registry=None):
+    return GenericScalar(description=getattr(field, 'help_text', ''))
+convert_mongoengine_field.register(DynamicField)(convert_dynamic_field)
 
-class ProjectDefaultMaterialType(MongoengineObjectType):
-    class Meta:
-        model = ProjectDefaultMaterial
-        
-    created_time = graphene.String()
-    last_modified_time = graphene.String()
-    default_guide_products = GenericScalar()
-    
-    def resolve_created_time(self, info):
-        dt = self.created_time
-        if timezone.is_naive(dt):
-            dt = timezone.make_aware(dt, dt_timezone.utc) 
-        local_dt = timezone.localtime(dt)  
-        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
-    
-    def resolve_last_modified_time(self, info):
-        dt = self.last_modified_time
-        if timezone.is_naive(dt):
-            dt = timezone.make_aware(dt, dt_timezone.utc) 
-        local_dt = timezone.localtime(dt)  
-        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
-    
-    def resolve_default_guide_products(self, info):
-        default_guide_products = self.default_guide_products or []
-        default_guide_products = serialize_datetime(default_guide_products)
-        return dynamic_field_to_json(default_guide_products)
-    
-        
-class ProjectPermissionsType(MongoengineObjectType):
-    class Meta:
-        model = ProjectPermissions
-        
-    created_time = graphene.String()
-    last_modified_time = graphene.String()
-    
-    def resolve_created_time(self, info):
-        dt = self.created_time
-        if timezone.is_naive(dt):
-            dt = timezone.make_aware(dt, dt_timezone.utc) 
-        local_dt = timezone.localtime(dt)  
-        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
-    
-    def resolve_last_modified_time(self, info):
-        dt = self.last_modified_time
-        if timezone.is_naive(dt):
-            dt = timezone.make_aware(dt, dt_timezone.utc) 
-        local_dt = timezone.localtime(dt)  
-        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
+class DateTime(graphene.Scalar):
+    """Auto-serialize datetime to ISO 8601 string"""
+    @staticmethod
+    def serialize(dt):
+        if isinstance(dt, datetime):
+            if timezone.is_naive(dt):
+                dt = timezone.make_aware(dt, timezone.utc)
+            return timezone.localtime(dt).isoformat()
+        return dt
 
-class ProjectStageType(MongoengineObjectType):
-    class Meta:
-        model = ProjectStage
-        
-    created_time = graphene.String()
-    last_modified_time = graphene.String()
-    
-    def resolve_created_time(self, info):
-        dt = self.created_time
-        if timezone.is_naive(dt):
-            dt = timezone.make_aware(dt, dt_timezone.utc) 
-        local_dt = timezone.localtime(dt)  
-        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
-    
-    def resolve_last_modified_time(self, info):
-        dt = self.last_modified_time
-        if timezone.is_naive(dt):
-            dt = timezone.make_aware(dt, dt_timezone.utc) 
-        local_dt = timezone.localtime(dt)  
-        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
-        
-class ProjectDefaultGuideProductType(MongoengineObjectType):
-    class Meta:
-        model = ProjectDefaultGuideProduct
-    
-    created_time = graphene.String()
-    last_modified_time = graphene.String()
-    
-    def resolve_created_time(self, info):
-        dt = self.created_time
-        if timezone.is_naive(dt):
-            dt = timezone.make_aware(dt, dt_timezone.utc) 
-        local_dt = timezone.localtime(dt)  
-        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
-    
-    def resolve_last_modified_time(self, info):
-        dt = self.last_modified_time
-        if timezone.is_naive(dt):
-            dt = timezone.make_aware(dt, dt_timezone.utc) 
-        local_dt = timezone.localtime(dt)  
-        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
-        
-class ProjectTaskStageType(MongoengineObjectType):
-    class Meta:
-        model = ProjectTaskStage
-    
-    created_time = graphene.String()
-    last_modified_time = graphene.String()
-    
-    def resolve_created_time(self, info):
-        dt = self.created_time
-        if timezone.is_naive(dt):
-            dt = timezone.make_aware(dt, dt_timezone.utc) 
-        local_dt = timezone.localtime(dt)  
-        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
-    
-    def resolve_last_modified_time(self, info):
-        dt = self.last_modified_time
-        if timezone.is_naive(dt):
-            dt = timezone.make_aware(dt, dt_timezone.utc) 
-        local_dt = timezone.localtime(dt)  
-        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
+class TimestampMixin:
+    created_time = DateTime()
+    last_modified_time = DateTime()
 
-class ProjectRoleType(MongoengineObjectType):
-    class Meta:
-        model = ProjectRole
-        
-    created_time = graphene.String()
-    last_modified_time = graphene.String()
-    
-    def resolve_created_time(self, info):
-        dt = self.created_time
-        if timezone.is_naive(dt):
-            dt = timezone.make_aware(dt, dt_timezone.utc) 
-        local_dt = timezone.localtime(dt)  
-        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
-    
-    def resolve_last_modified_time(self, info):
-        dt = self.last_modified_time
-        if timezone.is_naive(dt):
-            dt = timezone.make_aware(dt, dt_timezone.utc) 
-        local_dt = timezone.localtime(dt)  
-        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
-        
-
-class ProjectRemainder(MongoengineObjectType):
-    class Meta:
-        model = ProjectReminder
-        
-    created_time = graphene.String()
-    last_modified_time = graphene.String()
-    project = GenericScalar()
-    project_default_task = GenericScalar()
-    user_reporter = GenericScalar()
-    
-    def resolve_project(self, info):
-        project = self.project or {}
-        project = serialize_datetime(project)
-        return dynamic_field_to_json(project)
-    
-    def resolve_project_default_task(self, info):
-        project_default_task = self.project_default_task or {}
-        project_default_task = serialize_datetime(project_default_task)
-        return dynamic_field_to_json(project_default_task)
-    
-    def resolve_user_reporter(self, info):
-        user_reporter = self.user_reporter or {}
-        user_reporter = serialize_datetime(user_reporter)
-        return dynamic_field_to_json(user_reporter)
-    
-    def resolve_created_time(self, info):
-        dt = self.created_time
-        if timezone.is_naive(dt):
-            dt = timezone.make_aware(dt, dt_timezone.utc) 
-        local_dt = timezone.localtime(dt)  
-        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
-    
-    def resolve_last_modified_time(self, info):
-        dt = self.last_modified_time
-        if timezone.is_naive(dt):
-            dt = timezone.make_aware(dt, dt_timezone.utc) 
-        local_dt = timezone.localtime(dt)  
-        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
-    
-
-class ProjectType(MongoengineObjectType):
+class ProjectType(MongoengineObjectType, TimestampMixin):
     class Meta:
         model = Project
-        
+        interfaces = (graphene.relay.Node,)
+
+    # dynamic JSON fields
     sales_order = GenericScalar()
     stage_history = GenericScalar()
     user_reporter = GenericScalar()
@@ -236,377 +59,119 @@ class ProjectType(MongoengineObjectType):
     project_comments = GenericScalar()
     project_materials = GenericScalar()
     project_guide_products = GenericScalar()
-    created_time = graphene.String()
-    last_modified_time = graphene.String()
-    start_date = graphene.DateTime()
-    
-    def resolve_created_time(self, info):
-        dt = self.created_time
-        if timezone.is_naive(dt):
-            dt = timezone.make_aware(dt, dt_timezone.utc) 
-        local_dt = timezone.localtime(dt)  
-        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
-    
-    def resolve_last_modified_time(self, info):
-        dt = self.last_modified_time
-        if timezone.is_naive(dt):
-            dt = timezone.make_aware(dt, dt_timezone.utc) 
-        local_dt = timezone.localtime(dt)  
-        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
-    
-    def resolve_sales_order(self, info):
-        sales_order = self.sales_order or {}
-        sales_order = serialize_datetime(sales_order)
-        return dynamic_field_to_json(sales_order)
-    
-    def resolve_stage_history(self, info):
-        stage_history = self.stage_history or []
-        stage_history = serialize_datetime(stage_history)
-        return dynamic_field_to_json(stage_history)
-    
-    def resolve_user_reporter(self, info):
-        user_reporter = self.user_reporter or {}
-        user_reporter = serialize_datetime(user_reporter)
-        return dynamic_field_to_json(user_reporter)
-    
-    def resolve_users_assignees(self, info):
-        users_assignees = self.users_assignees or []
-        users_assignees = serialize_datetime(users_assignees)
-        return dynamic_field_to_json(users_assignees)
-    
-    def resolve_current_stage(self, info):
-        current_stage = self.current_stage or {}
-        current_stage = serialize_datetime(current_stage)
-        return dynamic_field_to_json(current_stage)
+    # ...otros GenericScalar según tu modelo...
 
-    def resolve_project_attachments(self, info):
-        attachments = self.project_attachments or []
-        attachments = serialize_datetime(attachments)
-        return dynamic_field_to_json(attachments)
+    start_date = DateTime()
 
-    def resolve_project_tasks(self, info):
-        tasks = self.project_tasks or []
-        tasks = serialize_datetime(tasks)
-        return dynamic_field_to_json(tasks)
-    
-    def resolve_project_history(self, info):
-        project_history = self.project_history or []
-        project_history = serialize_datetime(project_history)
-        return dynamic_field_to_json(project_history)
-    
-    def resolve_user_manager(self, info):
-        user_manager = self.user_manager or {}
-        user_manager = serialize_datetime(user_manager)
-        return dynamic_field_to_json(user_manager)
-    
-    def resolve_project_default_tasks(self, info):
-        project_default_tasks = self.project_default_tasks or []
-        project_default_tasks = serialize_datetime(project_default_tasks)
-        return dynamic_field_to_json(project_default_tasks)
-    
-    def resolve_project_comments(self, info):
-        project_comments = self.project_comments or []
-        project_comments = serialize_datetime(project_comments)
-        return dynamic_field_to_json(project_comments)
-    
-    def resolve_project_materials(self, info):
-        project_materials = self.project_materials or []
-        project_materials = serialize_datetime(project_materials)
-        return dynamic_field_to_json(project_materials)
-    
-    def resolve_project_guide_products(self, info):
-        project_guide_products = self.project_guide_products or []
-        project_guide_products = serialize_datetime(project_guide_products)
-        return dynamic_field_to_json(project_guide_products)
-    
-    def resolve_user_installer(self, info):
-        user_installer = self.user_installer or {}
-        user_installer = serialize_datetime(user_installer)
-        return dynamic_field_to_json(user_installer)
+class ProjectDefaultMaterialType(MongoengineObjectType, TimestampMixin):
+    class Meta:
+        model = ProjectDefaultMaterial
+        interfaces = (graphene.relay.Node,)
 
-class ProjectConnection(graphene.ObjectType):
-    edges = graphene.List(ProjectType)
-    next_cursor = graphene.String()
+    default_guide_products = GenericScalar()
 
-class ProjectUserType(MongoengineObjectType):
+class ProjectPermissionsType(MongoengineObjectType, TimestampMixin):
+    class Meta:
+        model = ProjectPermissions
+        interfaces = (graphene.relay.Node,)
+
+class ProjectStageType(MongoengineObjectType, TimestampMixin):
+    class Meta:
+        model = ProjectStage
+        interfaces = (graphene.relay.Node,)
+
+class ProjectDefaultGuideProductType(MongoengineObjectType, TimestampMixin):
+    class Meta:
+        model = ProjectDefaultGuideProduct
+        interfaces = (graphene.relay.Node,)
+
+class ProjectTaskStageType(MongoengineObjectType, TimestampMixin):
+    class Meta:
+        model = ProjectTaskStage
+        interfaces = (graphene.relay.Node,)
+
+class ProjectRoleType(MongoengineObjectType, TimestampMixin):
+    class Meta:
+        model = ProjectRole
+        interfaces = (graphene.relay.Node,)
+
+class ProjectUserType(MongoengineObjectType, TimestampMixin):
     class Meta:
         model = ProjectUser
-    
-    created_time = graphene.String()
-    last_modified_time = graphene.String()
-    
-    def resolve_created_time(self, info):
-        dt = self.created_time
-        if timezone.is_naive(dt):
-            dt = timezone.make_aware(dt, dt_timezone.utc) 
-        local_dt = timezone.localtime(dt)  
-        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
-    
-    def resolve_last_modified_time(self, info):
-        dt = self.last_modified_time
-        if timezone.is_naive(dt):
-            dt = timezone.make_aware(dt, dt_timezone.utc) 
-        local_dt = timezone.localtime(dt)  
-        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
-        
-class ProjectNotificationType(MongoengineObjectType):
+        interfaces = (graphene.relay.Node,)
+
+class ProjectNotificationType(MongoengineObjectType, TimestampMixin):
     class Meta:
         model = ProjectNotification
-    
-    created_time = graphene.String()
-    last_modified_time = graphene.String()
-    
-    def resolve_created_time(self, info):
-        dt = self.created_time
-        if timezone.is_naive(dt):
-            dt = timezone.make_aware(dt, dt_timezone.utc) 
-        local_dt = timezone.localtime(dt)  
-        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
-    
-    def resolve_last_modified_time(self, info):
-        dt = self.last_modified_time
-        if timezone.is_naive(dt):
-            dt = timezone.make_aware(dt, dt_timezone.utc) 
-        local_dt = timezone.localtime(dt)  
-        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
-        
-class ProjectNotificationUserType(MongoengineObjectType):
-    class Meta:
-        model = ProjectNotificationUser
-        
+        interfaces = (graphene.relay.Node,)
+
     notification = GenericScalar()
     user = GenericScalar()
-    created_time = graphene.String()
-    last_modified_time = graphene.String()
-    
-    def resolve_created_time(self, info):
-        dt = self.created_time
-        if timezone.is_naive(dt):
-            dt = timezone.make_aware(dt, dt_timezone.utc) 
-        local_dt = timezone.localtime(dt)  
-        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
-    
-    def resolve_last_modified_time(self, info):
-        dt = self.last_modified_time
-        if timezone.is_naive(dt):
-            dt = timezone.make_aware(dt, dt_timezone.utc) 
-        local_dt = timezone.localtime(dt)  
-        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
-    
-    def resolve_notification(self, info):
-        notification = self.notification or {}
-        notification = serialize_datetime(notification)
-        return dynamic_field_to_json(notification)
-    
-    def resolve_user(self, info):
-        user = self.user or {}
-        user = serialize_datetime(user)
-        return dynamic_field_to_json(user)
-        
 
-class ProjectNotificationUsersPaginated(graphene.ObjectType):
-    count = graphene.Int()
-    page = graphene.Int()
-    page_size = graphene.Int()
-    results = graphene.List(ProjectNotificationUserType)
-    
-class ProjectTrackingType(MongoengineObjectType):
+class ProjectNotificationUserType(MongoengineObjectType, TimestampMixin):
+    class Meta:
+        model = ProjectNotificationUser
+        interfaces = (graphene.relay.Node,)
+
+    notification = GenericScalar()
+    user = GenericScalar()
+
+class ProjectTrackingType(MongoengineObjectType, TimestampMixin):
     class Meta:
         model = ProjectTracking
-    created_time = graphene.String()
+        interfaces = (graphene.relay.Node,)
+
     managed_data = GenericScalar()
     user_reporter = GenericScalar()
-    
-    def resolve_created_time(self, info):
-        dt = self.created_time
-        if timezone.is_naive(dt):
-            dt = timezone.make_aware(dt, dt_timezone.utc) 
-        local_dt = timezone.localtime(dt)  
-        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
-    
-    def resolve_managed_data(self, info):
-        managed_data = self.managed_data or {}
-        managed_data = serialize_datetime(managed_data)
-        return dynamic_field_to_json(managed_data)
-    
-    def resolve_user_reporter(self, info):
-        user_reporter = self.user_reporter or {}
-        user_reporter = serialize_datetime(user_reporter)
-        return dynamic_field_to_json(user_reporter)
-    
-class ProjectDefaultTaskType(MongoengineObjectType):
+
+class ProjectDefaultTaskType(MongoengineObjectType, TimestampMixin):
     class Meta:
         model = ProjectDefaultTask
-    created_time = graphene.String()
-    last_modified_time = graphene.String()
+        interfaces = (graphene.relay.Node,)
+
     project_stage = GenericScalar()
-    
-    def resolve_created_time(self, info):
-        dt = self.created_time
-        if timezone.is_naive(dt):
-            dt = timezone.make_aware(dt, dt_timezone.utc) 
-        local_dt = timezone.localtime(dt)  
-        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
-    
-    def resolve_last_modified_time(self, info):
-        dt = self.last_modified_time
-        if timezone.is_naive(dt):
-            dt = timezone.make_aware(dt, dt_timezone.utc) 
-        local_dt = timezone.localtime(dt)  
-        return local_dt.strftime('%Y-%m-%d %H:%M:%S')
-    
-    def resolve_project_stage(self, info):
-        project_stage = self.project_stage or {}
-        project_stage = serialize_datetime(project_stage)
-        return dynamic_field_to_json(project_stage)
-    
+
+class ProjectReminderType(MongoengineObjectType, TimestampMixin):
+    class Meta:
+        model = ProjectReminder
+        interfaces = (graphene.relay.Node,)
+
+    project = GenericScalar()
+    project_default_task = GenericScalar()
+    user_reporter = GenericScalar()
 
 class Query(graphene.ObjectType):
-    all_project_permissions = graphene.List(ProjectPermissionsType)
-    all_project_stages = graphene.List(ProjectStageType)
-    all_project_default_guide_products = graphene.List(ProjectDefaultGuideProductType)
-    all_project_task_stages = graphene.List(ProjectTaskStageType)
-    all_project_roles = graphene.List(ProjectRoleType)
-    # all_projects = graphene.List(ProjectType)
-    # all_projects = graphene.Field(
-    #     graphene.List(ProjectType),
-    #     page=graphene.Int(default_value=1),
-    #     page_size=graphene.Int(default_value=50),
-    # )
-    all_projects = graphene.Field(
-        ProjectConnection,
-        after=graphene.String(),
-        first=graphene.Int(default_value=50),
-    )
-    all_project_users = graphene.List(ProjectUserType)
+    node = graphene.relay.Node.Field()
+    
+    all_projects = graphene.relay.ConnectionField(ProjectType)
+    
     all_project_notifications = graphene.List(ProjectNotificationType)
-    all_project_tracking = graphene.List(ProjectTrackingType)
-    all_project_default_tasks = graphene.List(ProjectDefaultTaskType)
-    all_project_reminders = graphene.List(
-        ProjectRemainder, 
-        username=graphene.String(required=False)
-    )
-    all_project_notification_users = graphene.Field(
-        ProjectNotificationUsersPaginated,
-        username=graphene.String(required=False),
-        user=graphene.String(required=False),
-        page=graphene.Int(required=False, default_value=1), 
-        pageSize=graphene.Int(required=False, default_value=100)
-    )
-    project_by_id = graphene.Field(
-        ProjectType, 
-        id=graphene.String(required=True)
-    )
-    project_user_by_username = graphene.Field(
-        ProjectUserType, 
-        username=graphene.String(required=True), 
-    )
-    sales_orders_by_ids = graphene.List(
-        SalesOrderType,
-        ids=graphene.List(graphene.ID, required=True)
-    )
-    
-    all_project_default_materials = graphene.List(ProjectDefaultMaterialType)
-    
-    def resolve_all_project_reminders(self, info, username=None):
-        if username:
-            try:
-                user = LoginUser.objects.get(username=username)
-                if not user:
-                    return []
-                return list(ProjectReminder.objects(is_active=True, user_reporter__username=username))
-            except Exception:
-                return []
-        else:
-            return list(ProjectReminder.objects(is_active=True))
-    
-    def resolve_all_project_permissions(self, info):
-        return list(ProjectPermissions.objects(is_active=True))
+    all_project_notification_users = graphene.relay.ConnectionField(ProjectNotificationUserType)
 
-    def resolve_all_project_stages(self, info):
-        return list(ProjectStage.objects(is_active=True).order_by('order'))
-    
-    def resolve_all_project_task_stages(self, info):
-        return list(ProjectTaskStage.objects(is_active=True).order_by('order'))
+    def resolve_all_projects(self, info, **kwargs):
+        return Project.objects.order_by('start_date')
 
-    def resolve_all_project_roles(self, info):
-        return list(ProjectRole.objects(is_active=True))
-
-    # def resolve_all_projects(self, info):
-    #     return list(Project.objects.all().order_by('start_date'))
-    
-    # def resolve_all_projects(self, info, page, page_size):
-    #     skip = (page - 1) * page_size
-    #     return Project.objects.order_by('start_date').skip(skip).limit(page_size)
-    
-    def resolve_all_projects(self, info, after=None, first=50):
-        field_node = info.field_nodes[0]  # en lugar de info.field_asts
-        selections = field_node.selection_set.selections
-        requested = [sel.name.value for sel in selections]
-        print("Requested fields:", requested)
-        q = Project.objects.order_by('start_date')
-        if after:
-            dt = datetime.fromisoformat(after)
-            q = q.filter(start_date__gt=dt)
-        items = list(q.limit(first))
-        next_cursor = items[-1].start_date.isoformat() if len(items) == first else None
-        return ProjectConnection(edges=items, next_cursor=next_cursor)
-
-    def resolve_all_project_users(self, info):
-        return list(ProjectUser.objects.all())
-    
     def resolve_all_project_notifications(self, info):
-        return list(ProjectNotification.objects.all())
-    
-    def resolve_all_project_tracking(self, info):
-        return list(ProjectTracking.objects.all())
-    
-    def resolve_all_project_default_tasks(self, info):
-        return list(ProjectDefaultTask.objects.all())
-    
-    def resolve_all_project_default_guide_products(self, info):
-        return list(ProjectDefaultGuideProduct.objects.all())
-    
-    def resolve_all_project_notification_users(self, info, username=None, user=None, page=1, pageSize=100):
-        qs = ProjectNotificationUser.objects.all()
-        if username:
-            qs = qs(username=username)
-        if user:
-            qs = qs(user__username=user)
-        qs = qs.order_by('-created_time')
-        total = qs.count()
-        skip = (page - 1) * pageSize
-        paginated_qs = qs.skip(skip).limit(pageSize)
-        return ProjectNotificationUsersPaginated(
-            count=total,
-            page=page,
-            page_size=pageSize,
-            results=list(paginated_qs)
-        )
+        return list(ProjectNotification.objects.order_by('-created_time'))
 
-    def resolve_project_by_id(self, info, id):
-        try:
-            return Project.objects.get(id=ObjectId(id))
-        except Exception:
-            return None
+    def resolve_all_project_notification_users(self, info, **kwargs):
+        return ProjectNotificationUser.objects.order_by('-created_time')
 
-    def resolve_project_user_by_username(self, info, username):
-        try:
-            return ProjectUser.objects.get(username=username)
-        except Exception:
-            return None
-        
-    def resolve_all_project_default_materials(self, info):
-        return list(ProjectDefaultMaterial.objects(is_active=True))
-    
-    def resolve_sales_orders_by_ids(self, info, ids):
-        docs = Project.objects(id__in=ids).only('id', 'sales_order')
-        return [
-            SalesOrderType(
-              id=str(p.id),
-              sales_order=p.sales_order
-            )
-            for p in docs
-        ]
-
-schema = graphene.Schema(query=Query)
+schema = graphene.Schema(
+    query=Query,
+    types=[
+        ProjectType,
+        ProjectDefaultMaterialType,
+        ProjectPermissionsType,
+        ProjectStageType,
+        ProjectDefaultGuideProductType,
+        ProjectTaskStageType,
+        ProjectRoleType,
+        ProjectUserType,
+        ProjectNotificationType,
+        ProjectNotificationUserType,
+        ProjectTrackingType,
+        ProjectDefaultTaskType,
+        ProjectReminderType,
+    ]
+)

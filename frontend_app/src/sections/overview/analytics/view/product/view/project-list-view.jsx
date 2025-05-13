@@ -72,7 +72,7 @@ export function ProjectListView({ projects, loadingProjects, ...other }) {
   const [columnVisibilityModel, setColumnVisibilityModel] = useState(HIDE_COLUMNS);
 
   const currentProjects = useMemo(() =>
-    projects.filter((project) => project.currentStage.name.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) === -1),
+    projects.filter((project) => project.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) === -1),
     [projects]);
 
   useEffect(() => {

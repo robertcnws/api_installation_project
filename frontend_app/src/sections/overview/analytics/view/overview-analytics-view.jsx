@@ -203,17 +203,17 @@ export function OverviewAnalyticsView() {
                     percent={
                       linearRegresionCalculation(
                         projects?.filter(
-                          proj => proj.currentStage.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1
+                          proj => proj.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1
                         ).map((proj) => proj.hasPermission)
                       )}
                     total={
                       projects?.filter(
-                        proj => proj.currentStage.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1
+                        proj => proj.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1
                       ).length
                     }
                     quantity={
                       projects?.filter(
-                        proj => proj.currentStage.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1
+                        proj => proj.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1
                       ).length
                     }
                     color="error"
@@ -230,17 +230,17 @@ export function OverviewAnalyticsView() {
                     percent={
                       linearRegresionCalculation(
                         projects?.filter(
-                          proj => proj.currentStage.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1
+                          proj => proj.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1
                         ).map((proj) => proj.hasPermission)
                       )}
                     total={
                       projects?.filter(
-                        proj => proj.currentStage.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1
+                        proj => proj.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1
                       ).length
                     }
                     quantity={
                       projects?.filter(
-                        proj => proj.currentStage.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1
+                        proj => proj.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1
                       ).length
                     }
                     color="secondary"
@@ -257,17 +257,17 @@ export function OverviewAnalyticsView() {
                     percent={
                       linearRegresionCalculation(
                         projects?.filter(
-                          proj => proj.currentStage.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
+                          proj => proj.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
                         ).map((proj) => proj.hasPermission)
                       )}
                     total={
                       projects?.filter(
-                        proj => proj.currentStage.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
+                        proj => proj.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
                       ).length
                     }
                     quantity={
                       projects?.filter(
-                        proj => proj.currentStage.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
+                        proj => proj.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
                       ).length
                     }
                     color="info"
@@ -284,17 +284,17 @@ export function OverviewAnalyticsView() {
                     percent={
                       linearRegresionCalculation(
                         projects?.filter(
-                          proj => proj.currentStage.name.toLowerCase().indexOf(CONFIG.stages.permission.toLowerCase()) !== -1
+                          proj => proj.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.permission.toLowerCase()) !== -1
                         ).map((proj) => proj.hasPermission)
                       )}
                     total={
                       projects?.filter(
-                        proj => proj.currentStage.name.toLowerCase().indexOf(CONFIG.stages.permission.toLowerCase()) !== -1
+                        proj => proj.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.permission.toLowerCase()) !== -1
                       ).length
                     }
                     quantity={
                       projects?.filter(
-                        proj => proj.currentStage.name.toLowerCase().indexOf(CONFIG.stages.permission.toLowerCase()) !== -1
+                        proj => proj.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.permission.toLowerCase()) !== -1
                       ).length
                     }
                     color="warning"
@@ -311,17 +311,17 @@ export function OverviewAnalyticsView() {
                     percent={
                       linearRegresionCalculation(
                         projects?.filter(
-                          proj => proj.currentStage.name.toLowerCase().indexOf(CONFIG.stages.closing.toLowerCase()) !== -1
+                          proj => proj.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.closing.toLowerCase()) !== -1
                         ).map((proj) => proj.hasPermission)
                       )}
                     total={
                       projects?.filter(
-                        proj => proj.currentStage.name.toLowerCase().indexOf(CONFIG.stages.closing.toLowerCase()) !== -1
+                        proj => proj.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.closing.toLowerCase()) !== -1
                       ).length
                     }
                     quantity={
                       projects?.filter(
-                        proj => proj.currentStage.name.toLowerCase().indexOf(CONFIG.stages.closing.toLowerCase()) !== -1
+                        proj => proj.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.closing.toLowerCase()) !== -1
                       ).length
                     }
                     color="success"
@@ -391,7 +391,7 @@ export function OverviewAnalyticsView() {
                       <ProjectsStageToday
                         title="In installation stage"
                         stage="Installation"
-                        list={projects.filter(proj => proj.currentStage.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1)}
+                        list={projects.filter(proj => proj.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1)}
                       />
                     </Box>
                   </Grid>
@@ -438,7 +438,7 @@ export function OverviewAnalyticsView() {
                         <ProjectsStageToday
                           title="In closing stage"
                           stage="Closing"
-                          list={projects.filter(proj => proj.currentStage.name.toLowerCase().indexOf(CONFIG.stages.closing.toLowerCase()) !== -1)}
+                          list={projects.filter(proj => proj.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.closing.toLowerCase()) !== -1)}
                         />
                       </Box>
                     </Grid>

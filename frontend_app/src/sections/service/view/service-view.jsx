@@ -514,12 +514,12 @@ function applyFilter({ inputData, comparator, filters, dateError }) {
   if (list) {
     if (list === 'in progress') {
       inputData = inputData.filter(
-        (file) => file.currentStage.name.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) === -1 && !file.isClosed
+        (file) => file.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) === -1 && !file.isClosed
       );
     }
     else if (list === 'finished') {
       inputData = inputData.filter(
-        (file) => file.currentStage.name.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) !== -1 && !file.isClosed
+        (file) => file.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) !== -1 && !file.isClosed
       );
     }
     else if (list === 'closed') {
@@ -560,7 +560,7 @@ function applyFilter({ inputData, comparator, filters, dateError }) {
       const normalizedStageFilters = stageFilters.map(stage => stage.toLowerCase());
       inputData = inputData.filter(file => {
         if (file.currentStage && file.currentStage.name) {
-          return normalizedStageFilters.includes(file.currentStage.name.toLowerCase());
+          return normalizedStageFilters.includes(file.currentStage?.name?.toLowerCase());
         }
         return false;
       });
@@ -599,13 +599,13 @@ function applyFilter({ inputData, comparator, filters, dateError }) {
     inputData = inputData.filter(file => {
       const { currentStage } = file;
       if (currentStage && currentStage.name) {
-        if (custom.isPreparation.value && currentStage.name.toLowerCase().indexOf(custom.isPreparation.name.toLowerCase()) !== -1) {
+        if (custom.isPreparation.value && currentStage?.name?.toLowerCase().indexOf(custom.isPreparation.name.toLowerCase()) !== -1) {
           return true;
         }
-        if (custom.isRepair.value && currentStage.name.toLowerCase().indexOf(custom.isRepair.name.toLowerCase()) !== -1) {
+        if (custom.isRepair.value && currentStage?.name?.toLowerCase().indexOf(custom.isRepair.name.toLowerCase()) !== -1) {
           return true;
         }
-        if (custom.isClosing.value && currentStage.name.toLowerCase().indexOf(custom.isClosing.name.toLowerCase()) !== -1) {
+        if (custom.isClosing.value && currentStage?.name?.toLowerCase().indexOf(custom.isClosing.name.toLowerCase()) !== -1) {
           return true;
         }
       }
