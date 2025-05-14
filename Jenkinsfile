@@ -22,8 +22,7 @@ pipeline {
   }
 
   stages {
-
-    stage('1. Checkout & Stash') {
+    stage('Checkout & Stash') {
       agent any
       steps {
         checkout scm
@@ -31,7 +30,7 @@ pipeline {
       }
     }
 
-    stage('2. Verify agent groups') {
+    stage('Verify agent groups') {
       agent { label 'docker' }
       steps {
         sh 'echo "Users: $(id -un)"'
@@ -39,7 +38,7 @@ pipeline {
       }
     }
 
-    stage('3. Smoke Test Docker') {
+    stage('Smoke Test Docker') {
       agent { label 'docker' }
       steps {
         echo "🔍 Testing Docker from this agent in EC2..."
@@ -49,7 +48,7 @@ pipeline {
       }
     }
 
-    stage('4. Login to ECR') {
+    stage('Login to ECR') {
       agent { label 'docker' }
       steps {
         withCredentials([[
@@ -67,14 +66,14 @@ pipeline {
       }
     }
 
-    stage('5. Prune Docker') {
+    stage('Prune Docker') {
       agent { label 'docker' }
       steps {
         sh 'docker system prune -af || true'
       }
     }
 
-    stage('6. Build & Push Backend') {
+    stage('Build & Push Backend') {
       when { changeset "**/backend_app/**" }
       agent { label 'docker' }
       steps {
@@ -90,7 +89,7 @@ pipeline {
       }
     }
 
-    stage('7. Build & Push Frontend') {
+    stage('Build & Push Frontend') {
       when { changeset "**/frontend_app/**" }
       agent { label 'docker' }
       steps {
@@ -112,7 +111,7 @@ pipeline {
       }
     }
 
-    stage('8. Deploy Backend') {
+    stage('Deploy Backend') {
       when { changeset "**/backend_app/**" }
       agent { label 'docker' }
       steps {
@@ -135,7 +134,7 @@ pipeline {
       }
     }
 
-    stage('9. Deploy Frontend') {
+    stage('Deploy Frontend') {
       when { changeset "**/frontend_app/**" }
       agent { label 'docker' }
       steps {
@@ -159,83 +158,83 @@ pipeline {
     }
   }  
 
-  stage('10. Verify Deployments') {
-      agent { label 'docker' }
-      steps {
-        script {
-          def check = { svc ->
-            def state = sh(
-              script: """
-                docker run --rm \
-                  -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
-                  -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
-                  -e AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION \
-                  amazon/aws-cli ecs describe-services \
-                    --cluster $AWS_CLUSTER \
-                    --services ${svc} \
-                    --query 'services[0].deployments[?status==\`PRIMARY\`].rolloutState' \
-                    --output text
-              """,
-              returnStdout: true
-            ).trim()
-            if (state != 'COMPLETED') {
-              error "🚨 Deployment of ${svc} did not complete: ${state}"
-            }
+  stage('Verify Deployments') {
+    agent { label 'docker' }
+    steps {
+      script {
+        def check = { svc ->
+          def state = sh(
+            script: """
+              docker run --rm \\
+                -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \\
+                -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \\
+                -e AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION \\
+                amazon/aws-cli ecs describe-services \\
+                  --cluster $AWS_CLUSTER \\
+                  --services ${svc} \\
+                  --query "services[0].deployments[?status=='PRIMARY'].rolloutState" \\
+                  --output text
+            """,
+            returnStdout: true
+          ).trim()
+          if (state != 'COMPLETED') {
+            error "🚨 Deployment of ${svc} did not complete: ${state}"
           }
-          check(env.AWS_BACKEND_SERVICE)
-          check(env.AWS_FRONTEND_SERVICE)
-          echo "✅ Both deployments are COMPLETED"
         }
+        check(env.AWS_BACKEND_SERVICE)
+        check(env.AWS_FRONTEND_SERVICE)
+        echo "✅ Both deployments are COMPLETED"
       }
     }
-
-  stage('11. Notify') {
-      when { expression { currentBuild.currentResult == 'SUCCESS' } }
-      steps {
-        emailext(
-          mimeType: 'text/html',
-          subject: "✅ Build #${env.BUILD_NUMBER} Success – ${env.JOB_NAME}",
-          to: '$DEFAULT_RECIPIENTS',
-          from: 'Jenkins NWS CI/CD <nnws15815@gmail.com>',
-          body: '''<!DOCTYPE html>
-              <html>
-                <head>
-                  <style>
-                    body { font-family: Arial, sans-serif; color: #333; }
-                    .header { background: #004579; padding: 10px; color: white; }
-                    .content { padding: 20px; }
-                    .changelog { background: #f9f9f9; border: 1px solid #ddd; padding: 10px; }
-                    .commit { margin-bottom: 8px; }
-                    .commit-author { font-weight: bold; }
-                    .footer { font-size: 0.8em; color: #777; margin-top: 20px; }
-                  </style>
-                </head>
-                <body>
-                  <div class="header">
-                    Jenkins CI/CD Notification
-                  </div>
-                  <div class="content">
-                    <h1>Build #${BUILD_NUMBER} – Success 🎉</h1>
-                    <p><strong>Project:</strong> ${JOB_NAME}</p>
-                    <p><strong>URL:</strong> <a href="${BUILD_URL}">${BUILD_URL}</a></p>
-                    
-                    <h2>Commits included:</h2>
-                    <div class="changelog">
-                      <ul>
-                        ${CHANGES, showPaths="true", format="<li class='commit'><span class='commit-author'>%a</span> – (<code>%r</code>)<br/><pre style='background:#eee;padding:8px;'>%m</pre><br/><small>Files:<br/>%p</small><br/></li>"}
-                      </ul>
-                    </div>
-                  </div>
-                  <div class="footer">
-                    This is an automated message generated by Jenkins. Please contact DevOps Team for more questions.
-                  </div>
-                </body>
-              </html>''',
-        )
-      }
   }
 
   post {
+    success {
+      script {
+        if (currentBuild.changeSets.any { it.items }) {
+          emailext(
+            mimeType: 'text/html',
+            subject: "✅ Build #${env.BUILD_NUMBER} Success – ${env.JOB_NAME}",
+            to: '$DEFAULT_RECIPIENTS',
+            from: 'Jenkins NWS CI/CD <nnws15815@gmail.com>',
+            body: '''<!DOCTYPE html>
+                <html>
+                  <head>
+                    <style>
+                      body { font-family: Arial, sans-serif; color: #333; }
+                      .header { background: #004579; padding: 10px; color: white; }
+                      .content { padding: 20px; }
+                      .changelog { background: #f9f9f9; border: 1px solid #ddd; padding: 10px; }
+                      .commit { margin-bottom: 8px; }
+                      .commit-author { font-weight: bold; }
+                      .footer { font-size: 0.8em; color: #777; margin-top: 20px; }
+                    </style>
+                  </head>
+                  <body>
+                    <div class="header">
+                      Jenkins CI/CD Notification
+                    </div>
+                    <div class="content">
+                      <h1>Build #${BUILD_NUMBER} – Success 🎉</h1>
+                      <p><strong>Project:</strong> ${JOB_NAME}</p>
+                      <p><strong>URL:</strong> <a href="${BUILD_URL}">${BUILD_URL}</a></p>
+                      
+                      <h2>Commits included:</h2>
+                      <div class="changelog">
+                        <ul>
+                          ${CHANGES, showPaths="true", format="<li class='commit'><span class='commit-author'>%a</span> – (<code>%r</code>)<br/><pre style='background:#eee;padding:8px;'>%m</pre><br/><small>Files:<br/>%p</small><br/></li>"}
+                        </ul>
+                      </div>
+                    </div>
+                    <div class="footer">
+                      This is an automated message generated by Jenkins. Please contact DevOps Team for more questions.
+                    </div>
+                  </body>
+                </html>''',
+          )
+        }
+      }
+    }
     failure {
       emailext(
         mimeType: 'text/html',

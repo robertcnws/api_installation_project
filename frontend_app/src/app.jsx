@@ -39,14 +39,7 @@ const AuthProvider =
   (CONFIG.auth.method === 'auth0' && Auth0AuthProvider) ||
   JwtAuthProvider;
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 5 * 60_000,
-      refetchOnWindowFocus: false,
-    }
-  }
-});
+const queryClient = new QueryClient();
 
 export default function App() {
   useScrollToTop();

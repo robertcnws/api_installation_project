@@ -28,6 +28,9 @@ import { ProjectsToDoToday } from '../projects-to-do-today';
 import { ProjectsStageToday } from '../projects-stage-today';
 import { AnalyticsWidgetSummary } from '../analytics-widget-summary';
 
+
+
+
 const headersCSV = [
   { label: 'SKU', key: 'sku' },
   { label: 'Qty', key: 'stockOnHand' },
@@ -103,14 +106,13 @@ export function OverviewAnalyticsView() {
       else if (message.type === 'deleted') {
         setProjects((prevData) => prevData.filter(item => String(item.id) !== String(message.item.id)));
       }
-      refetchProjects?.();
     };
     return () => {
       if (socket && socket.readyState === WebSocket.OPEN) {
         socket.close();
       }
     };
-  }, [refetchProjects]);
+  }, []);
 
   useEffect(() => {
     if (loadedProjectReminders) {
