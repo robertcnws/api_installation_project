@@ -160,33 +160,41 @@ pipeline {
     }
 
     stage('10. Verify Deployments') {
-      agent { label 'docker' }
-      steps {
+    agent { label 'docker' }
+    steps {
+      withCredentials([[
+        $class: 'AmazonWebServicesCredentialsBinding',
+        credentialsId: 'aws-ecr-creds'
+      ]]) {
         script {
-          def check = { svc ->
-            def cmd = """
-              docker run --rm \
-                -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
-                -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
-                -e AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION} \
-                amazon/aws-cli ecs describe-services \
-                  --cluster ${AWS_CLUSTER} \
-                  --services ${svc} \
-                  --query "services[0].deployments[?status=='PRIMARY'].rolloutState" \
-                  --output text
-            """
-            def state = sh(script: cmd, returnStdout: true).trim()
+          def services = [env.AWS_BACKEND_SERVICE, env.AWS_FRONTEND_SERVICE]
+          
+          services.each { svc ->
+            def state = sh(
+              script: """
+                docker run --rm \\
+                  -e AWS_ACCESS_KEY_ID=${env.AWS_ACCESS_KEY_ID} \\
+                  -e AWS_SECRET_ACCESS_KEY=${env.AWS_SECRET_ACCESS_KEY} \\
+                  -e AWS_DEFAULT_REGION=${env.AWS_DEFAULT_REGION} \\
+                  amazon/aws-cli ecs describe-services \\
+                    --cluster ${env.AWS_CLUSTER} \\
+                    --services ${svc} \\
+                    --query "services[0].deployments[?status=='PRIMARY'].rolloutState" \\
+                    --output text
+              """,
+              returnStdout: true
+            ).trim()
+            
             if (state != 'COMPLETED') {
               error "🚨 Deployment of ${svc} did not complete: ${state}"
             }
           }
           
-          check(env.AWS_BACKEND_SERVICE)
-          check(env.AWS_FRONTEND_SERVICE)
           echo "✅ Both deployments are COMPLETED"
         }
       }
     }
+  }
 
     stage('11. Notify') {
       when { expression { currentBuild.currentResult == 'SUCCESS' } }
