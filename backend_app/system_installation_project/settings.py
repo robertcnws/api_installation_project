@@ -65,7 +65,6 @@ LOGGING = {
     },
 }
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
@@ -162,7 +161,6 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.signed_cookies'
-
 
 ROOT_URLCONF = 'system_installation_project.urls'
 
@@ -287,6 +285,19 @@ CELERY_BEAT_SCHEDULE = {
         # 'schedule': crontab(minute='*/2', hour='7-17', day_of_week='*'),
     },
 }
+
+
+# CACHES
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+        'LOCATION': f'{CELERY_BROKER_URL}',    
+        'TIMEOUT': 300,
+    }
+}
+
+PROJECTS_LIGHT_CACHE_TTL = 60 * 5
 
 
 # AWS

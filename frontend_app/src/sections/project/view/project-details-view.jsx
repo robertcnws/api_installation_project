@@ -56,6 +56,7 @@ export function ProjectDetailsView({ projectId }) {
 
     const {
         loadedProjects,
+        refetchProjects,
         listPermissions,
         loadedDefaultGuideProducts,
         loadedDefaultMaterials,
@@ -253,13 +254,14 @@ export function ProjectDetailsView({ projectId }) {
                     return prevData;
                 });
             }
+            refetchProjects?.();
         };
         return () => {
             if (socket && socket.readyState === WebSocket.OPEN) {
                 socket.close();
             }
         };
-    }, [projectId]);
+    }, [projectId, refetchProjects]);
 
 
     useEffect(() => {
