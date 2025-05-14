@@ -4,6 +4,8 @@ from graphene.types.generic import GenericScalar
 from graphene_mongo.converter import convert_mongoengine_field
 from mongoengine.fields import DynamicField
 from django.utils import timezone
+from django.core.cache import cache
+from django.conf import settings
 from datetime import datetime
 from .models import (
     Project,
@@ -43,8 +45,7 @@ class ProjectType(MongoengineObjectType, TimestampMixin):
     class Meta:
         model = Project
         interfaces = (graphene.relay.Node,)
-
-    # dynamic JSON fields
+    
     sales_order = GenericScalar()
     stage_history = GenericScalar()
     user_reporter = GenericScalar()
@@ -59,7 +60,6 @@ class ProjectType(MongoengineObjectType, TimestampMixin):
     project_comments = GenericScalar()
     project_materials = GenericScalar()
     project_guide_products = GenericScalar()
-    # ...otros GenericScalar según tu modelo...
 
     start_date = DateTime()
 
@@ -149,7 +149,12 @@ class Query(graphene.ObjectType):
     all_project_notification_users = graphene.relay.ConnectionField(ProjectNotificationUserType)
 
     def resolve_all_projects(self, info, **kwargs):
-        return Project.objects.order_by('start_date')
+        cache_key = 'all_projects_light'
+        cached = cache.get(cache_key)
+        if cached is not None:
+            return cached
+        qs = Project.objects.order_by('start_date')
+        cache.set(cache_key, qs, timeout=settings.PROJECTS_LIGHT_CACHE_TTL)
 
     def resolve_all_project_notifications(self, info):
         return list(ProjectNotification.objects.order_by('-created_time'))

@@ -140,13 +140,14 @@ export function ProjectView() {
       else if (message.type === 'deleted') {
         setTableData((prevData) => prevData.filter(item => String(item.id) !== String(message.item.id)));
       }
+      refetchProjects?.();
     };
     return () => {
       if (socket && socket.readyState === WebSocket.OPEN) {
         socket.close();
       }
     };
-  }, []);
+  }, [refetchProjects]);
 
   const filters = useSetState({
     list: localStorage.getItem('projectFilterList') || 'in progress',
