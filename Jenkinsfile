@@ -1,4 +1,5 @@
 pipeline {
+
   triggers {
     githubPush()
   }
@@ -157,23 +158,22 @@ pipeline {
         }
       }
     }
-  }  
 
-  stage('10. Verify Deployments') {
+    stage('10. Verify Deployments') {
       agent { label 'docker' }
       steps {
         script {
           def check = { svc ->
             def state = sh(
               script: """
-                docker run --rm \
-                  -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
-                  -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
-                  -e AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION \
-                  amazon/aws-cli ecs describe-services \
-                    --cluster $AWS_CLUSTER \
-                    --services ${svc} \
-                    --query 'services[0].deployments[?status==\`PRIMARY\`].rolloutState' \
+                docker run --rm \\
+                  -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \\
+                  -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \\
+                  -e AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION \\
+                  amazon/aws-cli ecs describe-services \\
+                    --cluster $AWS_CLUSTER \\
+                    --services ${svc} \\
+                    --query "services[0].deployments[?status=='PRIMARY'].rolloutState" \\
                     --output text
               """,
               returnStdout: true
@@ -182,6 +182,7 @@ pipeline {
               error "🚨 Deployment of ${svc} did not complete: ${state}"
             }
           }
+
           check(env.AWS_BACKEND_SERVICE)
           check(env.AWS_FRONTEND_SERVICE)
           echo "✅ Both deployments are COMPLETED"
@@ -189,7 +190,7 @@ pipeline {
       }
     }
 
-  stage('11. Notify') {
+    stage('11. Notify') {
       when { expression { currentBuild.currentResult == 'SUCCESS' } }
       steps {
         emailext(
@@ -233,7 +234,9 @@ pipeline {
               </html>''',
         )
       }
-  }
+    }
+
+  } 
 
   post {
     failure {
@@ -246,4 +249,5 @@ pipeline {
       )
     }
   }
+
 }    

@@ -1,5 +1,4 @@
 from mongoengine import signals
-from django.core.cache import cache
 from .data_util import serialize_datetime
 from .models import (
     ProjectStage, 
@@ -250,15 +249,8 @@ def project_task_stage_deleted(sender, document, **kwargs):
 # Project
 ##########################################################################
 
-CACHE_KEY_ALL_PROJECTS_LIGHT = 'all_projects_light'
-
-def invalidate_projects_cache():
-    cache.delete(CACHE_KEY_ALL_PROJECTS_LIGHT)
-
-
 def project_saved(sender, document, **kwargs):
     created = kwargs.get('created', False)
-    invalidate_projects_cache()
     channel_layer = get_channel_layer()
     event = {
         'type': 'project_update',
@@ -308,7 +300,6 @@ def project_saved(sender, document, **kwargs):
 
 
 def project_deleted(sender, document, **kwargs):
-    invalidate_projects_cache()
     channel_layer = get_channel_layer()
     event = {
         'type': 'project_update',
@@ -458,11 +449,9 @@ def project_tracking_deleted(sender, document, **kwargs):
 # Project By ID
 ##########################################################################
 
-
 def project_by_id_saved(sender, document, **kwargs):
     created = kwargs.get('created', False)
     channel_layer = get_channel_layer()
-    invalidate_projects_cache()
     group_name = f"project_{str(document.id)}"
     event = {
         'type': 'project_update',
@@ -513,7 +502,6 @@ def project_by_id_saved(sender, document, **kwargs):
     
 
 def project_by_id_deleted(sender, document, **kwargs):
-    invalidate_projects_cache()
     channel_layer = get_channel_layer()
     group_name = f"project_{str(document.id)}"
     event = {
