@@ -243,3 +243,15 @@ def get_project_installers(project):
                         user_assignee for user_assignee in user_assignees if user_assignee.get('user_role', {}).get('name', '').lower() == settings.ROLE_INSTALLER.lower()
                     ]
     return installers
+
+
+class DateTimeJSONEncoder(json.JSONEncoder):
+    def default(self, o):
+        if isinstance(o, datetime):
+            if timezone.is_naive(o):
+                o = timezone.make_aware(o, dt_timezone.utc)
+            return timezone.localtime(o).isoformat()
+        return super().default(o)
+
+def serializing_datetime(obj):
+    return json.loads(json.dumps(obj, cls=DateTimeJSONEncoder))

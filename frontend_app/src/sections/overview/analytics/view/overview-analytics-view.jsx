@@ -57,6 +57,8 @@ export function OverviewAnalyticsView() {
 
   const {
     loadedProjects,
+    hasMoreProjects,
+    loadMoreProjects,
     refetchProjects,
     loadingProjects,
     loadedProjectReminders,
@@ -162,7 +164,7 @@ export function OverviewAnalyticsView() {
   return (
     <>
       {
-        (!projects?.length === 0 || loadingProjects) ? (
+        (projects?.length === 0 || loadingProjects) ? (
           <Box
             sx={{
               width: '350px',

@@ -67,7 +67,7 @@ function CombineProviders({ children }) {
   const { userLogged, loadedUsers, refetchUsers, loadingUsers, errorUsers } = useAuth();
   const { loadedUserRoles, refetchUserRoles, loadingUserRoles, errorUserRoles } = useUserRoles();
   const { loadedNotifications, refetchNotifications, loadingNotifications, errorNotifications } = useNotifications();
-  const { loadedProjects, refetchProjects, loadingProjects, errorProjects } = useProjects();
+  const { loadedProjects, refetchProjects, loadingProjects, errorProjects, hasMoreProjects, loadMoreProjects } = useProjects();
   const { loadedServices, refetchServices, loadingServices, errorServices } = useServices();
   const { loadedPermissions, listPermissions, refetchPermissions, loadedSalesOrders, setLoadedSalesOrders, isLoadingSalesOrders } = useIntegration();
   const { loadedMeasurements, refetchMeasurements, loadingMeasurements, errorMeasurements } = useMeasurements();
@@ -95,6 +95,8 @@ function CombineProviders({ children }) {
     refetchProjects,
     loadingProjects,
     errorProjects,
+    hasMoreProjects,
+    loadMoreProjects,
     loadedServices,
     refetchServices,
     loadingServices,
@@ -162,6 +164,8 @@ function CombineProviders({ children }) {
     refetchProjects,
     loadingProjects,
     errorProjects,
+    hasMoreProjects,
+    loadMoreProjects,
     loadedServices,
     refetchServices,
     loadingServices,

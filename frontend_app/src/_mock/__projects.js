@@ -1,138 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { gql, useQuery, useApolloClient } from '@apollo/client';
 
-
-// const GET_ALL_PROJECTS = gql`
-//   {
-//     allProjects {
-//       address
-//       createdTime
-//       currentStage
-//       description
-//       endDate
-//       hasPermission
-//       id
-//       isActive
-//       lastModifiedTime
-//       name
-//       number
-//       projectAttachments
-//       projectComments
-//       projectDefaultTasks
-//       projectHistory
-//       projectTasks
-//       referenceNumber
-//       salesOrder
-//       stageHistory
-//       startDate
-//       userManager
-//       userReporter
-//       usersAssignees
-//       allProductsMarked
-//       allWindowsMarked
-//       allScrewMarked
-//       allTrashMarked
-//       feedback
-//       workScope
-//       projectMaterials
-//       projectGuideProducts
-//       projectMaterialsOtherNotes
-//       inspectionDate
-//       finishPermissionDate
-//       isPartDays
-//     }
-//   }
-// `;
-
-// const GET_ALL_PROJECTS = gql`
-//   query AllProjects($page:Int!,$pageSize:Int!) {
-//     allProjects(page:$page,pageSize:$pageSize) {
-//       address
-//       createdTime
-//       currentStage
-//       description
-//       endDate
-//       hasPermission
-//       id
-//       isActive
-//       lastModifiedTime
-//       name
-//       number
-//       projectAttachments
-//       projectComments
-//       projectDefaultTasks
-//       projectHistory
-//       projectTasks
-//       referenceNumber
-//       salesOrder
-//       stageHistory
-//       startDate
-//       userManager
-//       userReporter
-//       usersAssignees
-//       userInstaller
-//       allProductsMarked
-//       allWindowsMarked
-//       allScrewMarked
-//       allTrashMarked
-//       feedback
-//       workScope
-//       projectMaterials
-//       projectGuideProducts
-//       projectMaterialsOtherNotes
-//       inspectionDate
-//       finishPermissionDate
-//       isPartDays
-//     }
-//   }
-// `;
-
-
-const GET_ALL_PROJECTS = gql`
-  query AllProjects($after: String, $first: Int!) {
-    allProjects(after: $after, first: $first) {
-      edges {
-        address
-        createdTime
-        currentStage
-        description
-        endDate
-        hasPermission
-        id
-        isActive
-        lastModifiedTime
-        name
-        number
-        projectAttachments
-        projectComments
-        projectDefaultTasks
-        projectHistory
-        projectTasks
-        referenceNumber
-        salesOrder
-        stageHistory
-        startDate
-        userManager
-        userReporter
-        usersAssignees
-        userInstaller
-        allProductsMarked
-        allWindowsMarked
-        allScrewMarked
-        allTrashMarked
-        feedback
-        workScope
-        projectMaterials
-        projectGuideProducts
-        projectMaterialsOtherNotes
-        inspectionDate
-        finishPermissionDate
-        isPartDays
-      }
-      nextCursor
-    }
-  }
-  `;
+// PROJECT BY ID
 
 const GET_PROJECT_BY_ID = gql`
   query GetProjectById($id: String!) {
@@ -177,90 +46,9 @@ const GET_PROJECT_BY_ID = gql`
   }
 `;
 
-// export const useProjectsQuery = () => {
-
-//   const { loading, error, data, startPolling, stopPolling, refetch } = useQuery(GET_ALL_PROJECTS, {
-//     context: {
-//       clientName: 'Projects',
-//     },
-//   });
-
-//   const projects = data?.allProjects || [];
-
-//   return { loading, error, data: projects, refetch };
-
-// };
-
-// const PAGE_SIZE = 50;
-
-// export function useProjectsQuery() {
-
-//   const client = useApolloClient();
-//   const [allProjects, setAllProjects] = useState([]);
-//   const [error, setError] = useState();
-//   const [loading, setLoading] = useState(true);
-//   const [reloadFlag, setReloadFlag] = useState(0);
-
-//   const fetchAll = useCallback(() => {
-//     let cancelled = false;
-//     const accumulator = [];
-    
-//     function fetchPage(page) {
-//       client
-//         .query({
-//           query: GET_ALL_PROJECTS,
-//           variables: { page, pageSize: PAGE_SIZE },
-//           context: { clientName: 'Projects' },
-//           fetchPolicy: 'network-only',
-//         })
-//         .then((result) => {
-//           if (cancelled) return;
-//           const pageData = result.data.allProjects || [];
-//           accumulator.push(...pageData);
-
-//           if (pageData.length === PAGE_SIZE) {
-//             fetchPage(page + 1);
-//           } else {
-//             setAllProjects(accumulator);
-//             setLoading(false);
-//           }
-//         })
-//         .catch((err) => {
-//           if (cancelled) return;
-//           setError(err);
-//           setLoading(false);
-//         });
-//     }
-
-//     setLoading(true);
-//     setAllProjects([]);
-//     fetchPage(1);
-
-//     return () => {
-//       cancelled = true;
-//     };
-//   }, [client]);
-  
-//   useEffect(() => {
-//     const cleanup = fetchAll();
-//     return cleanup;
-//   }, [fetchAll, reloadFlag]);
-  
-//   const refetch = useCallback(() => {
-//     setReloadFlag((f) => f + 1);
-//   }, []);
-
-//   return {
-//     loading,
-//     error,
-//     data: allProjects,
-//     refetch,
-//   };
-// }
-
 export const useProjectByIdQuery = (id) => {
 
-  const { loading, error, data, startPolling, stopPolling, refetch } = useQuery(GET_PROJECT_BY_ID, {
+  const { loading, error, data, refetch } = useQuery(GET_PROJECT_BY_ID, {
     context: {
       clientName: 'Projects',
     },
@@ -274,43 +62,202 @@ export const useProjectByIdQuery = (id) => {
 
 }
 
+// PROJECTS
+// This query fetches all projects with pagination support
 
-export function useProjectsQuery(pageSize = 50) {
-  const { loading, error, data, fetchMore, refetch } = useQuery(
-    GET_ALL_PROJECTS,
-    {
-      context: {
-        clientName: 'Projects',
-      },
-      variables: { 
-        first: pageSize 
-      },
-      fetchPolicy: 'cache-and-network',
+const GET_ALL_PROJECTS = gql`
+  query AllProjects($after: String, $first: Int!) {
+    allProjects(after: $after, first: $first) {
+      results {
+          address
+          createdTime
+          currentStage
+          description
+          endDate
+          hasPermission
+          id
+          isActive
+          lastModifiedTime
+          name
+          number
+          projectAttachments
+          projectComments
+          projectDefaultTasks
+          projectHistory
+          projectTasks
+          referenceNumber
+          salesOrder
+          stageHistory
+          startDate
+          userManager
+          userReporter
+          usersAssignees
+          userInstaller
+          allProductsMarked
+          allWindowsMarked
+          allScrewMarked
+          allTrashMarked
+          feedback
+          workScope
+          projectMaterials
+          projectGuideProducts
+          projectMaterialsOtherNotes
+          inspectionDate
+          finishPermissionDate
+          isPartDays
+      }
+      hasNextPage
+      hasPreviousPage
+      pageSize
+      nextCursor
     }
-  );
+  }
+`;
 
-  const projects = data?.allProjects?.edges || [];
-  const hasMore = Boolean(data?.allProjects?.nextCursor);
+// export function useProjectsQuery(pageSize = 20) {
+//   const client = useApolloClient();
+//   const [projects, setProjects] = useState([]);
+//   const [loading, setLoading] = useState(true);
+//   const [error, setError] = useState(null);
+//   const [reload, setReload] = useState(0);
 
-  const loadMore = () => {
-    if (!hasMore) return;
-    fetchMore({
-      variables: { after: data.allProjects.nextCursor },
-      updateQuery: (prev, { fetchMoreResult }) => ({
-        allProjects: {
-          edges: [...prev.allProjects.edges, ...fetchMoreResult.allProjects.edges],
-          nextCursor: fetchMoreResult.allProjects.nextCursor
-        }
-      })
-    });
-  };
+//   useEffect(() => {
+//     let cancelled = false;
 
-  return {
-    loading,
-    error,
-    data: projects,
-    refetch,
-    loadMore,
-    hasMore
-  };
+//     (async () => {
+//       setLoading(true);
+//       setError(null);
+//       try {
+//         const all = [];
+//         let after = null;
+
+//         /* eslint-disable no-await-in-loop */
+//         while (!cancelled) {
+//           const { data } = await client.query({
+//             context: { clientName: 'Projects' },
+//             query: GET_ALL_PROJECTS,
+//             variables: { after, first: pageSize },
+//             fetchPolicy: 'network-only',
+//           });
+
+//           const { results, hasNextPage, nextCursor } = data.allProjects;
+//           all.push(...results);
+
+//           if (!hasNextPage) break;
+//           after = nextCursor;
+//         }
+//         /* eslint-enable no-await-in-loop */
+//         if (!cancelled) setProjects(all);
+
+//       } catch (err) {
+//         if (!cancelled) {
+//           setError(err);
+//         }
+//       } finally {
+//         if (!cancelled) {
+//           setLoading(false);
+//         }
+//       }
+//     })();
+
+//     return () => { cancelled = true; };
+//   }, [client, pageSize, reload]);
+
+//   const refetch = () => {
+//     setReload(r => r + 1);
+//   };
+
+//   return {
+//     loading,
+//     error,
+//     data: projects,
+//     refetch,
+//   };
+// }
+
+
+// projects offset
+// This query fetches all projects with pagination support
+
+const GET_ALL_PROJECTS_OFFSET = gql`
+  query AllProjectsOffset($skip: Int!, $limit: Int!) {
+    allProjectsOffset(skip: $skip, limit: $limit) {
+      totalCount
+      results {
+          address
+          createdTime
+          currentStage
+          description
+          endDate
+          hasPermission
+          id
+          isActive
+          lastModifiedTime
+          name
+          number
+          projectAttachments
+          projectComments
+          projectDefaultTasks
+          projectHistory
+          projectTasks
+          referenceNumber
+          salesOrder
+          stageHistory
+          startDate
+          userManager
+          userReporter
+          usersAssignees
+          userInstaller
+          allProductsMarked
+          allWindowsMarked
+          allScrewMarked
+          allTrashMarked
+          feedback
+          workScope
+          projectMaterials
+          projectGuideProducts
+          projectMaterialsOtherNotes
+          inspectionDate
+          finishPermissionDate
+          isPartDays
+      }
+    }
+  }
+`;
+
+export function useProjectsQuery(pageSize = 20) {
+  const client = useApolloClient();
+  const [all, setAll] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      const { data: head } = await client.query({
+        context: { clientName: 'Projects' },
+        query: GET_ALL_PROJECTS_OFFSET,
+        variables: { skip: 0, limit: 1 },
+      });
+      if (cancelled) return;
+      const total = head.allProjectsOffset.totalCount;
+      const pages = Math.ceil(total / pageSize);
+      
+      const promises = Array.from({ length: pages }, (_, i) =>
+        client.query({
+          context: { clientName: 'Projects' },
+          query: GET_ALL_PROJECTS_OFFSET,
+          variables: { skip: i * pageSize, limit: pageSize },
+        })
+      );
+      const results = (await Promise.all(promises))
+        .flatMap(r => r.data.allProjectsOffset.results);
+
+      if (!cancelled) setAll(results);
+      setLoading(false);
+    })();
+    return () => { cancelled = true };
+  }, [client, pageSize]);
+
+  return { loading, data: all };
 }
