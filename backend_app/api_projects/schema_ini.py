@@ -4,7 +4,6 @@ from graphene_mongo import MongoengineObjectType
 from mongoengine.fields import DynamicField
 from graphene_mongo.converter import convert_mongoengine_field
 from graphene.types.generic import GenericScalar
-from datetime import datetime
 from .models import (
     ProjectStage, 
     ProjectRole, 
@@ -32,16 +31,6 @@ def convert_dynamic_field(field, registry=None, executor=None):
         description=getattr(field, 'help_text', ''),
         required=field.required
     )
-    
-    
-class SalesOrderType(graphene.ObjectType):
-    id = graphene.ID()
-    sales_order = GenericScalar()
-    
-    def resolve_sales_order(self, info):
-        sales_order = self.sales_order or {}
-        sales_order = serialize_datetime(sales_order)
-        return dynamic_field_to_json(sales_order)
     
 
 class ProjectDefaultMaterialType(MongoengineObjectType):
@@ -238,7 +227,6 @@ class ProjectType(MongoengineObjectType):
     project_guide_products = GenericScalar()
     created_time = graphene.String()
     last_modified_time = graphene.String()
-    start_date = graphene.DateTime()
     
     def resolve_created_time(self, info):
         dt = self.created_time
@@ -323,10 +311,7 @@ class ProjectType(MongoengineObjectType):
         user_installer = self.user_installer or {}
         user_installer = serialize_datetime(user_installer)
         return dynamic_field_to_json(user_installer)
-
-class ProjectConnection(graphene.ObjectType):
-    edges = graphene.List(ProjectType)
-    next_cursor = graphene.String()
+    
 
 class ProjectUserType(MongoengineObjectType):
     class Meta:
@@ -467,17 +452,12 @@ class Query(graphene.ObjectType):
     all_project_default_guide_products = graphene.List(ProjectDefaultGuideProductType)
     all_project_task_stages = graphene.List(ProjectTaskStageType)
     all_project_roles = graphene.List(ProjectRoleType)
-    # all_projects = graphene.List(ProjectType)
+    all_projects = graphene.List(ProjectType)
     # all_projects = graphene.Field(
     #     graphene.List(ProjectType),
     #     page=graphene.Int(default_value=1),
     #     page_size=graphene.Int(default_value=50),
     # )
-    all_projects = graphene.Field(
-        ProjectConnection,
-        after=graphene.String(),
-        first=graphene.Int(default_value=50),
-    )
     all_project_users = graphene.List(ProjectUserType)
     all_project_notifications = graphene.List(ProjectNotificationType)
     all_project_tracking = graphene.List(ProjectTrackingType)
@@ -500,10 +480,6 @@ class Query(graphene.ObjectType):
     project_user_by_username = graphene.Field(
         ProjectUserType, 
         username=graphene.String(required=True), 
-    )
-    sales_orders_by_ids = graphene.List(
-        SalesOrderType,
-        ids=graphene.List(graphene.ID, required=True)
     )
     
     all_project_default_materials = graphene.List(ProjectDefaultMaterialType)
@@ -532,25 +508,12 @@ class Query(graphene.ObjectType):
     def resolve_all_project_roles(self, info):
         return list(ProjectRole.objects(is_active=True))
 
-    # def resolve_all_projects(self, info):
-    #     return list(Project.objects.all().order_by('start_date'))
+    def resolve_all_projects(self, info):
+        return list(Project.objects.all().order_by('start_date'))
     
     # def resolve_all_projects(self, info, page, page_size):
     #     skip = (page - 1) * page_size
     #     return Project.objects.order_by('start_date').skip(skip).limit(page_size)
-    
-    def resolve_all_projects(self, info, after=None, first=50):
-        field_node = info.field_nodes[0]  # en lugar de info.field_asts
-        selections = field_node.selection_set.selections
-        requested = [sel.name.value for sel in selections]
-        print("Requested fields:", requested)
-        q = Project.objects.order_by('start_date')
-        if after:
-            dt = datetime.fromisoformat(after)
-            q = q.filter(start_date__gt=dt)
-        items = list(q.limit(first))
-        next_cursor = items[-1].start_date.isoformat() if len(items) == first else None
-        return ProjectConnection(edges=items, next_cursor=next_cursor)
 
     def resolve_all_project_users(self, info):
         return list(ProjectUser.objects.all())
@@ -598,15 +561,5 @@ class Query(graphene.ObjectType):
         
     def resolve_all_project_default_materials(self, info):
         return list(ProjectDefaultMaterial.objects(is_active=True))
-    
-    def resolve_sales_orders_by_ids(self, info, ids):
-        docs = Project.objects(id__in=ids).only('id', 'sales_order')
-        return [
-            SalesOrderType(
-              id=str(p.id),
-              sales_order=p.sales_order
-            )
-            for p in docs
-        ]
 
 schema = graphene.Schema(query=Query)

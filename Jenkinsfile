@@ -160,41 +160,44 @@ pipeline {
     }
 
     stage('10. Verify Deployments') {
-    agent { label 'docker' }
-    steps {
-      withCredentials([[
-        $class: 'AmazonWebServicesCredentialsBinding',
-        credentialsId: 'aws-ecr-creds'
-      ]]) {
-        script {
-          def services = [env.AWS_BACKEND_SERVICE, env.AWS_FRONTEND_SERVICE]
-          
-          services.each { svc ->
-            def state = sh(
-              script: """
-                docker run --rm \\
-                  -e AWS_ACCESS_KEY_ID=${env.AWS_ACCESS_KEY_ID} \\
-                  -e AWS_SECRET_ACCESS_KEY=${env.AWS_SECRET_ACCESS_KEY} \\
-                  -e AWS_DEFAULT_REGION=${env.AWS_DEFAULT_REGION} \\
-                  amazon/aws-cli ecs describe-services \\
-                    --cluster ${env.AWS_CLUSTER} \\
-                    --services ${svc} \\
-                    --query "services[0].deployments[?status=='PRIMARY'].rolloutState" \\
-                    --output text
-              """,
-              returnStdout: true
-            ).trim()
-            
-            if (state != 'COMPLETED') {
-              error "🚨 Deployment of ${svc} did not complete: ${state}"
+      agent { label 'docker' }
+      steps {
+        withCredentials([[
+          $class: 'AmazonWebServicesCredentialsBinding',
+          credentialsId: 'aws-ecr-creds'
+        ]]) {
+          script {
+            def services = [env.AWS_BACKEND_SERVICE, env.AWS_FRONTEND_SERVICE]
+            services.each { svc ->
+              echo "⏳ Waiting for ${svc} to complete deployment…"
+              timeout(time: 10, unit: 'MINUTES') {
+                waitUntil {
+                  def state = sh(
+                    script: """
+                      docker run --rm \\
+                        -e AWS_ACCESS_KEY_ID=${env.AWS_ACCESS_KEY_ID} \\
+                        -e AWS_SECRET_ACCESS_KEY=${env.AWS_SECRET_ACCESS_KEY} \\
+                        -e AWS_DEFAULT_REGION=${env.AWS_DEFAULT_REGION} \\
+                        amazon/aws-cli ecs describe-services \\
+                          --cluster ${env.AWS_CLUSTER} \\
+                          --services ${svc} \\
+                          --query "services[0].deployments[?status=='PRIMARY'].rolloutState" \\
+                          --output text
+                    """,
+                    returnStdout: true
+                  ).trim()
+                  
+                  echo "→ ${svc} rolloutState = ${state}"
+                    return (state == 'COMPLETED')
+                  }
+              }
+              echo "✅ ${svc} deployment COMPLETED"
             }
+            echo "✅ Both deployments are COMPLETED"
           }
-          
-          echo "✅ Both deployments are COMPLETED"
         }
       }
     }
-  }
 
     stage('11. Notify') {
       when { expression { currentBuild.currentResult == 'SUCCESS' } }

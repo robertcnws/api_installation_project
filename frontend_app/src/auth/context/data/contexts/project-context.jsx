@@ -14,8 +14,6 @@ export function ProjectsProvider({ children }) {
     refetch: refetchProjects, 
     loading: loadingProjects, 
     error: errorProjects,
-    hasMore: hasMoreProjects,
-    loadMore: loadMoreProjects 
   } = useProjectsQuery();
 
   const { userLogged, loadedUsers } = useAuth();
@@ -27,15 +25,11 @@ export function ProjectsProvider({ children }) {
     refetchProjects, 
     loadingProjects, 
     errorProjects,
-    loadMoreProjects,
-    hasMoreProjects, 
 }), [
     loadedProjects, 
     refetchProjects, 
     loadingProjects, 
     errorProjects,
-    loadMoreProjects,
-    hasMoreProjects,
 ]);
 
   return <ProjectsContext.Provider value={value}>{children}</ProjectsContext.Provider>;

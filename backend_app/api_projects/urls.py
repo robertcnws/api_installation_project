@@ -4,7 +4,7 @@ from django.conf.urls.static import static
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from system_installation_project.graphql.orjson_graphql_view import ORJSONGraphQLView
-from .schema import schema
+from .schema_ini import schema
 from . import views
 urlpatterns = [
     path('graphql/', csrf_exempt(ORJSONGraphQLView.as_view(graphiql=True, schema=schema))),

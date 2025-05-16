@@ -51,13 +51,10 @@ class TimestampMixin:
     end_date = JSONDateTimeScalar()
     inspection_date = JSONDateTimeScalar()
     finish_permission_date = JSONDateTimeScalar()
-        
-
-class ProjectType(MongoengineObjectType, TimestampMixin):
-    class Meta:
-        model = Project
     
-    sales_order = JSONDateTimeScalar()
+    
+
+class HeavyProjectObjectType(graphene.ObjectType, TimestampMixin):
     stage_history = JSONDateTimeScalar()
     user_reporter = JSONDateTimeScalar()
     users_assignees = JSONDateTimeScalar()
@@ -71,12 +68,67 @@ class ProjectType(MongoengineObjectType, TimestampMixin):
     project_comments = JSONDateTimeScalar()
     project_materials = JSONDateTimeScalar()
     project_guide_products = JSONDateTimeScalar()
+        
 
+class ProjectType(MongoengineObjectType, TimestampMixin):
+    class Meta:
+        model = Project
+        
+    id = graphene.ID()
+    name = graphene.String()
+    number = graphene.String()
+    description = graphene.String()    
+    address = graphene.String()  
+    hasPermission = graphene.Boolean()
+    is_active = graphene.Boolean()
+    reference_number = graphene.String()
+    all_products_marked = graphene.Boolean()
+    all_windows_marked = graphene.Boolean()
+    all_screw_marked = graphene.Boolean()
+    all_trash_marked = graphene.Boolean()
+    feedback = graphene.String()
+    work_scope = graphene.String()
+    project_materials_other_notes = graphene.String()
+    is_part_days = graphene.Boolean()
     start_date = JSONDateTimeScalar()
     end_date = JSONDateTimeScalar()
     inspection_date = JSONDateTimeScalar()
     finish_permission_date = JSONDateTimeScalar()
+    sales_order = JSONDateTimeScalar()
     
+    heavy_fields = graphene.Field(HeavyProjectObjectType)
+    
+    def resolve_heavy_fields(self, info):
+        p = Project.objects.only(
+            'stage_history',
+            'user_reporter',
+            'users_assignees',
+            'user_installer',
+            'current_stage',
+            'project_attachments',
+            'project_tasks',
+            'project_history',
+            'user_manager',
+            'project_default_tasks',
+            'project_comments',
+            'project_materials',
+            'project_guide_products'
+        ).get(id=self.id)
+        return HeavyProjectObjectType(
+            stage_history=p.stage_history,
+            user_reporter=p.user_reporter,
+            users_assignees=p.users_assignees,
+            user_installer=p.user_installer,
+            current_stage=p.current_stage,
+            project_attachments=p.project_attachments,
+            project_tasks=p.project_tasks,
+            project_history=p.project_history,
+            user_manager=p.user_manager,
+            project_default_tasks=p.project_default_tasks,
+            project_comments=p.project_comments,
+            project_materials=p.project_materials,
+            project_guide_products=p.project_guide_products
+        )
 
 class ProjectTypePaginated(graphene.ObjectType, TimestampMixin):
     count = graphene.Int()
@@ -298,7 +350,31 @@ class Query(graphene.ObjectType):
         )
         
     def resolve_all_projects_offset(self, info, skip, limit):
-        qs = Project.objects.order_by('-created_time')
+        qs = Project.objects.only(
+            'id',
+            'name',
+            'number',
+            'description',
+            'address',
+            'has_permission',
+            'is_active',
+            'reference_number',
+            'all_products_marked',
+            'all_windows_marked',
+            'all_screw_marked',
+            'all_trash_marked',
+            'feedback',
+            'work_scope',
+            'project_materials_other_notes',
+            'is_part_days',
+            'start_date',
+            'end_date',
+            'inspection_date',
+            'finish_permission_date',
+            'created_time',
+            'last_modified_time',
+            'sales_order',
+        ).order_by('-created_time')
         total = qs.count()
         docs = qs.skip(skip).limit(limit)
         return ProjectTypeOffsetPaginated(
