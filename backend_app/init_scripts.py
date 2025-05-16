@@ -1,6 +1,7 @@
 # ./django/init_scripts.py
 import os
 import django
+from mongoengine import connection as mongo_connection
 from datetime import datetime
 from api_authorization.models import LoginUser
 from api_projects.models import ProjectPermissions
@@ -9,6 +10,8 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'system_installation_project.set
 django.setup()
 
 # connect_mongo()
+
+db = mongo_connection.get_db()
 
 def create_superuser():
     username = os.getenv('DJANGO_SUPERUSER_USERNAME')
@@ -54,7 +57,67 @@ def create_project_permissions():
             description='delete access to project',
         )
         permission.save()
+        
+def create_projects_view():
+    view_name = "project_view"
+    source_collection = "project"
+
+    # 1) Si ya existe, la borramos
+    if view_name in db.list_collection_names():
+        db.drop_collection(view_name)
+
+    # 2) Creamos la view como una colección especial
+    db.create_collection(
+        view_name,
+        viewOn=source_collection,
+        pipeline=[
+            {
+                '$project': {
+                    'address': 1,
+                    'created_time': 1,
+                    'current_stage': 1,
+                    'description': 1,
+                    'end_date': 1,
+                    'has_permission': 1,
+                    '_id': 1,
+                    'is_active': 1,
+                    'last_modified_time': 1,
+                    'name': 1,
+                    'number': 1,
+                    'project_attachments': 1,
+                    'project_comments': 1,
+                    'project_default_tasks': 1,
+                    'project_history': 1,
+                    'project_tasks': 1,
+                    'reference_number': 1,
+                    'sales_order': 1,
+                    'stage_history': 1,
+                    'start_date': 1,
+                    'user_manager': 1,
+                    'user_reporter': 1,
+                    'users_assignees': 1,
+                    'user_installer': 1,
+                    'all_products_marked': 1,
+                    'all_windows_marked': 1,
+                    'all_screw_marked': 1,
+                    'all_trash_marked': 1,
+                    'feedback': 1,
+                    'work_scope': 1,
+                    'project_materials': 1,
+                    'project_guide_products': 1,
+                    'project_materials_other_notes': 1,
+                    'inspection_date': 1,
+                    'finish_permission_date': 1,
+                    'is_part_days': 1,
+                }
+            },
+            { '$sort': { 'start_date': 1 } }
+        ]
+    )
+    print(f"View '{view_name}' created/recreated successfully.")
 
 if __name__ == "__main__":
     create_superuser()
     create_project_permissions()
+    create_projects_view()
+    print("Initialization script executed successfully.")

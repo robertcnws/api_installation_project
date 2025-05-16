@@ -52,7 +52,8 @@ def transform_dict_to_camelcase(data):
 def serialize_datetime(value):
     if isinstance(value, datetime):
         if timezone.is_naive(value):
-            value = timezone.make_aware(value, dt_timezone.utc) 
+            local_tz = timezone.get_current_timezone()
+            value = timezone.make_aware(value, local_tz) 
         local_dt = timezone.localtime(value)  
         return local_dt.isoformat()
     elif isinstance(value, dict):
