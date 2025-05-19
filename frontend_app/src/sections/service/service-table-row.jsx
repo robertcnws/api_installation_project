@@ -17,7 +17,7 @@ import { useBoolean } from 'src/hooks/use-boolean';
 import { useDoubleClick } from 'src/hooks/use-double-click';
 import { useCopyToClipboard } from 'src/hooks/use-copy-to-clipboard';
 
-import { fDate, fIsAfter, fDuration } from 'src/utils/format-time';
+import { fDate, fIsAfter, fDuration, fDateTime } from 'src/utils/format-time';
 import { listRolesAndSubroles } from 'src/utils/check-permissions';
 
 import { CONFIG } from 'src/config-global';
@@ -393,6 +393,31 @@ export function ServiceTableRow({
               );
             }
             )}
+            <TableCell
+              // onClick={handleClick} 
+              onClick={() => {
+                localStorage.removeItem('projectReminderTab');
+                onViewRow();
+              }}
+              sx={{
+                whiteSpace: 'nowrap',
+                cursor: 'pointer',
+                fontWeight: row?.endDate ? ((fIsAfter(today, dayjs(row?.endDate).format('YYYY-MM-DD')) && (
+                  row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
+                  row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
+                  row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
+                )) ? 'fontWeightBold' : 'inherit') : 'inherit',
+                fontSize: '0.75rem',
+              }}
+              align='center'
+            >
+              {/* {fDate(row?.salesOrder.date)} */}
+              {fDateTime(row?.lastModifiedTime) ? fDateTime(row?.lastModifiedTime) :
+                <Tooltip title="No Updated Datetime" arrow>
+                  <Iconify icon="ph:calendar-x-bold" sx={{ color: 'error.main' }} />
+                </Tooltip>
+              }
+            </TableCell>
           </>
         )}
 

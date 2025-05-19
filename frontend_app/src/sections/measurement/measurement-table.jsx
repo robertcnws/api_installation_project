@@ -73,6 +73,7 @@ export function MeasurementTable({
     { id: 'customer', label: 'Customer' },
     { id: 'service_project', label: 'Associated At' },
     { id: 'address', label: 'Address' },
+    { id: 'lastModifiedTime', label: 'Updated At' },
     { id: '', width: 88 },
   ];
 

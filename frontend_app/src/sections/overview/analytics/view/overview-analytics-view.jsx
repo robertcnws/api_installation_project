@@ -51,18 +51,34 @@ export function OverviewAnalyticsView() {
   // WS para proyectos
   useEffect(() => {
     const socket = new WebSocket(`wss://${CONFIG.apiHost}/api/projects/ws/projects/`);
-    socket.onmessage = ({ data }) => {
-      const { type, item } = JSON.parse(data);
-      const m = new Map(projectsRef.current);
-      if (type === 'created' || type === 'updated') {
-        m.set(item.id, item);
-      } else if (type === 'deleted') {
-        m.delete(item.id);
-      }
-      projectsRef.current = m;
-      setProjects(Array.from(m.values()));
+    socket.onerror = (errorEvent) => {
+      console.dir(errorEvent);
+      console.error('WebSocket error (toString):', errorEvent.toString());
     };
-    return () => socket.close();
+    socket.onmessage = (event) => {
+      const message = JSON.parse(event.data);
+      if (message.type === 'created' || message.type === 'updated') {
+        projectsRef.current = message.item;
+        setProjects((prevData) => {
+          const existingItemIndex = prevData.findIndex(item => String(item.id) === String(message.item.id));
+          if (existingItemIndex !== -1) {
+            const updatedData = [...prevData];
+            updatedData[existingItemIndex] = message.item;
+            return updatedData;
+          }
+          return [message.item, ...prevData];
+        });
+      }
+      else if (message.type === 'deleted') {
+        projectsRef.current = message.item;
+        setProjects((prevData) => prevData.filter(item => String(item.id) !== String(message.item.id)));
+      }
+    };
+    return () => {
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.close();
+      }
+    };
   }, []);
 
   // Reminders inicial
@@ -77,36 +93,44 @@ export function OverviewAnalyticsView() {
   // WS para reminders
   useEffect(() => {
     const socket = new WebSocket(`wss://${CONFIG.apiHost}/api/projects/ws/project-reminders/`);
-    socket.onmessage = ({ data }) => {
-      const { type, item } = JSON.parse(data);
-      setAvailableReminders((prev) => {
-        if ((type === 'created' || type === 'updated') &&
-          item.userReporter.id === userLogged?.data.id &&
-          fDate(item.date) === fDate(new Date())
-        ) {
-          // reemplaza o añade
-          const idx = prev.findIndex((r) => r.id === item.id);
-          if (idx >= 0) {
-            const copy = [...prev];
-            copy[idx] = item;
-            return copy;
-          }
-          return [item, ...prev];
-        }
-        if (type === 'deleted') {
-          return prev.filter((r) => r.id !== item.id);
-        }
-        return prev;
-      });
+    socket.onerror = (errorEvent) => {
+      console.dir(errorEvent);
+      console.error('WebSocket error (toString):', errorEvent.toString());
     };
-    return () => socket.close();
+    socket.onmessage = (event) => {
+      const message = JSON.parse(event.data);
+      if (message.type === 'created' || message.type === 'updated') {
+        setAvailableReminders((prevData) => {
+          if (prevData?.id === message.item.id &&
+            message.item.userReporter.id === userLogged?.data.id &&
+            fDate(message.item.date) === fDate(new Date())
+          ) {
+            return message.item;
+          }
+          return prevData;
+        });
+      }
+      else if (message.type === 'deleted') {
+        setAvailableReminders((prevData) => {
+          if (prevData?.id === message.item.id) {
+            return null;
+          }
+          return prevData;
+        });
+      }
+    };
+    return () => {
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.close();
+      }
+    };
   }, [userLogged]);
 
   // Cálculo memoizado de filtros y métricas
 
   const widgetColors = useMemo(() => {
     const colors = {
-      prepartion: 'error',
+      preparation: 'error',
       coordination: 'secondary',
       installation: 'info',
       permission: 'warning',

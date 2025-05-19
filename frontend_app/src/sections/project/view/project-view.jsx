@@ -39,16 +39,11 @@ import { ProjectFiltersResult } from '../project-filters-result';
 import { ProjectNewFolderDialog } from '../project-new-folder-dialog';
 import { ProjectEditModalManageStaffView } from './project-edit-modal-manage-staff-view';
 
-
-
-
 // ----------------------------------------------------------------------
 
 export function ProjectView() {
 
   const { isMobile } = useContext(LoadingContext);
-
-  
 
   localStorage.setItem('backFromProjectDetails', 'projects');
 
@@ -380,8 +375,6 @@ export function ProjectView() {
   );
 
   const [titleLinearProgress, setTitleLinearProgress] = useState('Loading installations data...');
-
-  
 
   return (
     <>

@@ -188,6 +188,21 @@ def create_project(request):
     if user_manager:
         user_manager['project_permissions'] = [permission]
         users_assignees.append(user_manager)
+        
+    else:
+        user_manager = {
+            'id': user_reporter.get('id'),
+            'name': user_reporter.get('name') if user_reporter.get('name') else f'{user_reporter.get('first_name')} {user_reporter.get('last_name')}'.strip(),
+            'firstName': user_reporter.get('first_name'),
+            'lastName': user_reporter.get('last_name'),
+            'avatarUrl': user_reporter.get('avatar_url'),
+            'username': user_reporter.get('username'),
+            'email': user_reporter.get('email'),
+            'isStaff': user_reporter.get('is_staff'),
+            'isActive': user_reporter.get('is_active'),
+            'userRole': user_reporter.get('user_role'),
+            'project_permissions': [permission],
+        }
     
     has_permission_str = data.get('hasPermission', 'false') if data.get('hasPermission') else None
     if has_permission_str:
@@ -421,6 +436,21 @@ def create_projects(request):
                 
     if user_manager:    
         user_manager['project_permissions'] = [permission]
+        
+    else:
+        user_manager = {
+            'id': user_reporter.get('id'),
+            'name': user_reporter.get('name') if user_reporter.get('name') else f'{user_reporter.get('first_name')} {user_reporter.get('last_name')}'.strip(),
+            'firstName': user_reporter.get('first_name'),
+            'lastName': user_reporter.get('last_name'),
+            'avatarUrl': user_reporter.get('avatar_url'),
+            'username': user_reporter.get('username'),
+            'email': user_reporter.get('email'),
+            'isStaff': user_reporter.get('is_staff'),
+            'isActive': user_reporter.get('is_active'),
+            'userRole': user_reporter.get('user_role'),
+            'project_permissions': [permission],
+        }
                   
     users_assignees = [user_manager] if user_manager else []
     

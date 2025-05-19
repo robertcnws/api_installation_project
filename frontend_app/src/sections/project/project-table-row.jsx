@@ -18,7 +18,7 @@ import { useBoolean } from 'src/hooks/use-boolean';
 import { useDoubleClick } from 'src/hooks/use-double-click';
 import { useCopyToClipboard } from 'src/hooks/use-copy-to-clipboard';
 
-import { fDate, fIsAfter, fDuration } from 'src/utils/format-time';
+import { fDate, fIsAfter, fDuration, fDateTime } from 'src/utils/format-time';
 import { verifyPermissions, listRolesAndSubroles } from 'src/utils/check-permissions';
 
 import { CONFIG } from 'src/config-global';
@@ -148,17 +148,19 @@ export function ProjectTableRow({
               row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
               row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
               row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
-            )) ? lighten(theme.palette.error.lighter, 0.6) : 'background.paper' ) : 'background.paper',
+            )) ? lighten(theme.palette.error.lighter, 0.6) : 'background.paper') : 'background.paper',
             boxShadow: theme.customShadows.z20,
             transition: theme.transitions.create(['background-color', 'box-shadow'], {
               duration: theme.transitions.duration.shortest,
             }),
-            '&:hover': { backgroundColor: row?.endDate ? ((fIsAfter(today, dayjs(row?.endDate).format('YYYY-MM-DD')) && (
-              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
-              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
-              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
-            )) ? lighten(theme.palette.error.lighter, 0.6) : 'background.paper' ) : 'background.paper'
-            , boxShadow: theme.customShadows.z20 },
+            '&:hover': {
+              backgroundColor: row?.endDate ? ((fIsAfter(today, dayjs(row?.endDate).format('YYYY-MM-DD')) && (
+                row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
+                row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
+                row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
+              )) ? lighten(theme.palette.error.lighter, 0.6) : 'background.paper') : 'background.paper'
+              , boxShadow: theme.customShadows.z20
+            },
           },
           [`& .${tableCellClasses.root}`]: { ...defaultStyles },
           ...(details.value && { [`& .${tableCellClasses.root}`]: { ...defaultStyles } }),
@@ -166,7 +168,7 @@ export function ProjectTableRow({
             row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
             row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
             row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
-          )) ? lighten(theme.palette.error.lighter, 0.7) : 'inherit' ) : 'inherit', 
+          )) ? lighten(theme.palette.error.lighter, 0.7) : 'inherit') : 'inherit',
         }}
       >
         {(verifyPermissions(
@@ -175,7 +177,7 @@ export function ProjectTableRow({
           CONFIG.permissions.moduleProjects,
           CONFIG.permissions.operationDelete
         ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) && (
-            <TableCell  padding="checkbox">
+            <TableCell padding="checkbox">
               <Checkbox
                 checked={selected}
                 onDoubleClick={() => console.info('ON DOUBLE CLICK')}
@@ -190,14 +192,14 @@ export function ProjectTableRow({
             localStorage.removeItem('projectReminderTab');
             onViewRow();
           }}
-          sx={{ 
-            whiteSpace: 'nowrap', 
+          sx={{
+            whiteSpace: 'nowrap',
             cursor: 'pointer',
             fontWeight: row?.endDate ? ((fIsAfter(today, dayjs(row?.endDate).format('YYYY-MM-DD')) && (
               row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
               row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
               row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
-            )) ? 'fontWeightBold' : 'inherit' ) : 'inherit',
+            )) ? 'fontWeightBold' : 'inherit') : 'inherit',
           }}
           align='center'
         >
@@ -213,14 +215,14 @@ export function ProjectTableRow({
             localStorage.removeItem('projectReminderTab');
             onViewRow();
           }}
-          sx={{ 
-            whiteSpace: 'nowrap', 
-            cursor: 'pointer', 
-            fontWeight: row?.endDate ?  ((fIsAfter(today, dayjs(row?.endDate).format('YYYY-MM-DD')) && (
+          sx={{
+            whiteSpace: 'nowrap',
+            cursor: 'pointer',
+            fontWeight: row?.endDate ? ((fIsAfter(today, dayjs(row?.endDate).format('YYYY-MM-DD')) && (
               row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
               row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
               row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
-            )) ? 'fontWeightBold' : 'inherit' ) : 'inherit',
+            )) ? 'fontWeightBold' : 'inherit') : 'inherit',
           }}
         >
           {row?.endDate ? fDuration(row?.startDate, row?.endDate) :
@@ -235,14 +237,14 @@ export function ProjectTableRow({
             localStorage.removeItem('projectReminderTab');
             onViewRow();
           }}
-          sx={{ 
-            whiteSpace: 'nowrap', 
-            cursor: 'pointer', 
-            fontWeight: row?.endDate ?  ((fIsAfter(today, dayjs(row?.endDate).format('YYYY-MM-DD')) && (
+          sx={{
+            whiteSpace: 'nowrap',
+            cursor: 'pointer',
+            fontWeight: row?.endDate ? ((fIsAfter(today, dayjs(row?.endDate).format('YYYY-MM-DD')) && (
               row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
               row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
               row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
-            )) ? 'fontWeightBold' : 'inherit' ) : 'inherit',
+            )) ? 'fontWeightBold' : 'inherit') : 'inherit',
           }}
         >
           <Stack direction="row" alignItems="center" spacing={2}>
@@ -288,14 +290,14 @@ export function ProjectTableRow({
                 localStorage.removeItem('projectReminderTab');
                 onViewRow();
               }}
-              sx={{ 
-                cursor: 'pointer', 
+              sx={{
+                cursor: 'pointer',
                 maxWidth: 200,
-                fontWeight: row?.endDate ?  ((fIsAfter(today, dayjs(row?.endDate).format('YYYY-MM-DD')) && (
+                fontWeight: row?.endDate ? ((fIsAfter(today, dayjs(row?.endDate).format('YYYY-MM-DD')) && (
                   row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
                   row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
                   row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
-                )) ? 'fontWeightBold' : 'inherit' ) : 'inherit',
+                )) ? 'fontWeightBold' : 'inherit') : 'inherit',
               }}
             >
               {row?.name}
@@ -400,6 +402,31 @@ export function ProjectTableRow({
               );
             }
             )}
+            <TableCell
+              // onClick={handleClick} 
+              onClick={() => {
+                localStorage.removeItem('projectReminderTab');
+                onViewRow();
+              }}
+              sx={{
+                whiteSpace: 'nowrap',
+                cursor: 'pointer',
+                fontWeight: row?.endDate ? ((fIsAfter(today, dayjs(row?.endDate).format('YYYY-MM-DD')) && (
+                  row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
+                  row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
+                  row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
+                )) ? 'fontWeightBold' : 'inherit') : 'inherit',
+                fontSize: '0.75rem',
+              }}
+              align='center'
+            >
+              {/* {fDate(row?.salesOrder.date)} */}
+              {fDateTime(row?.lastModifiedTime) ? fDateTime(row?.lastModifiedTime) :
+                <Tooltip title="No Updated Datetime" arrow>
+                  <Iconify icon="ph:calendar-x-bold" sx={{ color: 'error.main' }} />
+                </Tooltip>
+              }
+            </TableCell>
           </>
         ) : (
           <TableCell>

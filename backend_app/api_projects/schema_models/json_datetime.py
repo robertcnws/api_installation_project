@@ -1,7 +1,7 @@
 import graphene
 import orjson
 from datetime import datetime
-from api_projects.data_util import serialize_datetime
+# from api_projects.data_util import serialize_datetime
 from datetime import datetime
 from django.utils import timezone
 
@@ -9,13 +9,13 @@ from django.utils import timezone
 class JSONDateTime(graphene.Scalar):
     """
     Serializa dicts/lists anidados, aplicando
-    serialize_datetime a cada datetime.
+    datetime_to_timezone a cada datetime.
     """
     @staticmethod
     def serialize(value):
         dumped = orjson.dumps(
             value,
-            default=lambda obj: serialize_datetime(obj) if isinstance(obj, datetime) else obj
+            default=lambda obj: datetime_to_timezone(obj) if isinstance(obj, datetime) else obj
         )
         return orjson.loads(dumped)
 

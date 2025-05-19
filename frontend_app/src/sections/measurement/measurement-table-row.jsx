@@ -17,7 +17,7 @@ import { useBoolean } from 'src/hooks/use-boolean';
 import { useDoubleClick } from 'src/hooks/use-double-click';
 import { useCopyToClipboard } from 'src/hooks/use-copy-to-clipboard';
 
-import { fDate } from 'src/utils/format-time';
+import { fDate, fDateTime } from 'src/utils/format-time';
 import { listRolesAndSubroles } from 'src/utils/check-permissions';
 import { paths } from 'src/routes/paths';
 
@@ -73,7 +73,7 @@ export function MeasurementTableRow({
   const popover = usePopover();
 
   const handleSeeAssociated = useCallback(() => {
-    if (row?.project?.id ) {
+    if (row?.project?.id) {
       localStorage.setItem('projectId', row?.project?.id);
       localStorage.setItem('backFromProjectDetails', 'measurements');
       router.push(paths.dashboard.project.details(row?.project?.id));
@@ -83,7 +83,7 @@ export function MeasurementTableRow({
       localStorage.setItem('backFromServiceDetails', 'measurements');
       router.push(paths.dashboard.service.details(row?.service?.id));
     }
-    else  {
+    else {
       confirmCustomerAssociated.onTrue();
     }
   }, [router, row, confirmCustomerAssociated]);
@@ -307,6 +307,26 @@ export function MeasurementTableRow({
                   {row?.address ? row?.address : 'No Address'}
                 </Typography>
               </Stack>
+            </TableCell>
+            <TableCell
+              // onClick={handleClick} 
+              onClick={() => {
+                localStorage.removeItem('projectReminderTab');
+                onViewRow();
+              }}
+              sx={{
+                whiteSpace: 'nowrap',
+                cursor: 'pointer',
+                fontSize: '0.75rem',
+              }}
+              align='center'
+            >
+              {/* {fDate(row?.salesOrder.date)} */}
+              {fDateTime(row?.lastModifiedTime) ? fDateTime(row?.lastModifiedTime) :
+                <Tooltip title="No Updated Datetime" arrow>
+                  <Iconify icon="ph:calendar-x-bold" sx={{ color: 'error.main' }} />
+                </Tooltip>
+              }
             </TableCell>
           </>
         )}

@@ -90,6 +90,7 @@ export function ServiceTable({
       order: stage.order,
       width: 10,
     }))),
+    { id: 'lastModifiedTime', label: 'Updated At' },
     { id: '', width: 88 },
   ];
 

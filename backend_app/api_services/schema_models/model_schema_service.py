@@ -34,6 +34,8 @@ class ServiceType(MongoengineObjectType):
     created_by = JSONDateTime()
     created_time = graphene.String()
     last_modified_time = graphene.String()
+    start_date = graphene.String()
+    end_date = graphene.String()
     
     def resolve_created_time(self, info):
         dt = self.created_time
@@ -41,6 +43,14 @@ class ServiceType(MongoengineObjectType):
     
     def resolve_last_modified_time(self, info):
         dt = self.last_modified_time
+        return datetime_to_timezone(dt) if dt else None
+    
+    def resolve_start_date(self, info):
+        dt = self.start_date
+        return datetime_to_timezone(dt) if dt else None
+    
+    def resolve_end_date(self, info):
+        dt = self.end_date
         return datetime_to_timezone(dt) if dt else None
     
     def resolve_client(self, info):
