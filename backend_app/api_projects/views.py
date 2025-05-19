@@ -3278,16 +3278,20 @@ def download_mongo_db(request):
     db_name = settings.MONGO_DB
     client = MongoClient(mongo_uri)
     db = client[db_name]
+    
     zip_buffer = io.BytesIO()
     
     with zipfile.ZipFile(zip_buffer, mode='w', compression=zipfile.ZIP_DEFLATED) as zip_file:
-        for collection_name in db.list_collection_names():
-            collection = db[collection_name]
+        for info in db.list_collections():
+            name = info['name']
+            if name == 'system.views':
+                continue
+            collection = db[name]
             documents = list(collection.find())
             plain_data = json.loads(json_util.dumps(documents))
             # json_data = json.dumps(plain_data, indent=2)
             json_data = json.dumps(plain_data)
-            zip_file.writestr(f"{collection_name}.json", json_data)
+            zip_file.writestr(f"{name}.json", json_data)
     
     zip_buffer.seek(0)
     

@@ -611,7 +611,7 @@ function applyFilter({ inputData, comparator, filters, dateError }) {
   }
 
   if (custom.hasComments) {
-    inputData = inputData.filter(file => file.projectComments.length > 0);
+    inputData = inputData.filter(file => file?.projectComments?.length > 0);
   }
 
   if (!dateError) {

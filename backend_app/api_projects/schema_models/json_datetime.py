@@ -1,8 +1,8 @@
 import graphene
 import orjson
 from datetime import datetime
-# from api_projects.data_util import serialize_datetime
-from datetime import datetime
+from api_projects.data_util import serialize_datetime
+from datetime import datetime, timezone as dt_timezone
 from django.utils import timezone
 
 
@@ -15,7 +15,7 @@ class JSONDateTime(graphene.Scalar):
     def serialize(value):
         dumped = orjson.dumps(
             value,
-            default=lambda obj: datetime_to_timezone(obj) if isinstance(obj, datetime) else obj
+            default=lambda obj: serialize_datetime(obj)
         )
         return orjson.loads(dumped)
 
@@ -31,7 +31,7 @@ class JSONDateTime(graphene.Scalar):
 def datetime_to_timezone(dt):
     try:
         if timezone.is_naive(dt):
-            local_tz = timezone.get_current_timezone()
+            local_tz = dt_timezone.utc
             dt = timezone.make_aware(dt, local_tz)
         local_dt = timezone.localtime(dt)
         return local_dt.strftime('%Y-%m-%d %H:%M:%S')
