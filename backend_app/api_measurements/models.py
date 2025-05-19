@@ -34,6 +34,7 @@ class Measurement(Document):
     first_assignee = DynamicField(null=True)
     check_assignee = DynamicField(null=True)
     measurement_attachments = ListField(DynamicField(), default=list, null=True)
+    measurement_comments = ListField(DynamicField(), default=list, null=True)
     created_time = DateTimeField(default=timezone.now, null=True)
     last_modified_time = DateTimeField(default=timezone.now, null=True)
     general_notes = StringField(null=True)
@@ -42,24 +43,12 @@ class Measurement(Document):
         'collection': 'measurement',
         'indexes': [
             'number',
-            'sales_order',
-            'customer',
-            'service',
-            'project',
             'user_reporter',
-            'user_manager',
-            'phone',
-            'address',
-            'color',
-            'marks',
             'is_active',
             'created_time',
             'last_modified_time',
-            'general_notes',
             'first_date',
             'check_date',
-            'first_assignee',
-            'check_assignee',
         ],
         'verbose_name': 'Measurement',
         'verbose_name_plural': 'Measurements'
@@ -90,3 +79,24 @@ class MesurementAttachment(Document):
 
     def __str__(self):
         return self.name
+    
+
+class MeasurementComment(Document):
+    comment = StringField(required=True)
+    user_reporter = DynamicField(required=True, null=True)
+    created_time = DateTimeField(default=timezone.now, null=True)
+    last_modified_time = DateTimeField(default=timezone.now, null=True)
+    measurement = DynamicField(required=True)
+    measurement_default_task = DynamicField(null=True)
+    measurement_default_task_comment_attachments = ListField(DynamicField(), default=list, null=True)
+    is_active = BooleanField(default=True)
+    meta = {
+        'collection': 'measurement_comment',
+        'indexes': [
+            'comment', 'user_reporter', 'created_time', 'last_modified_time', 'is_active'
+        ],
+        'verbose_name': 'Measurement Comment',
+        'verbose_name_plural': 'Measurement Comments'
+    }
+    def __str__(self):
+        return self.comment

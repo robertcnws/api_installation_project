@@ -427,6 +427,11 @@ class ProjectPermissions(Document):
         return self.name
 
 class ProjectTrackingView(Document):
+    action         = StringField()     
+    created_time   = DateTimeField()
+    managed_data   = DynamicField()
+    user_reporter  = DynamicField()
+    
     meta = {
         'collection': 'project_tracking_view',
         'strict': False,   

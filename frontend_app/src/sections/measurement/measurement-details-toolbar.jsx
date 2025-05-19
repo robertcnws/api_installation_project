@@ -30,6 +30,7 @@ import { usePopover, CustomPopover } from 'src/components/custom-popover';
 
 export function MeasurementDetailsToolbar({
   measurement,
+  tabs,
   backLink,
   editLink,
   openEdit,
@@ -116,6 +117,7 @@ export function MeasurementDetailsToolbar({
                     const id = measurementFilteredList?.[indexInMeasurementFilteredList - 1]?.id;
                     localStorage.setItem('measurementId', id);
                     localStorage.setItem('backFromMeasurementDetails', 'measurements');
+                    // tabs?.setValue('overview');
                     router.push(paths.dashboard.measurement.details(id));
                   }} color='default'>
                   <Iconify icon="mdi-light:skip-previous" />
@@ -140,6 +142,7 @@ export function MeasurementDetailsToolbar({
                     const id = measurementFilteredList?.[indexInMeasurementFilteredList + 1]?.id;
                     localStorage.setItem('measurementId', id);
                     localStorage.setItem('backFromMeasurementDetails', 'measurements');
+                    // tabs?.setValue('overview');
                     router.push(paths.dashboard.measurement.details(id));
                   }} color='default'>
                   <Iconify icon="mdi-light:skip-next" />

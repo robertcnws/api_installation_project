@@ -36,6 +36,7 @@ import { useDataContext } from 'src/auth/context/data/data-context';
 
 export function ServiceDetailsToolbar({
   service,
+  tabs,
   backLink,
   editLink,
   openEdit,
@@ -179,6 +180,7 @@ export function ServiceDetailsToolbar({
                     const id = serviceFilteredList?.[indexInServiceFilteredList - 1]?.id;
                     localStorage.setItem('serviceId', id);
                     localStorage.setItem('backFromServiceDetails', 'services');
+                    // tabs?.setValue('overview');
                     router.push(paths.dashboard.service.details(id));
                   }} color='default'>
                   <Iconify icon="mdi-light:skip-previous" />
@@ -198,6 +200,7 @@ export function ServiceDetailsToolbar({
                     const id = serviceFilteredList?.[indexInServiceFilteredList + 1]?.id;
                     localStorage.setItem('serviceId', id);
                     localStorage.setItem('backFromServiceDetails', 'services');
+                    // tabs?.setValue('overview');
                     router.push(paths.dashboard.service.details(id));
                   }} color='default'>
                   <Iconify icon="mdi-light:skip-next" />

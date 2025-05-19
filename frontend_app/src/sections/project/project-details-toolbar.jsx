@@ -34,6 +34,7 @@ import { ServiceNewFormFromProject } from '../service/service-new-form-from-proj
 
 export function ProjectDetailsToolbar({
   project,
+  tabs,
   backLink,
   editLink,
   openEdit,
@@ -194,6 +195,7 @@ export function ProjectDetailsToolbar({
                     const id = installationFilteredList?.[indexInInstallationFilteredList - 1]?.id;
                     localStorage.setItem('projectId', id);
                     localStorage.setItem('backFromProjectDetails', 'projects');
+                    // tabs?.setValue('overview');
                     router.push(paths.dashboard.project.details(id));
                   }} color='default'>
                   <Iconify icon="mdi-light:skip-previous" />
@@ -213,6 +215,7 @@ export function ProjectDetailsToolbar({
                     const id = installationFilteredList?.[indexInInstallationFilteredList + 1]?.id;
                     localStorage.setItem('projectId', id);
                     localStorage.setItem('backFromProjectDetails', 'projects');
+                    // tabs?.setValue('overview');
                     router.push(paths.dashboard.project.details(id));
                   }} color='default'>
                   <Iconify icon="mdi-light:skip-next" />

@@ -298,6 +298,7 @@ export function MeasurementDetailsView({ measurementId }) {
                         <DashboardContent>
                             <MeasurementDetailsToolbar
                                 measurement={itemById}
+                                tabs={tabs}
                                 backLink={
                                     localStorage.getItem('backFromMeasurementDetails') === 'analytics' ? paths.dashboard.general.analytics :
                                         localStorage.getItem('backFromMeasurementDetails') === 'project' ?

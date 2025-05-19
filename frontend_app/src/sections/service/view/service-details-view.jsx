@@ -545,6 +545,7 @@ export function ServiceDetailsView({ serviceId }) {
                         <DashboardContent>
                             <ServiceDetailsToolbar
                                 service={itemById}
+                                tabs={tabs}
                                 backLink={
                                     localStorage.getItem('backFromServiceDetails') === 'analytics' ? paths.dashboard.general.analytics :
                                         localStorage.getItem('backFromProjectDetails') === 'calendarDashboard' ? paths.dashboard.general.calendar :

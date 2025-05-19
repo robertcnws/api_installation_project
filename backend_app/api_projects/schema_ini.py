@@ -110,8 +110,15 @@ class Query(graphene.ObjectType):
     # def resolve_all_project_tracking(self, info):
     #     return list(ProjectTracking.objects.all())
     
+    # def resolve_all_project_tracking(self, info):
+    #     return ProjectTrackingView.objects.all().order_by('-created_time')
+    
     def resolve_all_project_tracking(self, info):
-        return ProjectTrackingView.objects.all()
+        return (
+            ProjectTrackingView 
+            .objects(action__nin=['login','logout'])
+            .order_by('-created_time')
+        )
     
     def resolve_all_project_default_tasks(self, info):
         return list(ProjectDefaultTask.objects.all())

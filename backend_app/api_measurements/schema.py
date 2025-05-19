@@ -36,6 +36,7 @@ class MeasurementType(MongoengineObjectType):
     first_assignee = GenericScalar()
     check_assignee = GenericScalar()
     measurement_attachments = GenericScalar()
+    measurement_comments = GenericScalar()
     color = GenericScalar()
     created_time = graphene.String()
     last_modified_time = graphene.String()
@@ -126,6 +127,11 @@ class MeasurementType(MongoengineObjectType):
         color = self.color or {}
         color = serialize_datetime(color)
         return dynamic_field_to_json(color)
+    
+    def resolve_measurement_comments(self, info):
+        measurement_comments = self.measurement_comments or []
+        measurement_comments = serialize_datetime(measurement_comments)
+        return dynamic_field_to_json(measurement_comments)
     
 
 class Query(graphene.ObjectType):

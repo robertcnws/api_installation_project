@@ -35,6 +35,7 @@ class ProjectTrackingType(MongoengineObjectType):
 class ProjectTrackingViewType(MongoengineObjectType):
     class Meta:
         model = ProjectTrackingView
+        strict = False
         
     action = graphene.String()
     created_time = graphene.String()

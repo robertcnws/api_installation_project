@@ -533,6 +533,7 @@ export function ProjectDetailsView({ projectId }) {
                         <DashboardContent>
                             <ProjectDetailsToolbar
                                 project={itemById}
+                                tabs={tabs}
                                 backLink={
                                     localStorage.getItem('backFromProjectDetails') === 'analytics' ? paths.dashboard.general.analytics :
                                         localStorage.getItem('backFromProjectDetails') === 'calendarDashboard' ? paths.dashboard.general.calendar :

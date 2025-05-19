@@ -41,6 +41,7 @@ def measurement_saved(sender, document, **kwargs):
                 "firstAssignee": document.first_assignee,
                 "checkAssignee": document.check_assignee,
                 "measurementAttachments": document.measurement_attachments,
+                "measurementComments": document.measurement_comments,
                 "generalNotes": document.general_notes,
             }
 
@@ -76,6 +77,7 @@ def measurement_deleted(sender, document, **kwargs):
                 "firstAssignee": document.first_assignee,
                 "checkAssignee": document.check_assignee,
                 "measurementAttachments": document.measurement_attachments,
+                "measurementComments": document.measurement_comments,
                 "generalNotes": document.general_notes,
             }
         }
@@ -116,6 +118,7 @@ def measurement_by_id_saved(sender, document, **kwargs):
                 "firstAssignee": document.first_assignee,
                 "checkAssignee": document.check_assignee,
                 "measurementAttachments": document.measurement_attachments,
+                "measurementComments": document.measurement_comments,
                 "generalNotes": document.general_notes,
             }
 
@@ -152,6 +155,7 @@ def measurement_by_id_deleted(sender, document, **kwargs):
                 "firstAssignee": document.first_assignee,
                 "checkAssignee": document.check_assignee,
                 "measurementAttachments": document.measurement_attachments,
+                "measurementComments": document.measurement_comments,
                 "generalNotes": document.general_notes,
             }
         }
