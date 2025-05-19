@@ -35,6 +35,7 @@ export function ProjectEditModalDatesView({
     isInspectionDate,
     isFinishPermissionDate,
     project,
+    refetchProject,
     open,
     onClose,
 }) {
@@ -277,7 +278,7 @@ export function ProjectEditModalDatesView({
                 return;
             }
 
-            // refetchProject?.();
+            refetchProject?.();
 
             onClose();
 

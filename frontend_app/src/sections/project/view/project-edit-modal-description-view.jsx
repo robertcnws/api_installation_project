@@ -22,6 +22,7 @@ import { LoadingContext } from 'src/auth/context/loading-context';
 
 export function ProjectEditModalDescriptionView({
     project,
+    refetchProject,
     open,
     onClose,
 }) {
@@ -94,8 +95,8 @@ export function ProjectEditModalDescriptionView({
         try {
             toast.promise(promise, {
                 loading: 'Loading...',
-                success: `Update Service (${data.name}) success!`,
-                error: `Update Service (${data.name}) error!`,
+                success: `Update Project (${data.name}) success!`,
+                error: `Update Project (${data.name}) error!`,
             });
 
             const response = await promise;
@@ -104,7 +105,7 @@ export function ProjectEditModalDescriptionView({
                 return;
             }
 
-            // refetchServices?.();
+            refetchProject?.();
 
             // reset();
 

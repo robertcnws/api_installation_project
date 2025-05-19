@@ -33,6 +33,7 @@ class ProjectViewType(MongoengineObjectType):
     name = graphene.String()
     number = graphene.String()
     reference_number = graphene.String()
+    phone = graphene.String()
     feedback = graphene.String()
     work_scope = graphene.String()
     is_part_days = graphene.Boolean()
@@ -132,6 +133,9 @@ class ProjectViewType(MongoengineObjectType):
     
     def resolve_current_stage(self, info):
         return self._data.get('current_stage')
+    
+    def resolve_phone(self, info):
+        return self._data.get('phone')
     
     def resolve_address(self, info):
         return self._data.get('address')

@@ -28,6 +28,7 @@ import { useDataContext } from 'src/auth/context/data/data-context';
 export function ProjectEditModalInstallationTeamView({
     isEdit,
     project,
+    refetchProject,
     open,
     onClose,
 }) {
@@ -163,7 +164,7 @@ export function ProjectEditModalInstallationTeamView({
                 return;
             }
 
-            // refetchProjects?.();
+            refetchProject?.();
 
             // reset();
 

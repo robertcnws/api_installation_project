@@ -137,13 +137,13 @@ export function ProjectDetailsContentOverview({
           },
           {
             label: 'Phone Number',
-            value: (project?.salesOrder?.customer || project?.salesOrder?.contact_person_details)?.phone ||
+            value: project?.phone || (project?.salesOrder?.customer || project?.salesOrder?.contact_person_details)?.phone ||
               (project?.salesOrder?.customer || project?.salesOrder?.contact_person_details)?.mobile,
             icon: <Iconify
               icon="icon-park:phone"
               sx={{ color: 'text.primary' }}
             />,
-            hasValue: (project?.salesOrder?.customer || project?.salesOrder?.contact_person_details)?.phone?.length > 0 ||
+            hasValue: project?.phone || (project?.salesOrder?.customer || project?.salesOrder?.contact_person_details)?.phone?.length > 0 ||
               (project?.salesOrder?.customer || project?.salesOrder?.contact_person_details)?.mobile?.length > 0,
           },
           {

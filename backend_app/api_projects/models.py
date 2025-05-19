@@ -174,6 +174,7 @@ class Project(Document):
     inspection_date = DateTimeField(null=True)
     finish_permission_date = DateTimeField(null=True)
     is_part_days = BooleanField(default=False)
+    phone = StringField(max_length=255, null=True)
     
     meta = {
         'collection': 'project',

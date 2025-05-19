@@ -296,62 +296,65 @@ def create_project(request):
     description = f'{data.get('description')} & ' + '.'.join(installation_description) + ' & ' + '.'.join(structural_description)
     
     work_scope = '.'.join(installation_description) + ' & ' + '.'.join(structural_description)
+    
+    existing_number_project = Project.objects(number=number).first()
+    
+    if existing_number_project is None:
+        try:
+            project = Project(
+                name=data.get('name', ''),
+                description=description, 
+                sales_order=sales_order, 
+                users_assignees=users_assignees,
+                # start_date=start_date,
+                # end_date=end_date,
+                address=data.get('address', ''),
+                created_time=timezone.now(),
+                last_modified_time=timezone.now(),
+                is_active=True,
+                current_stage=current_stage,    
+                user_reporter=user_reporter,
+                project_attachments=project_attachments,
+                number=number,
+                user_manager=user_manager,
+                has_permission=has_permission,
+                project_default_tasks=list_default_tasks_info,
+                all_products_marked=False,
+                all_windows_marked=False,
+                all_screw_marked=False,
+                all_trash_marked=False,
+                feedback='',
+                work_scope=work_scope,
+                project_materials=[],
+                project_materials_other_notes='',
+            )
+            
+            project.save()
+            
+            tracking = ProjectTracking(
+                user_reporter=user_reporter,
+                action=f'create project ({project.id} - {project.name})',
+                created_time=timezone.now(),
+                managed_data={
+                    'data': transform_data_to_mongo(project, exclude_fields=['sales_order'])
+                },
+            )
+            tracking.save()
+            
+            if user_reporter:
+                module='projects'
+                info=f'has created new project {project.name}'
+                info_id=project.id
+                type='create_project'
+                create_notification(module, info_id, info, type, user_reporter['username'])
+            
+            return Response({
+                'message': 'Project created successfully',
+                'data': json.loads(project.to_json())
+            }, status=201)
 
-    try:
-        project = Project(
-            name=data.get('name', ''),
-            description=description, 
-            sales_order=sales_order, 
-            users_assignees=users_assignees,
-            # start_date=start_date,
-            # end_date=end_date,
-            address=data.get('address', ''),
-            created_time=timezone.now(),
-            last_modified_time=timezone.now(),
-            is_active=True,
-            current_stage=current_stage,    
-            user_reporter=user_reporter,
-            project_attachments=project_attachments,
-            number=number,
-            user_manager=user_manager,
-            has_permission=has_permission,
-            project_default_tasks=list_default_tasks_info,
-            all_products_marked=False,
-            all_windows_marked=False,
-            all_screw_marked=False,
-            all_trash_marked=False,
-            feedback='',
-            work_scope=work_scope,
-            project_materials=[],
-            project_materials_other_notes='',
-        )
-        
-        project.save()
-        
-        tracking = ProjectTracking(
-            user_reporter=user_reporter,
-            action=f'create project ({project.id} - {project.name})',
-            created_time=timezone.now(),
-            managed_data={
-                'data': transform_data_to_mongo(project, exclude_fields=['sales_order'])
-            },
-        )
-        tracking.save()
-        
-        if user_reporter:
-            module='projects'
-            info=f'has created new project {project.name}'
-            info_id=project.id
-            type='create_project'
-            create_notification(module, info_id, info, type, user_reporter['username'])
-        
-        return Response({
-            'message': 'Project created successfully',
-            'data': json.loads(project.to_json())
-        }, status=201)
-
-    except Exception as e:
-        return Response({'error': str(e)}, status=500)
+        except Exception as e:
+            return Response({'error': str(e)}, status=500)
     
 
 #############################################
@@ -472,45 +475,46 @@ def create_projects(request):
 
         work_scope = '.'.join(installation_description) + ' & ' + '.'.join(structural_description)
         
-        try:
-            project = Project(
-                name=f'{sales_order.get("salesorder_number")} ({sales_order.get("customer_name")})',
-                description=description, 
-                sales_order=sales_order, 
-                users_assignees=users_assignees,
-                # start_date=start_date,
-                # end_date=end_date,
-                address='You can add the address here',
-                created_time=timezone.now(),
-                last_modified_time=timezone.now(),
-                is_active=True,
-                current_stage=current_stage,
-                user_reporter=user_reporter,
-                project_attachments=project_attachments,
-                project_tasks=[],
-                number = create_entity_number(sales_order.get('salesorder_number')), 
-                user_manager=user_manager,
-                has_permission=has_permission,
-                project_default_tasks=list_default_tasks_info,
-                all_products_marked=False,
-                all_windows_marked=False,
-                all_screw_marked=False,
-                all_trash_marked=False,
-                feedback='',
-                work_scope=work_scope,
-                project_materials=[],
-                project_materials_other_notes='',
-            )
-            
-            project.save()
-            
-            tracking_info = transform_data_to_mongo(project, exclude_fields=['sales_order'])
-            list_tracking_info.append(tracking_info)
-            
-            count += 1
-            
-        except Exception as e:
-            return Response({'error': str(e)}, status=500)
+        number = create_entity_number(sales_order.get('salesorder_number'))
+        
+        existing_number_project = Project.objects(number=number).first()
+        
+        if existing_number_project is None:
+            try:
+                project = Project(
+                    name=f'{sales_order.get("salesorder_number")} ({sales_order.get("customer_name")})',
+                    description=description, 
+                    sales_order=sales_order, 
+                    users_assignees=users_assignees,
+                    # start_date=start_date,
+                    # end_date=end_date,
+                    address='You can add the address here',
+                    created_time=timezone.now(),
+                    last_modified_time=timezone.now(),
+                    is_active=True,
+                    current_stage=current_stage,
+                    user_reporter=user_reporter,
+                    project_attachments=project_attachments,
+                    project_tasks=[],
+                    number = number, 
+                    user_manager=user_manager,
+                    has_permission=has_permission,
+                    project_default_tasks=list_default_tasks_info,
+                    all_products_marked=False,
+                    all_windows_marked=False,
+                    all_screw_marked=False,
+                    all_trash_marked=False,
+                    feedback='',
+                    work_scope=work_scope,
+                    project_materials=[],
+                    project_materials_other_notes='',
+                )
+                project.save()
+                tracking_info = transform_data_to_mongo(project, exclude_fields=['sales_order'])
+                list_tracking_info.append(tracking_info)
+                count += 1
+            except Exception as e:
+                return Response({'error': str(e)}, status=500)
         
     tracking = ProjectTracking(
         user_reporter=user_reporter,
@@ -533,7 +537,6 @@ def create_projects(request):
         'message': f'{count} Project(s) created successfully',
         'data': tracking_info
     }, status=200)
-    
     
 
 #############################################
@@ -828,6 +831,8 @@ def change_project_phone_number(request, id):
     sales_order['customer']['mobile'] = phone_number
     
     project.sales_order = sales_order
+    
+    project.phone = phone_number if phone_number else ''
     
     project.last_modified_time = timezone.now()
     project.user_reporter = user_reporter if user_reporter else project.user_reporter

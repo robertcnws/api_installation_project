@@ -655,7 +655,7 @@ export function ProjectDetailsView({ projectId }) {
                             onClose={() => setOpenDialogs({ ...openDialogs, address: false })}
                         />
                         <ProjectEditModalPhoneNumberView
-                            isEdit={itemById?.salesOrder?.customer?.phone || itemById?.salesOrder?.customer?.mobile}
+                            isEdit={itemById?.phone || itemById?.salesOrder?.customer?.phone || itemById?.salesOrder?.customer?.mobile}
                             projectId={itemById?.id}
                             open={openDialogs.phoneNumber}
                             onClose={() => setOpenDialogs({ ...openDialogs, phoneNumber: false })}
@@ -668,6 +668,7 @@ export function ProjectDetailsView({ projectId }) {
                         />
                         <ProjectEditModalDescriptionView
                             project={itemById}
+                            refetchProject={refetchProject}
                             open={openDialogs.description}
                             onClose={() => setOpenDialogs({ ...openDialogs, description: false })}
                         />

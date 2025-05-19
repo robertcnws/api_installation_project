@@ -16,6 +16,7 @@ const GET_ALL_PROJECTS = gql`
       lastModifiedTime
       name
       number
+      phone
       projectAttachments
       projectComments
       projectDefaultTasks
@@ -58,6 +59,7 @@ const GET_PROJECT_BY_ID = gql`
       lastModifiedTime
       name
       number
+      phone
       projectAttachments
       projectComments
       projectDefaultTasks

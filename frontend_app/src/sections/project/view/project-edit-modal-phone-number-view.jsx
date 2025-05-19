@@ -44,7 +44,7 @@ export function ProjectEditModalPhoneNumberView({
 
     const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
 
-    const { data: itemById } = useProjectByIdQuery(item?.id, {
+    const { data: itemById, refetch: refetchProject } = useProjectByIdQuery(item?.id, {
         skip: !item?.id,
     });
 
@@ -52,7 +52,7 @@ export function ProjectEditModalPhoneNumberView({
 
     useEffect(() => {
         if (itemById) {
-            const phoneNumber = parsePhoneNumber(itemById?.salesOrder?.customer?.phone || itemById?.salesOrder?.customer?.mobile || '', 'US');
+            const phoneNumber = parsePhoneNumber(itemById?.phone || itemById?.salesOrder?.customer?.phone || itemById?.salesOrder?.customer?.mobile || '', 'US');
             const formattedNumber = phoneNumber ? phoneNumber.format('E.164') : '';
             setProjectData((prev) => ({
                 ...prev,
@@ -72,7 +72,7 @@ export function ProjectEditModalPhoneNumberView({
 
     const defaultValues = useMemo(
         () => {
-            const phoneNumber = parsePhoneNumber(itemById?.salesOrder?.customer?.phone || itemById?.salesOrder?.customer?.mobile || '', 'US');
+            const phoneNumber = parsePhoneNumber(itemById?.phone || itemById?.salesOrder?.customer?.phone || itemById?.salesOrder?.customer?.mobile || '', 'US');
             const formattedNumber = phoneNumber ? phoneNumber.format('E.164') : '';
             return {
                 id: itemById?.id || '',
@@ -102,7 +102,7 @@ export function ProjectEditModalPhoneNumberView({
 
     useEffect(() => {
         if (itemById) {
-            const phoneNumber = parsePhoneNumber(itemById?.salesOrder?.customer?.phone || itemById?.salesOrder?.customer?.mobile || '', 'US');
+            const phoneNumber = parsePhoneNumber(itemById?.phone || itemById?.salesOrder?.customer?.phone || itemById?.salesOrder?.customer?.mobile || '', 'US');
             const formattedNumber = phoneNumber ? phoneNumber.format('E.164') : '';
             reset({
                 id: itemById.id || '',
@@ -137,7 +137,7 @@ export function ProjectEditModalPhoneNumberView({
                 return;
             }
 
-            // refetchProjects?.();
+            refetchProject?.();
 
             // reset();
 

@@ -785,6 +785,7 @@ export function ProjectDetailsContent({
       <ProjectEditModalInstallationTeamView
         isEdit={getProjectInstaller(project, CONFIG)?.name}
         project={project}
+        refetchProject={refetchProject}
         open={openDialogs.installationTeam}
         onClose={() => setOpenDialogs({ ...openDialogs, installationTeam: false })}
       />

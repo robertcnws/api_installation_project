@@ -60,7 +60,7 @@ export function ProjectEditModalUserManagerView({
 
     const popover = usePopover();
 
-    const { data: itemById } = useProjectByIdQuery(item?.id, {
+    const { data: itemById, refetch: refetchProject } = useProjectByIdQuery(item?.id, {
         skip: !item?.id,
     });
 
@@ -222,7 +222,7 @@ export function ProjectEditModalUserManagerView({
                 return;
             }
 
-            // refetchProjects?.();
+            refetchProject?.();
 
             // reset();
 

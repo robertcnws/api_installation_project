@@ -46,7 +46,7 @@ export function ProjectEditModalAddressView({
 
     const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
 
-    const { data: itemById } = useProjectByIdQuery(item?.id, {
+    const { data: itemById, refetch: refetchProject } = useProjectByIdQuery(item?.id, {
         skip: !item?.id,
     });
 
@@ -132,7 +132,7 @@ export function ProjectEditModalAddressView({
                 return;
             }
 
-            // refetchProjects?.();
+            refetchProject?.();
 
             // reset();
 

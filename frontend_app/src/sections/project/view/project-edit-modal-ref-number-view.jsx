@@ -39,7 +39,7 @@ export function ProjectEditModalRefNumberView({
 
     const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
 
-    const { data: itemById } = useProjectByIdQuery(item?.id, {
+    const { data: itemById, refetch: refetchProject } = useProjectByIdQuery(item?.id, {
         skip: !item?.id,
     });
 
@@ -133,7 +133,7 @@ export function ProjectEditModalRefNumberView({
                 return;
             }
 
-            // refetchProjects?.();
+            refetchProject?.();
 
             onClose();
 
