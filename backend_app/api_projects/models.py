@@ -424,7 +424,12 @@ class ProjectPermissions(Document):
 
     def __str__(self):
         return self.name
-    
+
+class ProjectTrackingView(Document):
+    meta = {
+        'collection': 'project_tracking_view',
+        'strict': False,   
+    }   
     
 class ProjectTracking(Document):
     user_reporter = DynamicField(required=True)

@@ -11,6 +11,7 @@ from .models import (
     ProjectReminder,
     ProjectDefaultMaterial,
 )
+from .models_sync import ProjectSync
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 import json
@@ -596,6 +597,65 @@ def project_notification_user_deleted(sender, document, **kwargs):
     async_to_sync(channel_layer.group_send)('project_notification_user', serialize_datetime(event))
     
     
+##########################################################################
+# SYNC MODELS
+##########################################################################
+
+def sync_project(sender, document, **kwargs):
+    # Copiamos solo los campos que Definimos en ProjectDashboard
+    data = {
+        '_id': document.id,
+        'address': document.address,
+        'name': document.name,
+        'number': document.number,
+        'description': document.description,
+        'reference_number': document.reference_number,
+        'start_date': document.start_date,
+        'end_date': document.end_date,
+        'created_time': document.created_time,
+        'last_modified_time': document.last_modified_time,
+        'is_active': document.is_active,
+        'has_permission': document.has_permission,
+        'all_products_marked': document.all_products_marked,
+        'all_windows_marked': document.all_windows_marked,
+        'all_screw_marked': document.all_screw_marked,
+        'all_trash_marked': document.all_trash_marked,
+        'project_materials_other_notes': document.project_materials_other_notes,
+        # … el resto de escalares …
+        'sales_order': document.sales_order,
+        'project_tasks': document.project_tasks,
+        'project_default_tasks': document.project_default_tasks,
+        'project_history': document.project_history,
+        'project_attachments': document.project_attachments,
+        'project_comments': document.project_comments,
+        'stage_history': document.stage_history,
+        'users_assignees': document.users_assignees,
+        'project_materials': document.project_materials,
+        'project_guide_products': document.project_guide_products,
+        'user_manager': document.user_manager,
+        'user_reporter': document.user_reporter,
+        'user_installer': document.user_installer,
+        'feedback': document.feedback,
+        'work_scope': document.work_scope,
+        'inspection_date': document.inspection_date,
+        'finish_permission_date': document.finish_permission_date,
+        'is_part_days': document.is_part_days,
+        'current_stage': document.current_stage,
+    }
+    
+    ProjectSync._get_collection().replace_one(
+        {'_id': document.id},
+        data,
+        upsert=True
+    )
+
+def delete_from_sync(sender, document, **kwargs):
+    ProjectSync._get_collection().delete_one({'_id': document.id})
+
+
+####
+    
+    
 signals.post_save.connect(project_by_id_saved, sender=Project)
 signals.post_delete.connect(project_by_id_deleted, sender=Project)
 signals.post_save.connect(project_stage_saved, sender=ProjectStage)
@@ -616,3 +676,6 @@ signals.post_save.connect(project_reminder_saved, sender=ProjectReminder)
 signals.post_delete.connect(project_reminder_deleted, sender=ProjectReminder)
 signals.post_save.connect(project_default_material_saved, sender=ProjectDefaultMaterial)
 signals.post_delete.connect(project_default_material_deleted, sender=ProjectDefaultMaterial)
+
+signals.post_save.connect(sync_project, sender=Project)
+signals.post_delete.connect(delete_from_sync, sender=Project)

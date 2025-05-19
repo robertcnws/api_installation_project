@@ -33,6 +33,7 @@ CMD ["sh", "-c", "python manage.py makemigrations --no-input && \
                   python manage.py migrate --no-input && \
                   python manage.py collectstatic --no-input && \
                   python init_scripts.py && \
+                  python manage.py sync_scripts && \
                   celery -A system_installation_project worker --loglevel=info -E & \
                   celery -A system_installation_project beat --loglevel=info & \
                   gunicorn system_installation_project.asgi:application -w 3 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000"]
