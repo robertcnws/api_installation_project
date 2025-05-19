@@ -31,7 +31,8 @@ class JSONDateTime(graphene.Scalar):
 def datetime_to_timezone(dt):
     try:
         if timezone.is_naive(dt):
-            local_tz = dt_timezone.utc
+            # local_tz = dt_timezone.utc
+            local_tz = timezone.get_default_timezone()
             dt = timezone.make_aware(dt, local_tz)
         local_dt = timezone.localtime(dt)
         return local_dt.strftime('%Y-%m-%d %H:%M:%S')
