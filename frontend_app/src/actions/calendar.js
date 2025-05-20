@@ -50,7 +50,11 @@ export function useGetProjectEvents(projects = [], type = 'installation') {
   const currentProjects = useMemo(() => projects || [], [projects]);
 
   const getAvailableColor = useCallback(() => {
-    const index = type === 'installation' ? 2 : type === 'inspection' ? 1 : type === 'service' ? 3 : 0;
+    const index = type === 'installation' ? 2 :
+      type === 'inspection' ? 1 :
+        type === 'service' ? 3 :
+          type === 'firstCheckMeasurement' ? 10 :
+            type === 'secondCheckMeasurement' ? 12 : 0;
     return ALL_COLORS[index];
   }, [type]);
 
@@ -69,11 +73,19 @@ export function useGetProjectEvents(projects = [], type = 'installation') {
         title: project.name,
         start: type === 'installation' || type === 'service' ?
           project.startDate : type === 'inspection' ?
-            project.inspectionDate : project.finishPermissionDate,
+            project.inspectionDate :
+            type === 'firstCheckMeasurement' ?
+              project.firstDate :
+              type === 'secondCheckMeasurement' ?
+                project.checkDate : project.finishPermissionDate,
         end: type === 'inspection' ?
           project.inspectionDate : type === 'finishPermission' ?
-            project.finishPermissionDate : project.endDate ?
-            endDate : '9999-12-31',
+            project.finishPermissionDate :
+            type === 'firstCheckMeasurement' ?
+              project.firstDate :
+              type === 'secondCheckMeasurement' ?
+                project.checkDate : project.endDate ?
+                  endDate : '9999-12-31',
         textColor: color,
         color,
       };

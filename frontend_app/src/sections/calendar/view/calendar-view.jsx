@@ -46,10 +46,13 @@ export function CalendarView() {
     loadingProjects,
     loadedServices,
     loadingServices,
+    loadedMeasurements,
+    loadingMeasurements,
   } = useDataContext();
 
   const [projects, setProjects] = useState([]);
   const [services, setServices] = useState([]);
+  const [measurements, setMeasurements] = useState([]);
 
   useEffect(() => {
     if (loadedProjects && loadedProjects.length > 0) {
@@ -62,6 +65,12 @@ export function CalendarView() {
       setServices(loadedServices);
     }
   }, [loadedServices, setServices]);
+
+  useEffect(() => {
+    if (loadedMeasurements && loadedMeasurements.length > 0) {
+      setMeasurements(loadedMeasurements);
+    }
+  }, [loadedMeasurements, setMeasurements]);
 
   useEffect(() => {
     const socket = new WebSocket(`wss://${CONFIG.apiHost}/api/projects/ws/projects/`);
@@ -114,6 +123,36 @@ export function CalendarView() {
       }
       else if (message.type === 'deleted') {
         setServices((prevData) => prevData.filter(item => String(item.id) !== String(message.item.id)));
+      }
+    };
+    return () => {
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.close();
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    const socket = new WebSocket(`wss://${CONFIG.apiHost}/api/measurements/ws/measurements/`);
+    socket.onerror = (errorEvent) => {
+      console.dir(errorEvent);
+      console.error('WebSocket error (toString):', errorEvent.toString());
+    };
+    socket.onmessage = (event) => {
+      const message = JSON.parse(event.data);
+      if (message.type === 'created' || message.type === 'updated') {
+        setMeasurements((prevData) => {
+          const existingItemIndex = prevData.findIndex(item => String(item.id) === String(message.item.id));
+          if (existingItemIndex !== -1) {
+            const updatedData = [...prevData];
+            updatedData[existingItemIndex] = message.item;
+            return updatedData;
+          }
+          return [message.item, ...prevData];
+        });
+      }
+      else if (message.type === 'deleted') {
+        setMeasurements((prevData) => prevData.filter(item => String(item.id) !== String(message.item.id)));
       }
     };
     return () => {
@@ -180,6 +219,38 @@ export function CalendarView() {
       icon: 'carbon:user-service',
     })) || [], [services]);
 
+  const eventsFirstDateMeasurements = useMemo(
+    () => measurements?.filter((m) => m.firstDate).map((measurement) => ({
+      ...measurement,
+      id: `${measurement.id}-measurement`,
+      name: `${measurement.number} First Check Measurement for Installation ${measurement.project?.name}` || `Service ${measurement.service?.name}` || `Customer ${measurement.customer?.name}`,
+      originalName: `${measurement.number} First Check Measurement for Installation ${measurement.project?.name}` || `Service ${measurement.service?.name}` || `Customer ${measurement.customer?.name}`,
+      description: `${measurement.number} First Check Measurement for Installation: ${measurement.project?.name}` || `Service ${measurement.service?.name}` || `Customer ${measurement.customer?.name}`,
+      title: `${measurement.number} First Check Measurement`,
+      start: measurement.firstDate,
+      end: measurement.firstDate,
+      allDay: true,
+      type: 'firstCheckMeasurement',
+      namedType: 'first check measurement',
+      icon: 'tdesign:measurement',
+    })) || [], [measurements]);
+
+    const eventsSecondDateMeasurements = useMemo(
+    () => measurements?.filter((m) => m.checkDate).map((measurement) => ({
+      ...measurement,
+      id: `${measurement.id}-measurement`,
+      name: `${measurement.number} Second Check Measurement for Installation ${measurement.project?.name}` || `Service ${measurement.service?.name}` || `Customer ${measurement.customer?.name}`,
+      originalName: `${measurement.number} Second Check Measurement for Installation ${measurement.project?.name}` || `Service ${measurement.service?.name}` || `Customer ${measurement.customer?.name}`,
+      description: `${measurement.number} Second Check Measurement for Installation: ${measurement.project?.name}` || `Service ${measurement.service?.name}` || `Customer ${measurement.customer?.name}`,
+      title: `${measurement.number} Second Check Measurement`,
+      start: measurement.checkDate,
+      end: measurement.checkDate,
+      allDay: true,
+      type: 'secondCheckMeasurement',
+      namedType: 'second check measurement',
+      icon: 'tdesign:measurement-1',
+    })) || [], [measurements]);
+
 
   const {
     events: installEvents, eventsLoading: installEventsLoading
@@ -197,9 +268,31 @@ export function CalendarView() {
     events: serviceEvents, eventsLoading: serviceEventsLoading
   } = useGetProjectEvents(eventsServices, 'service');
 
-  const events = [...installEvents, ...inspectionEvents, ...finishPermissionEvents, ...serviceEvents];
+  const {
+    events: firstDateMeasurementEvents, eventsLoading: firstDateMeasurementEventsLoading
+  } = useGetProjectEvents(eventsFirstDateMeasurements, 'firstCheckMeasurement');
 
-  const eventsLoading = installEventsLoading || inspectionEventsLoading || finishPermissionEventsLoading || serviceEventsLoading;
+  const {
+    events: secondDateMeasurementEvents, eventsLoading: secondDateMeasurementEventsLoading
+  } = useGetProjectEvents(eventsSecondDateMeasurements, 'secondCheckMeasurement');
+
+  const events = [
+    ...installEvents, 
+    ...inspectionEvents, 
+    ...finishPermissionEvents, 
+    ...serviceEvents,
+    ...firstDateMeasurementEvents,
+    ...secondDateMeasurementEvents
+  ];
+
+  const eventsLoading = (
+    installEventsLoading || 
+    inspectionEventsLoading || 
+    finishPermissionEventsLoading || 
+    serviceEventsLoading ||
+    firstDateMeasurementEventsLoading ||
+    secondDateMeasurementEventsLoading
+  );
 
   const filters = useSetState({
     colors: [],

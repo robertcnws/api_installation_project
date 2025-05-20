@@ -147,8 +147,8 @@ export function ServiceDetailsContentComponent({
             hasValue: items?.length > 0,
             value: (
               <>
-                {listItems?.map((product) => (
-                  <ListItem key={product.line_item_id}>
+                {listItems?.map((product, index) => (
+                  <ListItem key={`${index}-${product.line_item_id}`}>
                     <ListItemText
                       primary={`${product.name} ${issuedProducts?.find((i) => i.line_item_id === product.line_item_id) ? '(Issued)' : ''}`}
                       secondary={
@@ -187,8 +187,8 @@ export function ServiceDetailsContentComponent({
               </>
             ),
           }] : [],
-        ].map((item) => (
-          <Stack key={item.label} spacing={1.5} direction="row">
+        ].map((item, index) => (
+          <Stack key={`${index}-${item.label}`} spacing={1.5} direction="row">
             {item?.icon}
             <Box sx={{ width: '100%', display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
               <ListItemText

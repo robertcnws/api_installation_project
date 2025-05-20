@@ -535,9 +535,13 @@ export function ProjectDetailsView({ projectId }) {
                                 project={itemById}
                                 tabs={tabs}
                                 backLink={
-                                    localStorage.getItem('backFromProjectDetails') === 'analytics' ? paths.dashboard.general.analytics :
-                                        localStorage.getItem('backFromProjectDetails') === 'calendarDashboard' ? paths.dashboard.general.calendar :
-                                            localStorage.getItem('backFromProjectDetails') === 'measurements' ? paths.dashboard.measurement.list : paths.dashboard.project.list
+                                    localStorage.getItem('backFromProjectDetails') === 'analytics' ?
+                                        paths.dashboard.general.analytics :
+                                        localStorage.getItem('backFromProjectDetails') === 'calendarDashboard' ?
+                                            paths.dashboard.general.calendar :
+                                            localStorage.getItem('backFromProjectDetails') === 'measurements' ?
+                                                paths.dashboard.measurement.list :
+                                                paths.dashboard.project.list
                                 }
                                 editLink={paths.dashboard.project.edit(`${itemById?.id}`)}
                                 openEdit={tabs.value === 'overview' ? openEdit : tabs.value === 'tasks' ? openEditTask : null}

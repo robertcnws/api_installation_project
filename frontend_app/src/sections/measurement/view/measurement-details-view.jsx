@@ -300,12 +300,15 @@ export function MeasurementDetailsView({ measurementId }) {
                                 measurement={itemById}
                                 tabs={tabs}
                                 backLink={
-                                    localStorage.getItem('backFromMeasurementDetails') === 'analytics' ? paths.dashboard.general.analytics :
+                                    localStorage.getItem('backFromMeasurementDetails') === 'analytics' ?
+                                        paths.dashboard.general.analytics :
                                         localStorage.getItem('backFromMeasurementDetails') === 'project' ?
                                             paths.dashboard.project.details(localStorage.getItem('backFromMeasurementDetailsProjectId')) :
                                             localStorage.getItem('backFromMeasurementDetails') === 'service' ?
                                                 paths.dashboard.service.details(localStorage.getItem('backFromMeasurementDetailsServiceId')) :
-                                                paths.dashboard.measurement.list
+                                                localStorage.getItem('backFromMeasurementDetails') === 'calendarDashboard' ?
+                                                    paths.dashboard.general.calendar :
+                                                    paths.dashboard.measurement.list
                                 }
                                 editLink={paths.dashboard.measurement.edit(`${itemById?.id}`)}
                                 openEdit={tabs.value === 'overview' ? openEdit : tabs.value === 'tasks' ? openEditTask : null}
