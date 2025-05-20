@@ -246,26 +246,6 @@ export function MeasurementDetailsContent({
         width: '100%',
         gap: 1,
       }}>
-        <Box sx={{
-          display: 'flex',
-          flexDirection: !isMobile ? 'row' : 'column',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          width: '100%',
-          gap: 1,
-        }}>
-          <Label variant="outlined" color="default" sx={{ textTransform: 'uppercase', fontSize: 12, fontWeight: 600 }}>
-            Not Checked: <b>{currentMarks.filter((m) => !m.first_check && !m.second_check).length}</b>
-          </Label>
-          {(!measurement?.project?.id && !measurement?.service?.id) && (
-            <Label variant="outlined" color="warning" sx={{ textTransform: 'uppercase', fontSize: 12, fontWeight: 600 }}>
-              First Checked: <b>{currentMarks.filter((m) => m.first_check && !m.second_check).length}</b>
-            </Label>
-          )}
-          <Label variant="outlined" color="success" sx={{ textTransform: 'uppercase', fontSize: 12, fontWeight: 600 }}>
-            Second Checked: <b>{currentMarks.filter((m) => m.second_check).length}</b>
-          </Label>
-        </Box>
         <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1 }}>
           <Table size="small" sx={{ width: '100%', p: 0 }}>
             <TableBody>
@@ -543,6 +523,26 @@ export function MeasurementDetailsContent({
               </TableRow>
             </TableBody>
           </Table>
+        </Box>
+        <Box sx={{
+          display: 'flex',
+          flexDirection: !isMobile ? 'row' : 'column',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          width: '100%',
+          gap: 1,
+        }}>
+          <Label variant="outlined" color="default" sx={{ textTransform: 'uppercase', fontSize: 12, fontWeight: 600 }}>
+            Not Checked: <b>{currentMarks.filter((m) => !m.first_check && !m.second_check).length}</b>
+          </Label>
+          {(!measurement?.project?.id && !measurement?.service?.id) && (
+            <Label variant="outlined" color="warning" sx={{ textTransform: 'uppercase', fontSize: 12, fontWeight: 600 }}>
+              First Checked: <b>{currentMarks.filter((m) => m.first_check && !m.second_check).length}</b>
+            </Label>
+          )}
+          <Label variant="outlined" color="success" sx={{ textTransform: 'uppercase', fontSize: 12, fontWeight: 600 }}>
+            Second Checked: <b>{currentMarks.filter((m) => m.second_check).length}</b>
+          </Label>
         </Box>
 
       </Box>

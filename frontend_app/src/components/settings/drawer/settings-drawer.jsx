@@ -9,6 +9,7 @@ import { useTheme, useColorScheme } from '@mui/material/styles';
 
 import { paper, varAlpha } from 'src/theme/styles';
 import { defaultFont } from 'src/theme/core/typography';
+import COLORS from 'src/theme/core/colors.json';
 import PRIMARY_COLOR from 'src/theme/with-settings/primary-color.json';
 
 import { Iconify } from '../../iconify';
@@ -118,8 +119,8 @@ export function SettingsDrawer({
       value={settings.primaryColor}
       onClickOption={(newValue) => settings.onUpdateField('primaryColor', newValue)}
       options={[
-        // { name: 'default', value: COLORS.primary.main },
-        { name: 'default', value: PRIMARY_COLOR.red.main },
+        { name: 'default', value: COLORS.primary.main },
+        // { name: 'default', value: PRIMARY_COLOR.red.main },
         { name: 'cyan', value: PRIMARY_COLOR.cyan.main },
         { name: 'purple', value: PRIMARY_COLOR.purple.main },
         { name: 'blue', value: PRIMARY_COLOR.blue.main },

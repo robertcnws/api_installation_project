@@ -107,6 +107,7 @@ export function ProjectDetailsView({ projectId }) {
         [loadedServices, itemById]
     );
 
+
     const DETAILS_TABS = [
         { label: 'Overview', value: 'overview' },
         ...!isFinancialStaff(userLogged?.data?.user_role?.name) ? [
@@ -541,7 +542,9 @@ export function ProjectDetailsView({ projectId }) {
                                             paths.dashboard.general.calendar :
                                             localStorage.getItem('backFromProjectDetails') === 'measurements' ?
                                                 paths.dashboard.measurement.list :
-                                                paths.dashboard.project.list
+                                                localStorage.getItem('backFromProjectDetails') === 'measurementDetails' ?
+                                                    paths.dashboard.measurement.details(localStorage.getItem('backFromProjectDetailsMeasurementId')) :
+                                                    paths.dashboard.project.list
                                 }
                                 editLink={paths.dashboard.project.edit(`${itemById?.id}`)}
                                 openEdit={tabs.value === 'overview' ? openEdit : tabs.value === 'tasks' ? openEditTask : null}

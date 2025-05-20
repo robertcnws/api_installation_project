@@ -293,7 +293,7 @@ export function ServiceDetailsToolbar({
 
         {(type === 'service' || type === 'tasks') && (
           <>
-            {(listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.serviceStaff) ||
+            {/* {(listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.serviceStaff) ||
               listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.projectManager)) && (
                 <Tooltip title='Generate Measurements' arrow>
                   <IconButton
@@ -308,7 +308,7 @@ export function ServiceDetailsToolbar({
                     <Iconify icon="tdesign:measurement-1" />
                   </IconButton>
                 </Tooltip>
-              )}
+              )} */}
             {(listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) && (
               <Tooltip title='Refetch Sales Order' arrow>
                 <IconButton

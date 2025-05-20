@@ -425,10 +425,10 @@ export function ServiceDetailsView({ serviceId }) {
             console.error(error);
         }
     }, [
-        selectedSalesOrder, 
-        selectedListItems, 
-        userLogged, 
-        openSalesOrderModal, 
+        selectedSalesOrder,
+        selectedListItems,
+        userLogged,
+        openSalesOrderModal,
         itemById?.id,
         serviceBooleanValues?.hasToPay,
         serviceBooleanValues?.byFactory,
@@ -548,11 +548,14 @@ export function ServiceDetailsView({ serviceId }) {
                                 tabs={tabs}
                                 backLink={
                                     localStorage.getItem('backFromServiceDetails') === 'analytics' ? paths.dashboard.general.analytics :
-                                        localStorage.getItem('backFromProjectDetails') === 'calendarDashboard' ? paths.dashboard.general.calendar :
+                                        localStorage.getItem('backFromServiceDetails') === 'calendarDashboard' ? paths.dashboard.general.calendar :
                                             localStorage.getItem('backFromServiceDetails') === 'projectDetails' ?
                                                 paths.dashboard.project.details(localStorage.getItem('projectId')) :
                                                 localStorage.getItem('backFromServiceDetails') === 'measurements' ?
-                                                    paths.dashboard.measurement.list : paths.dashboard.service.list
+                                                    paths.dashboard.measurement.list :
+                                                    localStorage.getItem('backFromServiceDetails') === 'measurementDetails' ?
+                                                        paths.dashboard.measurement.details(localStorage.getItem('backFromServiceDetailsMeasurementId')) :
+                                                        paths.dashboard.service.list
                                 }
                                 editLink={paths.dashboard.service.edit(`${itemById?.id}`)}
                                 openEdit={tabs.value === 'overview' ? openEdit : tabs.value === 'tasks' ? openEditTask : null}

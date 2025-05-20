@@ -3,7 +3,7 @@ import { useMemo, useState, useEffect, useCallback } from 'react';
 
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
-import { Box, Typography, LinearProgress } from '@mui/material';
+import { Box, Typography, LinearProgress, MenuItem, MenuList, Tooltip } from '@mui/material';
 
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
@@ -25,13 +25,15 @@ import { MeasurementDetailsCommentView } from 'src/sections/measurement/view/mea
 import { MeasurementDetailsAttachmentView } from 'src/sections/measurement/view/measurement-details-attachment-view';
 
 import { useDataContext } from 'src/auth/context/data/data-context';
+import { CustomPopover, usePopover } from 'src/components/custom-popover';
+import { Iconify } from 'src/components/iconify';
+import { fDate } from 'src/utils/format-time';
 
 import { MeasurementEditModalDatesView } from '../measurement-edit-modal-dates-view';
 import { MeasurementEditModalAddressView } from '../measurement-edit-modal-address-view';
 import { MeasurementEditModalUserManagerView } from '../measurement-edit-modal-user-manager-view';
 import { MeasurementEditModalPhoneNumberView } from '../measurement-edit-modal-phone-number-view';
 import { MeasurementEditModalGeneralNotesView } from '../measurement-edit-modal-general-notes-view';
-
 
 // ----------------------------------------------------------------------
 
@@ -41,9 +43,13 @@ export function MeasurementDetailsView({ measurementId }) {
 
     const router = useRouter();
 
+    const morePopover = usePopover();
+
     const {
         loadedMeasurements,
         loadedTracks,
+        loadedServices,
+        loadedProjects,
     } = useDataContext();
 
     const [openDialogs, setOpenDialogs] = useState({
@@ -64,11 +70,129 @@ export function MeasurementDetailsView({ measurementId }) {
 
     const [itemById, setItemById] = useState(fetchedMeasurement);
 
+    const associatedProject = useMemo(
+        () => loadedProjects?.find(p => p?.id === itemById?.project?.id) || null,
+        [loadedProjects, itemById]
+    );
+
+    const associatedService = useMemo(
+        () => loadedServices?.find(serv => serv?.id === itemById?.service?.id) || null,
+        [loadedServices, itemById]
+    );
+
     const DETAILS_TABS = [
         { label: 'Overview', value: 'overview' },
         // { label: 'Tasks', value: 'tasks' },
         // { label: 'Attachments', value: 'attachments' },
         { label: 'Comments & History', value: 'comments' },
+        ...(associatedProject || associatedService) ? [
+            {
+                label: <>
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            alignItems: 'center'
+                        }}
+                        onClick={morePopover.onOpen}
+                    >
+                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                            More
+                        </Typography>
+                        <Iconify icon="fluent:more-vertical-32-filled" width={16} sx={{ ml: 0.5 }} />
+                    </Box>
+                    <CustomPopover
+                        open={morePopover.open}
+                        anchorEl={morePopover.anchorEl}
+                        onClose={morePopover.onClose}
+                        slotProps={{ arrow: { placement: 'left-top' } }}
+                    >
+                        <MenuList>
+                            {associatedProject && associatedProject?.id && (
+                                <MenuItem
+                                    key='projects'
+                                    onClick={() => {
+                                        morePopover.onClose();
+                                        localStorage.setItem('projectId', associatedProject?.id);
+                                        localStorage.setItem('backFromProjectDetails', 'measurementDetails');
+                                        localStorage.setItem('backFromProjectDetailsMeasurementId', itemById?.id);
+                                        localStorage.setItem('backFromServiceDetailsMeasurementId', '');
+                                        router.push(paths.dashboard.project.details(associatedProject?.id));
+                                    }}
+                                >
+                                    <Tooltip
+                                        title={
+                                            <>
+                                                <Typography variant="body2" color="background.neutral" sx={{ mb: 0 }}>
+                                                    Number: {associatedProject?.number}
+                                                </Typography>
+                                                <Typography variant="body2" color="background.neutral" sx={{ mb: 0 }}>
+                                                    Name: {associatedProject?.name}
+                                                </Typography>
+                                                <Typography variant="body2" color="background.neutral" sx={{ mb: 0 }}>
+                                                    Installation date: {fDate(associatedProject?.startDate) || 'N/A'}
+                                                </Typography>
+                                            </>
+                                        }
+                                        placement="right"
+                                        arrow
+                                    >
+                                        <Box component="span" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                            <Iconify icon="fluent-emoji-high-contrast:man-mechanic" />
+                                            <Typography component="span" variant="body2">
+                                                Installation {associatedProject?.name}
+                                            </Typography>
+                                        </Box>
+                                    </Tooltip>
+
+
+                                </MenuItem>
+                            )}
+                            {associatedService && associatedService?.id && (
+                                <MenuItem
+                                    key='services'
+                                    onClick={() => {
+                                        morePopover.onClose();
+                                        localStorage.setItem('serviceId', associatedService?.id);
+                                        localStorage.setItem('backFromServiceDetails', 'measurementDetails');
+                                        localStorage.setItem('backFromProjectDetailsMeasurementId', '');
+                                        localStorage.setItem('backFromServiceDetailsMeasurementId', itemById?.id);
+                                        router.push(paths.dashboard.service.details(associatedService?.id));
+                                    }}
+                                >
+                                    <Tooltip
+                                        title={
+                                            <>
+                                                <Typography variant="body2" color="background.neutral" sx={{ mb: 0 }}>
+                                                    Number: {associatedService?.number}
+                                                </Typography>
+                                                <Typography variant="body2" color="background.neutral" sx={{ mb: 0 }}>
+                                                    Name: {associatedService?.name}
+                                                </Typography>
+                                                <Typography variant="body2" color="background.neutral" sx={{ mb: 0 }}>
+                                                    Start date: {fDate(associatedService?.startDate) || 'N/A'}
+                                                </Typography>
+                                            </>
+                                        }
+                                        placement="right"
+                                        arrow
+                                    >
+                                        <Box component="span" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                            <Iconify icon="carbon:user-service" />
+                                            <Typography component="span" variant="body2">
+                                                Service {associatedService?.name}
+                                            </Typography>
+                                        </Box>
+                                    </Tooltip>
+
+
+                                </MenuItem>
+                            )}
+                        </MenuList>
+                    </CustomPopover >
+                </>,
+                value: 'more'
+            },
+        ] : [],
     ];
 
 
@@ -318,7 +442,7 @@ export function MeasurementDetailsView({ measurementId }) {
                             />
                             {renderTabs}
 
-                            {tabs.value === 'overview' &&
+                            {(tabs.value === 'overview' || tabs.value === 'more') &&
                                 <MeasurementDetailsContent
                                     measurement={itemById}
                                     refetchMeasurement={refetchMeasurement}

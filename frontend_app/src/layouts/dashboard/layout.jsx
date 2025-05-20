@@ -4,6 +4,7 @@ import Box from '@mui/material/Box';
 import Alert from '@mui/material/Alert';
 import { useTheme } from '@mui/material/styles';
 import { iconButtonClasses } from '@mui/material/IconButton';
+import { allLangs } from 'src/locales';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
@@ -26,6 +27,7 @@ import { AccountDrawer } from '../components/account-drawer';
 import { SettingsButton } from '../components/settings-button';
 import { navData as dashboardNavData } from '../config-nav-dashboard';
 import { NotificationsDrawer } from '../components/notifications-drawer';
+import { LanguagePopover } from '../components/language-popover';
 
 
 
@@ -157,7 +159,7 @@ export function DashboardLayout({ sx, children, header, data }) {
                 {/* -- Searchbar -- */}
                 <Searchbar data={navData} />
                 {/* -- Language popover -- */}
-                {/* <LanguagePopover data={allLangs} /> */}
+                <LanguagePopover data={allLangs} />
                 {/* -- Notifications popover -- */}
                 <NotificationsDrawer />
                 {/* -- Contacts popover -- */}
