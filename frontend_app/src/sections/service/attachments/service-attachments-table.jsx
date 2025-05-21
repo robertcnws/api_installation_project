@@ -22,7 +22,7 @@ import { TableCustomPaginationZohoStyleRow } from 'src/components/table/table-pa
 
 import { LoadingContext } from 'src/auth/context/loading-context';
 
-import { ServiceTableRow } from './service-table-row';
+import { ServiceAttachmentsTableRow } from './service-attachments-table-row';
 
 
 
@@ -33,13 +33,15 @@ import { ServiceTableRow } from './service-table-row';
 
 // ----------------------------------------------------------------------
 
-export function ServiceTable({
+export function ServiceAttachmentsTable({
   sx,
   table,
   notFound,
   onDeleteRow,
   onCloseRow,
   onViewRow,
+  onViewAttachmentsRow,
+  setSelectedAttachmentStage,
   dataFiltered,
   onOpenConfirm,
   loadedUsers,
@@ -73,12 +75,7 @@ export function ServiceTable({
 
   const TABLE_HEAD = [
     { id: 'startDate', label: 'Date & Duration' },
-    { id: 'number', label: 'Number' },
-    { id: 'byFactory', label: 'By Factory?' },
-    { id: 'installedByUs', label: 'Installed By Us?' },
     { id: 'name', label: 'Name' },
-    { id: 'createdTime', label: 'Created At' },
-    { id: 'currentStage', label: 'Stage' },
     ...((loadedServiceStages || []).map((stage) => ({
       id: stage.id,
       label: stage.name,
@@ -90,9 +87,14 @@ export function ServiceTable({
   ];
 
   const TABLE_HEAD_MOBILE = [
-    { id: 'startDate', label: 'Start Date' },
-    { id: 'duration', label: 'Duration' },
-    { id: 'number', label: 'Number' },
+    { id: 'startDate', label: 'Date & Duration' },
+    { id: 'name', label: 'Name' },
+    ...((loadedServiceStages || []).map((stage) => ({
+      id: stage.id,
+      label: stage.name,
+      order: stage.order,
+      width: 10,
+    }))),
     { id: '' },
   ];
 
@@ -178,19 +180,18 @@ export function ServiceTable({
               {dataFiltered
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                 .map((row) => (
-                  <ServiceTableRow
+                  <ServiceAttachmentsTableRow
                     key={row.id}
                     row={row}
                     selected={selected.includes(row.id)}
                     onSelectRow={() => onSelectRow(row.id)}
                     onDeleteRow={() => onDeleteRow(row.id)}
                     onCloseRow={() => onCloseRow(row.id, !row.isClosed)}
-                    // onKanbanView={() => onKanbanView(row.id)}
                     onViewRow={() => onViewRow(row.id)}
+                    onViewAttachmentsRow={() => onViewAttachmentsRow(row)}
+                    setSelectedAttachmentStage={setSelectedAttachmentStage}
                     loadedUsers={loadedUsers}
                     loadedServiceStages={loadedServiceStages}
-                    // loadedStagesTask={loadedStagesTask}
-                    // listPermissions={listPermissions}
                     setTableData={setTableData}
                     refetchServices={refetchServices}
                     loadedServices={loadedServices}

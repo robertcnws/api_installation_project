@@ -1,4 +1,4 @@
-import { useMemo, useContext } from 'react';
+import { useMemo, useContext, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
 import Table from '@mui/material/Table';
@@ -8,7 +8,7 @@ import IconButton from '@mui/material/IconButton';
 import TableContainer from '@mui/material/TableContainer';
 import { tableCellClasses } from '@mui/material/TableCell';
 
-import { listRolesAndSubroles } from 'src/utils/check-permissions';
+import { verifyPermissions, listRolesAndSubroles } from 'src/utils/check-permissions';
 
 import { CONFIG } from 'src/config-global';
 
@@ -22,32 +22,42 @@ import { TableCustomPaginationZohoStyleRow } from 'src/components/table/table-pa
 
 import { LoadingContext } from 'src/auth/context/loading-context';
 
-import { ServiceTableRow } from './service-table-row';
+import { ProjectAttachmentsTableRow } from './project-attachments-table-row';
 
 
-
-
-// ----------------------------------------------------------------------
 
 
 
 // ----------------------------------------------------------------------
 
-export function ServiceTable({
+
+
+// ----------------------------------------------------------------------
+
+export function ProjectAttachmentsTable({
   sx,
   table,
   notFound,
   onDeleteRow,
-  onCloseRow,
+  onKanbanView,
   onViewRow,
+  onViewAttachmentsRow,
+  setSelectedAttachmentStage,
   dataFiltered,
   onOpenConfirm,
+  onOpenConfirmAllDescriptions,
   loadedUsers,
-  loadedServiceStages,
+  loadedProjectPermissions,
+  loadedStages,
   loadedStagesTask,
+  listPermissions,
   setTableData,
-  refetchServices,
-  loadedServices,
+  refetchProjects,
+  loadedProjects,
+  onOpenConfirmStaff,
+  isWarehouseStaff,
+  setIsWarehouseStaff,
+  canReset,
   ...other
 }) {
   const {
@@ -56,11 +66,9 @@ export function ServiceTable({
     order,
     orderBy,
     rowsPerPage,
-    //
     selected,
     onSelectRow,
     onSelectAllRows,
-    //
     onSort,
     onChangeDense,
     onChangePage,
@@ -72,14 +80,9 @@ export function ServiceTable({
   const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
 
   const TABLE_HEAD = [
-    { id: 'startDate', label: 'Date & Duration' },
-    { id: 'number', label: 'Number' },
-    { id: 'byFactory', label: 'By Factory?' },
-    { id: 'installedByUs', label: 'Installed By Us?' },
+    { id: 'startDate', label: 'Installation Date' },
     { id: 'name', label: 'Name' },
-    { id: 'createdTime', label: 'Created At' },
-    { id: 'currentStage', label: 'Stage' },
-    ...((loadedServiceStages || []).map((stage) => ({
+    ...((loadedStages || []).map((stage) => ({
       id: stage.id,
       label: stage.name,
       order: stage.order,
@@ -90,9 +93,14 @@ export function ServiceTable({
   ];
 
   const TABLE_HEAD_MOBILE = [
-    { id: 'startDate', label: 'Start Date' },
-    { id: 'duration', label: 'Duration' },
-    { id: 'number', label: 'Number' },
+    { id: 'startDate', label: 'Installation Date' },
+    { id: 'name', label: 'Name' },
+    ...((loadedStages || []).map((stage) => ({
+      id: stage.id,
+      label: stage.name,
+      order: stage.order,
+      width: 10,
+    }))),
     { id: '' },
   ];
 
@@ -117,13 +125,11 @@ export function ServiceTable({
             )
           }
           action={
-            <>
-              <Tooltip title="Delete" arrow>
-                <IconButton color="error" onClick={onOpenConfirm}>
-                  <Iconify icon="solar:trash-bin-trash-bold" />
-                </IconButton>
-              </Tooltip>
-            </>
+            <Tooltip title="Delete" arrow>
+              <IconButton color="error" onClick={onOpenConfirm}>
+                <Iconify icon="solar:trash-bin-trash-bold" />
+              </IconButton>
+            </Tooltip>
           }
           sx={{
             pl: 1,
@@ -136,11 +142,12 @@ export function ServiceTable({
           }}
         />
 
-        <TableContainer sx={{ px: { md: 3 } }}>
+        <TableContainer sx={{ px: { md: 3 }, overflowY: 'auto' }}>
           <Table
+            stickyHeader
             size={dense ? 'small' : 'medium'}
             sx={{
-              minWidth: !isMobile ? 960 : 0,
+              minWidth: !isMobile ? !canReset ? 900 : 960 : 0,
               borderCollapse: 'separate',
               borderSpacing: '0 2px',
             }}
@@ -153,7 +160,12 @@ export function ServiceTable({
               numSelected={selected.length}
               onSort={onSort}
               onSelectAllRows={
-                listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.superadmin) ?
+                verifyPermissions(
+                  listPermissions,
+                  CONFIG.permissions.system,
+                  CONFIG.permissions.moduleProjects,
+                  CONFIG.permissions.operationDelete
+                ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.superadmin) ?
                   (checked) =>
                     onSelectAllRows(
                       checked,
@@ -178,22 +190,18 @@ export function ServiceTable({
               {dataFiltered
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                 .map((row) => (
-                  <ServiceTableRow
+                  <ProjectAttachmentsTableRow
                     key={row.id}
                     row={row}
                     selected={selected.includes(row.id)}
                     onSelectRow={() => onSelectRow(row.id)}
                     onDeleteRow={() => onDeleteRow(row.id)}
-                    onCloseRow={() => onCloseRow(row.id, !row.isClosed)}
-                    // onKanbanView={() => onKanbanView(row.id)}
+                    onKanbanView={() => onKanbanView(row.id)}
                     onViewRow={() => onViewRow(row.id)}
-                    loadedUsers={loadedUsers}
-                    loadedServiceStages={loadedServiceStages}
-                    // loadedStagesTask={loadedStagesTask}
-                    // listPermissions={listPermissions}
-                    setTableData={setTableData}
-                    refetchServices={refetchServices}
-                    loadedServices={loadedServices}
+                    onViewAttachmentsRow={() => onViewAttachmentsRow(row)}
+                    setSelectedAttachmentStage={setSelectedAttachmentStage}
+                    loadedStages={loadedStages}
+                    listPermissions={listPermissions}
                   />
                 ))}
 
@@ -204,11 +212,11 @@ export function ServiceTable({
                   page={table.page}
                   rowsPerPage={table.rowsPerPage}
                   handleChangePage={(event, newPage) => {
-                    localStorage.setItem('servicePage', newPage);
+                    localStorage.setItem('projectPage', newPage);
                     table.onChangePage(event, newPage);
                   }}
                   handleChangeRowsPerPage={(event) => {
-                    localStorage.setItem('serviceRowsPerPage', event.target.value);
+                    localStorage.setItem('projectRowsPerPage', event.target.value);
                     table.onChangeRowsPerPage(event);
                   }}
                   dense={table.dense}

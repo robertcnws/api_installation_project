@@ -94,6 +94,10 @@ export const navData = () => [
               title: 'List',
               path: paths.dashboard.project.list,
             },
+            {
+              title: 'Attachments',
+              path: paths.dashboard.project.attachments,
+            },
           ],
         },
       ] : []),
@@ -108,6 +112,10 @@ export const navData = () => [
               path: paths.dashboard.service.list,
             },
             ...((userLogged && !isInstaller(userLogged?.data?.user_role?.name)) ? [
+              {
+                title: 'Attachments',
+                path: paths.dashboard.service.attachments,
+              },
               {
                 title: 'Create',
                 path: paths.dashboard.service.new

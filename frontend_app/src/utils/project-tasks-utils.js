@@ -25,7 +25,7 @@ export const availableTasks = (project, projectTasks, CONFIG) => {
     });
 
     let finalTasks = [];
-    
+
     if (project?.hasPermission) {
         const permissionTasks = sortedTasks?.filter(
             (t) => t.project_default_task?.project_stage?.name === CONFIG.stages.permission
@@ -69,7 +69,7 @@ export const getProjectInstaller = (project, CONFIG) => {
     const users = project?.projectDefaultTasks?.filter(
         (task) => task.project_default_task.project_stage.name === CONFIG.stages.installation &&
             task.project_default_task.name.toLowerCase().includes('start')
-    )[0]?.users_assignees 
+    )[0]?.users_assignees
 
     const installer = users?.filter(
         (user) => {
@@ -116,7 +116,7 @@ export const previousTasks = (task, projectTasks, inStagePermission, CONFIG) => 
         projectTasks?.filter(
             (t) => t.project_default_task.order < task.project_default_task.order &&
                 t.project_default_task?.project_stage?.name.toLowerCase().indexOf(CONFIG.stages.permission.toLowerCase()) !== -1
-        ) : 
+        ) :
         projectTasks?.filter(
             (t) => t.project_default_task.order < task.project_default_task.order &&
                 t.project_default_task?.project_stage?.name.toLowerCase().indexOf(CONFIG.stages.permission.toLowerCase()) === -1
@@ -139,36 +139,64 @@ export const previousTasksInStatus = (task, projectTasks, status, inStagePermiss
 export function buildMaterialsReport(productData, loadedDefaultMaterials) {
     const THRESHOLD = 0.8;
     const items = loadedDefaultMaterials.flatMap(mat => {
-      const matches = mat.defaultGuideProducts.filter(dgp => {
-        if (productData.some(pd => pd.id === dgp.order)) return true;
-        return productData.some(pd =>
-          stringSimilarity.compareTwoStrings(dgp.name.toLowerCase(), pd.name.toLowerCase()) >= THRESHOLD
-        );
-      });
-      return matches.map(dgp => {
-        const pd = productData.find(pdi =>
-          pdi.id === dgp.order ||
-          stringSimilarity.compareTwoStrings(dgp.name.toLowerCase(), pdi.name.toLowerCase()) >= THRESHOLD
-        );
-        const baseQty = mat.quantity * pd.quantity;
-        const quantity = mat.isPackaged
-          ? Math.ceil(baseQty / mat.packageQuantity)
-          : baseQty;
-        return {
-          id: mat.id,
-          name: mat.name,
-          quantity,
-          ticket: '',
-          cost: mat.price,
-          store: '',
-          notes: pd.notes
-        };
-      });
+        const matches = mat.defaultGuideProducts.filter(dgp => {
+            if (productData.some(pd => pd.id === dgp.order)) return true;
+            return productData.some(pd =>
+                stringSimilarity.compareTwoStrings(dgp.name.toLowerCase(), pd.name.toLowerCase()) >= THRESHOLD
+            );
+        });
+        return matches.map(dgp => {
+            const pd = productData.find(pdi =>
+                pdi.id === dgp.order ||
+                stringSimilarity.compareTwoStrings(dgp.name.toLowerCase(), pdi.name.toLowerCase()) >= THRESHOLD
+            );
+            const baseQty = mat.quantity * pd.quantity;
+            const quantity = mat.isPackaged
+                ? Math.ceil(baseQty / mat.packageQuantity)
+                : baseQty;
+            return {
+                id: mat.id,
+                name: mat.name,
+                quantity,
+                ticket: '',
+                cost: mat.price,
+                store: '',
+                notes: pd.notes
+            };
+        });
     });
     const grouped = items.reduce((acc, cur) => {
-      if (!acc[cur.id]) acc[cur.id] = { ...cur };
-      else acc[cur.id].quantity += cur.quantity;
-      return acc;
+        if (!acc[cur.id]) acc[cur.id] = { ...cur };
+        else acc[cur.id].quantity += cur.quantity;
+        return acc;
     }, {});
     return Object.values(grouped);
-  }
+}
+
+
+export function getProjectAttachments(project, stageName = null) {
+    const allAttachments = {
+        project: [],
+        tasks: [],
+    }
+    const projectAttachments = (stageName ?
+        project?.projectAttachments?.filter(
+            (attachment) => attachment?.current_stage?.name.toLowerCase() === stageName.toLowerCase()
+        ) :
+        project?.projectAttachments) || [];
+
+    const tasksAttachments = stageName ?
+        project?.projectDefaultTasks?.filter(
+            (task) => task?.project_default_task?.has_attachments &&
+                task?.project_task_attachments?.some(
+                    (attachment) => attachment?.due_project_stage?.name.toLowerCase() === stageName.toLowerCase()
+                )).map((task) => task?.project_task_attachments).flat() :
+        project?.projectDefaultTasks?.filter(
+            (task) => task?.project_default_task?.has_attachments
+        ).map((task) => task?.project_task_attachments).flat();
+
+    allAttachments.project = projectAttachments;
+    allAttachments.tasks = tasksAttachments;
+
+    return allAttachments;
+}
