@@ -1,6 +1,6 @@
 import Calendar from '@fullcalendar/react'; // => request placed at the top
 
-import { Box, LinearProgress, Typography } from '@mui/material';
+import { Box, LinearProgress, Paper, Popper, Tooltip, Typography } from '@mui/material';
 
 import listPlugin from '@fullcalendar/list';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -28,6 +28,8 @@ import { updateEvent, useGetProjectEvents } from 'src/actions/calendar';
 import { Iconify } from 'src/components/iconify';
 
 import { useDataContext } from 'src/auth/context/data/data-context';
+import { getProjectInstaller } from 'src/utils/project-tasks-utils';
+import { getServiceInstaller } from 'src/utils/service-tasks-utils';
 
 import { StyledCalendar } from '../styles';
 import { useEvent } from '../hooks/use-event';
@@ -36,6 +38,7 @@ import { useCalendar } from '../hooks/use-calendar';
 import { CalendarToolbar } from '../calendar-toolbar';
 import { CalendarFilters } from '../calendar-filters';
 import { CalendarFiltersResult } from '../calendar-filters-result';
+
 
 // ----------------------------------------------------------------------
 
@@ -220,36 +223,62 @@ export function CalendarView() {
     })) || [], [services]);
 
   const eventsFirstDateMeasurements = useMemo(
-    () => measurements?.filter((m) => m.firstDate).map((measurement) => ({
-      ...measurement,
-      id: `${measurement.id}-measurement`,
-      name: `${measurement.number} First Check Measurement for Installation ${measurement.project?.name}` || `Service ${measurement.service?.name}` || `Customer ${measurement.customer?.name}`,
-      originalName: `${measurement.number} First Check Measurement for Installation ${measurement.project?.name}` || `Service ${measurement.service?.name}` || `Customer ${measurement.customer?.name}`,
-      description: `${measurement.number} First Check Measurement for Installation: ${measurement.project?.name}` || `Service ${measurement.service?.name}` || `Customer ${measurement.customer?.name}`,
-      title: `${measurement.number} First Check Measurement`,
-      start: measurement.firstDate,
-      end: measurement.firstDate,
-      allDay: true,
-      type: 'firstCheckMeasurement',
-      namedType: 'first check measurement',
-      icon: 'tdesign:measurement',
-    })) || [], [measurements]);
+    () => measurements
+      ?.filter(m => m.firstDate)
+      .map(measurement => {
+        let contextText = '';
+        if (measurement.project?.name) {
+          contextText = `Installation ${measurement.project.name}`;
+        } else if (measurement.service?.name) {
+          contextText = `Service ${measurement.service.name}`;
+        } else if (measurement.customer?.name) {
+          contextText = `Customer ${measurement.customer.name}`;
+        }
 
-    const eventsSecondDateMeasurements = useMemo(
-    () => measurements?.filter((m) => m.checkDate).map((measurement) => ({
-      ...measurement,
-      id: `${measurement.id}-measurement`,
-      name: `${measurement.number} Second Check Measurement for Installation ${measurement.project?.name}` || `Service ${measurement.service?.name}` || `Customer ${measurement.customer?.name}`,
-      originalName: `${measurement.number} Second Check Measurement for Installation ${measurement.project?.name}` || `Service ${measurement.service?.name}` || `Customer ${measurement.customer?.name}`,
-      description: `${measurement.number} Second Check Measurement for Installation: ${measurement.project?.name}` || `Service ${measurement.service?.name}` || `Customer ${measurement.customer?.name}`,
-      title: `${measurement.number} Second Check Measurement`,
-      start: measurement.checkDate,
-      end: measurement.checkDate,
-      allDay: true,
-      type: 'secondCheckMeasurement',
-      namedType: 'second check measurement',
-      icon: 'tdesign:measurement-1',
-    })) || [], [measurements]);
+        return {
+          ...measurement,
+          id: `${measurement.id}-measurement`,
+          name: `${measurement.number} First Check Measurement for ${contextText}`,
+          originalName: `${measurement.number} First Check Measurement for ${contextText}`,
+          description: `${measurement.number} First Check Measurement for ${contextText}`,
+          title: `${measurement.number} First Check Measurement`,
+          start: measurement.firstDate,
+          end: measurement.firstDate,
+          allDay: true,
+          type: 'firstCheckMeasurement',
+          namedType: 'first check measurement',
+          icon: 'tdesign:measurement',
+        };
+      }) || [], [measurements]);
+
+  const eventsSecondDateMeasurements = useMemo(
+    () => measurements
+      ?.filter((m) => m.checkDate)
+      .map((measurement) => {
+        let contextText = '';
+        if (measurement.project?.name) {
+          contextText = `Installation ${measurement.project.name}`;
+        } else if (measurement.service?.name) {
+          contextText = `Service ${measurement.service.name}`;
+        } else if (measurement.customer?.name) {
+          contextText = `Customer ${measurement.customer.name}`;
+        }
+
+        return {
+          ...measurement,
+          id: `${measurement.id}-measurement`,
+          name: `${measurement.number} Second Check Measurement for ${contextText}`,
+          originalName: `${measurement.number} Second Check Measurement for ${contextText}`,
+          description: `${measurement.number} Second Check Measurement for ${contextText}`,
+          title: `${measurement.number} Second Check Measurement`,
+          start: measurement.checkDate,
+          end: measurement.checkDate,
+          allDay: true,
+          type: 'secondCheckMeasurement',
+          namedType: 'second check measurement',
+          icon: 'tdesign:measurement-1',
+        }
+      }) || [], [measurements]);
 
 
   const {
@@ -277,18 +306,18 @@ export function CalendarView() {
   } = useGetProjectEvents(eventsSecondDateMeasurements, 'secondCheckMeasurement');
 
   const events = [
-    ...installEvents, 
-    ...inspectionEvents, 
-    ...finishPermissionEvents, 
+    ...installEvents,
+    ...inspectionEvents,
+    ...finishPermissionEvents,
     ...serviceEvents,
     ...firstDateMeasurementEvents,
     ...secondDateMeasurementEvents
   ];
 
   const eventsLoading = (
-    installEventsLoading || 
-    inspectionEventsLoading || 
-    finishPermissionEventsLoading || 
+    installEventsLoading ||
+    inspectionEventsLoading ||
+    finishPermissionEventsLoading ||
     serviceEventsLoading ||
     firstDateMeasurementEventsLoading ||
     secondDateMeasurementEventsLoading
@@ -307,15 +336,21 @@ export function CalendarView() {
     const iconClass = eventInfo.event._def.extendedProps.icon;
 
     return (
-      <div style={{ display: 'flex', alignItems: 'center' }}>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center'
+        }}
+      >
         {iconClass && (
           <Iconify
             icon={iconClass}
             sx={{ mr: 1 }}
           />
         )}
-        <span
-          style={{
+        <Box
+          component='span'
+          sx={{
             whiteSpace: 'nowrap',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
@@ -324,8 +359,8 @@ export function CalendarView() {
           }}
         >
           {customTitle}
-        </span>
-      </div>
+        </Box>
+      </Box>
     );
   }
 
@@ -381,6 +416,53 @@ export function CalendarView() {
 
   const [titleLinearProgress, setTitleLinearProgress] = useState('Loading calendar events...');
 
+  const [tooltipAnchor, setTooltipAnchor] = useState(null);
+  const [tooltipInfo, setTooltipInfo] = useState({});
+
+  const handleEventMouseEnter = (info) => {
+
+    setTooltipAnchor(info.el);
+
+    const type = info.event.extendedProps.type;
+    const namedType = info.event.extendedProps.namedType;
+
+    const projectInstaller = type === 'service' ?
+      getServiceInstaller(info.event.extendedProps, CONFIG) :
+      type === 'firstCheckMeasurement' ?
+        info.event.extendedProps.firstAssignee :
+        type === 'secondCheckMeasurement' ?
+          info.event.extendedProps.checkAssignee :
+          getProjectInstaller(info.event.extendedProps, CONFIG);
+
+
+    const title = info.event.extendedProps.customTitle
+      || info.event._def.title
+      || info.event._def.publicId;
+    const startDate = info.event.start;
+    const endDate = info.event.end;
+    const installer = info.event.extendedProps.userInstaller || projectInstaller;
+    const responsible = info.event.extendedProps.userManager;
+    const description = info.event.extendedProps.description;
+
+    setTooltipInfo({
+      title,
+      startDate,
+      endDate,
+      installer,
+      description,
+      responsible,
+      namedType,
+    });
+  };
+
+  const handleEventMouseLeave = () => {
+    setTooltipAnchor(null);
+    setTooltipInfo({});
+  };
+
+  const openTooltip = Boolean(tooltipAnchor);
+  const id = openTooltip ? 'calendar-event-tooltip' : undefined;
+
   return (
     <>
       {
@@ -421,7 +503,8 @@ export function CalendarView() {
                 ...flexProps,
                 height: '100%',
                 minWidth: '100%',
-                minHeight: filters.state.colors.length === 0 && !filters.state.startDate && !filters.state.endDateDate ? 770 : 670
+                minHeight: filters.state.colors.length === 0 && !filters.state.startDate && !filters.state.endDateDate ? 770 : 670,
+                overflow: 'visible'
               }}>
                 <StyledCalendar sx={{ ...flexProps, '.fc.fc-media-screen': { flex: '0 0 auto' }, minHeight: '100%', height: '100%' }}>
                   <CalendarToolbar
@@ -462,6 +545,8 @@ export function CalendarView() {
                       ) ||
                         listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.projectManager) ? onClickEvent : null
                     }
+                    eventMouseEnter={handleEventMouseEnter}
+                    eventMouseLeave={handleEventMouseLeave}
                     aspectRatio={3}
                     eventDrop={(arg) => {
                       onDropEvent(arg, updateEvent);
@@ -478,6 +563,41 @@ export function CalendarView() {
                     ]}
                     height={filters.state.colors.length === 0 && !filters.state.startDate && !filters.state.endDateDate ? 700 : 600}
                   />
+
+                  <Popper
+                    id={id}
+                    open={openTooltip}
+                    anchorEl={tooltipAnchor}
+                    placement="top"
+                    // sx={{ zIndex: (theme) => theme.zIndex.tooltip + 2000 }}
+                    modifiers={[
+                      { name: 'offset', options: { offset: [0, 10] } },
+                      { name: 'preventOverflow', options: { boundary: document.body } }
+                    ]}
+                  >
+                    <Paper elevation={1} sx={{ p: 1, bgcolor: 'black', color: 'white', }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', flexDirection: 'column' }}>
+                        <Typography variant="caption">
+                          {tooltipInfo.namedType?.toUpperCase()}: {tooltipInfo.title}
+                        </Typography>
+                        {tooltipInfo.installer?.name && (
+                          <Typography variant="caption">
+                            Installer: {tooltipInfo.installer?.name}
+                          </Typography>
+                        )}
+                        {tooltipInfo.responsible?.name && (
+                          <Typography variant="caption">
+                            Responsible: {tooltipInfo.responsible?.name}
+                          </Typography>
+                        )}
+                        {/* {tooltipInfo.description && (
+                          <Typography variant="caption" sx={{ maxWidth: 400 }}>
+                            {tooltipInfo.description}
+                          </Typography>
+                        )} */}
+                      </Box>
+                    </Paper>
+                  </Popper>
                 </StyledCalendar>
               </Card>
             </DashboardContent>
