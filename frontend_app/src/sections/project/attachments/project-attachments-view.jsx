@@ -327,12 +327,12 @@ export function ProjectAttachmentsView() {
     />
   );
 
-  const [titleLinearProgress, setTitleLinearProgress] = useState('Loading installations data...');
+  const [titleLinearProgress, setTitleLinearProgress] = useState('Loading installations files data...');
 
   return (
     <>
       {
-        (loadingProjects) ? (
+        (tableData?.length === 0) ? (
           <Box
             sx={{
               width: '350px',

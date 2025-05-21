@@ -61,7 +61,6 @@ export function ServiceAttachmentsView() {
   const {
     loadedServices,
     refetchServices,
-    loadingServices,
     loadedUsers,
     loadedServiceStages,
     // loadedServiceStagesTask,
@@ -352,12 +351,12 @@ export function ServiceAttachmentsView() {
     />
   );
 
-  const [titleLinearProgress, setTitleLinearProgress] = useState('Loading services data...');
+  const [titleLinearProgress, setTitleLinearProgress] = useState('Loading services files data...');
 
   return (
     <>
       {
-        (loadingServices) ? (
+        (tableData?.length === 0) ? (
           <Box
             sx={{
               width: '350px',
