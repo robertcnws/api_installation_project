@@ -176,9 +176,9 @@ pipeline {
                   def state = sh(
                     script: """
                       docker run --rm \\
-                        -e ${env.AWS_ACCESS_KEY_ID} \\
-                        -e ${env.AWS_SECRET_ACCESS_KEY} \\
-                        -e ${env.AWS_DEFAULT_REGION} \\
+                        -e AWS_ACCESS_KEY_ID \\
+                        -e AWS_SECRET_ACCESS_KEY \\
+                        -e AWS_DEFAULT_REGION \\
                         amazon/aws-cli ecs describe-services \\
                           --cluster ${env.AWS_CLUSTER} \\
                           --services ${svc} \\
