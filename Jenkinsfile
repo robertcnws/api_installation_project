@@ -207,7 +207,7 @@ pipeline {
           mimeType: 'text/html',
           subject: "✅ Build #${env.BUILD_NUMBER} Success – ${env.JOB_NAME}",
           to: '$DEFAULT_RECIPIENTS',
-          from: 'Jenkins NWS CI/CD <nnws15815@gmail.com>',
+          from: 'Jenkins NWS CI/CD (API Installation Projects) <nnws15815@gmail.com>',
           body: '''<!DOCTYPE html>
               <html>
                 <head>
@@ -223,7 +223,7 @@ pipeline {
                 </head>
                 <body>
                   <div class="header">
-                    Jenkins CI/CD Notification
+                    Jenkins CI/CD Notification (API Installation Projects)
                   </div>
                   <div class="content">
                     <h1>Build #${BUILD_NUMBER} – Success 🎉</h1>
@@ -254,7 +254,7 @@ pipeline {
         mimeType: 'text/html',
         subject: "❌ Build #${env.BUILD_NUMBER} Failed – ${env.JOB_NAME}",
         to: '$DEFAULT_RECIPIENTS',
-        from: 'Jenkins NWS CI/CD <nnws15815@gmail.com>',
+        from: 'Jenkins NWS CI/CD (API Installation Projects) <nnws15815@gmail.com>',
         body: '${FILE,path="failure_template.html"}'
       )
     }
