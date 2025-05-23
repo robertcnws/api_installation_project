@@ -181,7 +181,10 @@ def project_stage_saved(sender, document, **kwargs):
                 "id": str(document.id),
                 "name": document.name,
                 "description": document.description,
+                "order": document.order,
+                "otherName": document.other_name,
                 "isActive": document.is_active,
+                "lastModifiedTime": document.last_modified_time,
             }
 
         }
@@ -199,7 +202,10 @@ def project_stage_deleted(sender, document, **kwargs):
                 "id": str(document.id),
                 "name": document.name,
                 "description": document.description,
+                "order": document.order,
+                "otherName": document.other_name,
                 "isActive": document.is_active,
+                "lastModifiedTime": document.last_modified_time,
             }
         }
     }

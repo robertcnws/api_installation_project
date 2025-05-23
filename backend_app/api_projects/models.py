@@ -25,6 +25,7 @@ class ProjectStage(Document):
     description = StringField(max_length=255, null=True)
     is_active = BooleanField(default=True)
     order = IntField(default=0)
+    other_name = StringField(max_length=255, null=True)
     created_time = DateTimeField(default=timezone.now, null=True)
     last_modified_time = DateTimeField(default=timezone.now, null=True)
     

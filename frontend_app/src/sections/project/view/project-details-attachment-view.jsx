@@ -47,7 +47,13 @@ export function ProjectDetailsAttachmentView({
 
     const finalStages = useMemo(() => {
         if (loadedStages) {
-            return loadedStages.filter((stage) => stage.name.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) === -1);
+            return loadedStages.filter(
+                (stage) =>
+                    stage.name.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) === -1 &&
+                    stage.otherName !== null &&
+                    stage.otherName !== ''
+
+            );
         }
         return [];
     }, [loadedStages]);

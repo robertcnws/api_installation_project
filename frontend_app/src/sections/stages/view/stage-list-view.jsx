@@ -85,6 +85,7 @@ export function StageListView() {
     { id: 'name', label: 'Name' },
     { id: 'order', label: 'Order' },
     { id: 'status', label: 'Status' },
+    { id: 'otherName', label: 'Other Name' },
     { id: 'description', label: 'Description' },
     { id: '' },
   ];

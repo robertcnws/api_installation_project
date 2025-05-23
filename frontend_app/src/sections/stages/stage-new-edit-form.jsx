@@ -56,6 +56,7 @@ export function StageNewEditForm({ currentStageId, onReturnList }) {
 
   const NewStageSchema = zod.object({
     name: zod.string().min(1, { message: 'Name is required!' }),
+    otherName: zod.string().min(1, { message: 'Other Name is required!' }),
     order: zod
     .number()
     .int({ message: 'Order must be an integer.' })
@@ -66,6 +67,7 @@ export function StageNewEditForm({ currentStageId, onReturnList }) {
   const defaultValues = useMemo(
     () => ({
       name: currentStage?.name || '',
+      otherName: currentStage?.otherName || '',
       description: currentStage?.description || '',
       order: currentStage?.order || lastOrderStage + 1,
     }),
@@ -93,6 +95,7 @@ export function StageNewEditForm({ currentStageId, onReturnList }) {
     try {
       await axios.post(url, {
         name: data.name,
+        otherName: data.otherName,
         order: data.order,
         description: stripHtmlUsingDOM(data.description),
         userReporter: userLogged?.data,
@@ -110,6 +113,7 @@ export function StageNewEditForm({ currentStageId, onReturnList }) {
     <Form methods={methods} onSubmit={onSubmit}>
 
       <Field.Text name="name" label="Name" placeholder="Name" />
+      <Field.Text name="otherName" label="Other Name (Attachments)" placeholder="Other Name (Attachments)" sx={{ mt: 2 }}/>
       <Field.Text name="order" label="Order" placeholder="Order" type="number" sx={{ mt: 2 }}/>
       <Box sx={{ width: 80, color: 'text.secondary', mr: 2, mt: 2 }}>
         Description

@@ -1304,7 +1304,6 @@ def delete_project_user(request, id, userId):
 # GET FILE URL
 #############################################
     
-    
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def get_default_file_url(request):
@@ -1331,6 +1330,7 @@ def create_stage(request):
         name = data.get('name')
         description = data.get('description')
         order = data.get('order', 0)
+        other_name = data.get('otherName', '')
         stage = ProjectStage.objects(name=name).first()
         if stage:
             return Response({'error': 'Stage already exists'}, status=404)
@@ -1340,7 +1340,8 @@ def create_stage(request):
         stage = ProjectStage(
             name=name,
             order=order,
-            description=description
+            description=description,
+            other_name=other_name
         )
         stage.save()
         tracking_info = transform_data_to_mongo(stage)
@@ -1376,6 +1377,7 @@ def edit_stage(request, id):
     try:
         name = data.get('name')
         description = data.get('description')
+        other_name = data.get('otherName', '')
         order = data.get('order', 0)
         stage = ProjectStage.objects(name=name).first()
         if stage and str(stage.id) != id:
@@ -1389,11 +1391,75 @@ def edit_stage(request, id):
         stage.name = name
         stage.description = description
         stage.order = order
+        stage.other_name = other_name
         stage.save()
+        
+        projects = Project.objects.all()
+        current_stage_projects = [project for project in projects if project.current_stage and str(project.current_stage.get('id')) == id]
+        for project in current_stage_projects:
+            project.current_stage = transform_data_to_mongo(stage)
+            project.save()
+        
+        default_tasks_projects = [
+            p for p in projects
+            if any(
+                task.get('project_default_task', {})\
+                    .get('project_stage', {})\
+                    .get('id') == id
+                for task in (p.project_default_tasks or [])
+            )
+        ]
+        for project in default_tasks_projects:
+            all_tasks = project.project_default_tasks if project.project_default_tasks else []
+            for task in all_tasks:
+                if task.get('project_default_task').get('project_stage').get('id') == id:
+                    task['project_default_task']['project_stage'] = transform_data_to_mongo(stage)
+            project.project_default_tasks = all_tasks
+            project.save()
+        
+        
+        default_task_attachments_projects = [
+            p for p in projects
+            if any(
+                any(
+                    (attach.get('due_project_stage') or {}).get('id') == id 
+                    for attach in (task.get('project_task_attachments') or [])
+                )
+                for task in (p.project_default_tasks or [])
+            )
+        ]
+        for project in default_task_attachments_projects:
+            all_tasks = project.project_default_tasks if project.project_default_tasks else []
+            for task in all_tasks:
+                if task.get('project_task_attachments'):
+                    for attachment in task.get('project_task_attachments'):
+                        if attachment.get('due_project_stage').get('id') == id:
+                            attachment['due_project_stage'] = transform_data_to_mongo(stage)
+            project.project_default_tasks = all_tasks
+            project.save()
+        
+        
+        attachments_projects = [
+            p for p in projects
+            if any(
+                task.get('current_stage', {})\
+                    .get('id') == id
+                for task in (p.project_attachments or [])
+            )
+        ]
+        for project in attachments_projects:
+            attachments = project.project_attachments if project.project_attachments else []
+            for attachment in attachments:
+                if attachment.get('current_stage').get('id') == stage.id:
+                    attachment['current_stage'] = transform_data_to_mongo(stage)
+            project.project_attachments = attachments
+            project.save()
+        
+        
         tracking_info = transform_data_to_mongo(stage)
         tracking = ProjectTracking(
             user_reporter=user_reporter,
-            action=f'update stage ({tracking_info["id"]} - {tracking_info["name"]})',
+            action=f'update stage ({tracking_info.get("id")} - {tracking_info.get("name")})',
             created_time=timezone.now(),
             managed_data={
                 'data': tracking_info

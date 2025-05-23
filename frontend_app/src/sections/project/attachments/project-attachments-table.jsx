@@ -84,7 +84,7 @@ export function ProjectAttachmentsTable({
     { id: 'name', label: 'Name' },
     ...((loadedStages || []).map((stage) => ({
       id: stage.id,
-      label: stage.name,
+      label: stage.otherName,
       order: stage.order,
       width: 10,
     }))),

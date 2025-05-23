@@ -76,7 +76,12 @@ export function ProjectAttachmentsView() {
 
   const finalStages = useMemo(() => {
     if (loadedStages) {
-      return loadedStages.filter((stage) => stage.name.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) === -1);
+      return loadedStages.filter(
+        (stage) => 
+          stage.name.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) === -1 &&
+          stage.otherName !== null &&
+          stage.otherName !== ''
+      );
     }
     return [];
   }, [loadedStages]);
@@ -430,6 +435,7 @@ export function ProjectAttachmentsView() {
               project={selectedRow}
               attachments={attachments}
               stageName={selectedAttachmentStage}
+              loadedStages={finalStages}
               open={openModalAttachments.value}
               onClose={openModalAttachments.onFalse}
             />

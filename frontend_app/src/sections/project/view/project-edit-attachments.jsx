@@ -41,6 +41,7 @@ export function ProjectEditAttachments({
       );
       return {
         stageName: stage.name,
+        stageOtherName: stage.otherName,
         stageId: stage.id,
         files: filesForStage,
       };
@@ -262,7 +263,7 @@ export function ProjectEditAttachments({
                   <Grid item xs={4} sm={2}>
                     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
                       <Box sx={{ mb: 1, typography: 'overline' }}>
-                        <b>{project?.currentStage?.name}</b>
+                        <b>{project?.currentStage?.other_name}</b>
                       </Box>
                       {((verifyPermissions(
                         listPermissions,
@@ -379,7 +380,7 @@ export function ProjectEditAttachments({
                   }}
                 >
                   <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                    <Box sx={{ mb: 1, typography: 'overline' }}>{mappedFile.stageName}</Box>
+                    <Box sx={{ mb: 1, typography: 'overline' }}>{mappedFile.stageOtherName}</Box>
                     <MultiFilePreview
                       key={mappedFile.stageId}
                       thumbnail

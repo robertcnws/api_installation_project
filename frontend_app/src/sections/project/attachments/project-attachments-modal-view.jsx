@@ -27,6 +27,7 @@ import { LoadingButton } from '@mui/lab';
 export function ProjectAttachmentsModalView({
     project,
     attachments,
+    loadedStages,
     stageName = null,
     open,
     onClose,
@@ -40,7 +41,10 @@ export function ProjectAttachmentsModalView({
 
     const displayFiles = useMemo(() => [...initialFiles], [initialFiles]);
 
-    const stages = useMemo(() => Object.entries(CONFIG.stages).map(([key, value]) => (key)), []);
+    const stages = useMemo(
+        () => Object.entries(
+            CONFIG.stages).map(([key, value]) => (key)),
+        []);
 
     const attachmentTypes = useMemo(() => stages, [stages]);
 
@@ -54,9 +58,10 @@ export function ProjectAttachmentsModalView({
             return {
                 attachmentType: type,
                 files: filesForStage,
+                attachmentOtherName: loadedStages.find((s) => s.name.toLowerCase() === type.toLowerCase())?.otherName
             };
         }).filter((mappedFile) => mappedFile?.files?.length > 0);
-    }, [displayFiles, project, attachmentTypes]);
+    }, [displayFiles, project, attachmentTypes, loadedStages]);
 
     const [isDownloading, setIsDownloading] = useState(false);
 
@@ -120,37 +125,37 @@ export function ProjectAttachmentsModalView({
     const handleDownloadAllFiles = useCallback(async (files) => {
         setIsDownloading(true);
         try {
-          const response = await axios.get(`${CONFIG.apiUrl}/projects/download/files/`, {
-            params: { 'keys[]': files, number: project.number },
-            paramsSerializer: p => files
-              .map(f => `keys[]=${encodeURIComponent(f)}`)
-              .concat([`number=${project.number}`])
-              .join('&'),
-            responseType: 'blob',
-          });
-    
-          const contentDisposition = response.headers['content-disposition'];
-          
-          let fileName = 'download.zip';
-          if (contentDisposition) {
-            const fileNameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
-            if (fileNameMatch && fileNameMatch.length > 1) {
-              fileName = fileNameMatch[1];
+            const response = await axios.get(`${CONFIG.apiUrl}/projects/download/files/`, {
+                params: { 'keys[]': files, number: project.number },
+                paramsSerializer: p => files
+                    .map(f => `keys[]=${encodeURIComponent(f)}`)
+                    .concat([`number=${project.number}`])
+                    .join('&'),
+                responseType: 'blob',
+            });
+
+            const contentDisposition = response.headers['content-disposition'];
+
+            let fileName = 'download.zip';
+            if (contentDisposition) {
+                const fileNameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
+                if (fileNameMatch && fileNameMatch.length > 1) {
+                    fileName = fileNameMatch[1];
+                }
             }
-          }
-          const url = window.URL.createObjectURL(new Blob([response.data]));
-          const link = document.createElement('a');
-          link.href = url;
-          link.setAttribute('download', fileName);
-          document.body.appendChild(link);
-          link.click();
-          link.remove();
-          window.URL.revokeObjectURL(url);
-          setIsDownloading(false);
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', fileName);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+            setIsDownloading(false);
         } catch (error) {
-          console.error('Error al descargar el archivo:', error);
+            console.error('Error al descargar el archivo:', error);
         }
-      }, [project]);
+    }, [project]);
 
     const renderService = (
         <Dialog fullWidth maxWidth="lg" open={open} onClose={onClose}>
@@ -207,7 +212,7 @@ export function ProjectAttachmentsModalView({
                                         sx={{ mb: 3, display: 'flex', gap: 3, flexDirection: 'column' }}
                                     >
                                         <Typography variant="overline">
-                                            <b>{stageName}</b>
+                                            <b>{mappedDisplayFiles.find((m) => m?.attachmentType === stageName.toLowerCase())?.attachmentOtherName || ''}</b>
                                         </Typography>
                                         <Typography variant="body2">
                                             No attachments available for this stage.
@@ -232,7 +237,7 @@ export function ProjectAttachmentsModalView({
                                             <Grid item xs={4} sm={2}>
                                                 <Box sx={{ display: 'flex', flexDirection: 'column' }}>
                                                     <Box sx={{ mb: 1, typography: 'overline' }}>
-                                                        <b>{stageName}</b>
+                                                        <b>{mappedDisplayFiles.find((m) => m?.attachmentType === stageName.toLowerCase())?.attachmentOtherName || ''}</b>
                                                     </Box>
                                                 </Box>
                                             </Grid>
@@ -273,7 +278,7 @@ export function ProjectAttachmentsModalView({
                                         <Grid item xs={4} sm={2}>
                                             <Box sx={{ display: 'flex', flexDirection: 'column' }}>
                                                 <Box sx={{ mb: 1, typography: 'overline' }}>
-                                                    <b>{mappedDisplay.attachmentType}</b>
+                                                    <b>{mappedDisplay.attachmentOtherName}</b>
                                                 </Box>
                                             </Box>
                                         </Grid>
