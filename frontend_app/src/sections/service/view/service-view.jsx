@@ -83,6 +83,8 @@ export function ServiceView() {
 
   const openInstallerFilter = useBoolean();
 
+  const openUserManagerFilter = useBoolean();
+
   const confirm = useBoolean();
 
   const confirmStaff = useBoolean();
@@ -150,6 +152,10 @@ export function ServiceView() {
       id: null,
       name: null,
     },
+    userManager: JSON.parse(localStorage.getItem('serviceFilterUserManager')) || {
+      id: null,
+      name: null,
+    },
     custom: JSON.parse(localStorage.getItem('serviceFilterCustom')) || {
       hasPermission: false,
       isPreparation: {
@@ -184,6 +190,7 @@ export function ServiceView() {
     filters.state.type.length > 0 ||
     (!!filters.state.startDate && !!filters.state.endDate) ||
     (!!filters.state.installer.id && !!filters.state.installer.name) ||
+    (!!filters.state.userManager.id && !!filters.state.userManager.name) ||
     filters.state.custom.hasPermission ||
     filters.state.custom.isPreparation?.value ||
     filters.state.custom.isRepair?.value ||
@@ -323,6 +330,9 @@ export function ServiceView() {
         openInstallerFilter={openInstallerFilter.value}
         onOpenInstallerFilter={openInstallerFilter.onTrue}
         onCloseInstallerFilter={openInstallerFilter.onFalse}
+        openUserManagerFilter={openUserManagerFilter.value}
+        onOpenUserManagerFilter={openUserManagerFilter.onTrue}
+        onCloseUserManagerFilter={openUserManagerFilter.onFalse}
         options={{ types: PROJECT_TYPE_OPTIONS }}
       />
 
@@ -499,7 +509,7 @@ export function ServiceView() {
 }
 
 function applyFilter({ inputData, comparator, filters, dateError }) {
-  const { list, name, type, startDate, endDate, byFactory, notByFactory, installer, custom } = filters;
+  const { list, name, type, startDate, endDate, byFactory, notByFactory, installer, userManager, custom } = filters;
 
   const stabilizedThis = inputData.map((el, index) => [el, index]);
 
@@ -530,17 +540,17 @@ function applyFilter({ inputData, comparator, filters, dateError }) {
   }
 
   if (name) {
-    inputData = inputData.filter(
-      (file) => file.name.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
-        file.number.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
-        file.salesOrder.salesorder_id.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
-        file.salesOrder.salesorder_number.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
-        file.salesOrder.customer_id.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
-        file.salesOrder.customer_name.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
-        file.address.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
-        JSON.stringify(file.userManager).toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
-        JSON.stringify(file.usersAssignees).toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
-        JSON.stringify(file.currentStage).toLowerCase().indexOf(name.toLowerCase()) !== -1
+    inputData = inputData?.filter(
+      (file) => file?.name?.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
+        file?.number?.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
+        file?.salesOrder?.salesorder_id?.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
+        file?.salesOrder?.salesorder_number?.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
+        file?.salesOrder?.customer_id?.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
+        file?.salesOrder?.customer_name?.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
+        file?.address?.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
+        JSON.stringify(file?.userManager)?.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
+        JSON.stringify(file?.usersAssignees)?.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
+        JSON.stringify(file?.currentStage)?.toLowerCase().indexOf(name.toLowerCase()) !== -1
     );
   }
 
@@ -580,6 +590,16 @@ function applyFilter({ inputData, comparator, filters, dateError }) {
       const installerId = getServiceInstaller(file, CONFIG)?.id;
       if (installerId) {
         return String(installerId) === String(installer.id);
+      }
+      return false;
+    });
+  }
+
+  if (userManager.id) {
+    inputData = inputData.filter((file) => {
+      const userManagerId = file?.userManager?.id;
+      if (userManagerId) {
+        return String(userManagerId) === String(userManager.id);
       }
       return false;
     });

@@ -207,8 +207,7 @@ export function ServiceTableRow({
         </TableCell>
 
 
-        <TableCell
-          // onClick={handleClick} 
+        {/* <TableCell
           onClick={onViewRow}
           sx={{
             whiteSpace: 'nowrap',
@@ -220,8 +219,6 @@ export function ServiceTableRow({
           }}
         >
           <Stack direction="row" alignItems="center" spacing={2}>
-            {/* <FileThumbnail file="folder" /> */}
-
             <Typography
               noWrap
               variant="inherit"
@@ -234,7 +231,7 @@ export function ServiceTableRow({
               {row?.number}-{row?.version}
             </Typography>
           </Stack>
-        </TableCell>
+        </TableCell> */}
 
         <TableCell
           // onClick={handleClick} 
@@ -301,6 +298,34 @@ export function ServiceTableRow({
             >
               {fDate(row?.createdTime)}
             </TableCell>
+
+            <TableCell
+              onClick={onViewRow}
+              sx={{
+                whiteSpace: 'nowrap',
+                cursor: 'pointer',
+                fontWeight: row?.endDate ? ((fIsAfter(today, dayjs(row?.endDate).format('YYYY-MM-DD')) && (
+                  row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
+                  row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.repair.toLowerCase()) !== -1
+                )) ? 'fontWeightBold' : 'inherit') : 'inherit',
+              }}
+            >
+              <Stack direction="row" alignItems="center" spacing={2}>
+                <Typography
+                  noWrap
+                  variant="inherit"
+                  sx={{
+                    maxWidth: 360,
+                    cursor: 'pointer',
+                    color: row?.userManager?.name ? 'text.primary' : 'text.disabled',
+                    ...(details.value && { fontWeight: 'fontWeightBold' }),
+                  }}
+                >
+                  {row?.userManager?.name || 'No Responsible'}
+                </Typography>
+              </Stack>
+            </TableCell>
+
             <TableCell
               // onClick={handleClick} 
               onClick={onViewRow}

@@ -9,7 +9,7 @@ import CardActionArea from '@mui/material/CardActionArea';
 import InputAdornment from '@mui/material/InputAdornment';
 import { Divider, Tooltip, MenuItem, MenuList, IconButton, Typography, ListItemIcon, ListItemText } from '@mui/material';
 
-import { isInstaller } from 'src/utils/check-permissions';
+import { isAdministrator, isInstaller } from 'src/utils/check-permissions';
 import { fDateRangeShortLabel } from 'src/utils/format-time';
 
 import { varAlpha } from 'src/theme/styles';
@@ -36,6 +36,9 @@ export function ServiceFilters({
   openInstallerFilter,
   onOpenInstallerFilter,
   onCloseInstallerFilter,
+  openUserManagerFilter,
+  onOpenUserManagerFilter,
+  onCloseUserManagerFilter,
 }) {
 
   const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
@@ -65,7 +68,8 @@ export function ServiceFilters({
     if (custom.hasComments) active.push('Have comments');
     if (filters.state.startDate && filters.state.endDate) active.push(fDateRangeShortLabel(filters.state.startDate, filters.state.endDate));
     if (filters.state.name) active.push(`Matches: ${filters.state.name}`);
-    if (filters.state.installer.id) active.push(`Service Team: ${filters.state.installer.name}`);
+    if (filters.state.installer.id) active.push(`Team: ${filters.state.installer.name}`);
+    if (filters.state.userManager.id) active.push(`Responsible: ${filters.state.userManager.name}`);
     return active.length > 0 ? `${name} Services (${active.join(', ')})` : `${name} services`;
   }, [custom, filters]);
 
@@ -97,6 +101,22 @@ export function ServiceFilters({
         }
       });
       localStorage.setItem('serviceFilterInstaller', JSON.stringify({ id, name: user?.name || '' }));
+    },
+    [loadedUsers, filters, onResetPage]
+  );
+
+  const handleFilterUserManager = useCallback(
+    (event) => {
+      const id = event.target.value;
+      onResetPage();
+      const user = loadedUsers.find((u) => u.id === id);
+      filters.setState({
+        userManager: {
+          id,
+          name: user?.name || ''
+        }
+      });
+      localStorage.setItem('serviceFilterUserManager', JSON.stringify({ id, name: user?.name || '' }));
     },
     [loadedUsers, filters, onResetPage]
   );
@@ -215,37 +235,97 @@ export function ServiceFilters({
         title="Select service team"
         content={
           <TextField
-              select
-              value={filters.state.installer.id || ''}
-              onChange={handleFilterInstaller}
-              placeholder="Select service team"
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Iconify icon="eva:search-fill" sx={{ color: 'text.disabled' }} />
-                  </InputAdornment>
-                ),
-              }}
-              sx={{ width: '100%' }}
-            >
-              {loadedUsers.filter((user) => isInstaller(user.userRole.name)).map((user) => (
-                <MenuItem key={user.id} value={user.id}>
-                  {user.name}
-                </MenuItem>
-              ))}
-            </TextField>
+            select
+            value={filters.state.installer.id || ''}
+            onChange={handleFilterInstaller}
+            placeholder="Select service team"
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Iconify icon="eva:search-fill" sx={{ color: 'text.disabled' }} />
+                </InputAdornment>
+              ),
+            }}
+            sx={{ width: '100%' }}
+          >
+            {loadedUsers.filter((user) => isInstaller(user.userRole.name)).map((user) => (
+              <MenuItem key={user.id} value={user.id}>
+                {user.name}
+              </MenuItem>
+            ))}
+          </TextField>
         }
         action={
           <Button
-              variant="contained"
-              onClick={() => {
-                onCloseInstallerFilter();
-                filters.setState({ installer: { id: null, name: null } });
-              }}
-              color='warning'
-            >
-              Clear
-            </Button>
+            variant="contained"
+            onClick={() => {
+              onCloseInstallerFilter();
+              filters.setState({ installer: { id: null, name: null } });
+            }}
+            color='warning'
+          >
+            Clear
+          </Button>
+        }
+      />
+    </>
+  );
+
+
+  const renderFilterResponsible = (
+    <>
+      <Button
+        color="inherit"
+        onClick={onOpenUserManagerFilter}
+        endIcon={
+          <Iconify
+            icon={openUserManagerFilter ? 'eva:arrow-ios-upward-fill' : 'eva:arrow-ios-downward-fill'}
+            sx={{ ml: -0.5 }}
+          />
+        }
+      >
+        {!!filters.state.userManager.id && !!filters.state.userManager.name
+          ? `Service responsible: ${filters.state.userManager.name}`
+          : 'Select service responsible'}
+      </Button>
+
+      <ConfirmDialog
+        open={openUserManagerFilter}
+        onClose={onCloseUserManagerFilter}
+        title="Select service responsible"
+        content={
+          <TextField
+            select
+            value={filters.state.userManager.id || ''}
+            onChange={handleFilterUserManager}
+            placeholder="Select service responsible"
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Iconify icon="eva:search-fill" sx={{ color: 'text.disabled' }} />
+                </InputAdornment>
+              ),
+            }}
+            sx={{ width: '100%' }}
+          >
+            {loadedUsers.filter((user) => isAdministrator(user.userRole.name)).map((user) => (
+              <MenuItem key={user.id} value={user.id}>
+                {user.name}
+              </MenuItem>
+            ))}
+          </TextField>
+        }
+        action={
+          <Button
+            variant="contained"
+            onClick={() => {
+              onCloseUserManagerFilter();
+              filters.setState({ userManager: { id: null, name: null } });
+            }}
+            color='warning'
+          >
+            Clear
+          </Button>
         }
       />
     </>
@@ -699,6 +779,7 @@ export function ServiceFilters({
       <Stack spacing={1} direction="row" alignItems="center" justifyContent="flex-end" flexGrow={1}>
         {!isInstaller(userLogged?.data?.user_role?.name) && (
           <>
+            {renderFilterResponsible}
             {renderFilterInstaller}
             {renderFilterDate()}
           </>

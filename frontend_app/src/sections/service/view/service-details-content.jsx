@@ -344,7 +344,7 @@ export function ServiceDetailsContent({
 
           )}
 
-          {service?.userManager?.name && (
+          {(service?.userManager?.name && !service?.byFactory) && (
 
             <TableRow>
               <TableCell>
@@ -389,80 +389,84 @@ export function ServiceDetailsContent({
 
           )}
 
-          <TableRow>
-            <TableCell>
-              <Typography variant="subtitle2" color="text.secondary">Estimated Start Date:</Typography>
-            </TableCell>
-            <TableCell>
-              <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, justifyContent: 'space-between' }}>
-                {service?.startDate ? (
-                  <Typography
-                    variant="subtitle2"
-                    color={
-                      service?.endDate
-                        ? (
+          {!service?.byFactory && (
+
+            <TableRow>
+              <TableCell>
+                <Typography variant="subtitle2" color="text.secondary">Estimated Start Date:</Typography>
+              </TableCell>
+              <TableCell>
+                <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, justifyContent: 'space-between' }}>
+                  {service?.startDate ? (
+                    <Typography
+                      variant="subtitle2"
+                      color={
+                        service?.endDate
+                          ? (
+                            (fIsAfter(dayjs(new Date()), dayjs(service?.endDate).format('YYYY-MM-DD')) &&
+                              (
+                                service?.currentStage?.name.toLowerCase().includes(CONFIG.stages.preparation.toLowerCase()) ||
+                                service?.currentStage?.name.toLowerCase().includes('repair')
+                              )
+                            )
+                              ? 'error.main'
+                              : 'text.primary'
+                          )
+                          : 'text.primary'
+                      }
+                      sx={{
+                        fontWeight: service?.endDate ? (
                           (fIsAfter(dayjs(new Date()), dayjs(service?.endDate).format('YYYY-MM-DD')) &&
                             (
                               service?.currentStage?.name.toLowerCase().includes(CONFIG.stages.preparation.toLowerCase()) ||
                               service?.currentStage?.name.toLowerCase().includes('repair')
                             )
                           )
-                            ? 'error.main'
-                            : 'text.primary'
-                        )
-                        : 'text.primary'
-                    }
-                    sx={{
-                      fontWeight: service?.endDate ? (
-                        (fIsAfter(dayjs(new Date()), dayjs(service?.endDate).format('YYYY-MM-DD')) &&
-                          (
-                            service?.currentStage?.name.toLowerCase().includes(CONFIG.stages.preparation.toLowerCase()) ||
-                            service?.currentStage?.name.toLowerCase().includes('repair')
-                          )
-                        )
-                          ? 'bold'
-                          : 'normal'
-                      ) : 'normal'
-                    }}
-                  >
-                    {fDate(service?.startDate)} <b>({fDuration(service?.startDate, service?.endDate)})</b> <br />
-                    <Label variant="filled" sx={{ bgcolor: 'whitesmoke', color: 'text.primary' }}>
-                      {service?.isPartDays ? 'Part Days' : 'Full Days'}
-                    </Label>
-                  </Typography>
-                ) : (
-                  <Iconify icon="fluent-mdl2:date-time" color="warning" width={20} sx={{ ml: 0.5, mt: 0.5 }} />
-                )}
+                            ? 'bold'
+                            : 'normal'
+                        ) : 'normal'
+                      }}
+                    >
+                      {fDate(service?.startDate)} <b>({fDuration(service?.startDate, service?.endDate)})</b> <br />
+                      <Label variant="filled" sx={{ bgcolor: 'whitesmoke', color: 'text.primary' }}>
+                        {service?.isPartDays ? 'Part Days' : 'Full Days'}
+                      </Label>
+                    </Typography>
+                  ) : (
+                    <Iconify icon="fluent-mdl2:date-time" color="warning" width={20} sx={{ ml: 0.5, mt: 0.5 }} />
+                  )}
 
-              </Box>
-            </TableCell>
-            <TableCell sx={{ textAlign: 'right', maxWidth: '30px' }}>
-              {(service?.startDate &&
-                (listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
-                  <IconButton variant="text" color="primary" size="small" sx={{ ml: 0, maxWidth: 10 }}
-                    onClick={() => {
-                      setIsStartDate(true)
-                      setIsInspectionDate(false)
-                      setOpenDialogs({ ...openDialogs, date: true })
-                    }}
-                  >
-                    <Iconify icon="fluent:calendar-edit-32-regular" color="primary" width={22} />
-                  </IconButton>
-                )}
-              {(!service?.startDate &&
-                (listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
-                  <IconButton variant="text" color="warning" size="small" sx={{ ml: 0, maxWidth: 10 }}
-                    onClick={() => {
-                      setIsStartDate(true)
-                      setIsInspectionDate(false)
-                      setOpenDialogs({ ...openDialogs, date: true })
-                    }}
-                  >
-                    <Iconify icon="zondicons:date-add" color="warning" width={20} />
-                  </IconButton>
-                )}
-            </TableCell>
-          </TableRow>
+                </Box>
+              </TableCell>
+              <TableCell sx={{ textAlign: 'right', maxWidth: '30px' }}>
+                {(service?.startDate &&
+                  (listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
+                    <IconButton variant="text" color="primary" size="small" sx={{ ml: 0, maxWidth: 10 }}
+                      onClick={() => {
+                        setIsStartDate(true)
+                        setIsInspectionDate(false)
+                        setOpenDialogs({ ...openDialogs, date: true })
+                      }}
+                    >
+                      <Iconify icon="fluent:calendar-edit-32-regular" color="primary" width={22} />
+                    </IconButton>
+                  )}
+                {(!service?.startDate &&
+                  (listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
+                    <IconButton variant="text" color="warning" size="small" sx={{ ml: 0, maxWidth: 10 }}
+                      onClick={() => {
+                        setIsStartDate(true)
+                        setIsInspectionDate(false)
+                        setOpenDialogs({ ...openDialogs, date: true })
+                      }}
+                    >
+                      <Iconify icon="zondicons:date-add" color="warning" width={20} />
+                    </IconButton>
+                  )}
+              </TableCell>
+            </TableRow>
+
+          )}
 
           <TableRow>
             <TableCell colSpan={3}>

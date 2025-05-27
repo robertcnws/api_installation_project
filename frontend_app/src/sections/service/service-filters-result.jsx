@@ -52,6 +52,12 @@ export function ServiceFiltersResult({ filters, onResetPage, totalResults, sx })
     localStorage.removeItem('serviceFilterInstaller');
   }, [filters, onResetPage]);
 
+  const handleRemoveUserManager = useCallback(() => {
+    onResetPage();
+    filters.setState({ userManager: { id: null, name: null } });
+    localStorage.removeItem('serviceFilterUserManager');
+  }, [filters, onResetPage]);
+
   const handleRemoveCustom = useCallback(
     (customType) => {
       onResetPage();
@@ -89,6 +95,7 @@ export function ServiceFiltersResult({ filters, onResetPage, totalResults, sx })
     localStorage.removeItem('serviceFilterStartDate');
     localStorage.removeItem('serviceFilterEndDate');
     localStorage.removeItem('serviceFilterInstaller');
+    localStorage.removeItem('serviceFilterUserManager');
     localStorage.removeItem('serviceFilterCustom');
     localStorage.removeItem('serviceFilterByFactory');
     localStorage.removeItem('serviceFilterNotByFactory');
@@ -98,6 +105,7 @@ export function ServiceFiltersResult({ filters, onResetPage, totalResults, sx })
       startDate: null,
       endDate: null,
       installer: { id: null, name: null },
+      userManager: { id: null, name: null },
       byFactory: false,
       notByFactory: false,
       custom: {
@@ -133,6 +141,17 @@ export function ServiceFiltersResult({ filters, onResetPage, totalResults, sx })
           {...chipProps}
           label={fDateRangeShortLabel(filters.state.startDate, filters.state.endDate)}
           onDelete={handleRemoveDate}
+        />
+      </FiltersBlock>
+
+      <FiltersBlock
+        label="Service Responsible:"
+        isShow={Boolean(filters.state.userManager.id)}
+      >
+        <Chip
+          {...chipProps}
+          label={filters.state.userManager.name}
+          onDelete={handleRemoveUserManager}
         />
       </FiltersBlock>
 
