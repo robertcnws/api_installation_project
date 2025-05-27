@@ -122,13 +122,22 @@ export function NotificationsDrawer({ sx, ...other }) {
     }
   }, [notifications, userLogged]);
 
-  const totalUnRead = notifications?.filter(
-    (notif) => notif.user.username === userLogged?.data.username && notif.username !== userLogged?.data.username
-  ).filter((item) => item.read === false).length;
+  const totalAll = useMemo(
+    () => notifications?.filter(
+      (notif) => notif.user.username === userLogged?.data.username && notif.username !== userLogged?.data.username).length,
+    [notifications, userLogged]);
 
-  const totalRead = notifications?.filter(
-    (notif) => notif.user.username === userLogged?.data.username && notif.username !== userLogged?.data.username
-  ).filter((item) => item.read === true).length;
+  const totalUnRead = useMemo(
+    () => notifications?.filter(
+      (notif) => notif.user.username === userLogged?.data.username && notif.username !== userLogged?.data.username
+    ).filter((item) => item.read === false).length,
+    [notifications, userLogged]);
+
+  const totalRead = useMemo(
+    () => notifications?.filter(
+      (notif) => notif.user.username === userLogged?.data.username && notif.username !== userLogged?.data.username
+    ).filter((item) => item.read === true).length,
+    [notifications, userLogged]);
 
   const handleMarkAllAsRead = useCallback(
     async () => {
@@ -163,12 +172,7 @@ export function NotificationsDrawer({ sx, ...other }) {
     }, [notifications, userLogged, currentTab]);
 
   const TABS = [
-    { 
-      value: 'all', 
-      label: 'All', 
-      count: notifications?.filter(
-        (notif) => notif.user.username === userLogged?.data.username && notif.username !== userLogged?.data.username).length 
-      },
+    { value: 'all', label: 'All', count: totalAll },
     { value: 'unread', label: 'Unread', count: totalUnRead },
     { value: 'archived', label: 'Archived', count: totalRead },
   ];

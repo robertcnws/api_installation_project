@@ -25,39 +25,39 @@ export function DataProvider({ children }) {
   return (
     <UserProvider>
       <UserRolesProvider>
-        <NotificationsProvider>
           <ProjectsProvider>
             <ServicesProvider>
               <MeasurementsProvider>
-                <StagesProvider>
-                  <StageTasksProvider>
-                    <ProjectPermissionsProvider>
-                      <ProjectRemindersProvider>
-                        <DefaultTasksProvider>
-                          <DefaultGuideProductsProvider>
-                            <DefaultMaterialsProvider>
-                              <ServiceStagesProvider>
-                                <ServiceDefaultTasksProvider>
-                                  <ServiceIssuesProvider>
-                                    <TracksProvider>
-                                      <IntegrationProvider>
-                                        <CombineProviders>{children}</CombineProviders>
-                                      </IntegrationProvider>
-                                    </TracksProvider>
-                                  </ServiceIssuesProvider>
-                                </ServiceDefaultTasksProvider>
-                              </ServiceStagesProvider>
-                            </DefaultMaterialsProvider>
-                          </DefaultGuideProductsProvider>
-                        </DefaultTasksProvider>
-                      </ProjectRemindersProvider>
-                    </ProjectPermissionsProvider>
-                  </StageTasksProvider>
-                </StagesProvider> 
+                <NotificationsProvider>
+                  <StagesProvider>
+                    <StageTasksProvider>
+                      <ProjectPermissionsProvider>
+                        <ProjectRemindersProvider>
+                          <DefaultTasksProvider>
+                            <DefaultGuideProductsProvider>
+                              <DefaultMaterialsProvider>
+                                <ServiceStagesProvider>
+                                  <ServiceDefaultTasksProvider>
+                                    <ServiceIssuesProvider>
+                                      <TracksProvider>
+                                        <IntegrationProvider>
+                                          <CombineProviders>{children}</CombineProviders>
+                                        </IntegrationProvider>
+                                      </TracksProvider>
+                                    </ServiceIssuesProvider>
+                                  </ServiceDefaultTasksProvider>
+                                </ServiceStagesProvider>
+                              </DefaultMaterialsProvider>
+                            </DefaultGuideProductsProvider>
+                          </DefaultTasksProvider>
+                        </ProjectRemindersProvider>
+                      </ProjectPermissionsProvider>
+                    </StageTasksProvider>
+                  </StagesProvider> 
+                </NotificationsProvider>
               </MeasurementsProvider>
             </ServicesProvider>
           </ProjectsProvider>
-        </NotificationsProvider>
       </UserRolesProvider>
     </UserProvider>
   );

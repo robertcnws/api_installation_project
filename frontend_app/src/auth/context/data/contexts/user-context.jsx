@@ -6,6 +6,7 @@ import { useUsersQuery } from 'src/_mock/__users';
 import { useAvailableUsers } from '../hooks/use-available-user';
 
 const UserContext = createContext();
+
 export const useAuth = () => useContext(UserContext);
 
 export function UserProvider({ children }) {
