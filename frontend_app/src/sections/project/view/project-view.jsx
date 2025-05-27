@@ -129,6 +129,13 @@ export function ProjectView() {
             updatedData[existingItemIndex] = message.item;
             return updatedData;
           }
+          const isInstallerRole = isInstaller(userLogged?.data?.user_role?.name);
+          if (isInstallerRole) {
+            const projInstaller = getProjectInstaller(message.item, CONFIG);
+            if (projInstaller && projInstaller.id && projInstaller.username && projInstaller.username !== userLogged?.data?.username) {
+              return [...prevData];
+            }
+          }
           return [message.item, ...prevData];
         });
       }
@@ -141,7 +148,7 @@ export function ProjectView() {
         socket.close();
       }
     };
-  }, []);
+  }, [userLogged?.data?.user_role?.name, userLogged?.data?.username]);
 
   const filters = useSetState({
     list: localStorage.getItem('projectFilterList') || 'in progress',

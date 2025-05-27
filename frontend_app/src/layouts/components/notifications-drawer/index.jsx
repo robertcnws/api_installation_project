@@ -23,11 +23,11 @@ import { varHover } from 'src/components/animate';
 import { Scrollbar } from 'src/components/scrollbar';
 import { CustomTabs } from 'src/components/custom-tabs';
 
+import { isInstaller } from 'src/utils/check-permissions';
+
 import { useDataContext } from 'src/auth/context/data/data-context';
 
 import { NotificationItem } from './notification-item';
-
-
 
 
 // ----------------------------------------------------------------------
@@ -36,12 +36,39 @@ export function NotificationsDrawer({ sx, ...other }) {
 
   const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
 
+  const filterNotifications = (notifications, projects, services, measurements, user) => {
+    const projectsIds = projects?.map((project) => project?.id);
+
+    const servicesIds = services?.map((service) => service?.id);
+
+    const measurementsIds = measurements?.map((measurement) => measurement?.id);
+
+    const allIds = [...projectsIds, ...servicesIds, ...measurementsIds];
+
+    const isInstallerRole = isInstaller(user?.data?.user_role?.name);
+    if (!notifications || !allIds?.length) return [];
+
+    if (!isInstallerRole && !user) return notifications;
+    
+    return notifications?.filter((notification) => {
+      const itemId = notification?.notification?.info_id;
+      if (!itemId || !allIds?.includes(itemId)) return false;
+      return true;
+    });
+
+  }
+
   const {
     loadedNotifications: userNotifications,
     refetchNotifications,
+    loadedProjects: projects,
+    loadedServices: services,
+    loadedMeasurements: measurements,
   } = useDataContext();
 
   const [notifications, setNotifications] = useState(null);
+
+  const [websocketChange, setWebsocketChange] = useState(false);
 
   useEffect(() => {
     if (refetchNotifications) {
@@ -73,11 +100,14 @@ export function NotificationsDrawer({ sx, ...other }) {
             return updatedData;
           }
           const pData = prevData?.filter((notif) => notif.user.username === userLogged?.data.username && String(notif.id) !== String(message.item.id));
-          return [message.item, ...pData];
+          const updatedNotifications = [message.item, ...pData];
+          return updatedNotifications;
         });
+        setWebsocketChange(true);
       }
       else if (message.type === 'deleted') {
         setNotifications((prevData) => prevData.filter(item => String(item.id) !== String(message.item.id)));
+        setWebsocketChange(true);
       }
     };
     return () => {
@@ -85,7 +115,16 @@ export function NotificationsDrawer({ sx, ...other }) {
         socket.close();
       }
     };
-  }, [userLogged]);
+  }, [userLogged, projects, services, measurements]);
+
+  useEffect(() => {
+    if (websocketChange) {
+      setNotifications(
+        filterNotifications(userNotifications, projects, services, measurements, userLogged)
+      );
+      setWebsocketChange(false);
+    }
+  }, [websocketChange, userLogged, projects, services, measurements, userNotifications]);
 
 
   const drawer = useBoolean();

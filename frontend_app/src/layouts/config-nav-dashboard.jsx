@@ -94,10 +94,12 @@ export const navData = () => [
               title: 'List',
               path: paths.dashboard.project.list,
             },
-            {
-              title: 'Attachments',
-              path: paths.dashboard.project.attachments,
-            },
+            ...((userLogged && !isInstaller(userLogged?.data?.user_role?.name)) ? [
+              {
+                title: 'Attachments',
+                path: paths.dashboard.project.attachments,
+              },
+            ] : []),
           ],
         },
       ] : []),
