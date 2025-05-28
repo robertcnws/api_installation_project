@@ -2773,7 +2773,21 @@ def upload_files_to_default_task(request, projectId, id):
                 last_modified_time=timezone.now(),
                 user_upload = user_reporter,
                 due_project_stage = project.current_stage if project.current_stage else None,
-                project_task = task if task else None
+                project_task = {
+                    'project_default_task': {
+                        '_id': task['project_default_task']['_id'],
+                        'id': task['project_default_task']['_id'],
+                        'name': task['project_default_task']['name'],
+                        'order': task['project_default_task']['order'],
+                        'redefined': True,
+                        'project_stage': {
+                            '_id': task['project_default_task']['project_stage']['_id'],
+                            'id': task['project_default_task']['project_stage']['_id'],
+                            'name': task['project_default_task']['project_stage']['name'],
+                            'order': task['project_default_task']['project_stage']['order'],
+                        }
+                     },
+                }
             )
             attachment.save()
             project_tasks_attachments.append(transform_data_to_mongo(attachment))
@@ -3749,6 +3763,34 @@ def delete_old_reminders():
     for reminder in reminders:
         reminder.is_active = False
         reminder.save()
+    return True
+
+
+#############################################
+# REDEFINE PROJECT TASK ATTACHMENTS
+#############################################
+
+def redefine_project_task_attachments():
+    task_attachments = ProjectTaskAttachment.objects.all()
+    for ta in task_attachments:
+        if ta.project_task.get('project_default_task', {}).get('redefined', False) is False:
+            project_task = {
+                'project_default_task': {
+                    '_id': ta.project_task.get('project_default_task', {}).get('_id'),
+                    'id': ta.project_task.get('project_default_task', {}).get('_id'),
+                    'name': ta.project_task.get('project_default_task', {}).get('name'),
+                    'order': ta.project_task.get('project_default_task', {}).get('order'),
+                    'redefined': True,
+                    'project_stage': {
+                        '_id': ta.project_task.get('project_default_task', {}).get('project_stage', {}).get('_id'),
+                        'id': ta.project_task.get('project_default_task', {}).get('project_stage', {}).get('_id'),
+                        'name': ta.project_task.get('project_default_task', {}).get('project_stage', {}).get('name'),
+                        'order': ta.project_task.get('project_default_task', {}).get('project_stage', {}).get('order'),
+                    }
+                },
+            }
+            ta.project_task = project_task
+            ta.save()
     return True
 
 
