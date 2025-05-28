@@ -15,7 +15,7 @@ import { useBoolean } from 'src/hooks/use-boolean';
 import { useSetState } from 'src/hooks/use-set-state';
 
 import { fIsAfter, fIsBetween } from 'src/utils/format-time';
-import { listRolesAndSubroles } from 'src/utils/check-permissions';
+import { isAdministrator, isServiceStaff, listRolesAndSubroles } from 'src/utils/check-permissions';
 import { getServiceInstaller } from 'src/utils/service-tasks-utils';
 
 import { CONFIG } from 'src/config-global';
@@ -54,6 +54,7 @@ export function ServiceView() {
     refetchServices,
     loadingServices,
     loadedUsers,
+    loadedSuperadminUsers,
     loadedServiceStages,
     // loadedServiceStagesTask,
     // listPermissions,
@@ -98,6 +99,13 @@ export function ServiceView() {
   const [view, setView] = useState(localStorage.getItem('serviceView') || 'list');
 
   const [tableData, setTableData] = useState([]);
+
+  const allCreatorsUsers = useMemo(() => [
+    ...loadedUsers.filter(
+      user => isServiceStaff(user.userRole.name) || isAdministrator(user.userRole.name)
+    ),
+    ...loadedSuperadminUsers,
+  ], [loadedUsers, loadedSuperadminUsers]);
 
   useEffect(() => {
     if (refetchServices) {
@@ -329,6 +337,7 @@ export function ServiceView() {
       <ServiceFilters
         filters={filters}
         loadedUsers={loadedUsers}
+        allCreatorsUsers={allCreatorsUsers}
         dateError={dateError}
         onResetPage={table.onResetPage}
         openDateRange={openDateRange.value}

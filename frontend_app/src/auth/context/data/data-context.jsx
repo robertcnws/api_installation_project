@@ -64,7 +64,7 @@ export function DataProvider({ children }) {
 }
 
 function CombineProviders({ children }) {
-  const { userLogged, loadedUsers, refetchUsers, loadingUsers, errorUsers } = useAuth();
+  const { userLogged, loadedUsers, refetchUsers, loadingUsers, errorUsers, loadedSuperadminUsers } = useAuth();
   const { loadedUserRoles, refetchUserRoles, loadingUserRoles, errorUserRoles } = useUserRoles();
   const { loadedNotifications, refetchNotifications, loadingNotifications, errorNotifications } = useNotifications();
   const { loadedProjects, refetchProjects, loadingProjects, errorProjects, hasMoreProjects, loadMoreProjects } = useProjects();
@@ -91,6 +91,7 @@ function CombineProviders({ children }) {
     refetchUsers,
     loadingUsers,
     errorUsers,
+    loadedSuperadminUsers,
     loadedProjects,
     refetchProjects,
     loadingProjects,
@@ -160,6 +161,7 @@ function CombineProviders({ children }) {
     refetchUsers,
     loadingUsers,
     errorUsers,
+    loadedSuperadminUsers,
     loadedProjects,
     refetchProjects,
     loadingProjects,

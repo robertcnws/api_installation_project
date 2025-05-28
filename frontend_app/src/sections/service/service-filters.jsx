@@ -27,6 +27,7 @@ import { LoadingContext } from 'src/auth/context/loading-context';
 export function ServiceFilters({
   filters,
   loadedUsers,
+  allCreatorsUsers,
   options,
   dateError,
   onResetPage,
@@ -129,7 +130,7 @@ export function ServiceFilters({
     (event) => {
       const id = event.target.value;
       onResetPage();
-      const user = loadedUsers.find((u) => u.id === id);
+      const user = allCreatorsUsers.find((u) => u.id === id);
       filters.setState({
         createdBy: {
           id,
@@ -138,7 +139,7 @@ export function ServiceFilters({
       });
       localStorage.setItem('serviceFilterCreatedBy', JSON.stringify({ id, name: user?.name || '' }));
     },
-    [loadedUsers, filters, onResetPage]
+    [allCreatorsUsers, filters, onResetPage]
   );
 
   const handleFilterCustom = useCallback((fieldName) => {
@@ -279,8 +280,9 @@ export function ServiceFilters({
           <Button
             variant="contained"
             onClick={() => {
-              onCloseInstallerFilter();
+              // onCloseInstallerFilter();
               filters.setState({ installer: { id: null, name: null } });
+              localStorage.removeItem('serviceFilterInstaller');
             }}
             color='warning'
           >
@@ -339,8 +341,9 @@ export function ServiceFilters({
           <Button
             variant="contained"
             onClick={() => {
-              onCloseUserManagerFilter();
+              // onCloseUserManagerFilter();
               filters.setState({ userManager: { id: null, name: null } });
+              localStorage.removeItem('serviceFilterUserManager');
             }}
             color='warning'
           >
@@ -388,7 +391,7 @@ export function ServiceFilters({
             }}
             sx={{ width: '100%' }}
           >
-            {loadedUsers.map((user) => (
+            {allCreatorsUsers.map((user) => (
               <MenuItem key={user.id} value={user.id}>
                 {user.name}
               </MenuItem>
@@ -399,8 +402,9 @@ export function ServiceFilters({
           <Button
             variant="contained"
             onClick={() => {
-              onCloseCreatedByFilter();
+              // onCloseCreatedByFilter();
               filters.setState({ createdBy: { id: null, name: null } });
+              localStorage.removeItem('serviceFilterCreatedBy');
             }}
             color='warning'
           >

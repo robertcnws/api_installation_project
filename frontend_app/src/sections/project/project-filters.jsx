@@ -256,7 +256,7 @@ export function ProjectFilters({
           <Button
             variant="contained"
             onClick={() => {
-              onCloseInstallerFilter();
+              // onCloseInstallerFilter();
               filters.setState({ installer: { id: null, name: null } });
               localStorage.removeItem('projectFilterInstaller');
             }}

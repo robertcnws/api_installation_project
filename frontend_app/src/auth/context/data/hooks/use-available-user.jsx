@@ -27,3 +27,16 @@ export function useAvailableUsers(initialUsers, userLogged) {
         );
     }, [initialUsers, userLogged]);
 }
+
+export function useSuperadminUsers(initialUsers) {
+    return useMemo(() => initialUsers?.filter(
+        (user) => isSuperAdmin(user.userRole.name)
+    ), [initialUsers]);
+}
+
+export function useAdministratorUsers(initialUsers) {
+    return useMemo(() => initialUsers?.filter(
+        (user) => isAdministrator(user.userRole.name)
+    ), [initialUsers]);
+}
+

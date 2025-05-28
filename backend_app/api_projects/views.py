@@ -43,6 +43,8 @@ from .data_util import (
     find_task_in_stage,
     transform_dict_to_camelcase,
 )
+import zipstream
+from django.http import StreamingHttpResponse
 import zipfile
 from django.http import HttpResponse
 import json
@@ -3337,32 +3339,68 @@ def generate_db_backup():
 # DOWNLOAD MONGO DB
 #############################################
 
+# @api_view(['GET'])
+# @permission_classes([AllowAny])
+# def download_mongo_db(request):
+#     mongo_uri = settings.MONGO_URI
+#     db_name = settings.MONGO_DB
+#     client = MongoClient(mongo_uri)
+#     db = client[db_name]
+    
+#     zip_buffer = io.BytesIO()
+    
+#     with zipfile.ZipFile(zip_buffer, mode='w', compression=zipfile.ZIP_DEFLATED) as zip_file:
+#         for info in db.list_collections():
+#             name = info['name']
+#             if name == 'system.views':
+#                 continue
+#             collection = db[name]
+#             documents = list(collection.find())
+#             plain_data = json.loads(json_util.dumps(documents))
+#             # json_data = json.dumps(plain_data, indent=2)
+#             json_data = json.dumps(plain_data)
+#             zip_file.writestr(f"{name}.json", json_data)
+    
+#     zip_buffer.seek(0)
+    
+#     timestamp = timezone.now().strftime('%Y%m%d_%H%M%S')
+#     response = HttpResponse(zip_buffer, content_type="application/zip")
+#     response['Content-Disposition'] = f'attachment; filename="mongo_db_export_{timestamp}.zip"'
+#     response['Access-Control-Expose-Headers'] = 'Content-Disposition'
+#     return response
+
+
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def download_mongo_db(request):
-    mongo_uri = settings.MONGO_URI
-    db_name = settings.MONGO_DB
-    client = MongoClient(mongo_uri)
-    db = client[db_name]
+    client = MongoClient(settings.MONGO_URI)
+    db = client[settings.MONGO_DB]
+
+    z = zipstream.ZipFile(mode='w', compression=zipstream.ZIP_DEFLATED)
     
-    zip_buffer = io.BytesIO()
-    
-    with zipfile.ZipFile(zip_buffer, mode='w', compression=zipfile.ZIP_DEFLATED) as zip_file:
-        for info in db.list_collections():
-            name = info['name']
-            if name == 'system.views':
-                continue
-            collection = db[name]
-            documents = list(collection.find())
-            plain_data = json.loads(json_util.dumps(documents))
-            # json_data = json.dumps(plain_data, indent=2)
-            json_data = json.dumps(plain_data)
-            zip_file.writestr(f"{name}.json", json_data)
-    
-    zip_buffer.seek(0)
+    for info in db.list_collections():
+        name = info['name']
+        if name == 'system.views':
+            continue
+
+        def gen_collection(coll_name):
+            cursor = db[coll_name].find()
+            yield b'['
+            first = True
+            for doc in cursor:
+                if not first:
+                    yield b','
+                first = False
+                yield json_util.dumps(doc).encode('utf-8')
+            yield b']'
+        
+        z.write_iter(f'{name}.json', gen_collection(name))
     
     timestamp = timezone.now().strftime('%Y%m%d_%H%M%S')
-    response = HttpResponse(zip_buffer, content_type="application/zip")
+    response = StreamingHttpResponse(
+        streaming_content=z, 
+        content_type='application/zip'
+    )
     response['Content-Disposition'] = f'attachment; filename="mongo_db_export_{timestamp}.zip"'
     response['Access-Control-Expose-Headers'] = 'Content-Disposition'
     return response
