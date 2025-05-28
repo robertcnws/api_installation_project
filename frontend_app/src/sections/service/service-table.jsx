@@ -77,7 +77,7 @@ export function ServiceTable({
     { id: 'byFactory', label: 'By Factory?' },
     { id: 'installedByUs', label: 'Installed By Us?' },
     { id: 'name', label: 'Name' },
-    { id: 'createdTime', label: 'Created At' },
+    { id: 'createdBy', label: 'Created By' },
     { id: 'userManager', label: 'Responsible' },
     { id: 'currentStage', label: 'Stage' },
     ...((loadedServiceStages || []).map((stage) => ({
@@ -86,6 +86,7 @@ export function ServiceTable({
       order: stage.order,
       width: 10,
     }))),
+    { id: 'createdTime', label: 'Created At' },
     { id: 'lastModifiedTime', label: 'Updated At' },
     { id: '', width: 88 },
   ];

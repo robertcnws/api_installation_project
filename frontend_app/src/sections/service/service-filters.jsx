@@ -39,6 +39,9 @@ export function ServiceFilters({
   openUserManagerFilter,
   onOpenUserManagerFilter,
   onCloseUserManagerFilter,
+  openCreatedByFilter,
+  onOpenCreatedByFilter,
+  onCloseCreatedByFilter,
 }) {
 
   const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
@@ -70,6 +73,7 @@ export function ServiceFilters({
     if (filters.state.name) active.push(`Matches: ${filters.state.name}`);
     if (filters.state.installer.id) active.push(`Team: ${filters.state.installer.name}`);
     if (filters.state.userManager.id) active.push(`Responsible: ${filters.state.userManager.name}`);
+    if (filters.state.createdBy.id) active.push(`Creator: ${filters.state.createdBy.name}`);
     return active.length > 0 ? `${name} Services (${active.join(', ')})` : `${name} services`;
   }, [custom, filters]);
 
@@ -117,6 +121,22 @@ export function ServiceFilters({
         }
       });
       localStorage.setItem('serviceFilterUserManager', JSON.stringify({ id, name: user?.name || '' }));
+    },
+    [loadedUsers, filters, onResetPage]
+  );
+
+  const handleFilterCreatedBy = useCallback(
+    (event) => {
+      const id = event.target.value;
+      onResetPage();
+      const user = loadedUsers.find((u) => u.id === id);
+      filters.setState({
+        createdBy: {
+          id,
+          name: user?.name || ''
+        }
+      });
+      localStorage.setItem('serviceFilterCreatedBy', JSON.stringify({ id, name: user?.name || '' }));
     },
     [loadedUsers, filters, onResetPage]
   );
@@ -225,20 +245,20 @@ export function ServiceFilters({
         }
       >
         {!!filters.state.installer.id && !!filters.state.installer.name
-          ? `Service team: ${filters.state.installer.name}`
-          : 'Select service team'}
+          ? `Team: ${filters.state.installer.name}`
+          : 'Select team'}
       </Button>
 
       <ConfirmDialog
         open={openInstallerFilter}
         onClose={onCloseInstallerFilter}
-        title="Select service team"
+        title="Select team"
         content={
           <TextField
             select
             value={filters.state.installer.id || ''}
             onChange={handleFilterInstaller}
-            placeholder="Select service team"
+            placeholder="Select team"
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -285,20 +305,20 @@ export function ServiceFilters({
         }
       >
         {!!filters.state.userManager.id && !!filters.state.userManager.name
-          ? `Service responsible: ${filters.state.userManager.name}`
-          : 'Select service responsible'}
+          ? `Responsible: ${filters.state.userManager.name}`
+          : 'Select responsible'}
       </Button>
 
       <ConfirmDialog
         open={openUserManagerFilter}
         onClose={onCloseUserManagerFilter}
-        title="Select service responsible"
+        title="Select responsible"
         content={
           <TextField
             select
             value={filters.state.userManager.id || ''}
             onChange={handleFilterUserManager}
-            placeholder="Select service responsible"
+            placeholder="Select responsible"
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -332,6 +352,66 @@ export function ServiceFilters({
   );
 
 
+  const renderFilterCreator = (
+    <>
+      <Button
+        color="inherit"
+        onClick={onOpenCreatedByFilter}
+        endIcon={
+          <Iconify
+            icon={openCreatedByFilter ? 'eva:arrow-ios-upward-fill' : 'eva:arrow-ios-downward-fill'}
+            sx={{ ml: -0.5 }}
+          />
+        }
+      >
+        {!!filters.state.createdBy.id && !!filters.state.createdBy.name
+          ? `Creator: ${filters.state.createdBy.name}`
+          : 'Select creator'}
+      </Button>
+
+      <ConfirmDialog
+        open={openCreatedByFilter}
+        onClose={onCloseCreatedByFilter}
+        title="Select creator"
+        content={
+          <TextField
+            select
+            value={filters.state.createdBy.id || ''}
+            onChange={handleFilterCreatedBy}
+            placeholder="Select creator"
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Iconify icon="eva:search-fill" sx={{ color: 'text.disabled' }} />
+                </InputAdornment>
+              ),
+            }}
+            sx={{ width: '100%' }}
+          >
+            {loadedUsers.map((user) => (
+              <MenuItem key={user.id} value={user.id}>
+                {user.name}
+              </MenuItem>
+            ))}
+          </TextField>
+        }
+        action={
+          <Button
+            variant="contained"
+            onClick={() => {
+              onCloseCreatedByFilter();
+              filters.setState({ createdBy: { id: null, name: null } });
+            }}
+            color='warning'
+          >
+            Clear
+          </Button>
+        }
+      />
+    </>
+  );
+
+
   const renderFilterDate = (isRenderCustom = false) => (
     <>
       <Button
@@ -347,12 +427,12 @@ export function ServiceFilters({
       >
         {!!filters.state.startDate && !!filters.state.endDate
           ? fDateRangeShortLabel(filters.state.startDate, filters.state.endDate)
-          : 'Select service date'}
+          : 'Select date'}
       </Button>
 
       <CustomDateRangePicker
         variant="calendar"
-        title="Select service date range"
+        title="Select date range"
         startDate={filters.state.startDate}
         endDate={filters.state.endDate}
         onChangeStartDate={handleFilterStartDate}
@@ -779,6 +859,7 @@ export function ServiceFilters({
       <Stack spacing={1} direction="row" alignItems="center" justifyContent="flex-end" flexGrow={1}>
         {!isInstaller(userLogged?.data?.user_role?.name) && (
           <>
+            {renderFilterCreator}
             {renderFilterResponsible}
             {renderFilterInstaller}
             {renderFilterDate()}

@@ -85,6 +85,8 @@ export function ServiceView() {
 
   const openUserManagerFilter = useBoolean();
 
+  const openCreatedByFilter = useBoolean();
+
   const confirm = useBoolean();
 
   const confirmStaff = useBoolean();
@@ -156,6 +158,10 @@ export function ServiceView() {
       id: null,
       name: null,
     },
+    createdBy: JSON.parse(localStorage.getItem('serviceFilterCreatedBy')) || {
+      id: null,
+      name: null,
+    },
     custom: JSON.parse(localStorage.getItem('serviceFilterCustom')) || {
       hasPermission: false,
       isPreparation: {
@@ -191,6 +197,7 @@ export function ServiceView() {
     (!!filters.state.startDate && !!filters.state.endDate) ||
     (!!filters.state.installer.id && !!filters.state.installer.name) ||
     (!!filters.state.userManager.id && !!filters.state.userManager.name) ||
+    (!!filters.state.createdBy.id && !!filters.state.createdBy.name) ||
     filters.state.custom.hasPermission ||
     filters.state.custom.isPreparation?.value ||
     filters.state.custom.isRepair?.value ||
@@ -333,6 +340,9 @@ export function ServiceView() {
         openUserManagerFilter={openUserManagerFilter.value}
         onOpenUserManagerFilter={openUserManagerFilter.onTrue}
         onCloseUserManagerFilter={openUserManagerFilter.onFalse}
+        openCreatedByFilter={openCreatedByFilter.value}
+        onOpenCreatedByFilter={openCreatedByFilter.onTrue}
+        onCloseCreatedByFilter={openCreatedByFilter.onFalse}
         options={{ types: PROJECT_TYPE_OPTIONS }}
       />
 
@@ -509,7 +519,20 @@ export function ServiceView() {
 }
 
 function applyFilter({ inputData, comparator, filters, dateError }) {
-  const { list, name, type, startDate, endDate, byFactory, notByFactory, installer, userManager, custom } = filters;
+
+  const { 
+    list, 
+    name, 
+    type, 
+    startDate, 
+    endDate, 
+    byFactory, 
+    notByFactory, 
+    installer, 
+    userManager, 
+    createdBy, 
+    custom 
+  } = filters;
 
   const stabilizedThis = inputData.map((el, index) => [el, index]);
 
@@ -600,6 +623,16 @@ function applyFilter({ inputData, comparator, filters, dateError }) {
       const userManagerId = file?.userManager?.id;
       if (userManagerId) {
         return String(userManagerId) === String(userManager.id);
+      }
+      return false;
+    });
+  }
+
+  if (createdBy.id) {
+    inputData = inputData.filter((file) => {
+      const createdById = file?.createdBy?.id;
+      if (createdById) {
+        return String(createdById) === String(createdBy.id);
       }
       return false;
     });

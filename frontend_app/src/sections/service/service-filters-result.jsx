@@ -58,6 +58,12 @@ export function ServiceFiltersResult({ filters, onResetPage, totalResults, sx })
     localStorage.removeItem('serviceFilterUserManager');
   }, [filters, onResetPage]);
 
+  const handleRemoveCreatedBy = useCallback(() => {
+    onResetPage();
+    filters.setState({ createdBy: { id: null, name: null } });
+    localStorage.removeItem('serviceFilterCreatedBy');
+  }, [filters, onResetPage]);
+
   const handleRemoveCustom = useCallback(
     (customType) => {
       onResetPage();
@@ -96,6 +102,7 @@ export function ServiceFiltersResult({ filters, onResetPage, totalResults, sx })
     localStorage.removeItem('serviceFilterEndDate');
     localStorage.removeItem('serviceFilterInstaller');
     localStorage.removeItem('serviceFilterUserManager');
+    localStorage.removeItem('serviceFilterCreatedBy');
     localStorage.removeItem('serviceFilterCustom');
     localStorage.removeItem('serviceFilterByFactory');
     localStorage.removeItem('serviceFilterNotByFactory');
@@ -106,6 +113,7 @@ export function ServiceFiltersResult({ filters, onResetPage, totalResults, sx })
       endDate: null,
       installer: { id: null, name: null },
       userManager: { id: null, name: null },
+      createdBy: { id: null, name: null },
       byFactory: false,
       notByFactory: false,
       custom: {
@@ -163,6 +171,17 @@ export function ServiceFiltersResult({ filters, onResetPage, totalResults, sx })
           {...chipProps}
           label={filters.state.installer.name}
           onDelete={handleRemoveInstaller}
+        />
+      </FiltersBlock>
+
+      <FiltersBlock
+        label="Service Creator:"
+        isShow={Boolean(filters.state.createdBy.id)}
+      >
+        <Chip
+          {...chipProps}
+          label={filters.state.createdBy.name}
+          onDelete={handleRemoveCreatedBy}
         />
       </FiltersBlock>
 
