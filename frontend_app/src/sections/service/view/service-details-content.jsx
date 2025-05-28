@@ -1017,23 +1017,52 @@ export function ServiceDetailsContent({
         >
           <b>Attachments:</b>
         </Typography>
-        <Label
-          variant="filled"
-          sx={{
-            bgcolor: 'whitesmoke',
-            color: service?.serviceAttachments?.length > 0 ? 'success.main' : 'warning.main',
-            cursor: 'pointer',
-            '&:hover': {
-              bgcolor: 'text.lighter',
+        <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 0.5 }}>
+          <Label
+            variant="filled"
+            sx={{
+              bgcolor: 'whitesmoke',
               color: service?.serviceAttachments?.length > 0 ? 'success.main' : 'warning.main',
-            },
-          }}
-          onClick={() => {
-            setOpenDialogs({ ...openDialogs, editAttachments: true });
-          }}
-        >
-          {listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator) ? service?.serviceAttachments?.length > 0 ? 'Edit' : 'Add' : ''} Files
-        </Label>
+              cursor: 'pointer',
+              '&:hover': {
+                bgcolor: 'text.lighter',
+                color: service?.serviceAttachments?.length > 0 ? 'success.main' : 'warning.main',
+              },
+            }}
+            onClick={() => {
+              setOpenDialogs({ ...openDialogs, editAttachments: true });
+            }}
+          >
+            <Typography
+              variant="filled"
+              sx={{
+                bgcolor: 'whitesmoke',
+                color: service?.serviceAttachments?.length > 0 ? 'success.main' : 'warning.main',
+                cursor: 'pointer',
+                '&:hover': {
+                  bgcolor: 'text.lighter',
+                  color: service?.serviceAttachments?.length > 0 ? 'success.main' : 'warning.main',
+                },
+                fontWeight: 'bold',
+              }}
+            >
+              {listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator) ? service?.serviceAttachments?.length > 0 ? 'Edit' : 'Add' : ''} Files
+            </Typography>
+          </Label>
+          {service?.serviceAttachments?.length > 0 && (
+            <IconButton
+              sx={{
+                color: service?.serviceAttachments?.length > 0 ? 'success.main' : 'warning.main',
+              }}
+              onClick={() => {
+                setOpenDialogs({ ...openDialogs, editAttachments: true });
+              }}
+            >
+              <Iconify icon="material-symbols:file-open" color="primary" width={22} />
+            </IconButton>
+          )}
+        </Box>
+
       </Box>
       <Box sx={{ display: 'flex', flexDirection: 'row', gap: 2, }}>
         <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, mt: 0, mb: -1, textAlign: 'right' }}>
