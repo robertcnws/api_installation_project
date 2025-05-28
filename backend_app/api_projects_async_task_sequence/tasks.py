@@ -14,7 +14,7 @@ def task_sequence_daily():
         task_delete_old_trackings.si(),
         task_generate_db_backup.si(),
         task_delete_old_reminders.si(),
-        task_redefine_project_task_attachments.si(),
+        # task_redefine_project_task_attachments.si(),
     )
     workflow.apply_async()
     
