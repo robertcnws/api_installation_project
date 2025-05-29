@@ -223,7 +223,7 @@ export function MeasurementDetailsContent({
 
   const handleIsNotValidMark = useCallback((mark) =>
     !mark.type || mark.type.length === 0 ||
-    mark.dimensions.some(dim => dim <= 0)
+    mark.dimensions?.some(dim => dim <= 0)
     , []);
 
 

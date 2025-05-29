@@ -10,6 +10,7 @@ from api_projects.s3_utils import (
 )
 from api_projects.models import (
     ProjectTracking,
+    Project,
 )
 from api_measurements.models import (
     Measurement,
@@ -97,7 +98,68 @@ def create_measurement(request):
                 created_time=timezone.now(),
                 last_modified_time=timezone.now(),
             )
+            
+            if project:
+                project_entity = Project.objects(id=project.get('id')).first()
+                if project_entity:
+                    tasks = project_entity.project_default_tasks if project_entity.project_default_tasks else []
+                    ckeck_measurement_task = next(
+                        (
+                            task for task in tasks if 'check' in task.get('project_default_task', '').get('name', '').lower() and \
+                                'measurement' in task.get('project_default_task', '').get('name', '').lower()
+                        ),
+                        None
+                    )
+                    if ckeck_measurement_task:
+                        default_tasks = [
+                            task for task in tasks if \
+                                task.get('project_default_task', {}).get('id', '') != ckeck_measurement_task.get('project_default_task', {}).get('id', '')
+                        ]
+                        ckeck_measurement_task['status'] = 'finished'
+                        ckeck_measurement_task['percentage'] = 100
+                        ckeck_measurement_task['user_reporter'] = user_reporter
+                        ckeck_measurement_task['last_modified_time'] = timezone.now()
+                        
+                        not_started_tasks = [
+                            t for t in default_tasks if \
+                                t.get('status', '') == 'not started' and \
+                                t.get('project_default_task', {}).get('order', 0) > ckeck_measurement_task.get('project_default_task', {}).get('order', 0)
+                        ]
         
+                        if not project_entity.has_permission:
+                            not_started_tasks = [
+                                t for t in not_started_tasks if \
+                                    t.get('project_default_task', {}).get('project_stage', {}).get('name', '') != 'Permission'
+                            ]
+                            
+                        sorted_tasks = sorted(not_started_tasks, key=lambda tt: tt.get('project_default_task', {}).get('order', 0))
+                        
+                        def get_next_task(task, sorted_tasks):
+                            return next((
+                                    tt for tt in sorted_tasks if \
+                                    tt.get('project_default_task', {}).get('order', 0) > task.get('project_default_task', {}).get('order', 0)
+                                ), None
+                            )
+                            
+                        next_task = get_next_task(ckeck_measurement_task, sorted_tasks)
+                        
+                        if next_task:
+                            default_tasks = [
+                                task for task in default_tasks if \
+                                    task.get('project_default_task', {}).get('id', '') != next_task.get('project_default_task', {}).get('id', '')
+                            ]
+                            next_task['status'] = 'in progress'
+                            next_task['percentage'] = 50
+                            next_task['user_reporter'] = user_reporter
+                            next_task['last_modified_time'] = timezone.now()
+                            
+                            default_tasks.append(next_task)
+                        
+                        default_tasks.append(ckeck_measurement_task)
+                        default_tasks = sorted(default_tasks, key=lambda x: x.get('project_default_task', {}).get('order', 0))
+                        project_entity.project_default_tasks = default_tasks
+                        project_entity.save()
+                        
         measurement.save()
         
         tracking_info = transform_data_to_mongo(measurement)

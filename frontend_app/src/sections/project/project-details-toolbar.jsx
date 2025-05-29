@@ -42,6 +42,7 @@ export function ProjectDetailsToolbar({
   type,
   onDelete,
   onGenerateMeasurements,
+  refetchProject,
   listPermissions,
   sx,
   ...other
@@ -53,7 +54,6 @@ export function ProjectDetailsToolbar({
     loadedMeasurements,
     refetchMeasurements,
     loadedServices,
-    refetchServices,
   } = useDataContext();
 
   const share = useBoolean();
@@ -525,6 +525,7 @@ export function ProjectDetailsToolbar({
                 localStorage.setItem('backFromMeasurementDetails', 'project');
                 localStorage.setItem('backFromMeasurementDetailsProjectId', project?.id);
                 localStorage.setItem('backFromMeasurementDetailsServiceId', '');
+                await refetchProject();
                 router.push(paths.dashboard.measurement.details(newMeas?.data?.id));
               }
             }}

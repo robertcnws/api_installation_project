@@ -423,6 +423,7 @@ export function ProjectDetailsView({ projectId }) {
                     success: `Measurements generated!`,
                     error: `Error in generating measurements!`,
                 });
+                refetchProject?.();
                 return response.data;
 
             }
@@ -432,7 +433,7 @@ export function ProjectDetailsView({ projectId }) {
 
             return null;
 
-        }, [listItems, itemById, userLogged?.data]
+        }, [listItems, itemById, userLogged?.data, refetchProject]
     );
 
 
@@ -552,6 +553,7 @@ export function ProjectDetailsView({ projectId }) {
                                 type={tabs.value === 'overview' || tabs.value === 'more' ? 'project' : tabs.value === 'tasks' ? 'tasks' : null}
                                 onDelete={() => onDelete(itemById?.id)}
                                 onGenerateMeasurements={() => generateMeasurements()}
+                                refetchProject={refetchProject} 
                                 listPermissions={listPermissions}
                             />
                             {renderTabs}
