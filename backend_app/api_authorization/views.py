@@ -14,13 +14,18 @@ import logging
 logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
 
-
+###################################
 # HEALTH CHECK VIEW
+###################################
 
 @csrf_exempt
 def health_check(request):
     return JsonResponse({'status': 'ok'})
 
+
+###################################
+# LOGIN VIEW
+###################################
 
 @csrf_exempt
 def login(request):
@@ -65,6 +70,9 @@ def login(request):
             return JsonResponse({'error': 'Invalid JSON', 'description': 'Request is not in a valid format'}, status=400)
     return JsonResponse({'error': 'Method not allowed', 'description': 'Method not allowed'}, status=405)
 
+###################################
+# LOGOUT VIEW
+###################################
 
 @csrf_exempt
 @api_view(['POST'])
