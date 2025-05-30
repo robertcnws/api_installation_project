@@ -39,6 +39,8 @@ export function isValidToken(accessToken) {
   try {
     const decoded = jwtDecode(accessToken);
 
+    // console.log('Decoded Token:', decoded);
+
     if (!decoded || !('exp' in decoded)) {
       return false;
     }
@@ -46,6 +48,7 @@ export function isValidToken(accessToken) {
     const currentTime = Date.now() / 1000;
 
     return decoded.exp > currentTime;
+
   } catch (error) {
     console.error('Error during token validation:', error);
     return false;
@@ -61,7 +64,7 @@ export function tokenExpired(exp) {
 
   setTimeout(() => {
     try {
-      alert('Token expired!');
+      // alert('Token expired!');
       sessionStorage.removeItem(STORAGE_KEY);
       window.location.href = paths.auth.jwt.signIn;
     } catch (error) {
@@ -82,13 +85,15 @@ export async function setSession(accessToken, refreshToken) {
 
       axios.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
 
-      const decodedToken = jwtDecode(accessToken);
+      // const decodedToken = jwtDecode(accessToken);
 
-      if (decodedToken && 'exp' in decodedToken) {
-        tokenExpired(decodedToken.exp);
-      } else {
-        throw new Error('Invalid access token!');
-      }
+      // console.log('Decoded Token in setSession:', decodedToken);
+
+      // if (decodedToken && 'exp' in decodedToken) {
+      //   tokenExpired(decodedToken.exp);
+      // } else {
+      //   throw new Error('Invalid access token!');
+      // }
     } else {
       sessionStorage.removeItem(STORAGE_KEY);
       sessionStorage.removeItem(STORAGE_KEY_REFRESH);
@@ -98,12 +103,13 @@ export async function setSession(accessToken, refreshToken) {
     console.error('Error during set session:', error);
     throw error;
   }
+  return true;
 }
 
 // ----------------------------------------------------------------------
 
-export async function renewToken() {
-  const refreshToken = localStorage.getItem('refreshToken');
+export async function renewToken(refreshToken) {
+  const refresh = refreshToken || sessionStorage.getItem(STORAGE_KEY_REFRESH);
   if (!refreshToken) {
     sessionStorage.removeItem('accessToken');
     window.location.href = paths.auth.jwt.signIn;
@@ -112,7 +118,7 @@ export async function renewToken() {
 
   try {
     const response = await axios.post(`${CONFIG.apiUrl}/authorization/token/refresh/`, { 
-      refresh: refreshToken 
+      refresh
     });
     const newAccessToken = response.data.accessToken;
     setSession(newAccessToken, refreshToken);

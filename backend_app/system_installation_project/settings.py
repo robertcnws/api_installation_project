@@ -15,6 +15,7 @@ from celery.schedules import crontab
 from .mongo_setup import (
     connect_mongo
 )
+from datetime import timedelta
 import os
 import environ
 import warnings 
@@ -134,6 +135,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'channels',
     'graphene_django',
+    # 'rest_framework_simplejwt.token_blacklist',
     'api_integration',
     'api_authorization',
     # 'api_projects',
@@ -258,8 +260,20 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'api_authorization.authentication.RevocationCheckJWTAuthentication',
+        # 'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=59),  # 1 hour
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ACCESS_TOKEN_LIFETIME_REMEMBER': timedelta(days=30),
+    'REFRESH_TOKEN_LIFETIME_REMEMBER': timedelta(days=60),
+    'ROTATE_REFRESH_TOKENS': False,
+    'BLACKLIST_AFTER_ROTATION': False,
+    'USER_ID_FIELD': 'id',  
+    'USER_ID_CLAIM': 'user_id',
 }
 
 FRONTEND_URL = env('FRONTEND_URL', default='')

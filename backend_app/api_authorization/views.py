@@ -6,13 +6,34 @@ from django.utils import timezone
 from bson.objectid import ObjectId
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
-from .models import LoginUser
+from rest_framework_simplejwt.tokens import UntypedToken
+from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from .serializers import MyTokenObtainPairSerializer, RevocationCheckTokenRefreshSerializer
+
+from .models import LoginUser, RevokedToken
 from api_projects.models import ProjectTracking
 import json
 import logging
 
 logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
+
+####################################
+# TOKEN AUTHENTICATION VIEW
+####################################
+
+class MyTokenObtainPairView(TokenObtainPairView):
+    serializer_class = MyTokenObtainPairSerializer
+    
+
+####################################
+# TOKEN REFRESH VIEW
+####################################
+
+class MyTokenRefreshView(TokenRefreshView):
+    serializer_class = RevocationCheckTokenRefreshSerializer
+
 
 ###################################
 # HEALTH CHECK VIEW
@@ -33,7 +54,7 @@ def login(request):
         try:
             data = json.loads(request.body)  
             username = data.get('username')  
-            password = data.get('password') 
+            password = data.get('password')
             if not username or not password:
                 return JsonResponse({'error': 'Username and password required', 'description': 'Username and password required'}, status=400)
             user = authenticate(request, username=username, password=password)
@@ -80,9 +101,19 @@ def login(request):
 def logout(request):
     data = request.data
     user_reporter = data.get('userReporter', None)
+    refresh_token = data.get('refreshToken', None)
     if user_reporter:
         request.session.flush()
-        logger.info(f'User {user_reporter["username"]} logged out')
+        
+        if refresh_token:
+            try:
+                token = UntypedToken(refresh_token)
+                jti   = token['jti']
+                revoked_token = RevokedToken(jti=jti)
+                revoked_token.save()
+            except (InvalidToken, TokenError) as e:
+                return JsonResponse({'error':'invalid token'}, status=400)
+            
         tracking = ProjectTracking(
             user_reporter=user_reporter,
             action='logout',

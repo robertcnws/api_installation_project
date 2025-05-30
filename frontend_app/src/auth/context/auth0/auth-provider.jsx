@@ -44,6 +44,8 @@ function AuthProviderContainer({ children }) {
       if (isAuthenticated) {
         const token = await getAccessTokenSilently();
 
+        // console.log('Access Token Silently:', token);
+
         setAccessToken(token);
         axios.defaults.headers.common.Authorization = `Bearer ${token}`;
       } else {

@@ -11,6 +11,9 @@ import { CONFIG } from 'src/config-global';
 import { toast } from 'src/components/snackbar';
 
 import { useAuthContext } from 'src/auth/hooks';
+
+import { STORAGE_KEY_REFRESH } from 'src/auth/context/jwt/constant';
+
 import { signOut as jwtSignOut } from 'src/auth/context/jwt/action';
 
 // ----------------------------------------------------------------------
@@ -24,6 +27,8 @@ export function SignOutButton({ onClose, ...other }) {
 
   const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
 
+  const refreshToken = useMemo(() => sessionStorage.getItem(STORAGE_KEY_REFRESH), []);
+
   const { checkUserSession } = useAuthContext();
 
   const { logout: signOutAuth0 } = useAuth0();
@@ -32,6 +37,7 @@ export function SignOutButton({ onClose, ...other }) {
     try {
       const promise = await axios.post(`${CONFIG.apiUrl}/authorization/logout/`, {
         userReporter: userLogged?.data,
+        refreshToken,
       });
       const response = promise.data;
 
@@ -51,7 +57,7 @@ export function SignOutButton({ onClose, ...other }) {
       console.error(error);
       toast.error('Unable to logout!');
     }
-  }, [checkUserSession, onClose, router, userLogged?.data]);
+  }, [checkUserSession, onClose, router, userLogged?.data, refreshToken]);
 
   const handleLogoutAuth0 = useCallback(async () => {
     try {
