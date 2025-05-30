@@ -9,13 +9,13 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
         data = super().validate(attrs)
         
-        print('data', data)
+        # print('data', data)
         
         remember = self.context['request'].data.get('rememberMe', False)
         
-        print('remember', remember)
+        # print('remember', remember)
         
-        print('self.user', self.user)
+        # print('self.user', self.user)
         
         if remember:
             access_life  = settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME_REMEMBER']
