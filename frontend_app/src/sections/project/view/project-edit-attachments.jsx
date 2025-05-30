@@ -63,7 +63,7 @@ export function ProjectEditAttachments({
     const taskAttachments = tasks?.map((task) =>
       task?.project_task_attachments.map((attachment) => ({
         ...attachment,
-        current_stage: attachment?.due_project_stage,
+        current_stage: attachment?.project_task?.project_default_task?.project_stage,
         task_id: task?.project_default_task?.id,
       }))).flat();
 

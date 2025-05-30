@@ -189,10 +189,11 @@ export function getProjectAttachments(project, stageName = null) {
         project?.projectDefaultTasks?.filter(
             (task) => task?.project_default_task?.has_attachments &&
                 task?.project_task_attachments?.some(
-                    (attachment) => attachment?.due_project_stage?.name.toLowerCase() === stageName.toLowerCase()
+                    // (attachment) => attachment?.due_project_stage?.name.toLowerCase() === stageName.toLowerCase()
+                    (attachment) => attachment?.project_task?.project_default_task?.project_stage?.name.toLowerCase() === stageName.toLowerCase()
                 )).map((task) => task?.project_task_attachments).flat() :
         project?.projectDefaultTasks?.filter(
-            (task) => task?.project_default_task?.has_attachments
+            (task) => task?.project_default_task?.has_attachments || task?.project_task_attachments?.length > 0
         ).map((task) => task?.project_task_attachments).flat();
 
     allAttachments.project = projectAttachments;

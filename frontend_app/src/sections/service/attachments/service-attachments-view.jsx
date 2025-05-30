@@ -443,6 +443,7 @@ export function ServiceAttachmentsView() {
             <ServiceAttachmentsModalView
               service={selectedRow}
               attachments={attachments}
+              dataFiltered={dataFiltered}
               stageName={selectedAttachmentStage}
               open={openModalAttachments.value}
               onClose={openModalAttachments.onFalse}

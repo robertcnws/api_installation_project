@@ -434,6 +434,7 @@ export function ProjectAttachmentsView() {
             <ProjectAttachmentsModalView
               project={selectedRow}
               attachments={attachments}
+              dataFiltered={dataFiltered}
               stageName={selectedAttachmentStage}
               loadedStages={finalStages}
               open={openModalAttachments.value}

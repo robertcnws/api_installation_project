@@ -10,6 +10,8 @@ import { useBoolean } from 'src/hooks/use-boolean';
 
 import { listRolesAndSubroles } from 'src/utils/check-permissions';
 
+import { getProjectAttachments } from 'src/utils/project-tasks-utils';
+
 import { CONFIG } from 'src/config-global';
 
 import { toast } from 'src/components/snackbar';
@@ -20,6 +22,9 @@ import { UploadBox, MultiFilePreview } from 'src/components/upload';
 import { LoadingContext } from 'src/auth/context/loading-context';
 import { Scrollbar } from 'src/components/scrollbar';
 import { LoadingButton } from '@mui/lab';
+import { usePopover } from 'src/components/custom-popover';
+import { AttachmentNavigationComponent } from './attachment-navigation-component';
+
 
 
 // ----------------------------------------------------------------------
@@ -27,6 +32,7 @@ import { LoadingButton } from '@mui/lab';
 export function ProjectAttachmentsModalView({
     project,
     attachments,
+    dataFiltered,
     loadedStages,
     stageName = null,
     open,
@@ -35,7 +41,18 @@ export function ProjectAttachmentsModalView({
 
     const { isMobile } = useContext(LoadingContext);
 
-    const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
+    const [displayAttachments, setDisplayAttachments] = useState(attachments || []);
+
+    const [displayProject, setDisplayProject] = useState(project || {});
+
+    useEffect(() => {
+        if (project) {
+            setDisplayProject(project);
+        }
+        if (attachments) {
+            setDisplayAttachments(attachments);
+        }
+    }, [project, attachments]);
 
     const [initialFiles, setInitialFiles] = useState([]);
 
@@ -48,12 +65,13 @@ export function ProjectAttachmentsModalView({
 
     const attachmentTypes = useMemo(() => stages, [stages]);
 
+
     const mappedDisplayFiles = useMemo(() => {
-        if (!project) return [];
+        if (!displayProject) return [];
         return attachmentTypes?.map((type) => {
             const filesForStage = displayFiles.filter((file) =>
                 file.current_stage?.name?.toLowerCase() === type.toLowerCase() ||
-                file.due_project_stage?.name?.toLowerCase() === type.toLowerCase()
+                file.project_task?.project_default_task?.project_stage?.name?.toLowerCase() === type.toLowerCase()
             );
             return {
                 attachmentType: type,
@@ -61,18 +79,18 @@ export function ProjectAttachmentsModalView({
                 attachmentOtherName: loadedStages.find((s) => s.name.toLowerCase() === type.toLowerCase())?.otherName
             };
         }).filter((mappedFile) => mappedFile?.files?.length > 0);
-    }, [displayFiles, project, attachmentTypes, loadedStages]);
+    }, [displayFiles, displayProject, attachmentTypes, loadedStages]);
 
     const [isDownloading, setIsDownloading] = useState(false);
 
     useEffect(() => {
-        if (!attachments.length) {
+        if (!displayAttachments.length) {
             setInitialFiles([]);
             return;
         }
         const loadFiles = async () => {
             const loaded = await Promise.all(
-                attachments.map(async (attachment) => {
+                displayAttachments.map(async (attachment) => {
                     if (attachment instanceof File) {
                         return {
                             ...attachment,
@@ -107,7 +125,7 @@ export function ProjectAttachmentsModalView({
             setInitialFiles(loaded);
         };
         loadFiles();
-    }, [attachments]);
+    }, [displayAttachments]);
 
     const handleDownloadFile = (file) => {
         if (!file || !file.fileUrl) return;
@@ -126,10 +144,10 @@ export function ProjectAttachmentsModalView({
         setIsDownloading(true);
         try {
             const response = await axios.get(`${CONFIG.apiUrl}/projects/download/files/`, {
-                params: { 'keys[]': files, number: project.number },
+                params: { 'keys[]': files, number: displayProject.number },
                 paramsSerializer: p => files
                     .map(f => `keys[]=${encodeURIComponent(f)}`)
-                    .concat([`number=${project.number}`])
+                    .concat([`number=${displayProject.number}`])
                     .join('&'),
                 responseType: 'blob',
             });
@@ -155,7 +173,7 @@ export function ProjectAttachmentsModalView({
         } catch (error) {
             console.error('Error al descargar el archivo:', error);
         }
-    }, [project]);
+    }, [displayProject]);
 
     const renderService = (
         <Dialog fullWidth maxWidth="lg" open={open} onClose={onClose}>
@@ -164,24 +182,46 @@ export function ProjectAttachmentsModalView({
                     display: 'flex',
                     alignItems: 'center',
                     flexDirection: 'row',
-                    gap: 1
+                    justifyContent: 'space-between',
                 }}>
-                    <Typography variant="h6" sx={{ flexGrow: 1 }}>
-                        Attachments in Installation {project?.name}
-                    </Typography>
-                    <LoadingButton
-                        loading={isDownloading}
-                        color="info"
-                        variant="outlined"
-                        disabled={initialFiles?.length === 0}
-                        onClick={() => {
-                            const files = initialFiles?.map((file) => file.file);
-                            handleDownloadAllFiles(files);
-                        }}
-                        sx={{ p: 1, mt: 1 }}
-                    >
-                        <Iconify icon="line-md:download-loop" /> Download All
-                    </LoadingButton>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'left', gap: 0.5 }}>
+                        <Typography variant="h6" sx={{ flexGrow: 1 }}>
+                            Attachments in Installation {displayProject?.name}
+                        </Typography>
+                        <AttachmentNavigationComponent
+                            dataFiltered={dataFiltered}
+                            setDisplayAttachments={setDisplayAttachments}
+                            displayData={displayProject}
+                            setDisplayData={setDisplayProject}
+                            stageName={stageName}
+                            funcGetAttachments={getProjectAttachments}
+                        />
+                    </Box>
+                    <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'right', gap: 1 }}>
+                        <LoadingButton
+                            loading={isDownloading}
+                            color="info"
+                            variant="outlined"
+                            disabled={initialFiles?.length === 0}
+                            onClick={() => {
+                                const files = initialFiles?.map((file) => file.file);
+                                handleDownloadAllFiles(files);
+                            }}
+                            sx={{ p: 1, mt: 1 }}
+                        >
+                            <Iconify icon="line-md:download-loop" /> Download All
+                        </LoadingButton>
+                        <Button
+                            color="inherit"
+                            variant="outlined"
+                            startIcon={<Iconify icon="lets-icons:close-ring" />}
+                            sx={{ p: 1, mt: 1 }}
+                            onClick={onClose}
+                            disableElevation
+                        >
+                            Close
+                        </Button>
+                    </Box>
                 </Box>
             </DialogTitle>
 
@@ -306,11 +346,11 @@ export function ProjectAttachmentsModalView({
                     </Box>
                 )}
             </Stack>
-            <DialogActions>
+            {/* <DialogActions>
                 <Button variant="outlined" onClick={onClose}>
                     Cancel
                 </Button>
-            </DialogActions>
+            </DialogActions> */}
         </Dialog >
     )
 
