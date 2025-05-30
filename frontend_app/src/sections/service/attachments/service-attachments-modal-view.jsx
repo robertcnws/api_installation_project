@@ -15,6 +15,7 @@ import { Scrollbar } from 'src/components/scrollbar';
 import { LoadingButton } from '@mui/lab';
 import { getServiceAttachments } from 'src/utils/service-tasks-utils';
 import { AttachmentNavigationComponent } from 'src/sections/project/attachments/attachment-navigation-component';
+import { Label } from 'src/components/label';
 
 
 // ----------------------------------------------------------------------
@@ -167,9 +168,24 @@ export function ServiceAttachmentsModalView({
                     justifyContent: 'space-between',
                 }}>
                     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'left', gap: 0.5 }}>
-                        <Typography variant="h6" sx={{ flexGrow: 1 }}>
-                            Attachments in Service {displayService?.name}
-                        </Typography>
+                        <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1 }}>
+                            <Typography variant="h6" sx={{ flexGrow: 1 }}>
+                                Attachments in Service {displayService?.name}
+                            </Typography>
+                            {displayService?.isClosed && (
+                                <Label color="error" sx={{ textTransform: 'uppercase', mt: 0.2, gap: 0.5 }}>
+                                    <Iconify icon="nrk:media-media-incomplete" width={16} />
+                                    Closed
+                                </Label>
+                            )}
+                            {(!displayService?.isClosed &&
+                                displayService?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) !== -1) && (
+                                    <Label color="success" sx={{ textTransform: 'uppercase', mt: 0.2, gap: 0.5 }}>
+                                        <Iconify icon="fluent-mdl2:completed" width={16} />
+                                        Finished
+                                    </Label>
+                                )}
+                        </Box>
                         <AttachmentNavigationComponent
                             dataFiltered={dataFiltered}
                             setDisplayAttachments={setDisplayAttachments}

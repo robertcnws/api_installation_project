@@ -27,6 +27,7 @@ import { usePopover, CustomPopover } from 'src/components/custom-popover';
 import { ServiceShareDialog } from 'src/sections/service/service-share-dialog';
 
 import { useDataContext } from 'src/auth/context/data/data-context';
+import { Label } from 'src/components/label';
 
 
 
@@ -160,7 +161,21 @@ export function ServiceDetailsToolbar({
           sx={{ mr: -3 }}
         /> */}
         <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-          <Typography variant="h6">SERVICE {service?.name}</Typography>
+          <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1 }}>
+            <Typography variant="h6">SERVICE {service?.name}</Typography>
+            {service?.isClosed && (
+              <Label color="error" sx={{ textTransform: 'uppercase', mt: 0.5, gap: 0.5 }}>
+                <Iconify icon="nrk:media-media-incomplete" width={16} />
+                Closed
+              </Label>
+            )}
+            {(!service?.isClosed && service?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) !== -1) && (
+              <Label color="success" sx={{ textTransform: 'uppercase', mt: 0.5, gap: 0.5 }}>
+                <Iconify icon="fluent-mdl2:completed" width={16} />
+                Finished
+              </Label>
+            )}
+          </Box>
           <Typography variant="caption" sx={{ color: 'text.secondary' }}>
             {service?.createdBy?.first_name ?
               `Created by ${service?.createdBy?.first_name || service?.createdBy?.firstName} ${service?.createdBy?.last_name || service?.createdBy?.lastName}` :

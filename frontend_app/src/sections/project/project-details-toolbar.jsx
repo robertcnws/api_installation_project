@@ -7,6 +7,7 @@ import Button from '@mui/material/Button';
 import Tooltip from '@mui/material/Tooltip';
 import IconButton from '@mui/material/IconButton';
 import { Link, MenuItem, MenuList, TextField, Typography } from '@mui/material';
+import { Label } from 'src/components/label';
 
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
@@ -28,6 +29,7 @@ import { useDataContext } from 'src/auth/context/data/data-context';
 
 import { ProjectShareDialog } from './project-share-dialog';
 import { ServiceNewFormFromProject } from '../service/service-new-form-from-project';
+
 
 
 // ----------------------------------------------------------------------
@@ -111,7 +113,7 @@ export function ProjectDetailsToolbar({
       const services = loadedServices.filter(s => s.salesOrder?.salesorder_id === project?.salesOrder?.salesorder_id);
       if (services && services?.length > 0) {
         setAssociatedServices(services);
-      } 
+      }
     }
   }, [loadedServices, project]);
 
@@ -180,7 +182,15 @@ export function ProjectDetailsToolbar({
           sx={{ mr: -3 }}
         /> */}
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'left', justifyContent: 'space-between', gap: 0 }}>
-          <Typography variant="h6">INSTALLATION {project?.name}</Typography>
+          <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1 }}>
+            <Typography variant="h6">INSTALLATION {project?.name}</Typography>
+            {(project?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) !== -1) && (
+              <Label color="success" sx={{ textTransform: 'uppercase', mt: 0.5, gap: 0.5 }}>
+                <Iconify icon="fluent-mdl2:completed" width={16} />
+                Finished
+              </Label>
+            )}
+          </Box>
           <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'left' }}>
             {indexInInstallationFilteredList - 1 >= 0 && (
               <Tooltip title={`Previous installation: ${installationFilteredList?.[indexInInstallationFilteredList - 1]?.name}`} arrow>
@@ -546,7 +556,7 @@ export function ProjectDetailsToolbar({
                 This installation already has {associatedServices?.length} associated services:
                 {associatedServices?.map((service, index) => (
                   <React.Fragment key={`associatedService-${index}`}>
-                    <br key={`br-${index}`}/>
+                    <br key={`br-${index}`} />
                     <Link
                       key={index}
                       component={RouterLink}

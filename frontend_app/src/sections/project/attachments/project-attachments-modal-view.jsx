@@ -6,6 +6,8 @@ import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import { Grid, Dialog, DialogTitle, DialogActions, Typography } from '@mui/material';
 
+import { Label } from 'src/components/label';
+
 import { useBoolean } from 'src/hooks/use-boolean';
 
 import { listRolesAndSubroles } from 'src/utils/check-permissions';
@@ -24,6 +26,7 @@ import { Scrollbar } from 'src/components/scrollbar';
 import { LoadingButton } from '@mui/lab';
 import { usePopover } from 'src/components/custom-popover';
 import { AttachmentNavigationComponent } from './attachment-navigation-component';
+
 
 
 
@@ -185,9 +188,17 @@ export function ProjectAttachmentsModalView({
                     justifyContent: 'space-between',
                 }}>
                     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'left', gap: 0.5 }}>
-                        <Typography variant="h6" sx={{ flexGrow: 1 }}>
-                            Attachments in Installation {displayProject?.name}
-                        </Typography>
+                        <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1 }}>
+                            <Typography variant="h6" sx={{ flexGrow: 1 }}>
+                                Attachments in Installation {displayProject?.name}
+                            </Typography>
+                            {(displayProject?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) !== -1) && (
+                                <Label color="success" sx={{ textTransform: 'uppercase', mt: 0.2, gap: 0.5 }}>
+                                    <Iconify icon="fluent-mdl2:completed" width={16} />
+                                    Finished
+                                </Label>
+                            )}
+                        </Box>
                         <AttachmentNavigationComponent
                             dataFiltered={dataFiltered}
                             setDisplayAttachments={setDisplayAttachments}
