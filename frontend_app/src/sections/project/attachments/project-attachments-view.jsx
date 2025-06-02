@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { useMemo, useState, useEffect, useContext, useCallback } from 'react';
+import dayjs from 'dayjs';
 
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
@@ -34,6 +35,7 @@ import { ProjectAttachmentsTable } from './project-attachments-table';
 import { ProjectAttachmentsFilters } from './project-attachments-filters';
 import { ProjectAttachmentsFiltersResult } from './project-attachments-filters-result';
 import { ProjectAttachmentsModalView } from './project-attachments-modal-view';
+
 
 // ----------------------------------------------------------------------
 
@@ -126,8 +128,8 @@ export function ProjectAttachmentsView() {
     list: localStorage.getItem('projectFilterList') || 'in progress',
     name: localStorage.getItem('projectFilterName') || '',
     type: JSON.parse(localStorage.getItem('projectFilterType')) || [],
-    startDate: localStorage.getItem('projectFilterStartDate') || null,
-    endDate: localStorage.getItem('projectFilterEndDate') || null,
+    startDate: localStorage.getItem('projectFilterStartDate') ? dayjs(localStorage.getItem('projectFilterStartDate')) : null,
+    endDate: localStorage.getItem('projectFilterEndDate') ? dayjs(localStorage.getItem('projectFilterEndDate')) : null,
     installer: JSON.parse(localStorage.getItem('projectFilterInstaller')) || {
       id: null,
       name: null,

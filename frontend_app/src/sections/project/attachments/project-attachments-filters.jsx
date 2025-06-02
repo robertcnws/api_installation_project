@@ -256,7 +256,7 @@ export function ProjectAttachmentsFilters({
           <Button
             variant="contained"
             onClick={() => {
-              onCloseInstallerFilter();
+              // onCloseInstallerFilter();
               filters.setState({ installer: { id: null, name: null } });
               localStorage.removeItem('projectFilterInstaller');
             }}
@@ -444,6 +444,7 @@ export function ProjectAttachmentsFilters({
                       value={filters.state.name}
                       onChange={handleFilterName}
                       placeholder="Search installation(s) by NAME, NUMBER, CUSTOMER, RESPONSIBLE..."
+                      onKeyDown={(e) => e.stopPropagation()}
                       InputProps={{
                         startAdornment: (
                           <InputAdornment position="start">

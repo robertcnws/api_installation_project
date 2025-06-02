@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { useMemo, useState, useEffect, useContext, useCallback } from 'react';
+import dayjs from 'dayjs';
 
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
@@ -15,6 +16,8 @@ import { useBoolean } from 'src/hooks/use-boolean';
 import { useSetState } from 'src/hooks/use-set-state';
 
 import { listRolesAndSubroles } from 'src/utils/check-permissions';
+
+import { fIsAfter, fIsBetween, fIsSame } from 'src/utils/format-time';
 
 import { CONFIG } from 'src/config-global';
 import { DashboardContent } from 'src/layouts/dashboard';
@@ -33,8 +36,6 @@ import { MeasurementFilters } from '../measurement-filters';
 import { MeasurementFiltersResult } from '../measurement-filters-result';
 
 
-
-
 // ----------------------------------------------------------------------
 
 export function MeasurementView() {
@@ -47,6 +48,7 @@ export function MeasurementView() {
     loadedMeasurements,
     refetchMeasurements,
     loadingMeasurements,
+    loadedUsers,
   } = useDataContext();
 
   const table = useTable({ defaultRowsPerPage: 10, defaultDense: true, defaultOrder: 'desc', defaultOrderBy: 'firstDate' });
@@ -56,6 +58,8 @@ export function MeasurementView() {
   const router = useRouter();
 
   const openDateRange = useBoolean();
+
+  const openCheckAssigneeFilter = useBoolean();
 
   const confirm = useBoolean();
 
@@ -115,7 +119,13 @@ export function MeasurementView() {
   }, []);
 
   const filters = useSetState({
-    name: '',
+    name: localStorage.getItem('measurementFilterName') || '',
+    startCheckDate: localStorage.getItem('measurementFilterStartCheckDate') ? dayjs(localStorage.getItem('measurementFilterStartCheckDate')) : null,
+    endCheckDate: localStorage.getItem('measurementFilterEndCheckDate') ? dayjs(localStorage.getItem('measurementFilterEndCheckDate')) : null,
+    checkAssignee: JSON.parse(localStorage.getItem('measurementFilterCheckAssignee')) || {
+      id: null,
+      name: null,
+    },
   });
 
   const dataFiltered = applyFilter({
@@ -126,7 +136,9 @@ export function MeasurementView() {
 
   const dataInPage = rowInPage(dataFiltered, table.page, table.rowsPerPage);
 
-  const canReset = !!filters.state.name;
+  const canReset = !!filters.state.name ||
+    (!!filters.state.startCheckDate || !!filters.state.endCheckDate) ||
+    (!!filters.state.checkAssignee.id && !!filters.state.checkAssignee.name)
 
   const notFound = (!dataFiltered.length && canReset) || !dataFiltered.length;
 
@@ -229,7 +241,14 @@ export function MeasurementView() {
     >
       <MeasurementFilters
         filters={filters}
+        loadedUsers={loadedUsers}
         onResetPage={table.onResetPage}
+        openDateRange={openDateRange.value}
+        onOpenDateRange={openDateRange.onTrue}
+        onCloseDateRange={openDateRange.onFalse}
+        openCheckAssigneeFilter={openCheckAssigneeFilter.value}
+        onOpenCheckAssigneeFilter={openCheckAssigneeFilter.onTrue}
+        onCloseCheckAssigneeFilter={openCheckAssigneeFilter.onFalse}
       />
 
 
@@ -394,7 +413,7 @@ export function MeasurementView() {
 }
 
 function applyFilter({ inputData, comparator, filters }) {
-  const { name } = filters;
+  const { name, startCheckDate, endCheckDate, checkAssignee } = filters;
 
   const stabilizedThis = inputData.map((el, index) => [el, index]);
 
@@ -408,19 +427,34 @@ function applyFilter({ inputData, comparator, filters }) {
 
   if (name) {
     inputData = inputData.filter(
-      (file) => file.name.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
-        file.number.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
-        file.salesOrder.salesorder_id.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
-        file.salesOrder.salesorder_number.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
-        file.salesOrder.customer_id.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
-        file.salesOrder.customer_name.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
-        file.address.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
-        JSON.stringify(file.userManager).toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
-        JSON.stringify(file.usersAssignees).toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
-        JSON.stringify(file.currentStage).toLowerCase().indexOf(name.toLowerCase()) !== -1
+      (file) => file.number?.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
+        file.address?.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
+        JSON.stringify(file.project)?.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
+        JSON.stringify(file.customer)?.toLowerCase().indexOf(name.toLowerCase()) !== -1
     );
   }
 
+  if (checkAssignee.id) {
+    inputData = inputData.filter((file) => {
+      const checkAssigneeId = file?.checkAssignee?.id;
+      if (checkAssigneeId) {
+        return String(checkAssigneeId) === String(checkAssignee.id);
+      }
+      return false;
+    });
+  }
+
+  if (startCheckDate && endCheckDate) {
+    inputData = inputData.filter((file) => file.checkDate && fIsBetween(file.checkDate, startCheckDate, endCheckDate));
+  }
+
+  else if (startCheckDate) {
+    inputData = inputData.filter((file) => file.checkDate && fIsSame(file.checkDate, startCheckDate) || fIsAfter(file.checkDate, startCheckDate));
+  }
+
+  else if (endCheckDate) {
+    inputData = inputData.filter((file) => file.checkDate && fIsSame(file.checkDate, endCheckDate) || fIsAfter(endCheckDate, file.checkDate));
+  }
 
   return inputData;
 }

@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { useMemo, useState, useEffect, useContext, useCallback } from 'react';
+import dayjs from 'dayjs';
 
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
@@ -41,6 +42,7 @@ import { ServiceAttachmentsFilters } from './service-attachments-filters';
 import { ServiceAttachmentsFiltersResult } from './service-attachments-filters-result';
 import { ServiceAttachmentsTable } from './service-attachments-table';
 import { ServiceAttachmentsModalView } from './service-attachments-modal-view';
+
 
 
 // import { ServiceNewFolderDialog } from '../service-new-folder-dialog';
@@ -119,8 +121,8 @@ export function ServiceAttachmentsView() {
     list: localStorage.getItem('serviceFilterList') || 'in progress',
     name: localStorage.getItem('serviceFilterName') || '',
     type: JSON.parse(localStorage.getItem('serviceFilterType')) || [],
-    startDate: localStorage.getItem('serviceFilterStartDate') || null,
-    endDate: localStorage.getItem('serviceFilterEndDate') || null,
+    startDate: localStorage.getItem('serviceFilterStartDate') ? dayjs(localStorage.getItem('serviceFilterStartDate')) : null,
+    endDate: localStorage.getItem('serviceFilterEndDate') ? dayjs(localStorage.getItem('serviceFilterEndDate')) : null,
     byFactory: localStorage.getItem('serviceFilterByFactory') === 'true' || false,
     notByFactory: localStorage.getItem('serviceFilterNotByFactory') === 'true' || false,
     installer: JSON.parse(localStorage.getItem('serviceFilterInstaller')) || {

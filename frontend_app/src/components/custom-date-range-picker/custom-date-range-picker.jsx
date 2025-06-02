@@ -98,9 +98,11 @@ export function CustomDateRangePicker({
         <Button variant="outlined" color="inherit" onClick={onClose}>
           Cancel
         </Button>
-        <Button disabled={error} variant="contained" onClick={onClose}>
-          Apply
-        </Button>
+        {error && (
+          <Button disabled={error} variant="contained" onClick={onClose}>
+            Apply
+          </Button>
+        )}
       </DialogActions>
     </Dialog>
   );

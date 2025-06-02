@@ -15,6 +15,7 @@ export function ProjectAttachmentsFiltersResult({ filters, onResetPage, totalRes
     filters.setState({ name: '' });
     localStorage.removeItem('projectFilterName');
   }, [filters, onResetPage]);
+  
 
   const handleRemoveTypes = useCallback(
     (inputValue) => {
