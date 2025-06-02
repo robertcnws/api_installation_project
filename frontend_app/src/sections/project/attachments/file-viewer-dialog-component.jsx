@@ -47,11 +47,26 @@ function FileViewerDialogComponent({
         setCurrentIndex((i) => Math.min(files.length - 1, i + 1));
     }, [files.length]);
 
-    if (!files || files.length === 0) {
+    if (!files || files?.length === 0) {
         return null;
     }
 
-    const { fileUrl, name, file: realName } = files[currentIndex];
+    const { fileUrl, name, file: realName } = files[currentIndex] || {};
+
+    if (!fileUrl || !name || !realName) {
+        return (
+            <Dialog
+                open={open}
+                onClose={onClose}
+                PaperProps={{ sx: { position: 'relative', height: '100vh' } }}
+            >
+                <DialogTitle>Error</DialogTitle>
+                <DialogContent>
+                    Could not load the file. Please check the file URL and try again.
+                </DialogContent>
+            </Dialog>
+        );
+    }
 
     return (
         <Dialog
@@ -90,7 +105,7 @@ function FileViewerDialogComponent({
                 }}
             >
                 {/* Controles de navegación */}
-                <Box sx={{ display: 'flex', flexDirection: 'column'}}>
+                <Box sx={{ display: 'flex', flexDirection: 'column' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0 }}>
                         <Iconify icon="mdi:file-document" width={24} height={24} />
                         <span>
@@ -118,7 +133,7 @@ function FileViewerDialogComponent({
                                             cursor: 'not-allowed !important',
                                             pointerEvents: 'auto',
                                         },
-                                        color : currentIndex === 0 ? 'text.disabled' : 'text.primary'
+                                        color: currentIndex === 0 ? 'text.disabled' : 'text.primary'
                                     }}
                                 >
                                     <Iconify icon="mdi-light:skip-previous" width={20} height={20} />
@@ -144,7 +159,7 @@ function FileViewerDialogComponent({
                                             cursor: 'not-allowed !important',
                                             pointerEvents: 'auto',
                                         },
-                                        color : currentIndex === files.length - 1 ? 'text.disabled' : 'text.primary'
+                                        color: currentIndex === files.length - 1 ? 'text.disabled' : 'text.primary'
                                     }}
                                 >
                                     <Iconify icon="mdi-light:skip-next" width={20} height={20} />
@@ -193,15 +208,20 @@ function FileViewerDialogComponent({
                     ) : /\.pdf$/i.test(realName) ? (
                         /* Si es PDF */
                         <Box
-                            component="iframe"
-                            src={fileUrl}
-                            title={name}
+                            id="pdf‐container"
                             sx={{
                                 width: '100%',
                                 height: '100%',
-                                border: 'none'
+                                position: 'relative',
                             }}
-                        />
+                        >
+                            <iframe
+                                src={fileUrl}
+                                title="PDF"
+                                style={{ width: '100%', height: '100%', border: 'none' }}
+                                allow="fullscreen"
+                            />
+                        </Box>
                     ) : (
                         /* Otros formatos (Word/Excel/PPT) */
                         <Box
