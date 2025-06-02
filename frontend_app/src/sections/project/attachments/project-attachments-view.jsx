@@ -1,6 +1,6 @@
 import axios from 'axios';
-import { useMemo, useState, useEffect, useContext, useCallback } from 'react';
 import dayjs from 'dayjs';
+import { useMemo, useState, useEffect, useContext, useCallback } from 'react';
 
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
@@ -14,9 +14,8 @@ import { useRouter } from 'src/routes/hooks';
 import { useBoolean } from 'src/hooks/use-boolean';
 import { useSetState } from 'src/hooks/use-set-state';
 
-import { isInstaller } from 'src/utils/check-permissions';
 import { fIsAfter, fIsBetween } from 'src/utils/format-time';
-import { getProjectAttachments, getProjectInstaller } from 'src/utils/project-tasks-utils';
+import { getProjectInstaller, getProjectAttachments } from 'src/utils/project-tasks-utils';
 
 import { CONFIG } from 'src/config-global';
 import { PROJECT_TYPE_OPTIONS } from 'src/_mock';
@@ -33,8 +32,8 @@ import { useDataContext } from 'src/auth/context/data/data-context';
 
 import { ProjectAttachmentsTable } from './project-attachments-table';
 import { ProjectAttachmentsFilters } from './project-attachments-filters';
-import { ProjectAttachmentsFiltersResult } from './project-attachments-filters-result';
 import { ProjectAttachmentsModalView } from './project-attachments-modal-view';
+import { ProjectAttachmentsFiltersResult } from './project-attachments-filters-result';
 
 
 // ----------------------------------------------------------------------

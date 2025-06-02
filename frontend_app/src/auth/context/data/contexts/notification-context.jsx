@@ -3,7 +3,6 @@ import React, { useMemo, useContext, createContext } from 'react';
 import { useNotificationsQuery } from 'src/_mock/__projects_notifications_users';
 
 import { useAuth } from './user-context';
-
 import { useProjects } from './project-context';
 import { useServices } from './service-context';
 import { useMeasurements } from './measurement-context';

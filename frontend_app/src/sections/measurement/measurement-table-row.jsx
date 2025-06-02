@@ -1,5 +1,4 @@
-import dayjs from 'dayjs';
-import React, { useMemo, useState, useContext, useCallback } from 'react';
+import React, { useMemo, useContext, useCallback } from 'react';
 
 import Stack from '@mui/material/Stack';
 import Divider from '@mui/material/Divider';
@@ -13,25 +12,26 @@ import Typography from '@mui/material/Typography';
 import TableRow, { tableRowClasses } from '@mui/material/TableRow';
 import TableCell, { tableCellClasses } from '@mui/material/TableCell';
 
+import { paths } from 'src/routes/paths';
+import { useRouter } from 'src/routes/hooks';
+
 import { useBoolean } from 'src/hooks/use-boolean';
 import { useDoubleClick } from 'src/hooks/use-double-click';
 import { useCopyToClipboard } from 'src/hooks/use-copy-to-clipboard';
 
 import { fDate, fDateTime } from 'src/utils/format-time';
 import { listRolesAndSubroles } from 'src/utils/check-permissions';
-import { paths } from 'src/routes/paths';
 
 import { CONFIG } from 'src/config-global';
 import { varAlpha } from 'src/theme/styles';
 
+import { Label } from 'src/components/label';
 import { toast } from 'src/components/snackbar';
 import { Iconify } from 'src/components/iconify';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 import { usePopover, CustomPopover } from 'src/components/custom-popover';
 
 import { LoadingContext } from 'src/auth/context/loading-context';
-import { Label } from 'src/components/label';
-import { useRouter } from 'src/routes/hooks';
 
 // import { ProjectShareDialog } from './project-share-dialog';
 // import { ProjectFileDetails } from './project-file-details';

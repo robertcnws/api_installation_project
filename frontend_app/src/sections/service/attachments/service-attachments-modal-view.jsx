@@ -3,19 +3,22 @@ import { useMemo, useState, useEffect, useContext, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
+import { LoadingButton } from '@mui/lab';
 import Button from '@mui/material/Button';
-import { Grid, Dialog, DialogTitle, DialogActions, Typography } from '@mui/material';
+import { Grid, Dialog, Typography, DialogTitle } from '@mui/material';
+
+import { getServiceAttachments } from 'src/utils/service-tasks-utils';
+
 import { CONFIG } from 'src/config-global';
 
+import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
+import { Scrollbar } from 'src/components/scrollbar';
 import { MultiFilePreview } from 'src/components/upload';
 
-import { LoadingContext } from 'src/auth/context/loading-context';
-import { Scrollbar } from 'src/components/scrollbar';
-import { LoadingButton } from '@mui/lab';
-import { getServiceAttachments } from 'src/utils/service-tasks-utils';
 import { AttachmentNavigationComponent } from 'src/sections/project/attachments/attachment-navigation-component';
-import { Label } from 'src/components/label';
+
+import { LoadingContext } from 'src/auth/context/loading-context';
 
 
 // ----------------------------------------------------------------------
@@ -355,12 +358,9 @@ export function ServiceAttachmentsModalView({
     )
 
     return (
-        <>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
                 {/* Tabs alineados a la izquierda */}
                 <Box sx={{ flexGrow: 1, borderRadius: 1 }}>{renderService}</Box>
             </Box>
-
-        </>
     );
 }

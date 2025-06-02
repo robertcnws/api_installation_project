@@ -7,7 +7,6 @@ import Button from '@mui/material/Button';
 import Tooltip from '@mui/material/Tooltip';
 import IconButton from '@mui/material/IconButton';
 import { Link, MenuItem, MenuList, TextField, Typography } from '@mui/material';
-import { Label } from 'src/components/label';
 
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
@@ -20,6 +19,7 @@ import { verifyPermissions, listRolesAndSubroles } from 'src/utils/check-permiss
 
 import { CONFIG } from 'src/config-global';
 
+import { Label } from 'src/components/label';
 import { toast } from 'src/components/snackbar';
 import { Iconify } from 'src/components/iconify';
 import { ConfirmDialog } from 'src/components/custom-dialog';

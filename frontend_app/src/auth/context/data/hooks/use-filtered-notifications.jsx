@@ -1,8 +1,6 @@
-import dayjs from 'dayjs';
 import { useMemo } from 'react';
 
-import { isInstaller, listRolesAndSubroles } from 'src/utils/check-permissions';
-import { CONFIG } from 'src/config-global';
+import { isInstaller } from 'src/utils/check-permissions';
 
 export function useFilteredNotifications(notifications, projects, services, measurements, userLogged) {
   const projectsIds = useMemo(() => projects.map((project) => project.id), [projects]);

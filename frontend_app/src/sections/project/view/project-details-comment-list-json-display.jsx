@@ -35,16 +35,23 @@ function highlightText(text, searchTerm, activeOccurrence, counter) {
     const escapedSearchTerm = escapeRegExp(searchTerm);
     const regex = new RegExp(escapedSearchTerm, 'gi');
     const result = [];
-    let lastIndex = 0;
     let match = regex.exec(input);
+    let lastIndex = 0;
+
     while (match !== null) {
-        result.push(input.substring(lastIndex, match.index));
+        const [matchedText] = match;             
+        const { index: matchIndex } = match; 
+        
+        result.push(input.substring(lastIndex, matchIndex));
+
         const occurrenceIndex = counter.current;
         counter.current += 1;
+
         const style =
             occurrenceIndex === activeOccurrence
                 ? { backgroundColor: 'orange', display: 'inline-block' }
                 : { backgroundColor: 'yellow', display: 'inline-block' };
+
         result.push(
             <Box
                 key={occurrenceIndex}
@@ -52,10 +59,13 @@ function highlightText(text, searchTerm, activeOccurrence, counter) {
                 sx={style}
                 data-occurrence={occurrenceIndex}
             >
-                {match[0]}
+                {matchedText}
             </Box>
         );
-        lastIndex = regex.lastIndex;
+        
+        const { lastIndex: newLastIndex } = regex;
+        lastIndex = newLastIndex;
+        
         match = regex.exec(input);
     }
     result.push(input.substring(lastIndex));

@@ -11,9 +11,7 @@ import { CONFIG } from 'src/config-global';
 import { toast } from 'src/components/snackbar';
 
 import { useAuthContext } from 'src/auth/hooks';
-
 import { STORAGE_KEY_REFRESH } from 'src/auth/context/jwt/constant';
-
 import { signOut as jwtSignOut } from 'src/auth/context/jwt/action';
 
 // ----------------------------------------------------------------------

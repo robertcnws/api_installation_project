@@ -1,7 +1,5 @@
 import Calendar from '@fullcalendar/react'; // => request placed at the top
 
-import { Box, LinearProgress, Paper, Popper, Tooltip, Typography } from '@mui/material';
-
 import listPlugin from '@fullcalendar/list';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
@@ -13,11 +11,14 @@ import Card from '@mui/material/Card';
 import Dialog from '@mui/material/Dialog';
 import { useTheme } from '@mui/material/styles';
 import DialogTitle from '@mui/material/DialogTitle';
+import { Box, Paper, Popper, Typography, LinearProgress } from '@mui/material';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 import { useSetState } from 'src/hooks/use-set-state';
 
 import { fDate, fIsAfter, fIsBetween } from 'src/utils/format-time';
+import { getProjectInstaller } from 'src/utils/project-tasks-utils';
+import { getServiceInstaller } from 'src/utils/service-tasks-utils';
 import { verifyPermissions, listRolesAndSubroles } from 'src/utils/check-permissions';
 
 import { CONFIG } from 'src/config-global';
@@ -28,8 +29,6 @@ import { updateEvent, useGetProjectEvents } from 'src/actions/calendar';
 import { Iconify } from 'src/components/iconify';
 
 import { useDataContext } from 'src/auth/context/data/data-context';
-import { getProjectInstaller } from 'src/utils/project-tasks-utils';
-import { getServiceInstaller } from 'src/utils/service-tasks-utils';
 
 import { StyledCalendar } from '../styles';
 import { useEvent } from '../hooks/use-event';
@@ -423,8 +422,8 @@ export function CalendarView() {
 
     setTooltipAnchor(info.el);
 
-    const type = info.event.extendedProps.type;
-    const namedType = info.event.extendedProps.namedType;
+    const {type} = info.event.extendedProps;
+    const {namedType} = info.event.extendedProps;
 
     const projectInstaller = type === 'service' ?
       getServiceInstaller(info.event.extendedProps, CONFIG) :
@@ -442,7 +441,7 @@ export function CalendarView() {
     const endDate = info.event.end;
     const installer = info.event.extendedProps.userInstaller || projectInstaller;
     const responsible = info.event.extendedProps.userManager;
-    const description = info.event.extendedProps.description;
+    const {description} = info.event.extendedProps;
 
     setTooltipInfo({
       title,

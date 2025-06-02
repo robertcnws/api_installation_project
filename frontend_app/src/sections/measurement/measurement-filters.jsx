@@ -1,19 +1,20 @@
-import { useMemo, useState, useContext, useCallback, useEffect } from 'react';
+import { useState, useEffect, useContext, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import InputAdornment from '@mui/material/InputAdornment';
-import { Tooltip, MenuItem, MenuList, IconButton, Typography, Button } from '@mui/material';
+import { Button, Tooltip, MenuItem, MenuList, IconButton, Typography } from '@mui/material';
+
+import { isInstaller } from 'src/utils/check-permissions';
+import { fDateRangeShortLabel } from 'src/utils/format-time';
 
 import { Iconify } from 'src/components/iconify';
+import { ConfirmDialog } from 'src/components/custom-dialog';
 import { usePopover, CustomPopover } from 'src/components/custom-popover';
+import { CustomDateRangePicker } from 'src/components/custom-date-range-picker';
 
 import { LoadingContext } from 'src/auth/context/loading-context';
-import { isInstaller } from 'src/utils/check-permissions';
-import { ConfirmDialog } from 'src/components/custom-dialog';
-import { fDateRangeShortLabel } from 'src/utils/format-time';
-import { CustomDateRangePicker } from 'src/components/custom-date-range-picker';
 
 // ----------------------------------------------------------------------
 

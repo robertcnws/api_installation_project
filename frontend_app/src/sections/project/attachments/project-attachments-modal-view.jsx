@@ -3,28 +3,21 @@ import { useMemo, useState, useEffect, useContext, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
+import { LoadingButton } from '@mui/lab';
 import Button from '@mui/material/Button';
-import { Grid, Dialog, DialogTitle, DialogActions, Typography } from '@mui/material';
-
-import { Label } from 'src/components/label';
-
-import { useBoolean } from 'src/hooks/use-boolean';
-
-import { listRolesAndSubroles } from 'src/utils/check-permissions';
+import { Grid, Dialog, Typography, DialogTitle } from '@mui/material';
 
 import { getProjectAttachments } from 'src/utils/project-tasks-utils';
 
 import { CONFIG } from 'src/config-global';
 
-import { toast } from 'src/components/snackbar';
+import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
-import { ConfirmDialog } from 'src/components/custom-dialog';
-import { UploadBox, MultiFilePreview } from 'src/components/upload';
+import { Scrollbar } from 'src/components/scrollbar';
+import { MultiFilePreview } from 'src/components/upload';
 
 import { LoadingContext } from 'src/auth/context/loading-context';
-import { Scrollbar } from 'src/components/scrollbar';
-import { LoadingButton } from '@mui/lab';
-import { usePopover } from 'src/components/custom-popover';
+
 import { AttachmentNavigationComponent } from './attachment-navigation-component';
 
 
@@ -366,12 +359,9 @@ export function ProjectAttachmentsModalView({
     )
 
     return (
-        <>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
                 {/* Tabs alineados a la izquierda */}
                 <Box sx={{ flexGrow: 1, borderRadius: 1 }}>{renderService}</Box>
             </Box>
-
-        </>
     );
 }

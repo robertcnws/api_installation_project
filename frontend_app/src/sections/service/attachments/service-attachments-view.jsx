@@ -1,6 +1,6 @@
 import axios from 'axios';
-import { useMemo, useState, useEffect, useContext, useCallback } from 'react';
 import dayjs from 'dayjs';
+import { useMemo, useState, useEffect, useContext, useCallback } from 'react';
 
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
@@ -17,7 +17,7 @@ import { useSetState } from 'src/hooks/use-set-state';
 
 import { fIsAfter, fIsBetween } from 'src/utils/format-time';
 import { listRolesAndSubroles } from 'src/utils/check-permissions';
-import { getServiceAttachments, getServiceInstaller } from 'src/utils/service-tasks-utils';
+import { getServiceInstaller, getServiceAttachments } from 'src/utils/service-tasks-utils';
 
 import { CONFIG } from 'src/config-global';
 import { PROJECT_TYPE_OPTIONS } from 'src/_mock';
@@ -32,16 +32,13 @@ import { useTable, rowInPage, getComparator } from 'src/components/table';
 import { LoadingContext } from 'src/auth/context/loading-context';
 import { useDataContext } from 'src/auth/context/data/data-context';
 
-import { ServiceTable } from '../service-table';
-import { ServiceFilters } from '../service-filters';
 // import { ServiceGridView } from '../service-grid-view';
 // import { ServiceCalendarView } from '../calendar/view';
 // import { KanbanServiceView } from '../kanban-service/view';
-import { ServiceFiltersResult } from '../service-filters-result';
-import { ServiceAttachmentsFilters } from './service-attachments-filters';
-import { ServiceAttachmentsFiltersResult } from './service-attachments-filters-result';
 import { ServiceAttachmentsTable } from './service-attachments-table';
+import { ServiceAttachmentsFilters } from './service-attachments-filters';
 import { ServiceAttachmentsModalView } from './service-attachments-modal-view';
+import { ServiceAttachmentsFiltersResult } from './service-attachments-filters-result';
 
 
 

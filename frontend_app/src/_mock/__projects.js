@@ -1,5 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
-import { gql, useQuery, useApolloClient } from '@apollo/client';
+import { gql, useQuery } from '@apollo/client';
 
 
 const GET_ALL_PROJECTS = gql`

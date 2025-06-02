@@ -119,13 +119,11 @@ export function ServiceAttachmentsTable({
             )
           }
           action={
-            <>
-              <Tooltip title="Delete" arrow>
+            <Tooltip title="Delete" arrow>
                 <IconButton color="error" onClick={onOpenConfirm}>
                   <Iconify icon="solar:trash-bin-trash-bold" />
                 </IconButton>
               </Tooltip>
-            </>
           }
           sx={{
             pl: 1,

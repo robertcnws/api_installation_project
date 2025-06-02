@@ -1,17 +1,26 @@
-import React, { useMemo, useState, useEffect, useRef } from 'react';
+import React, { useRef, useMemo, useState, useEffect } from 'react';
+
 import Grid from '@mui/material/Unstable_Grid2';
 import Typography from '@mui/material/Typography';
 import { Box, Button, LinearProgress } from '@mui/material';
-import { useRouter } from 'src/routes/hooks';
+
 import { paths } from 'src/routes/paths';
+import { useRouter } from 'src/routes/hooks';
+
+import { useBoolean } from 'src/hooks/use-boolean';
+
 import { isInstaller } from 'src/utils/check-permissions';
 import { fDate, fIsBetween } from 'src/utils/format-time';
+
 import { CONFIG } from 'src/config-global';
 import { DashboardContent } from 'src/layouts/dashboard';
+
 import { Iconify } from 'src/components/iconify';
-import { useBoolean } from 'src/hooks/use-boolean';
+
 import { ProjectCalendarView } from 'src/sections/project/calendar/view';
+
 import { useDataContext } from 'src/auth/context/data/data-context';
+
 import { ProjectListView } from './product/view';
 import { AnalyticsNews } from '../analytics-news';
 import { WelcomeTypography } from '../welcome-typography';

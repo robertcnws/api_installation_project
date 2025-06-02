@@ -9,8 +9,8 @@ import CardActionArea from '@mui/material/CardActionArea';
 import InputAdornment from '@mui/material/InputAdornment';
 import { Divider, Tooltip, MenuItem, MenuList, IconButton, Typography, ListItemIcon, ListItemText } from '@mui/material';
 
-import { isAdministrator, isInstaller } from 'src/utils/check-permissions';
 import { fDateRangeShortLabel } from 'src/utils/format-time';
+import { isInstaller, isAdministrator } from 'src/utils/check-permissions';
 
 import { varAlpha } from 'src/theme/styles';
 

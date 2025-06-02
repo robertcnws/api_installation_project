@@ -1,4 +1,4 @@
-import React, { useMemo, useContext, createContext, useEffect, useCallback, useState } from 'react';
+import React, { useMemo, useContext, createContext } from 'react';
 
 import { useProjectsQuery } from 'src/_mock/__projects';
 

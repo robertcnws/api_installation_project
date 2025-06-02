@@ -14,10 +14,10 @@ import { useNotifications, NotificationsProvider } from './contexts/notification
 import { useServiceIssues, ServiceIssuesProvider } from './contexts/service-issue-context';
 import { useServiceStages, ServiceStagesProvider } from './contexts/service-stage-context';
 import { useProjectReminders, ProjectRemindersProvider } from './contexts/project-reminder-context';
+import { useDefaultMaterials, DefaultMaterialsProvider } from './contexts/default-material-context';
 import { useProjectPermissions, ProjectPermissionsProvider } from './contexts/project-permission-context';
 import { useServiceDefaultTasks, ServiceDefaultTasksProvider } from './contexts/service-default-task-context';
 import { useDefaultGuideProducts, DefaultGuideProductsProvider } from './contexts/default-guide-product-context';
-import { useDefaultMaterials, DefaultMaterialsProvider } from './contexts/default-material-context';
 
 const DataContext = createContext();
 export const useDataContext = () => useContext(DataContext);

@@ -15,6 +15,8 @@ import IconButton from '@mui/material/IconButton';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
+import { isInstaller } from 'src/utils/check-permissions';
+
 import { CONFIG } from 'src/config-global';
 
 import { Label } from 'src/components/label';
@@ -22,8 +24,6 @@ import { Iconify } from 'src/components/iconify';
 import { varHover } from 'src/components/animate';
 import { Scrollbar } from 'src/components/scrollbar';
 import { CustomTabs } from 'src/components/custom-tabs';
-
-import { isInstaller } from 'src/utils/check-permissions';
 
 import { useDataContext } from 'src/auth/context/data/data-context';
 

@@ -3,7 +3,7 @@ import { useRef, useMemo, useState, useEffect, useContext, useCallback } from 'r
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import ListItemText from '@mui/material/ListItemText';
-import { Box, Radio, TextField, RadioGroup, FormControlLabel, Switch, ListItem, Chip, Autocomplete } from '@mui/material';
+import { Box, Chip, Radio, Switch, ListItem, TextField, RadioGroup, Autocomplete, FormControlLabel } from '@mui/material';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
@@ -19,10 +19,10 @@ import { UploadBox, MultiFilePreview } from 'src/components/upload';
 import { LoadingContext } from 'src/auth/context/loading-context';
 import { useDataContext } from 'src/auth/context/data/data-context';
 
+import { SERVICE_PLACE_OPTIONS } from './view/service-details-content';
 import { ServiceDetailsContentOverviewTableIssues } from './service-details-content-overview-table-issues';
 import { ServiceDetailsContentOverviewModalService } from './service-details-content-overview-modal-service';
 import { ServiceDetailsContentOverviewTableIssuesMobile } from './service-details-content-overview-table-issues-mobile';
-import { SERVICE_PLACE_OPTIONS } from './view/service-details-content';
 
 
 

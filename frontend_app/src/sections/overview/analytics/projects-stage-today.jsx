@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+
 import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
 import Card from '@mui/material/Card';
@@ -17,7 +19,6 @@ import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
 import { TableNoData } from 'src/components/table';
 import { Scrollbar } from 'src/components/scrollbar';
-import { useMemo } from 'react';
 
 // ----------------------------------------------------------------------
 
