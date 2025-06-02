@@ -19,6 +19,7 @@ import { MultiFilePreview } from 'src/components/upload';
 import { LoadingContext } from 'src/auth/context/loading-context';
 
 import { AttachmentNavigationComponent } from './attachment-navigation-component';
+import FileViewerDialogComponent from './file-viewer-dialog-component';
 
 
 
@@ -40,6 +41,10 @@ export function ProjectAttachmentsModalView({
     const [displayAttachments, setDisplayAttachments] = useState(attachments || []);
 
     const [displayProject, setDisplayProject] = useState(project || {});
+
+    const [viewerOpen, setViewerOpen] = useState(false);
+    const [viewerFiles, setViewerFiles] = useState([]);
+    const [viewerIndex, setViewerIndex] = useState(0);
 
     useEffect(() => {
         if (project) {
@@ -213,8 +218,23 @@ export function ProjectAttachmentsModalView({
                             }}
                             sx={{ p: 1, mt: 1 }}
                         >
-                            <Iconify icon="line-md:download-loop" /> Download All
+                            <Iconify icon="line-md:download-loop" />
+                            Download All
                         </LoadingButton>
+                        <Button
+                            color="success"
+                            variant="outlined"
+                            startIcon={<Iconify icon="mdi:view-arrow-left" />}
+                            sx={{ p: 1, mt: 1 }}
+                            disabled={initialFiles?.length === 0}
+                            onClick={() => {
+                                setViewerFiles(initialFiles);
+                                setViewerIndex(0);
+                                setViewerOpen(true);
+                            }}
+                        >
+                            View All
+                        </Button>
                         <Button
                             color="inherit"
                             variant="outlined"
@@ -359,9 +379,18 @@ export function ProjectAttachmentsModalView({
     )
 
     return (
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+        <>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
                 {/* Tabs alineados a la izquierda */}
                 <Box sx={{ flexGrow: 1, borderRadius: 1 }}>{renderService}</Box>
             </Box>
+            <FileViewerDialogComponent
+                open={viewerOpen}
+                data={project}
+                files={viewerFiles}
+                initialIndex={viewerIndex}
+                onClose={() => setViewerOpen(false)}
+            />
+        </>
     );
 }
