@@ -227,6 +227,12 @@ export function MeasurementDetailsContent({
     , []);
 
 
+  const handleAreNotValidMarks = useCallback(() => {
+    const invalidMarks = currentMarks.filter(handleIsNotValidMark);
+    return invalidMarks.length > 0;
+  }, [currentMarks, handleIsNotValidMark]);
+
+
   const renderFirstContent = (
     <Card sx={{
       p: 1,
@@ -521,10 +527,48 @@ export function MeasurementDetailsContent({
                   )}
                 </TableCell>
               </TableRow>
+              {(!measurement?.project?.id && !measurement?.service?.id) && (
+                <TableRow>
+                  <TableCell sx={{ fontSize: 14, color: theme.palette.text.secondary }} align="left">
+                    <Typography variant="subtitle2" sx={{ fontWeight: 600, color: theme.palette.text.secondary }}>
+                      First Checked Marks:
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Label variant="outlined" color="warning" sx={{ textTransform: 'uppercase', fontSize: 12, fontWeight: 600 }}>
+                      <b>{currentMarks.filter((m) => m.first_check && !m.second_check).length}</b>
+                    </Label>
+                  </TableCell>
+                </TableRow>
+              )}
+              <TableRow>
+                <TableCell sx={{ fontSize: 14, color: theme.palette.text.secondary }} align="left">
+                  <Typography variant="subtitle2" sx={{ fontWeight: 600, color: theme.palette.text.secondary }}>
+                    Checked Marks:
+                  </Typography>
+                </TableCell>
+                <TableCell>
+                  <Label variant="outlined" color="success" sx={{ textTransform: 'uppercase', fontSize: 12, fontWeight: 600 }}>
+                    <b>{currentMarks.filter((m) => m.second_check).length}</b>
+                  </Label>
+                </TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell sx={{ fontSize: 14, color: theme.palette.text.secondary }} align="left">
+                  <Typography variant="subtitle2" sx={{ fontWeight: 600, color: theme.palette.text.secondary }}>
+                    Not Checked Marks:
+                  </Typography>
+                </TableCell>
+                <TableCell>
+                  <Label variant="outlined" color="default" sx={{ textTransform: 'uppercase', fontSize: 12, fontWeight: 600 }}>
+                    <b>{currentMarks.filter((m) => !m.first_check && !m.second_check).length}</b>
+                  </Label>
+                </TableCell>
+              </TableRow>
             </TableBody>
           </Table>
         </Box>
-        <Box sx={{
+        {/* <Box sx={{
           display: 'flex',
           flexDirection: !isMobile ? 'row' : 'column',
           justifyContent: 'space-between',
@@ -543,7 +587,7 @@ export function MeasurementDetailsContent({
           <Label variant="outlined" color="success" sx={{ textTransform: 'uppercase', fontSize: 12, fontWeight: 600 }}>
             Second Checked: <b>{currentMarks.filter((m) => m.second_check).length}</b>
           </Label>
-        </Box>
+        </Box> */}
 
       </Box>
     </Card>
@@ -574,6 +618,7 @@ export function MeasurementDetailsContent({
           handleCheck={handleCheck}
           handleAddMark={handleAddMark}
           handleIsNotValidMark={handleIsNotValidMark}
+          handleAreNotValidMarks={handleAreNotValidMarks}
           confirmRemove={confirmRemove}
           setSelectedMark={setSelectedMark}
           setSelectedMarkIndex={setSelectedMarkIndex}
@@ -590,6 +635,7 @@ export function MeasurementDetailsContent({
           handleCheck={handleCheck}
           handleAddMark={handleAddMark}
           handleIsNotValidMark={handleIsNotValidMark}
+          handleAreNotValidMarks={handleAreNotValidMarks}
           confirmRemove={confirmRemove}
           setSelectedMark={setSelectedMark}
           setSelectedMarkIndex={setSelectedMarkIndex}
@@ -655,7 +701,7 @@ export function MeasurementDetailsContent({
         openDialogs={openDialogs}
         setOpenDialogs={setOpenDialogs}
         isOverview={!!measurement}
-        height={(!measurement?.project?.id && !measurement?.service?.id) ? 310 : 410}
+        height={(!measurement?.project?.id && !measurement?.service?.id) ? 250 : 370}
       />
     </Box>
   );
@@ -674,25 +720,25 @@ export function MeasurementDetailsContent({
     <>
       <Grid container spacing={3}>
         {/* {!isInstaller(userLogged?.data?.user_role?.name) && ( */}
-          <>
-            <Grid xs={12} md={8}>
-              <Grid xs={12} md={12}>
-                <Box sx={{ display: 'flex', flexDirection: !isMobile ? 'row' : 'column', gap: 1, mb: 1, mt: -3 }}>
-                  <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                    {renderMainContent}
-                  </Box>
-                </Box>
-              </Grid>
-            </Grid>
-            <Grid xs={12} md={4}>
-              <Box sx={{ mb: 1, width: '100%', mt: -2, ml: -3 }}>
+        <>
+          <Grid xs={12} md={8}>
+            <Grid xs={12} md={12}>
+              <Box sx={{ display: 'flex', flexDirection: !isMobile ? 'row' : 'column', gap: 1, mb: 1, mt: -3 }}>
                 <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                  {renderFirstContent}
-                  {renderOverview}
+                  {renderMainContent}
                 </Box>
               </Box>
             </Grid>
-          </>
+          </Grid>
+          <Grid xs={12} md={4}>
+            <Box sx={{ mb: 1, width: '100%', mt: -2, ml: -3 }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                {renderFirstContent}
+                {renderOverview}
+              </Box>
+            </Box>
+          </Grid>
+        </>
         {/* )} */}
       </Grid >
       <ConfirmDialog

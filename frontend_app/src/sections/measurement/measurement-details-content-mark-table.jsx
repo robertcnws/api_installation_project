@@ -14,6 +14,7 @@ export function MeasurementDetailsContentMarkTable({
     handleCheck,
     handleAddMark,
     handleIsNotValidMark,
+    handleAreNotValidMarks,
     confirmRemove,
     setSelectedMark,
     setSelectedMarkIndex,
@@ -222,32 +223,6 @@ export function MeasurementDetailsContentMarkTable({
                             </TableCell>
                             <TableCell align="left" sx={{ fontSize: 14, color: theme.palette.text.secondary }}>
                                 <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    {(index === currentMarks.length - 1 && belongsToWorkingStaff(userLogged?.data?.uer_role?.name)) && (
-                                        <Tooltip title="Add" placement="top" arrow>
-                                            <span>
-                                                <IconButton
-                                                    sx={{
-                                                        cursor: !handleIsNotValidMark(mark) ? 'pointer' : 'not-allowed',
-                                                        '&.Mui-disabled': {
-                                                            cursor: 'not-allowed !important',
-                                                            pointerEvents: 'auto',
-                                                        }
-                                                    }}
-                                                    size="small"
-                                                    onClick={!handleIsNotValidMark(mark) ? () => {
-                                                        handleAddMark();
-                                                    } : undefined}
-                                                    disabled={handleIsNotValidMark(mark)}>
-                                                    <Iconify
-                                                        icon="eva:plus-fill"
-                                                        width={20}
-                                                        height={20}
-                                                        color={!handleIsNotValidMark(mark) ? theme.palette.secondary.main : theme.palette.grey[300]}
-                                                    />
-                                                </IconButton>
-                                            </span>
-                                        </Tooltip>
-                                    )}
                                     {(!measurement?.project?.id && !measurement?.service?.id && belongsToWorkingStaff(userLogged?.data?.uer_role?.name)) && (
                                         <Tooltip title="First check" placement="top" arrow>
                                             <span>
@@ -343,6 +318,45 @@ export function MeasurementDetailsContentMarkTable({
                             </TableCell>
                         </TableRow>
                     ))}
+                    <TableRow sx={{ backgroundColor: theme.palette.grey[100] }}>
+                        <TableCell />
+                        <TableCell />
+                        <TableCell />
+                        <TableCell />
+                        <TableCell />
+                        <TableCell />
+                        <TableCell align="left">
+                            {(belongsToWorkingStaff(userLogged?.data?.uer_role?.name)) && (
+                                <Tooltip title="Add" placement="top" arrow>
+                                    <span>
+                                        <IconButton
+                                            sx={{
+                                                cursor: !handleAreNotValidMarks() ? 'pointer' : 'not-allowed',
+                                                '&.Mui-disabled': {
+                                                    cursor: 'not-allowed !important',
+                                                    pointerEvents: 'auto',
+                                                },
+                                                color: !handleAreNotValidMarks() ? theme.palette.secondary.main : theme.palette.grey[300],
+                                                fontSize: '0.95rem',
+                                                fontWeight: 600,
+                                            }}
+                                            size="small"
+                                            onClick={!handleAreNotValidMarks() ? () => {
+                                                handleAddMark();
+                                            } : undefined}
+                                            disabled={handleAreNotValidMarks()}>
+                                            <Iconify
+                                                icon="eva:plus-fill"
+                                                width={20}
+                                                height={20}
+                                                color={!handleAreNotValidMarks() ? theme.palette.secondary.main : theme.palette.grey[300]}
+                                            /> Add
+                                        </IconButton>
+                                    </span>
+                                </Tooltip>
+                            )}
+                        </TableCell>
+                    </TableRow>
                     <TableRow />
                 </TableBody>
 
