@@ -365,7 +365,7 @@ export function MeasurementDetailsContentMarkTableMobile({
                         <TableCell />
                         <TableCell align="left">
                             {(belongsToWorkingStaff(userLogged?.data?.uer_role?.name)) && (
-                                <Tooltip title="Add" placement="top" arrow>
+                                <Tooltip title="Add new mark" placement="top" arrow>
                                     <span>
                                         <IconButton
                                             sx={{

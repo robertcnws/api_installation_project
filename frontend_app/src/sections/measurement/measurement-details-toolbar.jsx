@@ -20,6 +20,7 @@ import { CONFIG } from 'src/config-global';
 import { Iconify } from 'src/components/iconify';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 import { usePopover, CustomPopover } from 'src/components/custom-popover';
+import { Label } from 'src/components/label';
 
 
 
@@ -90,14 +91,38 @@ export function MeasurementDetailsToolbar({
           sx={{ mr: -3 }}
         /> */}
         <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-          <Typography variant="h6">
-            MEASUREMENTS ({measurement?.number}) FOR {
-            measurement?.service?.number ? 'SERVICE # ' : measurement?.project?.number ? 'INSTALLATION # ' : 'CUSTOMER '
-            } {
-              measurement?.service?.number ? `${measurement?.service?.number}-${measurement?.service?.version}` : 
-              measurement?.project?.number ? `${measurement?.project?.number}` : measurement?.customer?.name
-            }
-          </Typography>
+          <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'left', gap: 1 }}>
+            <Typography variant="h6">
+              MEASUREMENTS ({measurement?.number}) FOR {
+                measurement?.service?.number ? 'SERVICE # ' : measurement?.project?.number ? 'INSTALLATION # ' : 'CUSTOMER '
+              } {
+                measurement?.service?.number ? `${measurement?.service?.number}-${measurement?.service?.version}` :
+                  measurement?.project?.number ? `${measurement?.project?.number}` : measurement?.customer?.name
+              }
+            </Typography>
+            <Label
+              variant="soft"
+              color={
+                measurement?.status === 'finished' ? 'success' :
+                  measurement?.status === 'in progress' ? 'warning' :
+                    'default'
+              }
+              sx={{ 
+                gap: 0.5, 
+                textTransform: 'uppercase', 
+                mt: 0.2,
+              }}
+            >
+              <Iconify
+                icon={
+                  measurement?.status === 'finished' ? 'nrk:media-media-complete' :
+                    measurement?.status === 'in progress' ? 'grommet-icons:in-progress' :
+                      'bx:error'
+                } width={16} height={16}
+              />
+              {measurement?.status ? measurement?.status : 'No Status'}
+            </Label>
+          </Box>
           <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'left' }}>
             {indexInMeasurementFilteredList - 1 >= 0 && (
               <Tooltip

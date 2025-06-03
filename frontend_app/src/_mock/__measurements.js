@@ -27,6 +27,7 @@ const GET_ALL_MEASUREMENTS = gql`
       measurementAttachments
       measurementComments
       generalNotes
+      status
     }
   }
 `;
@@ -56,6 +57,7 @@ const GET_MEASUREMENT_BY_ID = gql`
       measurementAttachments
       measurementComments
       generalNotes
+      status
     }
   }
 `;

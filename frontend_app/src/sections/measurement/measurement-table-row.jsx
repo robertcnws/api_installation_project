@@ -147,7 +147,7 @@ export function MeasurementTableRow({
             />
           </TableCell>
         )}
-        <TableCell
+        {/* <TableCell
           onClick={onViewRow}
           sx={{
             whiteSpace: 'nowrap',
@@ -166,7 +166,7 @@ export function MeasurementTableRow({
             </Tooltip>
           )}
 
-        </TableCell>
+        </TableCell> */}
 
         <TableCell
           onClick={onViewRow}
@@ -242,6 +242,38 @@ export function MeasurementTableRow({
           </Stack>
         </TableCell>
 
+        <TableCell
+          // onClick={handleClick} 
+          onClick={onViewRow}
+          sx={{
+            whiteSpace: 'nowrap',
+            cursor: 'pointer',
+            fontWeight: 'inherit',
+          }}
+          align='center'
+        >
+          <Stack direction="row" alignItems="center" spacing={2}>
+            <Label
+              variant="soft"
+              color={
+                row?.status === 'finished' ? 'success' :
+                  row?.status === 'in progress' ? 'warning' :
+                    'default'
+              }
+              sx={{ cursor: 'pointer', gap: 0.5, textTransform: 'capitalize' }}
+            >
+              <Iconify
+                icon={
+                  row?.status === 'finished' ? 'nrk:media-media-complete' :
+                    row?.status === 'in progress' ? 'grommet-icons:in-progress' :
+                      'bx:error'
+                } width={14} height={14}
+              />
+              {row?.status ? row?.status : 'No Status'}
+            </Label>
+          </Stack>
+        </TableCell>
+
         {!isMobile && (
           <>
             <TableCell
@@ -251,8 +283,11 @@ export function MeasurementTableRow({
                 cursor: 'pointer',
                 fontWeight: 'inherit',
               }}
+              align='center'
             >
-              <Tooltip title="Click to see details..." arrow>
+              <Tooltip title={
+                `Click to see details of ${row?.project?.number ? row?.project?.name : row?.service?.number ? row?.service?.name : 'Customer'}...`
+              } arrow>
                 <Stack direction="row" alignItems="center" spacing={2}>
                   <Typography
                     noWrap
@@ -264,7 +299,7 @@ export function MeasurementTableRow({
                     }}
                   >
                     <Label
-                      variant="soft"
+                      variant="outlined"
                       color={
                         row?.project?.id ? 'success' :
                           row?.service?.id ? 'warning' :
@@ -273,8 +308,8 @@ export function MeasurementTableRow({
                       sx={{ cursor: 'pointer' }}
                     >
                       {
-                        row?.project?.id ? `Installation: ${row?.project?.number}` :
-                          row?.service?.id ? `Service: ${row?.service?.number}` :
+                        row?.project?.id ? `${row?.project?.number}` :
+                          row?.service?.id ? `${row?.service?.number}` :
                             'To Customer'
                       }
                     </Label>

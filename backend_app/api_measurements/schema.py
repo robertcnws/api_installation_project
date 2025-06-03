@@ -39,6 +39,7 @@ class MeasurementType(MongoengineObjectType):
     color = JSONDateTime()
     created_time = graphene.String()
     last_modified_time = graphene.String()
+    status = graphene.String()
     
     def resolve_created_time(self, info):
         dt = self.created_time
@@ -91,6 +92,15 @@ class MeasurementType(MongoengineObjectType):
     
     def resolve_measurement_comments(self, info):
         return self.measurement_comments
+    
+    def resolve_status(self, info):
+        number_of_checked = sum(1 for mark in self.marks if mark.get('second_check') is True)
+        if number_of_checked == 0:
+            return 'not started'
+        elif number_of_checked < len(self.marks):
+            return 'in progress'
+        else:
+            return 'finished'
     
 
 class Query(graphene.ObjectType):

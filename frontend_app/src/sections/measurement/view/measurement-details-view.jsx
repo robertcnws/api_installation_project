@@ -29,12 +29,14 @@ import { MeasurementDetailsCommentView } from 'src/sections/measurement/view/mea
 import { MeasurementDetailsAttachmentView } from 'src/sections/measurement/view/measurement-details-attachment-view';
 
 import { useDataContext } from 'src/auth/context/data/data-context';
+import { getMeasurementStatus } from 'src/utils/measurement-tasks-utils';
 
 import { MeasurementEditModalDatesView } from '../measurement-edit-modal-dates-view';
 import { MeasurementEditModalAddressView } from '../measurement-edit-modal-address-view';
 import { MeasurementEditModalUserManagerView } from '../measurement-edit-modal-user-manager-view';
 import { MeasurementEditModalPhoneNumberView } from '../measurement-edit-modal-phone-number-view';
 import { MeasurementEditModalGeneralNotesView } from '../measurement-edit-modal-general-notes-view';
+
 
 // ----------------------------------------------------------------------
 
@@ -52,7 +54,7 @@ export function MeasurementDetailsView({ measurementId }) {
         loadedServices,
         loadedProjects,
     } = useDataContext();
-    
+
 
     const [openDialogs, setOpenDialogs] = useState({
         firstAssignee: false,
@@ -201,11 +203,7 @@ export function MeasurementDetailsView({ measurementId }) {
     const [openValidationDialog, setOpenValidationDialog] = useState(false);
     const [validationMessage, setValidationMessage] = useState('');
 
-    const selectedSalesOrder = useMemo(() => itemById?.salesOrder || {}, [itemById]);
-
     const openSalesOrderModal = useBoolean(false);
-
-    const [isSubmiting, setIsSubmiting] = useState(false);
 
     const [listSelectedTracks, setListSelectedTracks] = useState(loadedTracks);
 
@@ -223,7 +221,7 @@ export function MeasurementDetailsView({ measurementId }) {
     }, [loadedTracks, listSelectedTracks.length]);
 
     useEffect(() => {
-        const socket = new WebSocket(`wss://${CONFIG.apiHost}/api/measurements/ws/measurement/${measurementId}/`);
+        const socket = new WebSocket(`wss://${CONFIG.apiHost}/api/measurements/ws/measurement/${itemById?.id}/`);
         socket.onerror = (errorEvent) => {
             console.dir(errorEvent);
             console.error('WebSocket error (toString):', errorEvent.toString());
@@ -234,7 +232,12 @@ export function MeasurementDetailsView({ measurementId }) {
             if (message.type === 'created' || message.type === 'updated') {
                 setItemById((prevData) => {
                     if (prevData?.id === message.item.id) {
-                        return message.item;
+                        const newItem = { ...message.item };
+                        const finalItem = {
+                            ...newItem,
+                            status: getMeasurementStatus(newItem?.marks),
+                        }
+                        return finalItem;
                     }
                     return prevData;
                 });
@@ -253,7 +256,7 @@ export function MeasurementDetailsView({ measurementId }) {
                 socket.close();
             }
         };
-    }, [measurementId]);
+    }, [itemById]);
 
 
     useEffect(() => {
