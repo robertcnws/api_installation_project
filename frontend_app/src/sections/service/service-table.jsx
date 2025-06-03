@@ -88,6 +88,7 @@ export function ServiceTable({
     }))),
     { id: 'createdTime', label: 'Created At' },
     { id: 'lastModifiedTime', label: 'Updated At' },
+    { id : 'associatedProject', label: 'Associated To' },
     { id: '', width: 88 },
   ];
 
@@ -95,6 +96,7 @@ export function ServiceTable({
     { id: 'startDate', label: 'Start Date' },
     { id: 'duration', label: 'Duration' },
     { id: 'number', label: 'Number' },
+    { id : 'associatedProject', label: 'Associated To' },
     { id: '' },
   ];
 

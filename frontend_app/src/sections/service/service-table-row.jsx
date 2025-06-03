@@ -6,7 +6,7 @@ import Divider from '@mui/material/Divider';
 import MenuList from '@mui/material/MenuList';
 import MenuItem from '@mui/material/MenuItem';
 import Checkbox from '@mui/material/Checkbox';
-import { Button, Tooltip } from '@mui/material';
+import { Box, Button, Tooltip } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import { lighten, useTheme } from '@mui/material/styles';
@@ -30,6 +30,8 @@ import { ConfirmDialog } from 'src/components/custom-dialog';
 import { usePopover, CustomPopover } from 'src/components/custom-popover';
 
 import { LoadingContext } from 'src/auth/context/loading-context';
+import { useRouter } from 'src/routes/hooks';
+import { paths } from 'src/routes/paths';
 
 // import { ProjectShareDialog } from './project-share-dialog';
 // import { ProjectFileDetails } from './project-file-details';
@@ -58,49 +60,17 @@ export function ServiceTableRow({
   refetchServices,
 }) {
 
-  const [rowUpdated, setRowUpdated] = useState(null);
+  const router = useRouter();
 
   const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
 
   const today = dayjs().format('YYYY-MM-DD');
 
-  // const endDate = dayjs(row?.endDate).format('YYYY-MM-DD');
-
-  // console.log('now', today);
-  // console.log('endDate', endDate);
-  // console.log('fIsAfter', fIsAfter(now, endDate));
-
-  // useEffect(() => {
-  //   if (item) {
-  //     setRow(item);
-  //   }
-  // }, [item]);
-
-  // useEffect(() => {
-  //   if (refetchProject) {
-  //     refetchProject();
-  //   } 
-  // }, [refetchProject]);
-
-  // useEffect(() => {
-  //   if (project) {
-  //     setRow(project);
-  //   }
-  // }, [project]);
-
   const theme = useTheme();
 
   const { isMobile } = useContext(LoadingContext);
 
-  const { copy } = useCopyToClipboard();
-
-  const [inviteEmail, setInviteEmail] = useState('');
-
-  const favorite = useBoolean(row?.isFavorited);
-
   const details = useBoolean();
-
-  const share = useBoolean();
 
   const confirm = useBoolean();
 
@@ -108,21 +78,13 @@ export function ServiceTableRow({
 
   const popover = usePopover();
 
-  const handleChangeInvite = useCallback((event) => {
-    setInviteEmail(event.target.value);
-  }, []);
-
-  const handleClick = useDoubleClick({
-    click: () => {
-      details.onTrue();
-    },
-    doubleClick: () => console.info('DOUBLE CLICK'),
-  });
-
-  const handleCopy = useCallback(() => {
-    toast.success('Copied!');
-    copy(row?.url);
-  }, [copy, row]);
+  const handleSeeAssociated = useCallback(() => {
+    if (row?.associatedProject?.id) {
+      localStorage.setItem('projectId', row?.associatedProject?.id);
+      localStorage.setItem('backFromProjectDetails', 'services');
+      router.push(paths.dashboard.project.details(row?.project?.id));
+    }
+  }, [router, row]);
 
   const defaultStyles = {
     borderTop: `solid 1px ${varAlpha(theme.vars.palette.grey['500Channel'], 0.16)}`,
@@ -194,10 +156,14 @@ export function ServiceTableRow({
           align='left'
         >
           {row?.startDate ? (
-            <>
-              {fDate(row.startDate)}{' '}
-              {row.endDate && `(${fDuration(row.startDate, row.endDate)})`}
-            </>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+              <Typography noWrap variant="inherit" sx={{ maxWidth: 360, cursor: 'pointer' }}>
+                {fDate(row.startDate)}
+              </Typography>
+              <Typography noWrap variant="inherit" sx={{ maxWidth: 360, cursor: 'pointer', color: 'text.secondary' }}>
+                {row.endDate && `(${fDuration(row.startDate, row.endDate)})`}
+              </Typography>
+            </Box>
           ) : (
             <Tooltip title="No Start Date" arrow>
               <Iconify icon="ph:calendar-x-bold" sx={{ color: 'error.main' }} />
@@ -310,7 +276,7 @@ export function ServiceTableRow({
                 )) ? 'fontWeightBold' : 'inherit') : 'inherit',
               }}
             >
-              <Stack direction="row" alignItems="center" spacing={2}>
+              <Stack direction="column" alignItems="left" spacing={0}>
                 <Typography
                   noWrap
                   variant="inherit"
@@ -321,7 +287,19 @@ export function ServiceTableRow({
                     ...(details.value && { fontWeight: 'fontWeightBold' }),
                   }}
                 >
-                  {row?.userManager?.name || 'No Responsible'}
+                  {row?.userManager?.firstName || row?.userManager?.first_name || 'No Responsible'}
+                </Typography>
+                <Typography
+                  noWrap
+                  variant="inherit"
+                  sx={{
+                    maxWidth: 360,
+                    cursor: 'pointer',
+                    color: row?.userManager?.name ? 'text.primary' : 'text.disabled',
+                    ...(details.value && { fontWeight: 'fontWeightBold' }),
+                  }}
+                >
+                  {row?.userManager?.lastName || row?.userManager?.last_name}
                 </Typography>
               </Stack>
             </TableCell>
@@ -440,8 +418,9 @@ export function ServiceTableRow({
                 onViewRow();
               }}
               sx={{
-                whiteSpace: 'nowrap',
+                // whiteSpace: 'nowrap',
                 cursor: 'pointer',
+                maxWidth: 200,
                 fontWeight: row?.endDate ? ((fIsAfter(today, dayjs(row?.endDate).format('YYYY-MM-DD')) && (
                   row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
                   row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
@@ -461,7 +440,61 @@ export function ServiceTableRow({
           </>
         )}
 
-
+        <TableCell
+          onClick={row?.associatedProject?.id ? handleSeeAssociated : onViewRow}
+          sx={{
+            whiteSpace: 'nowrap',
+            cursor: 'pointer',
+            maxWidth: 200,
+            fontWeight: row?.endDate ? ((fIsAfter(today, dayjs(row?.endDate).format('YYYY-MM-DD')) && (
+              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
+              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.repair.toLowerCase()) !== -1
+            )) ? 'fontWeightBold' : 'inherit') : 'inherit',
+          }}
+          align='center'
+        >
+          {row?.associatedProject?.id ? (
+            <Tooltip title={`Click to see details of ${row?.associatedProject?.name}...`} arrow>
+              <Stack direction="column" alignItems="center" spacing={0}>
+                <Typography
+                  noWrap
+                  variant="inherit"
+                  sx={{
+                    maxWidth: 360,
+                    cursor: 'pointer',
+                    ...(details.value && { fontWeight: 'fontWeightBold' }),
+                  }}
+                >
+                  Installation:
+                </Typography>
+                <Typography
+                  noWrap
+                  variant="inherit"
+                  sx={{
+                    maxWidth: 360,
+                    cursor: 'pointer',
+                    color: row?.associatedProject?.id ? 'text.primary' : 'text.disabled',
+                    ...(details.value && { fontWeight: 'fontWeightBold' }),
+                  }}
+                >
+                  <Label
+                    variant="soft"
+                    color={
+                      row?.associatedProject?.id ? 'success' : 'default'
+                    }
+                    sx={{ cursor: 'pointer' }}
+                  >
+                    {row?.associatedProject?.number || 'No Associated Installation'}
+                  </Label>
+                </Typography>
+              </Stack>
+            </Tooltip>
+          ) : (
+            <Tooltip title="No Associated Installation" arrow>
+              <Iconify icon="ep:failed" sx={{ color: 'error.main' }} />
+            </Tooltip>
+          )}
+        </TableCell>
 
         <TableCell align="right" sx={{ px: 1, whiteSpace: 'nowrap', cursor: 'pointer', }}>
           {/* <Checkbox

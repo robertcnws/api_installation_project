@@ -3,7 +3,7 @@ import { useMemo, useState, useEffect, useCallback } from 'react';
 
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
-import { Box, Button, Dialog, MenuItem, MenuList, Typography, DialogActions, LinearProgress } from '@mui/material';
+import { Box, Button, Dialog, MenuItem, MenuList, Typography, DialogActions, LinearProgress, Tooltip } from '@mui/material';
 
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
@@ -14,6 +14,7 @@ import { useBoolean } from 'src/hooks/use-boolean';
 import { getServiceInstaller } from 'src/utils/service-tasks-utils';
 import { filteredDescriptionJson } from 'src/utils/project-tasks-utils';
 import { extractDimensions } from 'src/utils/generate-installation-guide-pdf';
+import { fDate } from 'src/utils/format-time';
 
 import { CONFIG } from 'src/config-global';
 import { DashboardContent } from 'src/layouts/dashboard';
@@ -42,6 +43,7 @@ import { ServiceDetailsContentOverview } from '../service-details-content-overvi
 import { ServiceEditModalAttachmentsView } from '../service-edit-modal-attachments-view';
 
 
+
 // ----------------------------------------------------------------------
 
 export function ServiceDetailsView({ serviceId }) {
@@ -56,6 +58,7 @@ export function ServiceDetailsView({ serviceId }) {
         loadedServices,
         loadedTracks,
         loadedMeasurements,
+        loadedProjects,
     } = useDataContext();
 
     const [openDialogs, setOpenDialogs] = useState({
@@ -84,12 +87,17 @@ export function ServiceDetailsView({ serviceId }) {
         [loadedMeasurements, itemById]
     );
 
+    const associatedProject = useMemo(
+        () => loadedProjects?.find(p => p?.salesOrder?.salesorder_id === itemById?.salesOrder?.salesorder_id) || null,
+        [loadedProjects, itemById]
+    );
+
     const DETAILS_TABS = [
         { label: 'Overview', value: 'overview' },
         { label: 'Tasks', value: 'tasks' },
         // { label: 'Attachments', value: 'attachments' },
         { label: 'Comments & History', value: 'comments' },
-        ...associatedMeasurement ? [
+        ...(associatedProject || associatedMeasurement) ? [
             {
                 label: <>
                     <Box sx={{ display: 'flex', alignItems: 'center' }} onClick={morePopover.onOpen}>
@@ -105,19 +113,61 @@ export function ServiceDetailsView({ serviceId }) {
                         slotProps={{ arrow: { placement: 'left-top' } }}
                     >
                         <MenuList>
-                            <MenuItem
-                                onClick={() => {
-                                    morePopover.onClose();
-                                    localStorage.setItem('measurementId', associatedMeasurement?.id);
-                                    localStorage.setItem('backFromMeasurementDetails', 'service');
-                                    localStorage.setItem('backFromMeasurementDetailsProjectId', '');
-                                    localStorage.setItem('backFromMeasurementDetailsServiceId', itemById?.id);
-                                    router.push(paths.dashboard.measurement.details(associatedMeasurement?.id));
-                                }}
-                            >
-                                <Iconify icon="tdesign:measurement-1" />
-                                Measurements
-                            </MenuItem>
+                            {associatedProject && associatedProject?.id && (
+                                <MenuItem
+                                    key='projects'
+                                    onClick={() => {
+                                        morePopover.onClose();
+                                        localStorage.setItem('projectId', associatedProject?.id);
+                                        localStorage.setItem('backFromProjectDetails', 'serviceDetails');
+                                        localStorage.setItem('backFromProjectDetailsServiceId', itemById?.id);
+                                        localStorage.setItem('backFromServiceDetailsMeasurementId', '');
+                                        router.push(paths.dashboard.project.details(associatedProject?.id));
+                                    }}
+                                >
+                                    <Tooltip
+                                        title={
+                                            <>
+                                                <Typography variant="body2" color="background.neutral" sx={{ mb: 0 }}>
+                                                    Number: {associatedProject?.number}
+                                                </Typography>
+                                                <Typography variant="body2" color="background.neutral" sx={{ mb: 0 }}>
+                                                    Name: {associatedProject?.name}
+                                                </Typography>
+                                                <Typography variant="body2" color="background.neutral" sx={{ mb: 0 }}>
+                                                    Installation date: {fDate(associatedProject?.startDate) || 'N/A'}
+                                                </Typography>
+                                            </>
+                                        }
+                                        placement="right"
+                                        arrow
+                                    >
+                                        <Box component="span" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                            <Iconify icon="fluent-emoji-high-contrast:man-mechanic" />
+                                            <Typography component="span" variant="body2">
+                                                Installation {associatedProject?.name}
+                                            </Typography>
+                                        </Box>
+                                    </Tooltip>
+
+
+                                </MenuItem>
+                            )}
+                            {associatedMeasurement && associatedMeasurement?.id && (
+                                <MenuItem
+                                    onClick={() => {
+                                        morePopover.onClose();
+                                        localStorage.setItem('measurementId', associatedMeasurement?.id);
+                                        localStorage.setItem('backFromMeasurementDetails', 'service');
+                                        localStorage.setItem('backFromMeasurementDetailsProjectId', '');
+                                        localStorage.setItem('backFromMeasurementDetailsServiceId', itemById?.id);
+                                        router.push(paths.dashboard.measurement.details(associatedMeasurement?.id));
+                                    }}
+                                >
+                                    <Iconify icon="tdesign:measurement-1" />
+                                    Measurements
+                                </MenuItem>
+                            )}
                         </MenuList>
                     </CustomPopover >
                 </>,

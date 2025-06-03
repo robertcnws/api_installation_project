@@ -47,8 +47,6 @@ import { ServiceFiltersResult } from '../service-filters-result';
 
 export function ServiceView() {
 
-  const { isMobile } = useContext(LoadingContext);
-
   localStorage.setItem('backFromServiceDetails', 'services');
 
   const {
@@ -58,17 +56,18 @@ export function ServiceView() {
     loadedUsers,
     loadedSuperadminUsers,
     loadedServiceStages,
+    loadedProjects,
     // loadedServiceStagesTask,
     // listPermissions,
     // refetchSalesOrders,
   } = useDataContext();
 
-  const table = useTable({ 
+  const table = useTable({
     defaultCurrentPage: parseInt(localStorage.getItem('servicePage'), 10) || 0,
     defaultRowsPerPage: parseInt(localStorage.getItem('serviceRowsPerPage'), 10) || 10,
-    defaultDense: true, 
-    defaultOrder: 'asc', 
-    defaultOrderBy: 'startDate' 
+    defaultDense: true,
+    defaultOrder: 'asc',
+    defaultOrderBy: 'startDate'
   });
 
   const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
@@ -92,12 +91,6 @@ export function ServiceView() {
 
   const confirm = useBoolean();
 
-  const confirmStaff = useBoolean();
-
-  const [isWarehouseStaff, setIsWarehouseStaff] = useState(false);
-
-  const upload = useBoolean();
-
   const [view, setView] = useState(localStorage.getItem('serviceView') || 'list');
 
   const [tableData, setTableData] = useState([]);
@@ -113,14 +106,44 @@ export function ServiceView() {
     if (refetchServices) {
       refetchServices();
     }
-    setTableData(loadedServices || []);
-  }, [refetchServices, loadedServices]);
+    const mappedServices = loadedServices?.map(
+      (item) => ({
+        ...item,
+        associatedProject: loadedProjects?.map(
+          (project) => ({
+            id: project.id,
+            name: project.name,
+            number: project.number,
+            salesOrderId: project.salesOrder?.salesorder_id,
+          })
+        ).find(
+          (project) => project?.salesOrderId === item.salesOrder?.salesorder_id
+        ) ?? null
+      }
+      )) || [];
+    setTableData(mappedServices || []);
+  }, [refetchServices, loadedServices, loadedProjects]);
 
   useEffect(() => {
     if (loadedServices) {
-      setTableData(loadedServices);
+      const mappedServices = loadedServices?.map(
+        (item) => ({
+          ...item,
+          associatedProject: loadedProjects?.map(
+            (project) => ({
+              id: project.id,
+              name: project.name,
+              number: project.number,
+              salesOrderId: project.salesOrder?.salesorder_id,
+            })
+          ).find(
+            (project) => project?.salesOrderId === item.salesOrder?.salesorder_id
+          ) ?? null
+        }
+        )) || [];
+      setTableData(mappedServices || []);
     }
-  }, [loadedServices]);
+  }, [loadedServices, loadedProjects]);
 
   useEffect(() => {
     const socket = new WebSocket(`wss://${CONFIG.apiHost}/api/services/ws/services/`);
@@ -131,14 +154,26 @@ export function ServiceView() {
     socket.onmessage = (event) => {
       const message = JSON.parse(event.data);
       if (message.type === 'created' || message.type === 'updated') {
+        const incoming = message.item;
+        const associatedProject = loadedProjects
+          ?.map(proj => ({
+            id: proj.id,
+            name: proj.name,
+            number: proj.number,
+            salesOrderId: proj.salesOrder?.salesorder_id,
+          }))
+          .find(proj => proj.salesOrderId === incoming.salesOrder?.salesorder_id) || null;
+
+        const enriched = { ...incoming, associatedProject };
+
         setTableData((prevData) => {
-          const existingItemIndex = prevData.findIndex(item => String(item.id) === String(message.item.id));
-          if (existingItemIndex !== -1) {
-            const updatedData = [...prevData];
-            updatedData[existingItemIndex] = message.item;
-            return updatedData;
+          const idx = prevData.findIndex(x => String(x.id) === String(incoming.id));
+          if (idx !== -1) {
+            const copy = [...prevData];
+            copy[idx] = enriched;
+            return copy;
           }
-          return [message.item, ...prevData];
+          return [enriched, ...prevData];
         });
       }
       else if (message.type === 'deleted') {
@@ -150,7 +185,7 @@ export function ServiceView() {
         socket.close();
       }
     };
-  }, []);
+  }, [loadedProjects]);
 
   const filters = useSetState({
     list: localStorage.getItem('serviceFilterList') || 'in progress',
@@ -531,18 +566,18 @@ export function ServiceView() {
 
 function applyFilter({ inputData, comparator, filters, dateError }) {
 
-  const { 
-    list, 
-    name, 
-    type, 
-    startDate, 
-    endDate, 
-    byFactory, 
-    notByFactory, 
-    installer, 
-    userManager, 
-    createdBy, 
-    custom 
+  const {
+    list,
+    name,
+    type,
+    startDate,
+    endDate,
+    byFactory,
+    notByFactory,
+    installer,
+    userManager,
+    createdBy,
+    custom
   } = filters;
 
   const stabilizedThis = inputData.map((el, index) => [el, index]);

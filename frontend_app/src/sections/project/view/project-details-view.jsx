@@ -545,7 +545,11 @@ export function ProjectDetailsView({ projectId }) {
                                                 paths.dashboard.measurement.list :
                                                 localStorage.getItem('backFromProjectDetails') === 'measurementDetails' ?
                                                     paths.dashboard.measurement.details(localStorage.getItem('backFromProjectDetailsMeasurementId')) :
-                                                    paths.dashboard.project.list
+                                                    localStorage.getItem('backFromProjectDetails') === 'serviceDetails' ?
+                                                        paths.dashboard.service.details(localStorage.getItem('backFromProjectDetailsServiceId')) :
+                                                        localStorage.getItem('backFromProjectDetails') === 'services' ?
+                                                            paths.dashboard.service.list :
+                                                            paths.dashboard.project.list
                                 }
                                 editLink={paths.dashboard.project.edit(`${itemById?.id}`)}
                                 openEdit={tabs.value === 'overview' ? openEdit : tabs.value === 'tasks' ? openEditTask : null}
@@ -553,7 +557,7 @@ export function ProjectDetailsView({ projectId }) {
                                 type={tabs.value === 'overview' || tabs.value === 'more' ? 'project' : tabs.value === 'tasks' ? 'tasks' : null}
                                 onDelete={() => onDelete(itemById?.id)}
                                 onGenerateMeasurements={() => generateMeasurements()}
-                                refetchProject={refetchProject} 
+                                refetchProject={refetchProject}
                                 listPermissions={listPermissions}
                             />
                             {renderTabs}

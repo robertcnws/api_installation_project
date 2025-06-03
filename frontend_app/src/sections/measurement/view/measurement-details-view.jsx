@@ -52,6 +52,7 @@ export function MeasurementDetailsView({ measurementId }) {
         loadedServices,
         loadedProjects,
     } = useDataContext();
+    
 
     const [openDialogs, setOpenDialogs] = useState({
         firstAssignee: false,
