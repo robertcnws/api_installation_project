@@ -75,6 +75,13 @@ export function ServiceFilters({
     if (filters.state.installer.id) active.push(`Team: ${filters.state.installer.name}`);
     if (filters.state.userManager.id) active.push(`Responsible: ${filters.state.userManager.name}`);
     if (filters.state.createdBy.id) active.push(`Creator: ${filters.state.createdBy.name}`);
+    if (custom.isPreparation.value) active.push('In Preparation Stage');
+    if (custom.isRepair.value) active.push('In Repair Stage');
+    if (custom.isClosing.value) active.push('In Closing Stage');
+    if (filters.state.byFactory) active.push('By Factory');
+    if (filters.state.notByFactory) active.push('Not by Factory');
+    if (filters.state.associatedToProject) active.push('Associated');
+    if (filters.state.notAssociatedToProject) active.push('Not Associated');
     return active.length > 0 ? `${name} Services (${active.join(', ')})` : `${name} services`;
   }, [custom, filters]);
 
@@ -182,6 +189,20 @@ export function ServiceFilters({
         notByFactory: byFactory,
       });
       localStorage.setItem('serviceFilterNotByFactory', byFactory);
+    }
+    else if (fieldName === 'associatedToProject') {
+      const associatedToProject = !filters.state.associatedToProject;
+      filters.setState({
+        associatedToProject,
+      });
+      localStorage.setItem('serviceFilterAssociatedToProject', associatedToProject);
+    }
+    else if (fieldName === 'notAssociatedToProject') {
+      const notAssociatedToProject = !filters.state.notAssociatedToProject;
+      filters.setState({
+        notAssociatedToProject,
+      });
+      localStorage.setItem('serviceFilterNotAssociatedToProject', notAssociatedToProject);
     }
 
     setCustomFilterName(createCustomFilterName());
@@ -627,6 +648,38 @@ export function ServiceFilters({
                       sx={{ width: '100%' }}
                     />
                   </Tooltip>
+                </Box>
+              </MenuItem>
+
+              <MenuItem sx={{ py: 0 }} key="factory-divider">
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', p: 0 }}>
+                  <Divider orientation="vertical" flexItem sx={{ color: 'text.disabled' }} >
+                    <ListItemText primary="Associated to Installations" />
+                  </Divider>
+                </Box>
+              </MenuItem>
+
+              <MenuItem sx={{ py: 0 }} key="associatedToProject" onClick={() => handleFilterCustom('associatedToProject')}>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <ListItemIcon>
+                    <CheckBox
+                      checked={filters.state.associatedToProject}
+                      onChange={() => handleFilterCustom('associatedToProject')}
+                    />
+                  </ListItemIcon>
+                  <ListItemText primary="Associated to Installation?" />
+                </Box>
+              </MenuItem>
+
+              <MenuItem sx={{ py: 0 }} key="notAssociatedToProject" onClick={() => handleFilterCustom('notAssociatedToProject')}>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <ListItemIcon>
+                    <CheckBox
+                      checked={filters.state.notAssociatedToProject}
+                      onChange={() => handleFilterCustom('notAssociatedToProject')}
+                    />
+                  </ListItemIcon>
+                  <ListItemText primary="Not associated to Installation?" />
                 </Box>
               </MenuItem>
 

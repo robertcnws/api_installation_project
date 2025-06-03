@@ -195,6 +195,8 @@ export function ServiceView() {
     endDate: localStorage.getItem('serviceFilterEndDate') ? dayjs(localStorage.getItem('serviceFilterEndDate')) : null,
     byFactory: localStorage.getItem('serviceFilterByFactory') === 'true' || false,
     notByFactory: localStorage.getItem('serviceFilterNotByFactory') === 'true' || false,
+    associatedToProject: localStorage.getItem('serviceFilterAssociatedToProject') === 'true' || false,
+    notAssociatedToProject: localStorage.getItem('serviceFilterNotAssociatedToProject') === 'true' || false,
     installer: JSON.parse(localStorage.getItem('serviceFilterInstaller')) || {
       id: null,
       name: null,
@@ -251,7 +253,9 @@ export function ServiceView() {
     filters.state.custom.isClosing?.value ||
     filters.state.custom.hasComments ||
     filters.state.byFactory ||
-    filters.state.notByFactory;
+    filters.state.notByFactory ||
+    filters.state.associatedToProject ||  
+    filters.state.notAssociatedToProject;
 
   const notFound = (!dataFiltered.length && canReset) || !dataFiltered.length;
 
@@ -574,6 +578,8 @@ function applyFilter({ inputData, comparator, filters, dateError }) {
     endDate,
     byFactory,
     notByFactory,
+    associatedToProject,
+    notAssociatedToProject,
     installer,
     userManager,
     createdBy,
@@ -652,6 +658,14 @@ function applyFilter({ inputData, comparator, filters, dateError }) {
 
   if (notByFactory && !byFactory) {
     inputData = inputData.filter(file => !file.byFactory);
+  }
+
+  if (associatedToProject && !notAssociatedToProject) {
+    inputData = inputData.filter(file => file.associatedProject && file.associatedProject.id);
+  }
+
+  if (notAssociatedToProject && !associatedToProject) {
+    inputData = inputData.filter(file => !file.associatedProject || !file.associatedProject.id);
   }
 
   if (installer.id) {

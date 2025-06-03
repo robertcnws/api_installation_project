@@ -46,6 +46,18 @@ export function ServiceFiltersResult({ filters, onResetPage, totalResults, sx })
     localStorage.removeItem('serviceFilterNotByFactory');
   }, [filters, onResetPage]);
 
+  const handleRemoveAssociatedToProject = useCallback(() => {
+    onResetPage();
+    filters.setState({ associatedToProject: false });
+    localStorage.removeItem('serviceFilterAssociatedToProject');
+  }, [filters, onResetPage]);
+
+  const handleRemoveNotAssociatedToProject = useCallback(() => {
+    onResetPage();
+    filters.setState({ notAssociatedToProject: false });
+    localStorage.removeItem('serviceFilterNotAssociatedToProject');
+  }, [filters, onResetPage]);
+
   const handleRemoveInstaller = useCallback(() => {
     onResetPage();
     filters.setState({ installer: { id: null, name: null } });
@@ -106,6 +118,8 @@ export function ServiceFiltersResult({ filters, onResetPage, totalResults, sx })
     localStorage.removeItem('serviceFilterCustom');
     localStorage.removeItem('serviceFilterByFactory');
     localStorage.removeItem('serviceFilterNotByFactory');
+    localStorage.removeItem('serviceFilterAssociatedToProject');
+    localStorage.removeItem('serviceFilterNotAssociatedToProject');
     filters.setState({
       name: '',
       type: [],
@@ -116,6 +130,8 @@ export function ServiceFiltersResult({ filters, onResetPage, totalResults, sx })
       createdBy: { id: null, name: null },
       byFactory: false,
       notByFactory: false,
+      associatedToProject: false,
+      notAssociatedToProject: false,
       custom: {
         hasPermission: false,
         isPreparation: { name: 'preparation', value: false },
@@ -191,6 +207,14 @@ export function ServiceFiltersResult({ filters, onResetPage, totalResults, sx })
 
       <FiltersBlock label="Not by Factory?:" isShow={Boolean(filters.state.notByFactory)}>
         <Chip {...chipProps} label='Yes' onDelete={() => handleRemoveNotByFactory()} />
+      </FiltersBlock>
+
+      <FiltersBlock label="Associated to Installation?:" isShow={Boolean(filters.state.associatedToProject)}>
+        <Chip {...chipProps} label='Yes' onDelete={() => handleRemoveAssociatedToProject()} />
+      </FiltersBlock>
+
+      <FiltersBlock label="Not associated to Installation?:" isShow={Boolean(filters.state.notAssociatedToProject)}>
+        <Chip {...chipProps} label='Yes' onDelete={() => handleRemoveNotAssociatedToProject()} />
       </FiltersBlock>
 
       <FiltersBlock label="Has Comment(s):" isShow={Boolean(filters.state.custom.hasComments)}>
