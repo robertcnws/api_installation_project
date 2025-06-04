@@ -133,10 +133,11 @@ function FileViewerDialogComponent({
                                             cursor: 'not-allowed !important',
                                             pointerEvents: 'auto',
                                         },
-                                        color: currentIndex === 0 ? 'text.disabled' : 'text.primary'
+                                        color: currentIndex === 0 ? 'text.disabled' : 'text.primary',
+                                        fontSize: '0.875rem',
                                     }}
                                 >
-                                    <Iconify icon="mdi-light:skip-previous" width={20} height={20} />
+                                    <Iconify icon="mdi-light:skip-previous" width={20} height={20} /> Previous
                                 </IconButton>
                             </span>
                         </Tooltip>
@@ -159,10 +160,11 @@ function FileViewerDialogComponent({
                                             cursor: 'not-allowed !important',
                                             pointerEvents: 'auto',
                                         },
-                                        color: currentIndex === files.length - 1 ? 'text.disabled' : 'text.primary'
+                                        color: currentIndex === files.length - 1 ? 'text.disabled' : 'text.primary',
+                                        fontSize: '0.875rem',
                                     }}
                                 >
-                                    <Iconify icon="mdi-light:skip-next" width={20} height={20} />
+                                    Next <Iconify icon="mdi-light:skip-next" width={20} height={20} />
                                 </IconButton>
                             </span>
                         </Tooltip>

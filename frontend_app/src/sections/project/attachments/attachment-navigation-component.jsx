@@ -47,44 +47,64 @@ export function AttachmentNavigationComponent({
 
     return (
         <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'left' }}>
-            {indexInFilteredList - 1 >= 0 && (
-                <Tooltip title={`Previous ${objType.toLowerCase()}: ${dataFiltered?.[indexInFilteredList - 1]?.name}`} arrow>
+            <Tooltip title={
+                indexInFilteredList <= 0 ? '' :
+                    `Previous ${objType.toLowerCase()}: ${dataFiltered?.[indexInFilteredList - 1]?.name}`
+            } arrow>
+                <span>
                     <IconButton
+                        disabled={indexInFilteredList <= 0}
                         sx={{
                             '&:hover': {
                                 boxShadow: 'none',
                                 backgroundColor: 'transparent',
                             },
+                            cursor: indexInFilteredList <= 0 ? 'not-allowed' : 'pointer',
+                            '&.Mui-disabled': {
+                                cursor: 'not-allowed !important',
+                                pointerEvents: 'auto',
+                            },
+                            color: indexInFilteredList <= 0 ? 'text.disabled' : 'text.primary',
                         }}
                         onClick={() => {
                             const currentProject = dataFiltered?.[indexInFilteredList - 1];
                             setDisplayData(currentProject)
                             const files = funcGetAttachments(currentProject, stageName);
-                            setDisplayAttachments(files?.project?.concat(files?.tasks) || files?.service );
+                            setDisplayAttachments(files?.project?.concat(files?.tasks) || files?.service);
                         }} color='default'>
                         <Iconify icon="mdi-light:skip-previous" />
                     </IconButton>
-                </Tooltip>
-            )}
-            {indexInFilteredList + 1 < dataFiltered?.length && (
-                <Tooltip title={`Next ${objType.toLowerCase()}: ${dataFiltered?.[indexInFilteredList + 1]?.name}`} arrow>
+                </span>
+            </Tooltip>
+            <Tooltip title={
+                indexInFilteredList >= dataFiltered.length - 1 ? '' :
+                    `Next ${objType.toLowerCase()}: ${dataFiltered?.[indexInFilteredList + 1]?.name}`
+            } arrow>
+                <span>
                     <IconButton
+                        disabled={indexInFilteredList >= dataFiltered.length - 1}
                         sx={{
                             '&:hover': {
                                 boxShadow: 'none',
                                 backgroundColor: 'transparent',
                             },
+                            cursor: indexInFilteredList >= dataFiltered.length - 1 ? 'not-allowed' : 'pointer',
+                            '&.Mui-disabled': {
+                                cursor: 'not-allowed !important',
+                                pointerEvents: 'auto',
+                            },
+                            color: indexInFilteredList >= dataFiltered.length - 1 ? 'text.disabled' : 'text.primary',   
                         }}
                         onClick={() => {
                             const currentProject = dataFiltered?.[indexInFilteredList + 1];
                             setDisplayData(currentProject)
                             const files = funcGetAttachments(currentProject, stageName);
-                            setDisplayAttachments(files?.project?.concat(files?.tasks) || files?.service );
+                            setDisplayAttachments(files?.project?.concat(files?.tasks) || files?.service);
                         }} color='default'>
                         <Iconify icon="mdi-light:skip-next" />
                     </IconButton>
-                </Tooltip>
-            )}
+                </span>
+            </Tooltip>
             <Tooltip title={`List ${objType.toLowerCase()}s`} arrow>
                 <IconButton
                     sx={{
@@ -92,6 +112,8 @@ export function AttachmentNavigationComponent({
                             boxShadow: 'none',
                             backgroundColor: 'transparent',
                         },
+                        cursor: 'pointer',
+                        color: 'text.primary',
                     }}
                     onClick={popoverList.onOpen}
                     color='default'>
@@ -130,7 +152,7 @@ export function AttachmentNavigationComponent({
                                     popoverList.onClose();
                                     setDisplayData(obj)
                                     const files = funcGetAttachments(obj, stageName);
-                                    setDisplayAttachments(files?.project?.concat(files?.tasks) || files?.service );
+                                    setDisplayAttachments(files?.project?.concat(files?.tasks) || files?.service);
                                 }}
                             >
                                 <Tooltip
