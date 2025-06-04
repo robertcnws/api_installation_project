@@ -182,14 +182,25 @@ export function ServiceDetailsToolbar({
               `Created by ${service?.createdBy?.first_name || service?.userReporter?.firstName} ${service?.createdBy?.last_name || service?.userReporter?.lastName}`}
           </Typography>
           <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'left' }}>
-            {indexInServiceFilteredList - 1 >= 0 && (
-              <Tooltip title={`Previous service: ${serviceFilteredList?.[indexInServiceFilteredList - 1]?.name}`} arrow>
+
+            <Tooltip title={
+              indexInServiceFilteredList <= 0 ? '' :
+                `Previous service: ${serviceFilteredList?.[indexInServiceFilteredList - 1]?.name}`
+            } arrow>
+              <span>
                 <IconButton
+                  disabled={indexInServiceFilteredList <= 0}
                   sx={{
                     '&:hover': {
                       boxShadow: 'none',
                       backgroundColor: 'transparent',
                     },
+                    cursor: indexInServiceFilteredList <= 0 ? 'not-allowed' : 'pointer',
+                    '&.Mui-disabled': {
+                      cursor: 'not-allowed !important',
+                      pointerEvents: 'auto',
+                    },
+                    color: indexInServiceFilteredList <= 0 ? 'text.disabled' : 'text.primary',
                   }}
                   onClick={() => {
                     const id = serviceFilteredList?.[indexInServiceFilteredList - 1]?.id;
@@ -200,16 +211,27 @@ export function ServiceDetailsToolbar({
                   }} color='default'>
                   <Iconify icon="mdi-light:skip-previous" />
                 </IconButton>
-              </Tooltip>
-            )}
-            {indexInServiceFilteredList + 1 < serviceFilteredList?.length && (
-              <Tooltip title={`Next service: ${serviceFilteredList?.[indexInServiceFilteredList + 1]?.name}`} arrow>
+              </span>
+            </Tooltip>
+
+            <Tooltip title={
+              indexInServiceFilteredList >= serviceFilteredList.length - 1 ? '' :
+                `Next service: ${serviceFilteredList?.[indexInServiceFilteredList + 1]?.name}`
+            } arrow>
+              <span>
                 <IconButton
+                  disabled={indexInServiceFilteredList >= serviceFilteredList.length - 1}
                   sx={{
                     '&:hover': {
                       boxShadow: 'none',
                       backgroundColor: 'transparent',
                     },
+                    cursor: indexInServiceFilteredList >= serviceFilteredList.length - 1 ? 'not-allowed' : 'pointer',
+                    '&.Mui-disabled': {
+                      cursor: 'not-allowed !important',
+                      pointerEvents: 'auto',
+                    },
+                    color: indexInServiceFilteredList >= serviceFilteredList.length - 1 ? 'text.disabled' : 'text.primary',
                   }}
                   onClick={() => {
                     const id = serviceFilteredList?.[indexInServiceFilteredList + 1]?.id;
@@ -220,8 +242,9 @@ export function ServiceDetailsToolbar({
                   }} color='default'>
                   <Iconify icon="mdi-light:skip-next" />
                 </IconButton>
-              </Tooltip>
-            )}
+              </span>
+            </Tooltip>
+
             <Tooltip title='List services' arrow>
               <IconButton
                 sx={{
@@ -229,6 +252,8 @@ export function ServiceDetailsToolbar({
                     boxShadow: 'none',
                     backgroundColor: 'transparent',
                   },
+                  cursor: 'pointer',
+                  color: 'text.primary',
                 }}
                 onClick={popoverServiceList.onOpen}
                 color='default'>

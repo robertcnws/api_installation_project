@@ -14,6 +14,7 @@ import { fDate } from 'src/utils/format-time';
 import { extractDimensions } from 'src/utils/generate-installation-guide-pdf';
 import { getProjectInstaller, filteredDescriptionJson } from 'src/utils/project-tasks-utils';
 import { isInstaller, isFinancialStaff, isWarehouseStaff, listRolesAndSubroles } from 'src/utils/check-permissions';
+import { generateMeasurementProperties } from 'src/utils/measurement-tasks-utils';
 
 import { CONFIG } from 'src/config-global';
 import { DashboardContent } from 'src/layouts/dashboard';
@@ -43,6 +44,7 @@ import { ProjectEditModalPhoneNumberView } from './project-edit-modal-phone-numb
 import { ProjectDetailsReleaseFormInstallerView } from './project-details-release-form-installer-view';
 import { ProjectDetailsInstallationGuideFormView } from './project-details-installation-guide-form-view';
 import { ProjectDetailsInstallationGuideFormInstallerView } from './project-details-installation-guide-form-installer-view';
+
 
 // ----------------------------------------------------------------------
 
@@ -375,16 +377,8 @@ export function ProjectDetailsView({ projectId }) {
             const arrayDimensions = listItems?.map((i) => {
                 const propertiesJson = filteredDescriptionJson(i.description);
                 const dimensions = propertiesJson?.Size ? extractDimensions(i.description) : i.description ? extractDimensions(i.description) : null;
-                let config = ''
-                if (propertiesJson?.Config?.length > 0 || propertiesJson?.config?.length > 0) {
-                    config = propertiesJson?.Config || propertiesJson?.config;
-                }
-                else if (propertiesJson?.Size?.length > 0 || propertiesJson?.size?.length > 0) {
-                    const array = propertiesJson?.Size?.split(' ') || propertiesJson?.size?.split(' ');
-                    config = array[array.length - 1];
-                }
-                const sku = propertiesJson?.SKU || propertiesJson?.sku;
-                const type = sku?.split(' ')[0] || i?.description.split(' ')[0];
+                const { config, type } = generateMeasurementProperties(i, propertiesJson);
+
                 return {
                     ...i,
                     type,
@@ -407,6 +401,13 @@ export function ProjectDetailsView({ projectId }) {
             delete project.projectHistory;
             delete project.stageHistory;
             delete project.currentStage;
+
+            // console.log('arrayDimensions', arrayDimensions.map((it) => ({
+            //     name: it.name,
+            //     type: it.type,
+            //     dimensions: it.dimensions,
+            //     config: it.config,
+            // })));
 
             try {
                 const promise = axios.post(`${CONFIG.apiUrl}/measurements/create/measurement/`, {

@@ -192,14 +192,25 @@ export function ProjectDetailsToolbar({
             )}
           </Box>
           <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'left' }}>
-            {indexInInstallationFilteredList - 1 >= 0 && (
-              <Tooltip title={`Previous installation: ${installationFilteredList?.[indexInInstallationFilteredList - 1]?.name}`} arrow>
+
+            <Tooltip title={
+              indexInInstallationFilteredList <= 0 ? '' :
+                `Previous installation: ${installationFilteredList?.[indexInInstallationFilteredList - 1]?.name}`
+            } arrow>
+              <span>
                 <IconButton
+                  disabled={indexInInstallationFilteredList <= 0}
                   sx={{
                     '&:hover': {
                       boxShadow: 'none',
                       backgroundColor: 'transparent',
                     },
+                    cursor: indexInInstallationFilteredList <= 0 ? 'not-allowed' : 'pointer',
+                    '&.Mui-disabled': {
+                      cursor: 'not-allowed !important',
+                      pointerEvents: 'auto',
+                    },
+                    color: indexInInstallationFilteredList <= 0 ? 'text.disabled' : 'text.primary',
                   }}
                   onClick={() => {
                     const id = installationFilteredList?.[indexInInstallationFilteredList - 1]?.id;
@@ -210,16 +221,27 @@ export function ProjectDetailsToolbar({
                   }} color='default'>
                   <Iconify icon="mdi-light:skip-previous" />
                 </IconButton>
-              </Tooltip>
-            )}
-            {indexInInstallationFilteredList + 1 < installationFilteredList?.length && (
-              <Tooltip title={`Next installation: ${installationFilteredList?.[indexInInstallationFilteredList + 1]?.name}`} arrow>
+              </span>
+            </Tooltip>
+
+            <Tooltip title={
+              indexInInstallationFilteredList >= installationFilteredList.length - 1 ? '' :
+              `Next installation: ${installationFilteredList?.[indexInInstallationFilteredList + 1]?.name}`
+            } arrow>
+              <span>
                 <IconButton
+                  disabled={indexInInstallationFilteredList >= installationFilteredList.length - 1}
                   sx={{
                     '&:hover': {
                       boxShadow: 'none',
                       backgroundColor: 'transparent',
                     },
+                    cursor: indexInInstallationFilteredList >= installationFilteredList.length - 1 ? 'not-allowed' : 'pointer',
+                    '&.Mui-disabled': {
+                      cursor: 'not-allowed !important',
+                      pointerEvents: 'auto',
+                    },
+                    color: indexInInstallationFilteredList >= installationFilteredList.length - 1 ? 'text.disabled' : 'text.primary',
                   }}
                   onClick={() => {
                     const id = installationFilteredList?.[indexInInstallationFilteredList + 1]?.id;
@@ -230,8 +252,9 @@ export function ProjectDetailsToolbar({
                   }} color='default'>
                   <Iconify icon="mdi-light:skip-next" />
                 </IconButton>
-              </Tooltip>
-            )}
+              </span>
+            </Tooltip>
+
             <Tooltip title='List installations' arrow>
               <IconButton
                 sx={{
@@ -239,6 +262,8 @@ export function ProjectDetailsToolbar({
                     boxShadow: 'none',
                     backgroundColor: 'transparent',
                   },
+                  cursor: 'pointer',
+                  color: 'text.primary',
                 }}
                 onClick={popoverInstallationList.onOpen}
                 color='default'>

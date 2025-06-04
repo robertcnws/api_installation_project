@@ -107,9 +107,9 @@ export function MeasurementDetailsToolbar({
                   measurement?.status === 'in progress' ? 'warning' :
                     'default'
               }
-              sx={{ 
-                gap: 0.5, 
-                textTransform: 'uppercase', 
+              sx={{
+                gap: 0.5,
+                textTransform: 'uppercase',
                 mt: 0.2,
               }}
             >
@@ -124,19 +124,27 @@ export function MeasurementDetailsToolbar({
             </Label>
           </Box>
           <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'left' }}>
-            {indexInMeasurementFilteredList - 1 >= 0 && (
-              <Tooltip
-                title={`
-                    Previous measurement: ${measurementFilteredList?.[indexInMeasurementFilteredList - 1]?.number} ${' '}
+            <Tooltip
+              title={
+                indexInMeasurementFilteredList <= 0 ? '' :
+                  `Previous measurement: ${measurementFilteredList?.[indexInMeasurementFilteredList - 1]?.number} ${' '}
                     (${measurementFilteredList?.[indexInMeasurementFilteredList - 1]?.customerName})`
-                }
-                arrow>
+              }
+              arrow>
+              <span>
                 <IconButton
+                  disabled={indexInMeasurementFilteredList <= 0}
                   sx={{
                     '&:hover': {
                       boxShadow: 'none',
                       backgroundColor: 'transparent',
                     },
+                    cursor: indexInMeasurementFilteredList <= 0 ? 'not-allowed' : 'pointer',
+                    '&.Mui-disabled': {
+                      cursor: 'not-allowed !important',
+                      pointerEvents: 'auto',
+                    },
+                    color: indexInMeasurementFilteredList <= 0 ? 'text.disabled' : 'text.primary',
                   }}
                   onClick={() => {
                     const id = measurementFilteredList?.[indexInMeasurementFilteredList - 1]?.id;
@@ -147,21 +155,30 @@ export function MeasurementDetailsToolbar({
                   }} color='default'>
                   <Iconify icon="mdi-light:skip-previous" />
                 </IconButton>
-              </Tooltip>
-            )}
-            {indexInMeasurementFilteredList + 1 < measurementFilteredList?.length && (
-              <Tooltip
-                title={`
-                  Next measurement: ${measurementFilteredList?.[indexInMeasurementFilteredList + 1]?.number} ${' '}
+              </span>
+            </Tooltip>
+
+            <Tooltip
+              title={
+                indexInMeasurementFilteredList >= measurementFilteredList.length - 1 ? '' :
+                  `Next measurement: ${measurementFilteredList?.[indexInMeasurementFilteredList + 1]?.number} ${' '}
                   (${measurementFilteredList?.[indexInMeasurementFilteredList + 1]?.customerName})
                   `}
-                arrow>
+              arrow>
+              <span>
                 <IconButton
+                  disabled={indexInMeasurementFilteredList >= measurementFilteredList.length - 1}
                   sx={{
                     '&:hover': {
                       boxShadow: 'none',
                       backgroundColor: 'transparent',
                     },
+                    cursor: indexInMeasurementFilteredList >= measurementFilteredList.length - 1 ? 'not-allowed' : 'pointer',
+                    '&.Mui-disabled': {
+                      cursor: 'not-allowed !important',
+                      pointerEvents: 'auto',
+                    },
+                    color: indexInMeasurementFilteredList >= measurementFilteredList.length - 1 ? 'text.disabled' : 'text.primary',
                   }}
                   onClick={() => {
                     const id = measurementFilteredList?.[indexInMeasurementFilteredList + 1]?.id;
@@ -172,8 +189,9 @@ export function MeasurementDetailsToolbar({
                   }} color='default'>
                   <Iconify icon="mdi-light:skip-next" />
                 </IconButton>
-              </Tooltip>
-            )}
+              </span>
+            </Tooltip>
+
             <Tooltip title='List measurements' arrow>
               <IconButton
                 sx={{
@@ -181,6 +199,8 @@ export function MeasurementDetailsToolbar({
                     boxShadow: 'none',
                     backgroundColor: 'transparent',
                   },
+                  cursor: 'pointer',
+                  color: 'text.primary',
                 }}
                 onClick={popoverMeasurementList.onOpen}
                 color='default'>
