@@ -8,6 +8,7 @@ from api_projects.data_util import (
     create_notification,
     create_entity_number,
     to_aware,
+    parse_custom_date,
 )
 from api_projects.s3_utils import (
     upload_attachment_to_s3, 
@@ -33,6 +34,10 @@ from api_services.utils import (
     updated_tasks,
 )
 import json
+import logging
+
+logging.basicConfig(level=logging.WARNING)
+logger = logging.getLogger(__name__)
 
 
 #############################################
@@ -169,6 +174,7 @@ def create_service(request):
             service_place=service_place,
             has_to_pay=has_to_pay,
             by_factory=by_factory,
+            duration=0,
         )
         
         service.save()
@@ -251,18 +257,35 @@ def update_service(request, id):
     if not service:
         return Response({'error': 'Service not found'}, status=404)
     
-    start_date = data.get('startDate', None)
-    end_date = data.get('endDate', None)
+    start_date = parse_custom_date(logger, data.get('startDate')) if data.get('startDate') else service.start_date
+    
+    end_date = service.end_date
+    
+    if data.get('startDate') and data.get('duration'):
+        try:
+            duration = int(data.get('duration', 0))
+            if duration > 0:
+                new_duration = duration - 1 if duration else 0
+                end_date = start_date + timezone.timedelta(days=new_duration)
+                end_date = parse_custom_date(logger, end_date)
+            else:
+                end_date = service.end_date
+        except ValueError:
+                return Response({'error': 'Invalid duration value'}, status=400)
+            
+    # end_date = data.get('endDate', None)
     notes = data.get('notes', None)
     name = data.get('name', data.get('title', None))
     
     try:
         start_date = start_date if start_date else None
+        duration = duration if duration else None
         end_date = end_date if end_date else None
         name = name if name else None
         notes = notes if notes else None
         
         service.start_date = start_date
+        service.duration = duration
         service.end_date = end_date
         service.service_notes = notes
         service.name = name

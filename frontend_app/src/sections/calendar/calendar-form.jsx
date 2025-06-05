@@ -85,7 +85,7 @@ export function CalendarForm({ currentEvent, colorOptions, onClose }) {
     (id) => {
       const fieldId = currentEvent?.type === 'service' ? 'serviceId' :
         currentEvent?.type.toLowerCase().indexOf('measurement') !== -1 ? 'measurementId' : 'projectId';
-      const field  = currentEvent?.type === 'service' ? 'Service' :
+      const field = currentEvent?.type === 'service' ? 'Service' :
         currentEvent?.type.toLowerCase().indexOf('measurement') !== -1 ? 'Measurement' : 'Project';
       localStorage.setItem(fieldId, id);
       localStorage.setItem(`backFrom${field}Details`, 'calendarDashboard');
@@ -102,6 +102,8 @@ export function CalendarForm({ currentEvent, colorOptions, onClose }) {
     }, [router, currentEvent?.type]);
 
   const onSubmit = handleSubmit(async (data) => {
+    const utcStart = dayjs(data?.start).utc();
+    const utcEnd = data?.end ? dayjs(data?.end).utc() : null;
     const eventData = {
       id: currentEvent?.id ? currentEvent?.id : uuidv4(),
       // color: data?.color,
@@ -109,14 +111,18 @@ export function CalendarForm({ currentEvent, colorOptions, onClose }) {
       // allDay: data?.allDay,
       description: data?.description,
       notes: data?.description,
-      end: data?.end,
-      start: data?.start,
-      endDate: currentEvent.type === 'installation' || currentEvent.type === 'service' ? data?.end : null,
-      startDate: currentEvent.type === 'installation' || currentEvent.type === 'service' ? data?.start : null,
-      inspectionDate: currentEvent.type === 'inspection' ? data?.start : null,
-      finishPermissionDate: currentEvent.type === 'finishPermission' ? data?.start : null,
+      end: utcEnd ? utcEnd.format('YYYY-MM-DD') : null,
+      start: utcStart.format('YYYY-MM-DD'),
+      // endDate: currentEvent.type === 'installation' || currentEvent.type === 'service' ? data?.end : null,
+      startDate: currentEvent.type === 'installation' || currentEvent.type === 'service' ? utcStart.format('YYYY-MM-DD') : null,
+      duration: currentEvent.type === 'installation' || currentEvent.type === 'service' ?
+        dayjs(utcEnd.format('YYYY-MM-DD')).diff(dayjs(utcStart.format('YYYY-MM-DD')), 'day') + 1 : null,
+      inspectionDate: currentEvent.type === 'inspection' ? utcStart.format('YYYY-MM-DD') : null,
+      finishPermissionDate: currentEvent.type === 'finishPermission' ? utcStart.format('YYYY-MM-DD') : null,
       name: currentEvent?.originalName,
     };
+
+    console.log('eventData', eventData);
 
     try {
       if (!dateError) {
@@ -162,12 +168,13 @@ export function CalendarForm({ currentEvent, colorOptions, onClose }) {
         {currentEvent?.type.toLowerCase().indexOf('measurement') === -1 && (
           <Scrollbar sx={{ p: 3, bgcolor: 'background.neutral' }}>
             <Stack spacing={3}>
-              <Field.Text name="title" label="Title" />
+              <Field.Text name="title" label="Title" disabled/>
 
               <Field.Text
                 name='description'
                 label={currentEvent?.type !== 'service' ? 'Description' : 'Notes'}
                 multiline rows={3}
+                disabled
               />
 
               {/* <Field.Switch name="allDay" label="All day" /> */}
@@ -179,6 +186,7 @@ export function CalendarForm({ currentEvent, colorOptions, onClose }) {
                     currentEvent?.type === 'inspection' ? 'Inspection date' : 'Finish date'
                 }
                 minDate={dayjs(currentEvent?.salesOrder?.date)}
+                disabled
               />
 
               {(currentEvent?.type === 'installation' || currentEvent?.type === 'service') ? (
@@ -193,6 +201,7 @@ export function CalendarForm({ currentEvent, colorOptions, onClose }) {
                         helperText: dateError ? 'End date must be later than start date' : null,
                       },
                     }}
+                    disabled
                   />
                   {(currentEvent?.type !== 'service' && getProjectInstaller(currentEvent, CONFIG)?.name) && (
                     <Box sx={{ display: 'flex', mb: 1, p: 1, justifyContent: 'flex-start' }}>
@@ -258,7 +267,7 @@ export function CalendarForm({ currentEvent, colorOptions, onClose }) {
 
           <Box sx={{ flexGrow: 1 }} />
 
-          {currentEvent?.type.toLowerCase().indexOf('measurement') === -1 && (
+          {/* {currentEvent?.type.toLowerCase().indexOf('measurement') === -1 && (
 
             <LoadingButton
               type="submit"
@@ -269,7 +278,7 @@ export function CalendarForm({ currentEvent, colorOptions, onClose }) {
               Save changes
             </LoadingButton>
 
-          )}
+          )} */}
 
           <Button
             variant="contained"

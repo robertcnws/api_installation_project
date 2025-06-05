@@ -102,12 +102,12 @@ export function ProjectView() {
 
   const [tableData, setTableData] = useState([]);
 
-  // useEffect(() => {
-  //   if (refetchProjects) {
-  //     refetchProjects();
-  //   }
-  //   setTableData(loadedProjects || []);
-  // }, [refetchProjects, loadedProjects]);
+  useEffect(() => {
+    if (refetchProjects) {
+      refetchProjects();
+    }
+    setTableData(loadedProjects || []);
+  }, [refetchProjects, loadedProjects]);
 
   useEffect(() => {
     if (loadedProjects) {

@@ -1,0 +1,1 @@
+FROM mrvautin/adminmongo:latest

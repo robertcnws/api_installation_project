@@ -153,6 +153,7 @@ class Project(Document):
     user_installer = DynamicField(null=True)
     start_date = DateTimeField(null=True)
     end_date = DateTimeField(null=True)
+    duration = IntField(default=0, null=True)  # Duration in days
     current_stage = DynamicField(null=True)
     project_attachments = ListField(DynamicField(), default=list, null=True)
     project_tasks = ListField(DynamicField(), default=list, null=True)
@@ -176,6 +177,7 @@ class Project(Document):
     finish_permission_date = DateTimeField(null=True)
     is_part_days = BooleanField(default=False)
     phone = StringField(max_length=255, null=True)
+    duration = IntField(default=0, null=True)  # Duration in days
     
     meta = {
         'collection': 'project',

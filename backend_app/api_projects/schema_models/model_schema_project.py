@@ -64,6 +64,7 @@ class ProjectViewType(MongoengineObjectType):
     start_date = graphene.String()
     inspection_date = graphene.String()
     finish_permission_date = graphene.String()
+    duration = graphene.Int()
     
     def resolve_created_time(self, info):
         dt = self._data.get('created_time') 
@@ -182,6 +183,9 @@ class ProjectViewType(MongoengineObjectType):
     def resolve_project_materials_other_notes(self, info):
         return self._data.get('project_materials_other_notes')
     
+    def resolve_duration(self, info):
+        return self._data.get('duration', 0) 
+    
 
 class ProjectType(MongoengineObjectType):
     class Meta:
@@ -207,6 +211,7 @@ class ProjectType(MongoengineObjectType):
     start_date = graphene.String()
     inspection_date = graphene.String()
     finish_permission_date = graphene.String()
+    duration = graphene.Int()
     
     def resolve_created_time(self, info):
         dt = self.created_time
@@ -273,6 +278,9 @@ class ProjectType(MongoengineObjectType):
     
     def resolve_user_installer(self, info):
         return self.user_installer or {}
+    
+    def resolve_duration(self, info):
+        return self.duration or 0
     
     
 class ProjectSyncType(MongoengineObjectType):
@@ -299,6 +307,7 @@ class ProjectSyncType(MongoengineObjectType):
     end_date = graphene.String()
     inspection_date = graphene.String()
     finish_permission_date = graphene.String()
+    duration = graphene.Int()
     
     
     def resolve_created_time(self, info):
@@ -366,3 +375,6 @@ class ProjectSyncType(MongoengineObjectType):
     
     def resolve_user_installer(self, info):
         return self.user_installer or {}
+    
+    def resolve_duration(self, info):
+        return self.duration or 0

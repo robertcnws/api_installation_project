@@ -262,7 +262,7 @@ export function ProjectDetailsContent({
                     color={
                       project?.endDate
                         ? (
-                          (fIsAfter(dayjs(new Date()), dayjs(project?.endDate).format('YYYY-MM-DD')) &&
+                          (fIsAfter(dayjs(new Date()).format('YYYY-MM-DD'), dayjs(project?.endDate).format('YYYY-MM-DD')) &&
                             (
                               project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.preparation.toLowerCase()) ||
                               project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.coordination.toLowerCase()) ||
@@ -276,7 +276,7 @@ export function ProjectDetailsContent({
                     }
                     sx={{
                       fontWeight: project?.endDate ? (
-                        (fIsAfter(dayjs(new Date()), dayjs(project?.endDate).format('YYYY-MM-DD')) &&
+                        (fIsAfter(dayjs(new Date()).format('YYYY-MM-DD'), dayjs(project?.endDate).format('YYYY-MM-DD')) &&
                           (
                             project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.preparation.toLowerCase()) ||
                             project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.coordination.toLowerCase()) ||
@@ -288,7 +288,9 @@ export function ProjectDetailsContent({
                       ) : 'normal'
                     }}
                   >
-                    {fDate(project?.startDate)} <b>({fDuration(project?.startDate, project?.endDate)})</b> <br />
+                    {fDate(project?.startDate)} 
+                    <b> ({project?.duration ? (project?.duration === 1 ? '1 day' : `${project?.duration} days`) : fDuration(project?.startDate, project?.endDate)})</b> 
+                    <br />
                     <Label variant="filled" sx={{ bgcolor: 'whitesmoke', color: 'text.primary' }}>
                       {project?.isPartDays ? 'Part Days' : 'Full Days'}
                     </Label>

@@ -42,6 +42,8 @@ export function ProjectEditModalDatesView({
 
     const [diffDays, setDiffDays] = useState(1);
 
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
     const {
         loadedProjects,
         loadedServices,
@@ -83,10 +85,10 @@ export function ProjectEditModalDatesView({
 
     useEffect(() => {
         if (project?.endDate) {
-            const diff = dayjs(project?.endDate).diff(dayjs(project?.startDate), 'day');
+            const diff = project?.duration ?? (dayjs(project?.endDate).diff(dayjs(project?.startDate), 'day'));
             setDiffDays(diff);
         }
-    }, [project?.endDate, project?.startDate]);
+    }, [project?.endDate, project?.startDate, project?.duration]);
 
     const [daysToInstall, setDaysToInstall] = useState(1);
 
@@ -104,16 +106,29 @@ export function ProjectEditModalDatesView({
 
     const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
 
-    const [selectedDate, setSelectedDate] = useState(null);
+    const [selectedDate, setSelectedDate] = useState(project?.startDate ?
+        (isStartDate ? dayjs(project?.startDate) : isInspectionDate ? dayjs(project?.inspectionDate) :
+            isFinishPermissionDate ? dayjs(project?.finishPermissionDate) : dayjs(project?.endDate)) : null);
 
     const [endDate, setEndDate] = useState(null);
 
     const toggleMainInfo = useBoolean(true);
 
+    useEffect(() => {
+        if (project && project?.startDate) {
+            setSelectedDate(
+                isStartDate ? dayjs(project?.startDate) :
+                    isInspectionDate ? dayjs(project?.inspectionDate) :
+                        isFinishPermissionDate ? dayjs(project?.finishPermissionDate) : dayjs(project?.endDate)
+            );
+        }
+    }, [project, isStartDate, isInspectionDate, isFinishPermissionDate]);
+
+
     const handleDaysChange = (e) => {
         const days = parseInt(e.target.value, 10) || 1;
         setDaysToInstall(days);
-        const newEndDate = dayjs(project?.startDate).add(days - 1, 'day');
+        const newEndDate = dayjs(project?.startDate).add(days, 'day');
         setEndDate(newEndDate);
         setFormChanged(!Number.isNaN(days) && days > 0);
     };
@@ -148,57 +163,59 @@ export function ProjectEditModalDatesView({
         [project, confirmValidInstallDate, isStartDate, isInspectionDate, isFinishPermissionDate]
     );
 
-    const ProjectDialogSchema = zod.object({
-        name: zod.string().min(1, { message: 'Name is required!' }),
-    });
+    // const ProjectDialogSchema = zod.object({
+    //     name: zod.string().min(1, { message: 'Name is required!' }),
+    // });
 
-    const defaultValues = useMemo(
-        () => ({
-            id: project?.id || '',
-            name: project?.name || '',
-            number: project?.number || '',
-            userReporter: userLogged?.data,
-            startDate: project?.startDate || null,
-            endDate: project?.endDate ? dayjs(project?.endDate).toISOString() : null,
-            finishPermissionDate: project?.finishPermissionDate ? dayjs(project?.finishPermissionDate).toISOString() : null,
-            inspectionDate: project?.inspectionDate ? dayjs(project?.inspectionDate).toISOString() : null,
-        }),
-        [project, userLogged]
-    );
+    // const defaultValues = useMemo(
+    //     () => ({
+    //         id: project?.id || '',
+    //         name: project?.name || '',
+    //         number: project?.number || '',
+    //         userReporter: userLogged?.data,
+    //         startDate: project?.startDate || null,
+    //         duration: project?.duration || dayjs(project?.endDate).diff(dayjs(project?.startDate), 'day') + 1 || 1,
+    //         endDate: project?.endDate ? dayjs(project?.endDate).toISOString() : null,
+    //         finishPermissionDate: project?.finishPermissionDate ? dayjs(project?.finishPermissionDate).toISOString() : null,
+    //         inspectionDate: project?.inspectionDate ? dayjs(project?.inspectionDate).toISOString() : null,
+    //     }),
+    //     [project, userLogged]
+    // );
 
-    const methods = useForm({
-        mode: 'all',
-        resolver: zodResolver(ProjectDialogSchema),
-        defaultValues,
-    });
+    // const methods = useForm({
+    //     mode: 'all',
+    //     resolver: zodResolver(ProjectDialogSchema),
+    //     defaultValues,
+    // });
 
-    const {
-        reset,
-        handleSubmit,
-        formState: { isSubmitting },
-    } = methods;
+    // const {
+    //     reset,
+    //     handleSubmit,
+    //     formState: { isSubmitting },
+    // } = methods;
 
 
-    useEffect(() => {
-        if (project) {
-            reset({
-                id: project.id || '',
-                name: project.name || '',
-                number: project.number || '',
-                userReporter: userLogged?.data,
-                startDate: project.startDate || null,
-                endDate: project.endDate || null,
-                inspectionDate: project.inspectionDate || null,
-                finishPermissionDate: project.finishPermissionDate || null,
-            });
-            setSelectedDate(
-                isStartDate ? dayjs(project?.startDate) :
-                    isInspectionDate ? dayjs(project?.inspectionDate) :
-                        isFinishPermissionDate ? dayjs(project?.finishPermissionDate) : dayjs(project?.endDate));
-            setDaysToInstall(diffDays);
-            setFormChanged(false);
-        }
-    }, [project, userLogged?.data, reset, diffDays, isStartDate, isInspectionDate, isFinishPermissionDate]);
+    // useEffect(() => {
+    //     if (project) {
+    //         reset({
+    //             id: project.id || '',
+    //             name: project.name || '',
+    //             number: project.number || '',
+    //             userReporter: userLogged?.data,
+    //             startDate: project.startDate || null,
+    //             duration: project.duration || 1,
+    //             endDate: project.endDate || null,
+    //             inspectionDate: project.inspectionDate || null,
+    //             finishPermissionDate: project.finishPermissionDate || null,
+    //         });
+    //         setSelectedDate(
+    //             isStartDate ? dayjs(project?.startDate) :
+    //                 isInspectionDate ? dayjs(project?.inspectionDate) :
+    //                     isFinishPermissionDate ? dayjs(project?.finishPermissionDate) : dayjs(project?.endDate));
+    //         setDaysToInstall(diffDays);
+    //         setFormChanged(false);
+    //     }
+    // }, [project, userLogged?.data, reset, diffDays, isStartDate, isInspectionDate, isFinishPermissionDate]);
 
 
     const [isPartDays, setIsPartDays] = useState(false);
@@ -215,48 +232,49 @@ export function ProjectEditModalDatesView({
         setFormChanged(newVal !== project.isPartDays);
     }
 
-
-    const minDate = useMemo(() => {
-        if (isStartDate || isInspectionDate || isFinishPermissionDate) {
-            if (project?.startDate) {
-                return dayjs(project?.startDate);
-            }
-            return dayjs(project?.salesOrder?.date);
-        }
-        // if (isFinishPermissionDate) {
-        //     if (project?.inspectionDate) {
-        //         return dayjs(project?.inspectionDate);
-        //     }
-        //     return dayjs(project?.salesOrder?.date);
-        // }
-        return dayjs(project?.salesOrder?.date);
-    }, [isStartDate, isInspectionDate, isFinishPermissionDate, project]);
+    const minDate = useMemo(() => dayjs(project?.salesOrder?.date), [project]);
 
 
-    const onSubmit = handleSubmit(async (data) => {
+    // const minDate = useMemo(() => {
+    //     // if (isStartDate || isInspectionDate || isFinishPermissionDate) {
+    //     //     if (project?.startDate) {
+    //     //         return dayjs(project?.startDate);
+    //     //     }
+    //     //     return dayjs(project?.salesOrder?.date);
+    //     // }
+    //     // // if (isFinishPermissionDate) {
+    //     // //     if (project?.inspectionDate) {
+    //     // //         return dayjs(project?.inspectionDate);
+    //     // //     }
+    //     // //     return dayjs(project?.salesOrder?.date);
+    //     // // }
+    //     return dayjs(project?.salesOrder?.date);
+    // }, [isStartDate, isInspectionDate, isFinishPermissionDate, project]);
+
+
+    const onSubmit = (async () => {
+        setIsSubmitting(true);
         const formData = new FormData();
         formData.append('userReporter', JSON.stringify(userLogged?.data));
 
-        const field = isStartDate ? 'startDate' : isInspectionDate ? 'inspectionDate' : 'endDate';
-        formData.append(field, fDate(selectedDate));
+        const field = isStartDate ? 'startDate' : isInspectionDate ? 'inspectionDate' : isFinishPermissionDate ? 'finishPermissionDate' : 'endDate';
+        formData.append(field, dayjs(selectedDate).format('YYYY-MM-DD'));
         if (isStartDate) {
-            if (isEdit) {
-                formData.append('endDate', fDate(endDate));
-            }
-            else {
-                const newEndDate = dayjs(selectedDate).add(daysToInstall - 1, 'day');
-                formData.append('endDate', fDate(newEndDate));
-            }
+            const newEndDate = dayjs(selectedDate).add(daysToInstall, 'day');
+            formData.append('endDate', newEndDate.format('YYYY-MM-DD'));
             formData.append('isPartDays', isPartDays ? 'true' : 'false');
+            formData.append('duration', daysToInstall);
         }
 
         if (isInspectionDate) {
-            formData.append('inspectionDate', fDate(selectedDate));
+            formData.append('inspectionDate', dayjs(selectedDate).format('YYYY-MM-DD'));
         }
 
         if (isFinishPermissionDate) {
-            formData.append('finishPermissionDate', fDate(selectedDate));
+            formData.append('finishPermissionDate', dayjs(selectedDate).format('YYYY-MM-DD'));
         }
+
+        // console.log('formData', formData);
 
 
         const promise = axios.post(`${CONFIG.apiUrl}/projects/update/project/${project.id}/`, formData, {
@@ -268,9 +286,11 @@ export function ProjectEditModalDatesView({
         try {
             toast.promise(promise, {
                 loading: 'Loading...',
-                success: `Update Project (${data.name}) success!`,
-                error: `Update Project (${data.name}) error!`,
+                success: `Update Project (${project?.name}) success!`,
+                error: `Update Project (${project?.name}) error!`,
             });
+
+            setIsSubmitting(false);
 
             const response = await promise;
 
@@ -347,9 +367,9 @@ export function ProjectEditModalDatesView({
                                         value={selectedDate}
                                         onChange={handleDateChange}
                                         minDate={minDate}
-                                        maxDate={
-                                            isStartDate ? dayjs(project?.endDate) : null
-                                        }
+                                        // maxDate={
+                                        //     isStartDate ? dayjs(project?.endDate) : null
+                                        // }
                                         shouldDisableDate={isStartDate ? (date) => {
                                             if (date.isBefore(minDate, 'day')) return true;
                                             if (busyDays.some(disabledDate => date.isSame(disabledDate, 'day'))) {
@@ -395,7 +415,7 @@ export function ProjectEditModalDatesView({
                                                 min={1}
                                                 label="Duration days"
                                                 sx={{ width: '30%', mt: 1 }}
-                                                value={daysToInstall + 1}
+                                                value={daysToInstall}
                                                 onChange={handleDaysChange}
                                             />
 
@@ -454,44 +474,45 @@ export function ProjectEditModalDatesView({
                 } date to Project {project?.name}
             </DialogTitle>
 
-            <Form methods={methods} onSubmit={onSubmit}>
+            {/* <Form methods={methods} onSubmit={onSubmit}> */}
 
-                <Stack
-                    spacing={2.5}
-                    justifyContent="center"
-                    sx={{ p: 2.5 }}
+            <Stack
+                spacing={2.5}
+                justifyContent="center"
+                sx={{ p: 2.5 }}
+            >
+
+                {renderMainInfo}
+
+
+            </Stack>
+            <DialogActions>
+                <LoadingButton
+                    type="button"
+                    variant="contained"
+                    loading={isSubmitting}
+                    disabled={!formChanged || confirmValidInstallMessage !== null}
+                    onClick={onSubmit}
                 >
-
-                    {renderMainInfo}
-
-
-                </Stack>
-                <DialogActions>
-                    <LoadingButton
-                        type="submit"
-                        variant="contained"
-                        loading={isSubmitting}
-                        disabled={!formChanged || confirmValidInstallMessage !== null}
-                    >
-                        {isEdit ? 'Update' : 'Add'}
-                    </LoadingButton>
-                    <LoadingButton
-                        type="button"
-                        variant="contained"
-                        loading={isRemovingDate}
-                        onClick={handleRemoveDate}
-                        color='error'
-                        disabled={!project?.startDate}
-                    >
-                        Remove {isStartDate ?
-                            'install' : isInspectionDate ?
-                                'inspection' : isFinishPermissionDate ? 'finish' : 'closing'} date
-                    </LoadingButton>
-                    <Button variant="outlined" onClick={onClose}>
-                        Cancel
-                    </Button>
-                </DialogActions>
-            </Form>
+                    {isEdit ? 'Update' : 'Add'}
+                </LoadingButton>
+                <LoadingButton
+                    type="button"
+                    variant="contained"
+                    loading={isRemovingDate}
+                    onClick={handleRemoveDate}
+                    color='error'
+                    disabled={!project?.startDate}
+                >
+                    Remove {isStartDate ?
+                        'install' : isInspectionDate ?
+                            'inspection' : isFinishPermissionDate ? 'finish' : 'closing'} date
+                </LoadingButton>
+                <Button variant="outlined" onClick={onClose}>
+                    Cancel
+                </Button>
+            </DialogActions>
+            {/* </Form> */}
         </Dialog>
     )
 

@@ -403,7 +403,7 @@ export function ServiceDetailsContent({
                       color={
                         service?.endDate
                           ? (
-                            (fIsAfter(dayjs(new Date()), dayjs(service?.endDate).format('YYYY-MM-DD')) &&
+                            (fIsAfter(dayjs(new Date()).format('YYYY-MM-DD'), dayjs(service?.endDate).format('YYYY-MM-DD')) &&
                               (
                                 service?.currentStage?.name.toLowerCase().includes(CONFIG.stages.preparation.toLowerCase()) ||
                                 service?.currentStage?.name.toLowerCase().includes('repair')
@@ -416,7 +416,7 @@ export function ServiceDetailsContent({
                       }
                       sx={{
                         fontWeight: service?.endDate ? (
-                          (fIsAfter(dayjs(new Date()), dayjs(service?.endDate).format('YYYY-MM-DD')) &&
+                          (fIsAfter(dayjs(new Date()).format('YYYY-MM-DD'), dayjs(service?.endDate).format('YYYY-MM-DD')) &&
                             (
                               service?.currentStage?.name.toLowerCase().includes(CONFIG.stages.preparation.toLowerCase()) ||
                               service?.currentStage?.name.toLowerCase().includes('repair')

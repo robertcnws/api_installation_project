@@ -99,7 +99,9 @@ export function ProjectCalendarForm({ currentEvent, colorOptions, onClose }) {
       description: data?.description,
       end: data?.end,
       start: data?.start,
-      endDate: currentEvent.type === 'installation' ? data?.end : null,
+      // endDate: currentEvent.type === 'installation' ? data?.end : null,
+      duration: currentEvent.type === 'installation' ? 
+            dayjs(dayjs(data?.end).format('YYYY-MM-DD')).diff(dayjs(dayjs(data?.start).format('YYYY-MM-DD')), 'day') + 1 : null,
       startDate: currentEvent.type === 'installation' ? data?.start : null,
       inspectionDate: currentEvent.type === 'inspection' ? data?.start : null,
       finishPermissionDate: currentEvent.type === 'finishPermission' ? data?.start : null,
@@ -147,16 +149,17 @@ export function ProjectCalendarForm({ currentEvent, colorOptions, onClose }) {
       <Form methods={methods} onSubmit={onSubmit}>
         <Scrollbar sx={{ p: 3, bgcolor: 'background.neutral' }}>
           <Stack spacing={3}>
-            <Field.Text name="title" label="Title" />
+            <Field.Text name="title" label="Title" disabled/>
 
-            <Field.Text name="description" label="Description" multiline rows={3} />
+            <Field.Text name="description" label="Description" multiline rows={3} disabled/>
 
-            {/* <Field.Switch name="allDay" label="All day" /> */}
+            {/* <Field.Switch name="allDay" label="All day" /> */}le
 
             <Field.MobileDateTimePicker
               name="start"
               label={currentEvent?.type === 'installation' ? 'Start date' : currentEvent?.type === 'inspection' ? 'Inspection date' : 'Finish date'}
               minDate={dayjs(currentEvent?.salesOrder?.date)}
+              disabled
             />
 
             {currentEvent?.type === 'installation' ? (
@@ -171,6 +174,7 @@ export function ProjectCalendarForm({ currentEvent, colorOptions, onClose }) {
                       helperText: dateError ? 'End date must be later than start date' : null,
                     },
                   }}
+                  disabled
                 />
                 {getProjectInstaller(currentEvent, CONFIG)?.name && (
                   <Box sx={{ display: 'flex', mb: 1, p: 1, justifyContent: 'flex-start' }}>
@@ -222,14 +226,14 @@ export function ProjectCalendarForm({ currentEvent, colorOptions, onClose }) {
 
           <Box sx={{ flexGrow: 1 }} />
 
-          <LoadingButton
+          {/* <LoadingButton
             type="submit"
             variant="contained"
             loading={isSubmitting}
             disabled={dateError}
           >
             Save changes
-          </LoadingButton>
+          </LoadingButton> */}
 
           <Button
             variant="contained"

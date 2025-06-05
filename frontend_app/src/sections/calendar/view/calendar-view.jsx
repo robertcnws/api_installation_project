@@ -45,10 +45,13 @@ export function CalendarView() {
 
   const {
     loadedProjects,
+    refetchProjects,
     loadingProjects,
     loadedServices,
+    refetchServices,
     loadingServices,
     loadedMeasurements,
+    refetchMeasurements,
     loadingMeasurements,
   } = useDataContext();
 
@@ -57,16 +60,37 @@ export function CalendarView() {
   const [measurements, setMeasurements] = useState([]);
 
   useEffect(() => {
+    if (refetchProjects) {
+      refetchProjects();
+    }
+    setProjects(loadedProjects || []);
+  }, [refetchProjects, loadedProjects]);
+
+  useEffect(() => {
     if (loadedProjects && loadedProjects.length > 0) {
       setProjects(loadedProjects);
     }
   }, [loadedProjects, setProjects]);
 
   useEffect(() => {
+    if (refetchServices) {
+      refetchServices();
+    }
+    setServices(loadedServices || []);
+  }, [refetchServices, loadedServices]);
+
+  useEffect(() => {
     if (loadedServices && loadedServices.length > 0) {
       setServices(loadedServices);
     }
   }, [loadedServices, setServices]);
+
+  useEffect(() => {
+    if (refetchMeasurements) {
+      refetchMeasurements();
+    }
+    setMeasurements(loadedMeasurements || []);
+  }, [refetchMeasurements, loadedMeasurements]);
 
   useEffect(() => {
     if (loadedMeasurements && loadedMeasurements.length > 0) {
@@ -422,8 +446,8 @@ export function CalendarView() {
 
     setTooltipAnchor(info.el);
 
-    const {type} = info.event.extendedProps;
-    const {namedType} = info.event.extendedProps;
+    const { type } = info.event.extendedProps;
+    const { namedType } = info.event.extendedProps;
 
     const projectInstaller = type === 'service' ?
       getServiceInstaller(info.event.extendedProps, CONFIG) :
@@ -441,7 +465,7 @@ export function CalendarView() {
     const endDate = info.event.end;
     const installer = info.event.extendedProps.userInstaller || projectInstaller;
     const responsible = info.event.extendedProps.userManager;
-    const {description} = info.event.extendedProps;
+    const { description } = info.event.extendedProps;
 
     setTooltipInfo({
       title,

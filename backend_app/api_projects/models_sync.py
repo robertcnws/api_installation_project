@@ -1,4 +1,4 @@
-from mongoengine import Document, DynamicField, StringField, DateTimeField, BooleanField
+from mongoengine import Document, DynamicField, StringField, DateTimeField, BooleanField, IntField
 
 class ProjectSync(Document):
     meta = {
@@ -47,3 +47,4 @@ class ProjectSync(Document):
     is_part_days            = BooleanField()
     current_stage           = DynamicField()
     project_tasks           = DynamicField()
+    duration                = IntField()

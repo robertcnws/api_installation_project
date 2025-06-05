@@ -93,6 +93,10 @@ def create_default_task_number(order):
 
 def parse_custom_date(logger, date_str):
     try:
+        if not date_str:
+            return None
+        if isinstance(date_str, datetime):
+            return date_str
         return parser.parse(date_str)
     except Exception as e:
         if logger:

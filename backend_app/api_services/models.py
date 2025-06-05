@@ -53,29 +53,17 @@ class Service(Document):
     created_by = DynamicField(null=True)
     is_part_days = BooleanField(default=False)
     is_closed = BooleanField(default=False)
+    duration = IntField(default=0, null=True)
     
     meta = {
         'collection': 'service',
         'indexes': [
             'number',
             'name',
-            'client',
-            'sales_order',
-            'user_reporter',
             'created_time',
             'last_modified_time',
-            'issued_products',
-            'current_stage',
-            'users_assignees',
             'start_date',
             'end_date',
-            'service_attachments',
-            'service_history',
-            'address',
-            'is_active',
-            'user_manager',
-            'service_comments',
-            'service_default_tasks',
         ],
         'verbose_name': 'Service',
         'verbose_name_plural': 'Services'

@@ -112,6 +112,7 @@ def create_projects_view():
                 'inspection_date': 1,
                 'finish_permission_date': 1,
                 'is_part_days': 1,
+                'duration': 1,
             }},
             {"$sort": {"start_date": 1}}
         ]
@@ -159,6 +160,7 @@ def create_services_view():
                 'created_by': 1,
                 'is_part_days': 1,
                 'is_closed': 1,
+                'duration': 1,
             }},
             {"$sort": {"start_date": 1}}
         ]

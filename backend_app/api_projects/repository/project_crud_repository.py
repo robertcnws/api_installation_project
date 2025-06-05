@@ -243,6 +243,7 @@ def create_project(request):
                 work_scope=work_scope,
                 project_materials=[],
                 project_materials_other_notes='',
+                duration=0,
             )
             
             project.save()
@@ -422,6 +423,7 @@ def create_projects(request):
                     work_scope=work_scope,
                     project_materials=[],
                     project_materials_other_notes='',
+                    duration=0,
                 )
                 project.save()
                 tracking_info = transform_data_to_mongo(project, exclude_fields=['sales_order'])
@@ -488,14 +490,29 @@ def update_project(request, id):
     project_comments = json.loads(data.get('projectComments', [])) if data.get('projectComments') else project.project_comments
     if data.get('projectComments'):
         include_fields.append('project_comments')
-
+    
     start_date = parse_custom_date(logger, data.get('startDate')) if data.get('startDate') else project.start_date
+    
+    end_date = project.end_date
+    
     if data.get('startDate'):
         include_fields.append('start_date')
+        if data.get('duration'):
+            try:
+                duration = int(data.get('duration', 0))
+                if duration > 0:
+                    new_duration = duration - 1 if duration else 0
+                    end_date = start_date + timezone.timedelta(days=new_duration)
+                    end_date = parse_custom_date(logger, end_date)
+                    include_fields.append('end_date')
+                else:
+                    end_date = project.end_date
+            except ValueError:
+                return Response({'error': 'Invalid duration value'}, status=400)
         
-    end_date = parse_custom_date(logger, data.get('endDate')) if data.get('endDate') else project.end_date
-    if data.get('endDate'):
-        include_fields.append('start_date')
+    # end_date = parse_custom_date(logger, data.get('endDate')) if data.get('endDate') else project.end_date
+    # if data.get('endDate'):
+    #     include_fields.append('start_date')
     
     inspection_date = parse_custom_date(logger, data.get('inspectionDate')) if data.get('inspectionDate') else project.inspection_date
     if data.get('inspectionDate'):
@@ -583,8 +600,8 @@ def update_project(request, id):
     project.name = data.get('name', project.name) if data.get('name') else project.name
     project.description = data.get('description', project.description) if data.get('description') else project.description
     project.users_assignees = users_assignees if users_assignees else project.users_assignees
-    project.start_date = start_date if start_date else project.start_date
-    project.end_date = end_date if end_date else project.end_date
+    project.start_date = start_date if data.get('startDate') else project.start_date
+    project.end_date = end_date if data.get('duration') else project.end_date
     project.address = data.get('address', project.address) if data.get('address') else project.address
     project.last_modified_time = timezone.now()
     project.current_stage = current_stage if current_stage else project.current_stage
@@ -597,6 +614,7 @@ def update_project(request, id):
     project.inspection_date = inspection_date if inspection_date else project.inspection_date
     project.finish_permission_date = finish_permission_date if finish_permission_date else project.finish_permission_date
     project.is_part_days = is_part_days if is_part_days_str else project.is_part_days
+    project.duration = duration if data.get('duration') else project.duration
         
     project.save()
     

@@ -225,7 +225,7 @@ export function ProjectTableRow({
             )) ? 'fontWeightBold' : 'inherit') : 'inherit',
           }}
         >
-          {row?.endDate ? fDuration(row?.startDate, row?.endDate) :
+          {row?.duration ? (row?.duration === 1 ? '1 day' : `${row?.duration} days`) : row?.endDate ? fDuration(row?.startDate, row?.endDate) :
             <Tooltip title="No Closing Date" arrow>
               <Iconify icon="material-symbols:sms-failed-outline" sx={{ color: 'error.main' }} />
             </Tooltip>}

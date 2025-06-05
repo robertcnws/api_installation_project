@@ -5,6 +5,7 @@ from api_projects.data_util import (
     transform_data_to_mongo,
     create_notification,
     get_current_stage_from_tasks,
+    parse_custom_date,
 )
 from api_projects.models import (
     ProjectTracking,
@@ -19,6 +20,10 @@ from api_services.utils import (
     updated_tasks,
 )
 import json
+import logging
+
+logging.basicConfig(level=logging.WARNING)
+logger = logging.getLogger(__name__)
 
 #############################################
 # ADD NEW ISSUE SERVICE
@@ -544,13 +549,28 @@ def change_service_dates(request, id):
     
     include_fields = ['id', 'name', 'version']
     
-    if data.get('startDate', None):
-        start_date = data.get('startDate', None)
-        include_fields.append('start_date')
+    start_date = parse_custom_date(logger, data.get('startDate')) if data.get('startDate') else service.start_date
     
-    if data.get('endDate', None):
-        end_date = data.get('endDate', None)
-        include_fields.append('end_date')
+    end_date = service.end_date
+    
+    if data.get('startDate'):
+        include_fields.append('start_date')
+        if data.get('duration'):
+            try:
+                duration = int(data.get('duration', 0))
+                if duration > 0:
+                    new_duration = duration - 1 if duration else 0
+                    end_date = start_date + timezone.timedelta(days=new_duration)
+                    end_date = parse_custom_date(logger, end_date)
+                    include_fields.append('end_date')
+                else:
+                    end_date = service.end_date
+            except ValueError:
+                return Response({'error': 'Invalid duration value'}, status=400)
+    
+    # if data.get('endDate', None):
+    #     end_date = data.get('endDate', None)
+    #     include_fields.append('end_date')
     
     is_part_days_str = data.get('isPartDays', '')
     if is_part_days_str:
@@ -559,10 +579,11 @@ def change_service_dates(request, id):
             include_fields.append('is_part_days')
     
     service.start_date = start_date if start_date else service.start_date
-    service.end_date = end_date if end_date else service.end_date
+    service.end_date = end_date if data.get('duration') else service.end_date
     service.last_modified_time = timezone.now()
     service.user_reporter = user_reporter if user_reporter else service.user_reporter
     service.is_part_days = is_part_days if is_part_days_str else service.is_part_days
+    service.duration = duration if data.get('duration') else service.duration
     
     if start_date:
         all_tasks = service.service_default_tasks if service.service_default_tasks else []

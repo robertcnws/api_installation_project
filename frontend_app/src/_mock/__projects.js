@@ -40,6 +40,7 @@ const GET_ALL_PROJECTS = gql`
       inspectionDate
       finishPermissionDate
       isPartDays
+      duration
     }
   }
 `;
@@ -84,6 +85,7 @@ const GET_PROJECT_BY_ID = gql`
       inspectionDate
       finishPermissionDate
       isPartDays
+      duration
     }
   }
 `;

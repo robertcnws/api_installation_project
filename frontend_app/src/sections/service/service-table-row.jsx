@@ -161,7 +161,7 @@ export function ServiceTableRow({
                 {fDate(row.startDate)}
               </Typography>
               <Typography noWrap variant="inherit" sx={{ maxWidth: 360, cursor: 'pointer', color: 'text.secondary' }}>
-                {row.endDate && `(${fDuration(row.startDate, row.endDate)})`}
+                {row?.duration ? (row?.duration === 1 ? '1 day' : `${row?.duration} days`) : row?.endDate ? fDuration(row?.startDate, row?.endDate) : 'No Duration'}
               </Typography>
             </Box>
           ) : (

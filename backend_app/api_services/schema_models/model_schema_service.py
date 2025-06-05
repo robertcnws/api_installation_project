@@ -36,6 +36,7 @@ class ServiceType(MongoengineObjectType):
     last_modified_time = graphene.String()
     start_date = graphene.String()
     end_date = graphene.String()
+    duration = graphene.Int()
     
     def resolve_created_time(self, info):
         dt = self.created_time
@@ -97,3 +98,6 @@ class ServiceType(MongoengineObjectType):
     
     def resolve_created_by(self, info):
         return self.created_by or {}
+    
+    def resolve_duration(self, info):
+        return self.duration if self.duration is not None else 0
