@@ -3,7 +3,7 @@ import { useMemo, useState, useEffect, useCallback } from 'react';
 
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
-import { Box, Button, Dialog, MenuItem, MenuList, Typography, DialogActions, LinearProgress, Tooltip } from '@mui/material';
+import { Box, Button, Dialog, Tooltip, MenuItem, MenuList, Typography, DialogActions, LinearProgress } from '@mui/material';
 
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
@@ -11,10 +11,10 @@ import { useRouter } from 'src/routes/hooks';
 import { useTabs } from 'src/hooks/use-tabs';
 import { useBoolean } from 'src/hooks/use-boolean';
 
+import { fDate } from 'src/utils/format-time';
 import { getServiceInstaller } from 'src/utils/service-tasks-utils';
 import { filteredDescriptionJson } from 'src/utils/project-tasks-utils';
 import { extractDimensions } from 'src/utils/generate-installation-guide-pdf';
-import { fDate } from 'src/utils/format-time';
 
 import { CONFIG } from 'src/config-global';
 import { DashboardContent } from 'src/layouts/dashboard';

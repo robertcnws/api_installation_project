@@ -17,8 +17,8 @@ import TableCell, { tableCellClasses } from '@mui/material/TableCell';
 import { useBoolean } from 'src/hooks/use-boolean';
 import { useCopyToClipboard } from 'src/hooks/use-copy-to-clipboard';
 
-import { fDate, fIsAfter, fDateTime } from 'src/utils/format-time';
 import { getProjectAttachments } from 'src/utils/project-tasks-utils';
+import { fDate, fTime, fIsAfter, fDateTime } from 'src/utils/format-time';
 import { verifyPermissions, listRolesAndSubroles } from 'src/utils/check-permissions';
 
 import { CONFIG } from 'src/config-global';
@@ -291,7 +291,15 @@ export function ProjectAttachmentsTableRow({
           align='left'
         >
           {/* {fDate(rowUpdated?.salesOrder.date)} */}
-          {fDateTime(rowUpdated?.lastModifiedTime) ? fDateTime(rowUpdated?.lastModifiedTime) :
+          {fDateTime(rowUpdated?.lastModifiedTime) ?
+            <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+              <Box component="span" sx={{ typography: 'caption', color: 'text.primary' }} >
+                {fDate(rowUpdated?.lastModifiedTime)}
+              </Box>
+              <Box component="span" sx={{ typography: 'caption', color: 'text.secondary' }}>
+                {fTime(rowUpdated?.lastModifiedTime)}
+              </Box>
+            </Box> :
             <Tooltip title="No Updated Datetime" arrow>
               <Iconify icon="ph:calendar-x-bold" sx={{ color: 'error.main' }} />
             </Tooltip>

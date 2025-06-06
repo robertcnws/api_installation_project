@@ -17,8 +17,8 @@ import TableCell, { tableCellClasses } from '@mui/material/TableCell';
 import { useBoolean } from 'src/hooks/use-boolean';
 import { useCopyToClipboard } from 'src/hooks/use-copy-to-clipboard';
 
-import { fDate, fIsAfter, fDateTime } from 'src/utils/format-time';
 import { getServiceAttachments } from 'src/utils/service-tasks-utils';
+import { fDate, fTime, fIsAfter, fDateTime } from 'src/utils/format-time';
 import { verifyPermissions, listRolesAndSubroles } from 'src/utils/check-permissions';
 
 import { CONFIG } from 'src/config-global';
@@ -113,7 +113,7 @@ export function ServiceAttachmentsTableRow({
             '&:hover': {
               backgroundColor: rowUpdated?.endDate ? ((fIsAfter(today, dayjs(rowUpdated?.endDate).format('YYYY-MM-DD')) && (
                 rowUpdated?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
-              rowUpdated?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.repair.toLowerCase()) !== -1
+                rowUpdated?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.repair.toLowerCase()) !== -1
               )) ? lighten(theme.palette.error.lighter, 0.6) : 'background.paper') : 'background.paper'
               , boxShadow: theme.customShadows.z20
             },
@@ -122,7 +122,7 @@ export function ServiceAttachmentsTableRow({
           ...(details.value && { [`& .${tableCellClasses.root}`]: { ...defaultStyles } }),
           bgcolor: rowUpdated?.endDate ? ((fIsAfter(today, dayjs(rowUpdated?.endDate).format('YYYY-MM-DD')) && (
             rowUpdated?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
-              rowUpdated?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.repair.toLowerCase()) !== -1
+            rowUpdated?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.repair.toLowerCase()) !== -1
           )) ? lighten(theme.palette.error.lighter, 0.7) : 'inherit') : 'inherit',
         }}
       >
@@ -280,7 +280,15 @@ export function ServiceAttachmentsTableRow({
           align='left'
         >
           {/* {fDate(rowUpdated?.salesOrder.date)} */}
-          {fDateTime(rowUpdated?.lastModifiedTime) ? fDateTime(rowUpdated?.lastModifiedTime) :
+          {fDateTime(rowUpdated?.lastModifiedTime) ?
+            <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+              <Box component="span" sx={{ typography: 'caption', color: 'text.primary' }} >
+                {fDate(rowUpdated?.lastModifiedTime)}
+              </Box>
+              <Box component="span" sx={{ typography: 'caption', color: 'text.secondary' }}>
+                {fTime(rowUpdated?.lastModifiedTime)}
+              </Box>
+            </Box> :
             <Tooltip title="No Updated Datetime" arrow>
               <Iconify icon="ph:calendar-x-bold" sx={{ color: 'error.main' }} />
             </Tooltip>

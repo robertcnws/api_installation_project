@@ -31,14 +31,28 @@ class JSONDateTime(graphene.Scalar):
 def datetime_to_timezone(dt):
     if not dt:
         return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=dt_timezone.utc)
     try:
-        if timezone.is_naive(dt):
-            local_tz = dt_timezone.utc
-            dt = timezone.make_aware(dt, local_tz)
-        local_dt = timezone.localtime(dt)
+        local_dt = dt.astimezone(timezone.get_default_timezone())
         return local_dt.strftime('%Y-%m-%d %H:%M:%S')
-
     except Exception:
         if isinstance(dt, datetime):
             return dt.strftime('%Y-%m-%d %H:%M:%S')
         return dt
+    
+    
+def serialize_datetime(value):
+    if isinstance(value, datetime):
+        if timezone.is_naive(value):
+            local_tz = timezone.get_current_timezone()
+            # local_tz = dt_timezone.utc
+            value = timezone.make_aware(value, local_tz) 
+        local_dt = timezone.localtime(value)  
+        return local_dt.isoformat()
+    elif isinstance(value, dict):
+        return {key: serialize_datetime(val) for key, val in value.items()}
+    elif isinstance(value, list):
+        return [serialize_datetime(item) for item in value]
+    else:
+        return value

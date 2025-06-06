@@ -1,37 +1,35 @@
 import dayjs from 'dayjs';
-import React, { useMemo, useState, useContext, useCallback } from 'react';
+import React, { useMemo, useContext, useCallback } from 'react';
 
 import Stack from '@mui/material/Stack';
 import Divider from '@mui/material/Divider';
 import MenuList from '@mui/material/MenuList';
 import MenuItem from '@mui/material/MenuItem';
 import Checkbox from '@mui/material/Checkbox';
-import { Box, Button, Tooltip } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
+import { Box, Button, Tooltip } from '@mui/material';
 import { lighten, useTheme } from '@mui/material/styles';
 import TableRow, { tableRowClasses } from '@mui/material/TableRow';
 import TableCell, { tableCellClasses } from '@mui/material/TableCell';
 
+import { paths } from 'src/routes/paths';
+import { useRouter } from 'src/routes/hooks';
+
 import { useBoolean } from 'src/hooks/use-boolean';
-import { useDoubleClick } from 'src/hooks/use-double-click';
-import { useCopyToClipboard } from 'src/hooks/use-copy-to-clipboard';
 
 import { listRolesAndSubroles } from 'src/utils/check-permissions';
-import { fDate, fIsAfter, fDuration, fDateTime, fTime } from 'src/utils/format-time';
+import { fDate, fTime, fIsAfter, fDuration, fDateTime } from 'src/utils/format-time';
 
 import { CONFIG } from 'src/config-global';
 import { varAlpha } from 'src/theme/styles';
 
 import { Label } from 'src/components/label';
-import { toast } from 'src/components/snackbar';
 import { Iconify } from 'src/components/iconify';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 import { usePopover, CustomPopover } from 'src/components/custom-popover';
 
 import { LoadingContext } from 'src/auth/context/loading-context';
-import { useRouter } from 'src/routes/hooks';
-import { paths } from 'src/routes/paths';
 
 // import { ProjectShareDialog } from './project-share-dialog';
 // import { ProjectFileDetails } from './project-file-details';

@@ -1,3 +1,4 @@
+
 import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
 import Stack from '@mui/material/Stack';
@@ -7,8 +8,8 @@ import LinearProgress from '@mui/material/LinearProgress';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
+import { fDate } from 'src/utils/format-time';
 import { fCurrency } from 'src/utils/format-number';
-import { fTime, fDate } from 'src/utils/format-time';
 import { availableTasks, totalPercentageProject } from 'src/utils/project-tasks-utils';
 
 import { CONFIG } from 'src/config-global';
@@ -17,7 +18,6 @@ import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
 
 import { ProjectEditModalDatesView } from 'src/sections/project/view/project-edit-modal-dates-view';
-import dayjs from 'dayjs';
 
 // ----------------------------------------------------------------------
 

@@ -8,7 +8,7 @@ from .models import (
 from bson import ObjectId
 from django.utils import timezone
 from datetime import timezone as dt_timezone
-from api_projects.schema_models.json_datetime import JSONDateTime, datetime_to_timezone
+from api_projects.schema_models.json_datetime import JSONDateTime, datetime_to_timezone, serialize_datetime
 
 
 @convert_mongoengine_field.register(DynamicField)
@@ -51,11 +51,11 @@ class MeasurementType(MongoengineObjectType):
     
     def resolve_first_date(self, info):
         dt = self.first_date
-        return datetime_to_timezone(dt)
+        return serialize_datetime(dt)
     
     def resolve_check_date(self, info):
         dt = self.check_date
-        return datetime_to_timezone(dt)
+        return serialize_datetime(dt)
     
     def resolve_sales_order(self, info):
         return self.sales_order

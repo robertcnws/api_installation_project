@@ -16,10 +16,10 @@ import { Iconify } from 'src/components/iconify';
 import { Scrollbar } from 'src/components/scrollbar';
 import { MultiFilePreview } from 'src/components/upload';
 
+import FileViewerDialogComponent from 'src/sections/project/attachments/file-viewer-dialog-component';
 import { AttachmentNavigationComponent } from 'src/sections/project/attachments/attachment-navigation-component';
 
 import { LoadingContext } from 'src/auth/context/loading-context';
-import FileViewerDialogComponent from 'src/sections/project/attachments/file-viewer-dialog-component';
 
 
 // ----------------------------------------------------------------------

@@ -5,7 +5,7 @@ from graphene_mongo.converter import convert_mongoengine_field
 from api_services.models import (
     Service,
 )
-from api_projects.schema_models.json_datetime import JSONDateTime, datetime_to_timezone
+from api_projects.schema_models.json_datetime import JSONDateTime, datetime_to_timezone, serialize_datetime
 
 @convert_mongoengine_field.register(DynamicField)
 def convert_dynamic_field(field, registry=None, executor=None):
@@ -48,11 +48,11 @@ class ServiceType(MongoengineObjectType):
     
     def resolve_start_date(self, info):
         dt = self.start_date
-        return datetime_to_timezone(dt) if dt else None
+        return serialize_datetime(dt) if dt else None
     
     def resolve_end_date(self, info):
         dt = self.end_date
-        return datetime_to_timezone(dt) if dt else None
+        return serialize_datetime(dt) if dt else None
     
     def resolve_client(self, info):
         return self.client or {}

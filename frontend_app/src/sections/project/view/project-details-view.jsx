@@ -12,9 +12,9 @@ import { useTabs } from 'src/hooks/use-tabs';
 
 import { fDate } from 'src/utils/format-time';
 import { extractDimensions } from 'src/utils/generate-installation-guide-pdf';
+import { generateMeasurementProperties } from 'src/utils/measurement-tasks-utils';
 import { getProjectInstaller, filteredDescriptionJson } from 'src/utils/project-tasks-utils';
 import { isInstaller, isFinancialStaff, isWarehouseStaff, listRolesAndSubroles } from 'src/utils/check-permissions';
-import { generateMeasurementProperties } from 'src/utils/measurement-tasks-utils';
 
 import { CONFIG } from 'src/config-global';
 import { DashboardContent } from 'src/layouts/dashboard';

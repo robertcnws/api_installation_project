@@ -18,8 +18,8 @@ import { MultiFilePreview } from 'src/components/upload';
 
 import { LoadingContext } from 'src/auth/context/loading-context';
 
-import { AttachmentNavigationComponent } from './attachment-navigation-component';
 import FileViewerDialogComponent from './file-viewer-dialog-component';
+import { AttachmentNavigationComponent } from './attachment-navigation-component';
 
 
 

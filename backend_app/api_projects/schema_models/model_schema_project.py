@@ -11,7 +11,7 @@ from api_projects.models import (
 from api_projects.models_sync import (
     ProjectSync,
 )
-from api_projects.schema_models.json_datetime import JSONDateTime, datetime_to_timezone
+from api_projects.schema_models.json_datetime import JSONDateTime, datetime_to_timezone, serialize_datetime
 
 
 @convert_mongoengine_field.register(DynamicField)
@@ -76,19 +76,19 @@ class ProjectViewType(MongoengineObjectType):
     
     def resolve_end_date(self, info):
         dt = self._data.get('end_date')
-        return datetime_to_timezone(dt) 
+        return serialize_datetime(dt) 
     
     def resolve_start_date(self, info):
         dt = self._data.get('start_date')
-        return datetime_to_timezone(dt)
+        return serialize_datetime(dt)
     
     def resolve_inspection_date(self, info):
         dt = self._data.get('inspection_date')
-        return datetime_to_timezone(dt)
+        return serialize_datetime(dt)
     
     def resolve_finish_permission_date(self, info):
         dt = self._data.get('finish_permission_date')
-        return datetime_to_timezone(dt)
+        return serialize_datetime(dt)
     
     def resolve_sales_order(self, info):
         return self._data.get('sales_order')
@@ -223,19 +223,19 @@ class ProjectType(MongoengineObjectType):
     
     def resolve_end_date(self, info):
         dt = self.end_date
-        return datetime_to_timezone(dt)
+        return serialize_datetime(dt)
     
     def resolve_start_date(self, info):
         dt = self.start_date
-        return datetime_to_timezone(dt)
+        return serialize_datetime(dt)
     
     def resolve_inspection_date(self, info):
         dt = self.inspection_date
-        return datetime_to_timezone(dt)
+        return serialize_datetime(dt)
     
     def resolve_finish_permission_date(self, info):
         dt = self.finish_permission_date
-        return datetime_to_timezone(dt)
+        return serialize_datetime(dt)
     
     def resolve_sales_order(self, info):
         return self.sales_order or {}
@@ -320,19 +320,19 @@ class ProjectSyncType(MongoengineObjectType):
     
     def resolve_start_date(self, info):
         dt = self.start_date
-        return datetime_to_timezone(dt)
+        return serialize_datetime(dt)
     
     def resolve_end_date(self, info):
         dt = self.end_date
-        return datetime_to_timezone(dt)
+        return serialize_datetime(dt)
     
     def resolve_inspection_date(self, info):
         dt = self.inspection_date
-        return datetime_to_timezone(dt)
+        return serialize_datetime(dt)
     
     def resolve_finish_permission_date(self, info):
         dt = self.finish_permission_date
-        return datetime_to_timezone(dt)
+        return serialize_datetime(dt)
     
     def resolve_sales_order(self, info):
         return self.sales_order or {}
