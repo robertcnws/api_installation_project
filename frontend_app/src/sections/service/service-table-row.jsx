@@ -80,7 +80,7 @@ export function ServiceTableRow({
     if (row?.associatedProject?.id) {
       localStorage.setItem('projectId', row?.associatedProject?.id);
       localStorage.setItem('backFromProjectDetails', 'services');
-      router.push(paths.dashboard.project.details(row?.project?.id));
+      router.push(paths.dashboard.project.details(row?.associatedProject?.id));
     }
   }, [router, row]);
 

@@ -76,7 +76,9 @@ export function CalendarForm({ currentEvent, colorOptions, onClose }) {
 
   const dateError = useMemo(() =>
     currentEvent?.type === 'installation' || currentEvent?.type === 'service' ? fIsAfter(values.start, values.end) :
-      currentEvent?.type === 'inspection' ? fIsAfter(currentEvent?.startDate, values.start) : fIsAfter(currentEvent?.inspectionDate, values.start),
+      currentEvent?.type === 'inspection' ? 
+      fIsAfter(dayjs(currentEvent?.startDate).format('YYYY-MM-DD'), dayjs(values.start).format('YYYY-MM-DD')) : 
+      fIsAfter(dayjs(currentEvent?.inspectionDate).format('YYYY-MM-DD'), dayjs(values.start).format('YYYY-MM-DD')),
     [currentEvent, values.start, values.end]
   );
 
@@ -88,17 +90,17 @@ export function CalendarForm({ currentEvent, colorOptions, onClose }) {
         currentEvent?.type.toLowerCase().indexOf('measurement') !== -1 ? 'Measurement' : 'Project';
       localStorage.setItem(fieldId, id);
       localStorage.setItem(`backFrom${field}Details`, 'calendarDashboard');
-      if (currentEvent?.type === 'service') {
+      if (currentEvent && currentEvent?.type === 'service') {
         router.push(paths.dashboard.service.details(id));
       }
-      else if (currentEvent?.type.toLowerCase().indexOf('measurement') !== -1) {
+      else if (currentEvent && currentEvent?.type?.toLowerCase().indexOf('measurement') !== -1) {
         router.push(paths.dashboard.measurement.details(id));
       }
       else {
         router.push(paths.dashboard.project.details(id));
       }
 
-    }, [router, currentEvent?.type]);
+    }, [router, currentEvent]);
 
   const onSubmit = handleSubmit(async (data) => {
     const utcStart = dayjs(data?.start).utc();
@@ -164,7 +166,7 @@ export function CalendarForm({ currentEvent, colorOptions, onClose }) {
   return (
     <>
       <Form methods={methods} onSubmit={onSubmit}>
-        {currentEvent?.type.toLowerCase().indexOf('measurement') === -1 && (
+        {currentEvent?.type?.toLowerCase().indexOf('measurement') === -1 && (
           <Scrollbar sx={{ p: 3, bgcolor: 'background.neutral' }}>
             <Stack spacing={3}>
               <Field.Text name="title" label="Title" disabled/>
