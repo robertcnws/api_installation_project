@@ -17,6 +17,7 @@ import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
 
 import { ProjectEditModalDatesView } from 'src/sections/project/view/project-edit-modal-dates-view';
+import dayjs from 'dayjs';
 
 // ----------------------------------------------------------------------
 
@@ -52,9 +53,11 @@ export function RenderCellDate({ params }) {
       {params?.row?.startDate ? (
         <Stack spacing={0.5} sx={{ width: 1 }}>
           <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-            <Box component="span" sx={{ typography: 'caption', color: 'text.primary' }} >{fDate(params?.row?.startDate)}</Box>
+            <Box component="span" sx={{ typography: 'caption', color: 'text.primary' }} >
+              {fDate(params?.row?.startDate)}
+            </Box>
             <Box component="span" sx={{ typography: 'caption', color: 'text.secondary' }}>
-              {fTime(params?.row?.startDate)}
+              (<b>{params?.row?.duration}</b> {params?.row?.duration === 1 ? 'day' : 'days'})
             </Box>
           </Box>
         </Stack>
@@ -131,7 +134,7 @@ export function RenderCellProject({ params, onViewRow }) {
             >
               {params?.row?.name}
             </Link>
-            <br/>
+            <br />
             <Label
               color="default"
               variant="outlined"
@@ -184,7 +187,7 @@ export function RenderCellMobile({ params, onViewRow }) {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 1 }}>
       <RenderCellProject params={params} onViewRow={onViewRow} />
-      <RenderCellStage params={params} includeNameStage/>
+      <RenderCellStage params={params} includeNameStage />
       <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', gap: 1 }}>
         <RenderCellDate params={params} />
         <RenderCellPercentage params={params} />

@@ -5,7 +5,7 @@ import Divider from '@mui/material/Divider';
 import MenuList from '@mui/material/MenuList';
 import MenuItem from '@mui/material/MenuItem';
 import Checkbox from '@mui/material/Checkbox';
-import { Button, Tooltip } from '@mui/material';
+import { Box, Button, Tooltip } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
@@ -19,7 +19,7 @@ import { useBoolean } from 'src/hooks/use-boolean';
 import { useDoubleClick } from 'src/hooks/use-double-click';
 import { useCopyToClipboard } from 'src/hooks/use-copy-to-clipboard';
 
-import { fDate, fDateTime } from 'src/utils/format-time';
+import { fDate, fDateTime, fTime } from 'src/utils/format-time';
 import { listRolesAndSubroles } from 'src/utils/check-permissions';
 
 import { CONFIG } from 'src/config-global';
@@ -357,7 +357,15 @@ export function MeasurementTableRow({
               align='center'
             >
               {/* {fDate(row?.salesOrder.date)} */}
-              {fDateTime(row?.lastModifiedTime) ? fDateTime(row?.lastModifiedTime) :
+              {fDateTime(row?.lastModifiedTime) ?
+                <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                  <Box component="span" sx={{ typography: 'caption', color: 'text.primary' }} >
+                    {fDate(row?.lastModifiedTime)}
+                  </Box>
+                  <Box component="span" sx={{ typography: 'caption', color: 'text.secondary' }}>
+                    {fTime(row?.lastModifiedTime)}
+                  </Box>
+                </Box> :
                 <Tooltip title="No Updated Datetime" arrow>
                   <Iconify icon="ph:calendar-x-bold" sx={{ color: 'error.main' }} />
                 </Tooltip>

@@ -141,7 +141,7 @@ export function ProjectListView({ projects, loadingProjects, ...other }) {
     },
     {
       field: 'startDate',
-      headerName: 'Install Date',
+      headerName: 'Date & Duration',
       width: 180,
       sortable: false,
       renderCell: (params) => <RenderCellDate params={params} />,

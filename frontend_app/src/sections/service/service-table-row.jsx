@@ -18,7 +18,7 @@ import { useDoubleClick } from 'src/hooks/use-double-click';
 import { useCopyToClipboard } from 'src/hooks/use-copy-to-clipboard';
 
 import { listRolesAndSubroles } from 'src/utils/check-permissions';
-import { fDate, fIsAfter, fDuration, fDateTime } from 'src/utils/format-time';
+import { fDate, fIsAfter, fDuration, fDateTime, fTime } from 'src/utils/format-time';
 
 import { CONFIG } from 'src/config-global';
 import { varAlpha } from 'src/theme/styles';
@@ -409,7 +409,11 @@ export function ServiceTableRow({
                 fontSize: '0.75rem',
               }}
             >
-              {fDate(row?.createdTime)}
+              <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                <Box component="span" sx={{ typography: 'caption', color: 'text.primary' }} >
+                  {fDate(row?.createdTime)}
+                </Box>
+              </Box>
             </TableCell>
             <TableCell
               // onClick={handleClick} 
@@ -431,7 +435,15 @@ export function ServiceTableRow({
               align='center'
             >
               {/* {fDate(row?.salesOrder.date)} */}
-              {fDateTime(row?.lastModifiedTime) ? fDateTime(row?.lastModifiedTime) :
+              {fDateTime(row?.lastModifiedTime) ?
+                <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                  <Box component="span" sx={{ typography: 'caption', color: 'text.primary' }} >
+                    {fDate(row?.lastModifiedTime)}
+                  </Box>
+                  <Box component="span" sx={{ typography: 'caption', color: 'text.secondary' }}>
+                    {fTime(row?.lastModifiedTime)}
+                  </Box>
+                </Box> :
                 <Tooltip title="No Updated Datetime" arrow>
                   <Iconify icon="ph:calendar-x-bold" sx={{ color: 'error.main' }} />
                 </Tooltip>
