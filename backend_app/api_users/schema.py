@@ -38,7 +38,7 @@ class Query(graphene.ObjectType):
     all_user_roles = graphene.List(UserRoleType, excluding_names=graphene.List(graphene.String))
     
     def resolve_all_login_users(self, info):
-        return list(LoginUser.objects.all())
+        return list(LoginUser.objects(is_active=True).all())
     
     def resolve_all_user_roles(self, info, excluding_names=None):
         if excluding_names:
