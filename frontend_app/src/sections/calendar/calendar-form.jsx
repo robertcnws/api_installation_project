@@ -32,6 +32,7 @@ import { Iconify } from 'src/components/iconify';
 import { Scrollbar } from 'src/components/scrollbar';
 import { Form, Field } from 'src/components/hook-form';
 import { ConfirmDialog } from 'src/components/custom-dialog';
+import { isInstaller } from 'src/utils/check-permissions';
 
 // ----------------------------------------------------------------------
 
@@ -76,9 +77,9 @@ export function CalendarForm({ currentEvent, colorOptions, onClose }) {
 
   const dateError = useMemo(() =>
     currentEvent?.type === 'installation' || currentEvent?.type === 'service' ? fIsAfter(values.start, values.end) :
-      currentEvent?.type === 'inspection' ? 
-      fIsAfter(dayjs(currentEvent?.startDate).format('YYYY-MM-DD'), dayjs(values.start).format('YYYY-MM-DD')) : 
-      fIsAfter(dayjs(currentEvent?.inspectionDate).format('YYYY-MM-DD'), dayjs(values.start).format('YYYY-MM-DD')),
+      currentEvent?.type === 'inspection' ?
+        fIsAfter(dayjs(currentEvent?.startDate).format('YYYY-MM-DD'), dayjs(values.start).format('YYYY-MM-DD')) :
+        fIsAfter(dayjs(currentEvent?.inspectionDate).format('YYYY-MM-DD'), dayjs(values.start).format('YYYY-MM-DD')),
     [currentEvent, values.start, values.end]
   );
 
@@ -123,7 +124,7 @@ export function CalendarForm({ currentEvent, colorOptions, onClose }) {
       name: currentEvent?.originalName,
     };
 
-    console.log('eventData', eventData);
+    // console.log('eventData', eventData);
 
     try {
       if (!dateError) {
@@ -169,7 +170,7 @@ export function CalendarForm({ currentEvent, colorOptions, onClose }) {
         {currentEvent?.type?.toLowerCase().indexOf('measurement') === -1 && (
           <Scrollbar sx={{ p: 3, bgcolor: 'background.neutral' }}>
             <Stack spacing={3}>
-              <Field.Text name="title" label="Title" disabled/>
+              <Field.Text name="title" label="Title" disabled />
 
               <Field.Text
                 name='description'
@@ -258,13 +259,14 @@ export function CalendarForm({ currentEvent, colorOptions, onClose }) {
         )}
 
         <DialogActions sx={{ flexShrink: 0 }}>
-          {(!!currentEvent?.id && currentEvent?.type.toLowerCase().indexOf('measurement') === -1) && (
-            <Tooltip title="Delete event">
-              <IconButton onClick={confirmDelete.onTrue} color="error">
-                <Iconify icon="solar:trash-bin-trash-bold" />
-              </IconButton>
-            </Tooltip>
-          )}
+          {(!!currentEvent?.id && currentEvent?.type.toLowerCase().indexOf('measurement') === -1 &&
+            !isInstaller(userLogged?.data?.user_role?.name)) && (
+              <Tooltip title="Delete event">
+                <IconButton onClick={confirmDelete.onTrue} color="error">
+                  <Iconify icon="solar:trash-bin-trash-bold" />
+                </IconButton>
+              </Tooltip>
+            )}
 
           <Box sx={{ flexGrow: 1 }} />
 

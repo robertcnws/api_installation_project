@@ -401,7 +401,7 @@ function CombineProviders({ children }) {
 //       project.usersAssignees.some((user) => user.username === userLogged?.data.username) ||
 //       project.userManager.username === userLogged?.data.username
 //     );
-//     if (userLogged?.data.user_role.name.toLowerCase().indexOf(CONFIG.roles.installer.toLowerCase()) !== -1) {
+//     if (userLogged?.data?.user_role?.name.toLowerCase().indexOf(CONFIG.roles.installer.toLowerCase()) !== -1) {
 //       finalProjects = sortedProjects.filter((project) =>
 //       (
 //         (

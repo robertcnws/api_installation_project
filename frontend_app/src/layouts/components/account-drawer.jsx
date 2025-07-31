@@ -160,7 +160,7 @@ export function AccountDrawer({ data = [], sx, ...other }) {
             </Typography>
 
             <Typography variant="subtitle2" sx={{ color: 'text.primary', mt: 0.5 }} noWrap>
-              {userLogged?.data.user_role.name || userLogged?.data.userRole.name}
+              {userLogged?.data?.user_role?.name || userLogged?.data?.userRole?.name}
             </Typography>
           </Stack>
 

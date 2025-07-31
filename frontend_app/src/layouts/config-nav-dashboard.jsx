@@ -84,7 +84,7 @@ export const navData = () => [
   {
     subheader: 'Management',
     items: [
-      ...(userLogged && !isServiceStaff(userLogged?.data.user_role.name) ? [
+      ...(userLogged && !isServiceStaff(userLogged?.data?.user_role?.name) ? [
         {
           title: 'Installations',
           path: paths.dashboard.project.root,
@@ -103,7 +103,7 @@ export const navData = () => [
           ],
         },
       ] : []),
-      ...(userLogged && belongsToWorkingStaff(userLogged?.data.user_role.name) ? [
+      ...(userLogged && belongsToWorkingStaff(userLogged?.data?.user_role?.name) ? [
         {
           title: 'Services',
           path: paths.dashboard.service.root,
@@ -145,7 +145,7 @@ export const navData = () => [
           ],
         },
       ] : []),
-      ...(userLogged && listRolesAndSubroles(userLogged?.data.user_role.name).includes(CONFIG.roles.administrator) ? [
+      ...(userLogged && listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator) ? [
         {
           title: 'Sales Orders',
           path: paths.dashboard.salesOrder.root,
@@ -158,7 +158,7 @@ export const navData = () => [
           ],
         },
       ] : []),
-      ...(userLogged && listRolesAndSubroles(userLogged?.data.user_role.name).includes(CONFIG.roles.projectManager) ? [
+      ...(userLogged && listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.projectManager) ? [
         {
           title: 'Users',
           path: paths.dashboard.user.root,
@@ -169,7 +169,7 @@ export const navData = () => [
           ],
         },
       ] : []),
-      ...(userLogged && listRolesAndSubroles(userLogged?.data.user_role.name).includes(CONFIG.roles.superadmin) ? [
+      ...(userLogged && listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.superadmin) ? [
         {
           title: 'Configuration',
           path: paths.dashboard.config.root,

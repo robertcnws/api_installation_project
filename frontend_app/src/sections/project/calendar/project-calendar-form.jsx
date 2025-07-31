@@ -31,6 +31,7 @@ import { Iconify } from 'src/components/iconify';
 import { Scrollbar } from 'src/components/scrollbar';
 import { Form, Field } from 'src/components/hook-form';
 import { ConfirmDialog } from 'src/components/custom-dialog';
+import { isInstaller } from 'src/utils/check-permissions';
 
 // ----------------------------------------------------------------------
 
@@ -215,7 +216,7 @@ export function ProjectCalendarForm({ currentEvent, colorOptions, onClose }) {
         </Scrollbar>
 
         <DialogActions sx={{ flexShrink: 0 }}>
-          {!!currentEvent?.id && (
+          {(!!currentEvent?.id && !isInstaller(userLogged?.data?.user_role?.name)) && (
             <Tooltip title="Delete event">
               <IconButton onClick={confirmDelete.onTrue} color="error">
                 <Iconify icon="solar:trash-bin-trash-bold" />

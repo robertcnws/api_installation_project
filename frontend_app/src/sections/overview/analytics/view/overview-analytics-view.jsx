@@ -230,7 +230,7 @@ export function OverviewAnalyticsView() {
     router.push(paths.dashboard.project.details(rem.project.id));
   };
 
-  const isInst = isInstaller(userLogged?.data.user_role.name);
+  const isInst = isInstaller(userLogged?.data?.user_role?.name);
 
   return (
     <DashboardContent maxWidth="xl">
@@ -311,7 +311,7 @@ export function OverviewAnalyticsView() {
             <ProjectCalendarView projects={projects} isOnlyWeek={isOnlyWeek.value} />
           </Box>
         </Grid>
-        {!isInstaller(userLogged?.data.user_role.name) && (
+        {!isInstaller(userLogged?.data?.user_role?.name) && (
           <Grid xs={12} md={6} lg={6}>
             <Box sx={{ mt: 0, mb: 0, width: '100%' }}>
               <ProjectListView projects={projects} loadingProjects={loadingProjects} />

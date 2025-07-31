@@ -559,15 +559,16 @@ export function CalendarView() {
                     eventContent={renderEventContent}
                     headerToolbar={false}
                     select={onSelectRange}
-                    eventClick={
-                      verifyPermissions(
-                        listPermissions,
-                        CONFIG.permissions.system,
-                        CONFIG.permissions.moduleProjects,
-                        CONFIG.permissions.operationEditCalendar
-                      ) ||
-                        listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.projectManager) ? onClickEvent : null
-                    }
+                    // eventClick={
+                    //   verifyPermissions(
+                    //     listPermissions,
+                    //     CONFIG.permissions.system,
+                    //     CONFIG.permissions.moduleProjects,
+                    //     CONFIG.permissions.operationEditCalendar
+                    //   ) ||
+                    //     listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.projectManager) ? onClickEvent : null
+                    // }
+                    eventClick={onClickEvent}
                     eventMouseEnter={handleEventMouseEnter}
                     eventMouseLeave={handleEventMouseLeave}
                     aspectRatio={3}
