@@ -13,15 +13,19 @@ RUN pip install gunicorn
 RUN pip install uvicorn
 RUN pip install -r requirements.txt
 
-RUN apt-get update && apt-get install -y wget gnupg2 lsb-release 
+# ------- MongoDB tools (keyring + repo soportado) -------
+RUN apt-get update && apt-get install -y wget curl ca-certificates gnupg lsb-release && \
+    rm -rf /var/lib/apt/lists/*
 
-RUN wget -qO - https://www.mongodb.org/static/pgp/server-4.4.asc | apt-key add -
-    
-RUN echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/debian bookworm/mongodb-org/4.4 main" | tee /etc/apt/sources.list.d/mongodb-org-4.4.list
+RUN install -d -m 0755 /etc/apt/keyrings && \
+    curl -fsSL https://pgp.mongodb.com/server-7.0.asc | gpg --dearmor -o /etc/apt/keyrings/mongodb-server-7.0.gpg
 
-RUN apt-get update && apt-get install -y mongodb-database-tools
+RUN echo "deb [arch=amd64,arm64 signed-by=/etc/apt/keyrings/mongodb-server-7.0.gpg] https://repo.mongodb.org/apt/debian bookworm/mongodb-org/7.0 main" \
+    | tee /etc/apt/sources.list.d/mongodb-org-7.0.list
 
-RUN apt-get update
+RUN apt-get update && apt-get install -y mongodb-database-tools && \
+    rm -rf /var/lib/apt/lists/*
+# --------------------------------------------------------
 
 RUN mkdir -p /tmp/mongo_backup
 
