@@ -48,3 +48,4 @@ class ProjectSync(Document):
     current_stage           = DynamicField()
     project_tasks           = DynamicField()
     duration                = IntField()
+    work_orders            = DynamicField()

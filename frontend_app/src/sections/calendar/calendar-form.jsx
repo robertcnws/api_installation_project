@@ -20,6 +20,7 @@ import { useBoolean } from 'src/hooks/use-boolean';
 
 import { uuidv4 } from 'src/utils/uuidv4';
 import { fDate, fIsAfter } from 'src/utils/format-time';
+import { isInstaller } from 'src/utils/check-permissions';
 import { getProjectInstaller } from 'src/utils/project-tasks-utils';
 import { getServiceInstaller } from 'src/utils/service-tasks-utils';
 
@@ -32,7 +33,6 @@ import { Iconify } from 'src/components/iconify';
 import { Scrollbar } from 'src/components/scrollbar';
 import { Form, Field } from 'src/components/hook-form';
 import { ConfirmDialog } from 'src/components/custom-dialog';
-import { isInstaller } from 'src/utils/check-permissions';
 
 // ----------------------------------------------------------------------
 

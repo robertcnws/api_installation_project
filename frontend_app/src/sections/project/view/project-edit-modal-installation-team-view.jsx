@@ -9,7 +9,9 @@ import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
 import { LoadingButton } from '@mui/lab';
 import Button from '@mui/material/Button';
-import { Avatar, Dialog, DialogTitle, DialogActions } from '@mui/material';
+import { Avatar, Dialog, DialogTitle, DialogActions, Typography } from '@mui/material';
+
+import { Iconify } from 'src/components/iconify';
 
 import { isInstaller } from 'src/utils/check-permissions';
 import { getProjectInstaller } from 'src/utils/project-tasks-utils';
@@ -177,7 +179,16 @@ export function ProjectEditModalInstallationTeamView({
 
     const renderProject = (
         <Dialog fullWidth maxWidth="md" open={open} onClose={onClose}>
-            <DialogTitle>{isEdit ? 'Update' : 'Add'} Installation Team to Project {project?.name} </DialogTitle>
+            <DialogTitle>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Box className="dialog-title-icon">
+                        <Iconify icon="mdi:account-group" />
+                    </Box>
+                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                        {isEdit ? 'Update' : 'Add'} Installation Team to Project {project?.name}
+                    </Typography>
+                </Box>
+            </DialogTitle>
 
             <Form methods={methods} onSubmit={onSubmit}>
 

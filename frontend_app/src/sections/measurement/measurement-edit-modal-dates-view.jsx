@@ -10,7 +10,7 @@ import Stack from '@mui/material/Stack';
 import { LoadingButton } from '@mui/lab';
 import Button from '@mui/material/Button';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { Grid, Dialog, DialogTitle, DialogActions } from '@mui/material';
+import { Grid, Dialog, DialogTitle, DialogActions, Typography } from '@mui/material';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
@@ -20,6 +20,7 @@ import { CONFIG } from 'src/config-global';
 
 import { toast } from 'src/components/snackbar';
 import { Form } from 'src/components/hook-form';
+import { Iconify } from 'src/components/iconify';
 
 
 // ----------------------------------------------------------------------
@@ -42,7 +43,7 @@ export function MeasurementEditModalDatesView({
 
     const toggleMainInfo = useBoolean(true);
 
-    const isEdit = useMemo(() => isFirstDate ? !!measurement?.firstDate : !!measurement?.checkDate , [isFirstDate, measurement]);
+    const isEdit = useMemo(() => isFirstDate ? !!measurement?.firstDate : !!measurement?.checkDate, [isFirstDate, measurement]);
 
     const handleDateChange = useCallback(
         (date) => {
@@ -210,9 +211,16 @@ export function MeasurementEditModalDatesView({
     const renderProject = (
         <Dialog fullWidth maxWidth="xs" open={open} onClose={onClose}>
             <DialogTitle>
-                {isEdit ? 'Update' : 'Add'} {
-                    isFirstDate ? 'First' : 'Check'
-                } Date to Measurement {measurement?.number}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Box className="dialog-title-icon">
+                        <Iconify icon="famicons:calendar" />
+                    </Box>
+                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                        {isEdit ? 'Update' : 'Add'} {
+                            isFirstDate ? 'First' : 'Check'
+                        } Date to Measurement {measurement?.number}
+                    </Typography>
+                </Box>
             </DialogTitle>
 
             <Form methods={methods} onSubmit={onSubmit}>
@@ -256,8 +264,8 @@ export function MeasurementEditModalDatesView({
 
     return (
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                {/* Tabs alineados a la izquierda */}
-                <Box sx={{ flexGrow: 1, borderRadius: 1 }}>{renderProject}</Box>
-            </Box>
+            {/* Tabs alineados a la izquierda */}
+            <Box sx={{ flexGrow: 1, borderRadius: 1 }}>{renderProject}</Box>
+        </Box>
     );
 }

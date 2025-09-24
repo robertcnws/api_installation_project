@@ -113,6 +113,7 @@ def create_projects_view():
                 'finish_permission_date': 1,
                 'is_part_days': 1,
                 'duration': 1,
+                'work_orders': 1,
             }},
             {"$sort": {"start_date": 1}}
         ]

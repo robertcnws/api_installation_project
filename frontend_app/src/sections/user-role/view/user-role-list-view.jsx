@@ -31,6 +31,7 @@ import { Iconify } from 'src/components/iconify';
 import { Scrollbar } from 'src/components/scrollbar';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 import { CustomBreadcrumbs } from 'src/components/custom-breadcrumbs';
+import { ClaudeCodeInActionModal } from 'src/components/claude-code-modal';
 import { TableCustomPaginationZohoStyleRow } from 'src/components/table/table-pagination-custom-zoho-style-row';
 import {
   useTable,
@@ -98,6 +99,7 @@ export function UserRoleListView() {
   const router = useRouter();
 
   const confirm = useBoolean();
+  const claudeModal = useBoolean();
 
   const [tableData, setTableData] = useState([]);
 
@@ -351,16 +353,36 @@ export function UserRoleListView() {
             { name: 'List' },
           ]}
           action={
-            <Button
-              component={RouterLink}
-              href={paths.dashboard.role.new}
-              // color="inherit"
-              // variant="outlined"
-              variant="contained"
-              startIcon={<Iconify icon="mingcute:add-line" />}
-            >
-              New User Role
-            </Button>
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <Button
+                onClick={claudeModal.onTrue}
+                variant="outlined"
+                startIcon={<Iconify icon="mdi:robot" />}
+                sx={{
+                  borderColor: '#00B8D9',
+                  color: '#00B8D9',
+                  '&:hover': {
+                    borderColor: '#8E33FF',
+                    color: '#8E33FF',
+                    background: 'linear-gradient(45deg, rgba(0,184,217,0.1), rgba(142,51,255,0.1))',
+                    transform: 'translateY(-1px)',
+                    boxShadow: '0 4px 12px rgba(0,184,217,0.3)',
+                  },
+                  transition: 'all 0.3s ease',
+                  fontWeight: 600,
+                }}
+              >
+                Claude Code in Action
+              </Button>
+              <Button
+                component={RouterLink}
+                href={paths.dashboard.role.new}
+                variant="contained"
+                startIcon={<Iconify icon="mingcute:add-line" />}
+              >
+                New User Role
+              </Button>
+            </Box>
           }
           sx={{ mb: { xs: 3, md: 5 } }}
         />
@@ -535,6 +557,11 @@ export function UserRoleListView() {
           </Box>
         </Card>
       </DashboardContent >
+
+      <ClaudeCodeInActionModal
+        open={claudeModal.value}
+        onClose={claudeModal.onFalse}
+      />
 
       <ConfirmDialog
         open={confirm.value}

@@ -598,7 +598,16 @@ export function ProjectEditModalView({
 
     const renderProject = (
         <Dialog fullWidth maxWidth="lg" open={open} onClose={onClose}>
-            <DialogTitle>Update Project {projectData?.name} </DialogTitle>
+            <DialogTitle>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Box className="dialog-title-icon">
+                        <Iconify icon="mdi:pencil" />
+                    </Box>
+                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                        Update Project {projectData?.name}
+                    </Typography>
+                </Box>
+            </DialogTitle>
 
             <Form methods={methods} onSubmit={onSubmit}>
 

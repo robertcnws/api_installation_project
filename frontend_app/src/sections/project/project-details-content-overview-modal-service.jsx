@@ -1,18 +1,30 @@
 import { Box, Stack, Button, Dialog, ListItem, Typography, DialogTitle, ListItemText, DialogActions } from '@mui/material';
+import { Iconify } from 'src/components/iconify';
 
 import { filteredDescription } from 'src/utils/project-tasks-utils';
 
 // ----------------------------------------------------------------------
 
-export function ProjectDetailsContentOverviewModalService({ project, items, open, onClose }) {
+export function ProjectDetailsContentOverviewModalService({
+    project,
+    items,
+    open,
+    onClose,
+    title = "Service Items",
+    subtitle = `Sales order ${project?.name}`,
+    iconTitle = "mdi:account-service-outline"
+}) {
 
     return (
         <Dialog fullWidth maxWidth="xs" open={open} onClose={onClose}>
             <DialogTitle>
                 <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                    <Typography>Service items</Typography>
+                    <Box className="dialog-title-icon">
+                        <Iconify icon={iconTitle} />
+                    </Box>
+                    <Typography variant="h6" sx={{ fontWeight: 600 }}>{title}</Typography>
                     <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                        Sales order {project?.name}
+                        {subtitle}
                     </Typography>
                 </Box>
             </DialogTitle>

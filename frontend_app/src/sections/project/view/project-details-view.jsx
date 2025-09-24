@@ -44,6 +44,7 @@ import { ProjectEditModalPhoneNumberView } from './project-edit-modal-phone-numb
 import { ProjectDetailsReleaseFormInstallerView } from './project-details-release-form-installer-view';
 import { ProjectDetailsInstallationGuideFormView } from './project-details-installation-guide-form-view';
 import { ProjectDetailsInstallationGuideFormInstallerView } from './project-details-installation-guide-form-installer-view';
+import { ProjectDetailsWorkOrdersFormView } from './project-details-work-orders-form-view';
 
 
 // ----------------------------------------------------------------------
@@ -74,6 +75,7 @@ export function ProjectDetailsView({ projectId }) {
         refNumber: false,
         installationTeam: false,
         description: false,
+        workOrder: false
     });
 
     const item = useMemo(() => loadedProjects?.find((project) => project.id === projectId), [loadedProjects, projectId]);
@@ -118,13 +120,18 @@ export function ProjectDetailsView({ projectId }) {
         ...(!isInstaller(userLogged?.data?.user_role?.name) &&
             !isFinancialStaff(userLogged?.data?.user_role?.name) &&
             !isWarehouseStaff(userLogged?.data?.user_role?.name)) ? [
+            { label: 'Work Orders', value: 'workOrders' },
+        ] : [],
+        ...(!isInstaller(userLogged?.data?.user_role?.name) &&
+            !isFinancialStaff(userLogged?.data?.user_role?.name) &&
+            !isWarehouseStaff(userLogged?.data?.user_role?.name)) ? [
             { label: 'Attachments', value: 'attachments' },
         ] : [],
-        ...((listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.installer) ||
-            listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.warehouseStaff)) &&
-            taskFinishInstallation?.status.toLowerCase().indexOf(CONFIG.taskStatus.finished.toLowerCase()) !== -1) ? [
-            { label: 'Release Form', value: 'releaseForm' },
-        ] : [],
+        // ...((listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.installer) ||
+        //     listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.warehouseStaff)) &&
+        //     taskFinishInstallation?.status.toLowerCase().indexOf(CONFIG.taskStatus.finished.toLowerCase()) !== -1) ? [
+        //     { label: 'Release Form', value: 'releaseForm' },
+        // ] : [],
         ...listRolesAndSubroles(userLogged?.data?.user_role?.name)
             .some(elem => [CONFIG.roles.installer, CONFIG.roles.warehouseStaff]) ? [
             { label: 'Installation Guide', value: 'installationGuide' },
@@ -319,6 +326,8 @@ export function ProjectDetailsView({ projectId }) {
 
     const totalAttachments = useMemo(() => qtyProjectAttachments + qtyTaskAttachments, [qtyProjectAttachments, qtyTaskAttachments]);
 
+    const totalWorkOrders = useMemo(() => itemById?.workOrders?.length || 0, [itemById]);
+
     const [selectedComments, setSelectedComments] = useState(false);
 
     const totalComments = useMemo(() => {
@@ -448,15 +457,21 @@ export function ProjectDetailsView({ projectId }) {
                     value={tab.value}
                     label={tab.label}
                     icon={
-                        (tab.value === 'tasks' || tab.value === 'attachments' || tab.value === 'comments') ? (
+                        (tab.value === 'tasks' ||
+                         tab.value === 'attachments' ||
+                         tab.value === 'comments' ||
+                         tab.value === 'workOrders'
+                        ) ? (
                             !isInstaller(userLogged?.data?.user_role?.name) ? (
                                 ((tab.value === 'tasks' && totalTasks > 0) ||
                                     (tab.value === 'attachments' && totalAttachments > 0) ||
+                                    (tab.value === 'workOrders' && totalWorkOrders > 0) ||
                                     (tab.value === 'comments' && totalComments > 0))
                                     ? (
                                         <Label variant="filled" color="primary">
                                             {tab.value === 'tasks' ? totalTasks :
-                                                tab.value === 'attachments' ? totalAttachments : totalComments}
+                                                tab.value === 'attachments' ? totalAttachments :
+                                                    tab.value === 'workOrders' ? totalWorkOrders : totalComments}
                                         </Label>
                                     ) : (
                                         ''
@@ -481,6 +496,7 @@ export function ProjectDetailsView({ projectId }) {
                             tab.value === 'attachments' ||
                             tab.value === 'comments' ||
                             tab.value === 'releaseForm' ||
+                            tab.value === 'workOrders' ||
                             tab.value === 'financial' ||
                             tab.value === 'installationGuide') && !itemById?.userManager?.username) {
                             setOpenValidationDialog(true);
@@ -581,6 +597,16 @@ export function ProjectDetailsView({ projectId }) {
                                     tasks={tasks ?? []}
                                     hasPermission={itemById?.hasPermission}
                                     listPermissions={listPermissions}
+                                />
+                            }
+
+                            {(tabs.value === 'workOrders' && itemById?.userManager?.username) &&
+                                <ProjectDetailsWorkOrdersFormView
+                                    project={itemById}
+                                    refetchProject={refetchProject}
+                                    listPermissions={listPermissions}
+                                    openDialogs={openDialogs}
+                                    setOpenDialogs={setOpenDialogs}
                                 />
                             }
 

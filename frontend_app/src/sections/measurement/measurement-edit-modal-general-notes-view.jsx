@@ -10,6 +10,7 @@ import { Dialog, TextField, Typography, DialogTitle, DialogActions } from '@mui/
 import { CONFIG } from 'src/config-global';
 
 import { toast } from 'src/components/snackbar';
+import { Iconify } from 'src/components/iconify';
 
 
 // ----------------------------------------------------------------------
@@ -101,7 +102,14 @@ export function MeasurementEditModalGeneralNotesView({
     const renderProject = (
         <Dialog fullWidth maxWidth="md" open={open} onClose={onClose}>
             <DialogTitle>
-                {isEdit ? 'Update' : 'Add'} General Notes to Measurement {measurement?.number}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Box className="dialog-title-icon">
+                        <Iconify icon="icon-park-outline:notes" />
+                    </Box>
+                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                        {isEdit ? 'Update' : 'Add'} General Notes to Measurement {measurement?.number}
+                    </Typography>
+                </Box>
             </DialogTitle>
 
             <Stack
@@ -141,8 +149,8 @@ export function MeasurementEditModalGeneralNotesView({
 
     return (
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                {/* Tabs alineados a la izquierda */}
-                <Box sx={{ flexGrow: 1, borderRadius: 1 }}>{renderProject}</Box>
-            </Box>
+            {/* Tabs alineados a la izquierda */}
+            <Box sx={{ flexGrow: 1, borderRadius: 1 }}>{renderProject}</Box>
+        </Box>
     );
 }

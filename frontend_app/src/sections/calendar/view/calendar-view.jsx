@@ -19,7 +19,6 @@ import { useSetState } from 'src/hooks/use-set-state';
 import { fDate, fIsAfter, fIsBetween } from 'src/utils/format-time';
 import { getProjectInstaller } from 'src/utils/project-tasks-utils';
 import { getServiceInstaller } from 'src/utils/service-tasks-utils';
-import { verifyPermissions, listRolesAndSubroles } from 'src/utils/check-permissions';
 
 import { CONFIG } from 'src/config-global';
 import { DashboardContent } from 'src/layouts/dashboard';
@@ -645,7 +644,16 @@ export function CalendarView() {
               }}
             >
               <DialogTitle sx={{ minHeight: 76 }}>
-                {openForm && <> {currentEvent?.id ? 'Edit' : 'Add'} {currentEvent?.namedType} event</>}
+                {openForm && (
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Box className="dialog-title-icon">
+                      <Iconify icon="mdi:calendar" />
+                    </Box>
+                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                      {currentEvent?.id ? 'Edit' : 'Add'} {currentEvent?.namedType} event
+                    </Typography>
+                  </Box>
+                )}
               </DialogTitle>
 
               <CalendarForm

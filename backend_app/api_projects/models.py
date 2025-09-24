@@ -139,6 +139,7 @@ class ProjectView(Document):
         'strict': False,   
     }
     
+    
 class Project(Document):
     name = StringField(max_length=255, required=True)
     number = StringField(max_length=255, required=True)
@@ -178,6 +179,7 @@ class Project(Document):
     is_part_days = BooleanField(default=False)
     phone = StringField(max_length=255, null=True)
     duration = IntField(default=0, null=True)  # Duration in days
+    work_orders = ListField(DynamicField(), default=list, null=True)
     
     meta = {
         'collection': 'project',

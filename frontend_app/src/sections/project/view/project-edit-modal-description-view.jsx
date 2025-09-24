@@ -6,6 +6,7 @@ import { useMemo, useState, useEffect, useContext } from 'react';
 
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
 import { LoadingButton } from '@mui/lab';
 import Button from '@mui/material/Button';
 import { Dialog, DialogTitle, DialogActions } from '@mui/material';
@@ -13,6 +14,7 @@ import { Dialog, DialogTitle, DialogActions } from '@mui/material';
 import { CONFIG } from 'src/config-global';
 
 import { toast } from 'src/components/snackbar';
+import { Iconify } from 'src/components/iconify';
 import { Form, Field } from 'src/components/hook-form';
 
 import { LoadingContext } from 'src/auth/context/loading-context';
@@ -118,7 +120,16 @@ export function ProjectEditModalDescriptionView({
 
     const renderService = (
         <Dialog fullWidth maxWidth="md" open={open} onClose={onClose}>
-                <DialogTitle>{project?.description ? 'Update' : 'Add'} Description to project {project?.name} </DialogTitle>
+                <DialogTitle>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <Box className="dialog-title-icon">
+                            <Iconify icon="mdi:note-text" />
+                        </Box>
+                        <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                            {project?.description ? 'Update' : 'Add'} Description to project {project?.name}
+                        </Typography>
+                    </Box>
+                </DialogTitle>
 
                 <Form methods={methods} onSubmit={onSubmit}>
 

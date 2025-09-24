@@ -65,6 +65,7 @@ class ProjectViewType(MongoengineObjectType):
     inspection_date = graphene.String()
     finish_permission_date = graphene.String()
     duration = graphene.Int()
+    work_orders = JSONDateTime()
     
     def resolve_created_time(self, info):
         dt = self._data.get('created_time') 
@@ -186,6 +187,9 @@ class ProjectViewType(MongoengineObjectType):
     def resolve_duration(self, info):
         return self._data.get('duration', 0) 
     
+    def resolve_work_orders(self, info):
+        return self._data.get('work_orders', [])
+    
 
 class ProjectType(MongoengineObjectType):
     class Meta:
@@ -212,6 +216,7 @@ class ProjectType(MongoengineObjectType):
     inspection_date = graphene.String()
     finish_permission_date = graphene.String()
     duration = graphene.Int()
+    work_orders = JSONDateTime()
     
     def resolve_created_time(self, info):
         dt = self.created_time
@@ -281,8 +286,11 @@ class ProjectType(MongoengineObjectType):
     
     def resolve_duration(self, info):
         return self.duration or 0
-    
-    
+
+    def resolve_work_orders(self, info):
+        return self.work_orders or []
+
+
 class ProjectSyncType(MongoengineObjectType):
     class Meta:
         model = ProjectSync
@@ -308,6 +316,7 @@ class ProjectSyncType(MongoengineObjectType):
     inspection_date = graphene.String()
     finish_permission_date = graphene.String()
     duration = graphene.Int()
+    work_orders = JSONDateTime()
     
     
     def resolve_created_time(self, info):
@@ -378,3 +387,6 @@ class ProjectSyncType(MongoengineObjectType):
     
     def resolve_duration(self, info):
         return self.duration or 0
+    
+    def resolve_work_orders(self, info):
+        return self.work_orders or []

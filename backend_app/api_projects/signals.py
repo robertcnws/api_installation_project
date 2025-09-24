@@ -301,6 +301,7 @@ def project_saved(sender, document, **kwargs):
                 "finishPermissionDate": document.finish_permission_date,
                 "isPartDays": document.is_part_days,
                 "duration": document.duration,
+                "workOrders": document.work_orders,
             }
 
         }
@@ -352,6 +353,7 @@ def project_deleted(sender, document, **kwargs):
                 "finishPermissionDate": document.finish_permission_date,
                 "isPartDays": document.is_part_days,
                 "duration": document.duration,
+                "workOrders": document.work_orders,
             }
         }
     }
@@ -507,6 +509,7 @@ def project_by_id_saved(sender, document, **kwargs):
                 "finishPermissionDate": document.finish_permission_date,
                 "isPartDays": document.is_part_days,
                 "duration": document.duration,
+                "workOrders": document.work_orders,
             }
 
         }
@@ -560,6 +563,7 @@ def project_by_id_deleted(sender, document, **kwargs):
                 "finishPermissionDate": document.finish_permission_date,
                 "isPartDays": document.is_part_days,
                 "duration": document.duration,
+                "workOrders": document.work_orders,
             }
         }
     }

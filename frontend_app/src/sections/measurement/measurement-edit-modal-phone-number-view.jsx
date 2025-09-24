@@ -7,6 +7,7 @@ import { parsePhoneNumber, isValidPhoneNumber } from 'react-phone-number-input/i
 
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
 import { LoadingButton } from '@mui/lab';
 import Button from '@mui/material/Button';
 import { Dialog, DialogTitle, DialogActions } from '@mui/material';
@@ -14,6 +15,7 @@ import { Dialog, DialogTitle, DialogActions } from '@mui/material';
 import { CONFIG } from 'src/config-global';
 
 import { toast } from 'src/components/snackbar';
+import { Iconify } from 'src/components/iconify';
 import { Form, Field, schemaHelper } from 'src/components/hook-form';
 
 import { LoadingContext } from 'src/auth/context/loading-context';
@@ -144,7 +146,16 @@ export function MeasurementEditModalPhoneNumberView({
 
     const renderMeasurement = (
         <Dialog fullWidth maxWidth="md" open={open} onClose={onClose}>
-            <DialogTitle>{isEdit ? 'Update' : 'Add'} Phone Number to Measurement {measurementData?.name} </DialogTitle>
+            <DialogTitle>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Box className="dialog-title-icon">
+                        <Iconify icon="mdi:phone" />
+                    </Box>
+                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                        {isEdit ? 'Update' : 'Add'} Phone Number to Measurement {measurementData?.name}
+                    </Typography>
+                </Box>
+            </DialogTitle>
 
             <Form methods={methods} onSubmit={onSubmit}>
 
