@@ -102,7 +102,8 @@ pipeline {
             sh 'cp $ENV_FILE .env'
           }
           sh 'npm cache clean --force'
-          sh 'npm ci'
+          sh 'npm install'
+          // sh 'npm ci'
           sh 'npm run lint -- --fix'
           sh 'npm run build'
           sh """
