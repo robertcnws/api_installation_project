@@ -58,6 +58,7 @@ const ICONS = {
   calendarOverview: icon('ic-calendar-overview'),
   measurement: icon('ic-measurements'),
   defaultMaterial: icon('ic-material'),
+  statistics: icon('ic-statistics'),
 };
 
 const userLogged = JSON.parse(sessionStorage.getItem('userLogged'));
@@ -74,7 +75,8 @@ export const navData = () => [
   {
     subheader: 'Overview',
     items: [
-      { title: 'Analytics', path: paths.dashboard.general.analytics, icon: ICONS.analytics },
+      { title: 'Dashboard', path: paths.dashboard.general.analytics, icon: ICONS.dashboard },
+      { title: 'Analytics', path: paths.dashboard.general.analytics, icon: ICONS.statistics },
       { title: 'Calendar', path: paths.dashboard.general.calendar, icon: ICONS.calendarOverview },
     ],
   },

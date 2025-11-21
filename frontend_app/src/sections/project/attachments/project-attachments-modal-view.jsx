@@ -186,8 +186,11 @@ export function ProjectAttachmentsModalView({
                     justifyContent: 'space-between',
                 }}>
                     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'left', gap: 0.5 }}>
-                        <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1 }}>
-                            <Typography variant="h6" sx={{ flexGrow: 1 }}>
+                        <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, alignItems: 'center' }}>
+                            <Box className="dialog-title-icon">
+                                <Iconify icon="mdi:paperclip" />
+                            </Box>
+                            <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 600 }}>
                                 Attachments in Installation {displayProject?.name}
                             </Typography>
                             {(displayProject?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) !== -1) && (

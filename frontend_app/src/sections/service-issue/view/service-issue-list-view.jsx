@@ -145,7 +145,7 @@ export function ServiceIssueListView() {
   }, [loadedServiceIssues]);
 
   useEffect(() => {
-    const socket = new WebSocket(`wss://${CONFIG.apiHost}/api/services/ws/service-issues/`);
+    const socket = new WebSocket(`${CONFIG.wsProtocol}://${CONFIG.wsHost}/${CONFIG.wsDomain}/services/ws/service-issues/`);
     // socket.onopen = () => {
     //   console.log('WebSocket connected');
     // };

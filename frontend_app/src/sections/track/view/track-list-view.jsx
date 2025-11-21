@@ -104,7 +104,7 @@ export function TrackListView() {
   }, [loadedTracks]);
 
   useEffect(() => {
-    const socket = new WebSocket(`wss://${CONFIG.apiHost}/api/projects/ws/tracks/`);
+    const socket = new WebSocket(`${CONFIG.wsProtocol}://${CONFIG.wsHost}/${CONFIG.wsDomain}/projects/ws/tracks/`);
     // socket.onopen = () => {
     //   console.log('WebSocket connected');
     // };

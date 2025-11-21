@@ -6,8 +6,11 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import FormHelperText from '@mui/material/FormHelperText';
+import { Box, Typography } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
+
+import { Iconify } from 'src/components/iconify';
 
 import { useResponsive } from 'src/hooks/use-responsive';
 
@@ -45,7 +48,16 @@ export function CustomDateRangePicker({
       }}
       {...other}
     >
-      <DialogTitle sx={{ pb: 2 }}>{title}</DialogTitle>
+      <DialogTitle sx={{ pb: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Box className="dialog-title-icon">
+            <Iconify icon="mdi:calendar-range" />
+          </Box>
+          <Typography variant="h6" sx={{ fontWeight: 600 }}>
+            {title}
+          </Typography>
+        </Box>
+      </DialogTitle>
 
       <DialogContent sx={{ ...(isCalendarView && mdUp && { overflow: 'unset' }) }}>
         <Stack

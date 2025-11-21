@@ -239,7 +239,7 @@ export function ServiceDetailsView({ serviceId }) {
     }, [loadedTracks]);
 
     useEffect(() => {
-        const socket = new WebSocket(`wss://${CONFIG.apiHost}/api/services/ws/service/${serviceId}/`);
+        const socket = new WebSocket(`${CONFIG.wsProtocol}://${CONFIG.wsHost}/${CONFIG.wsDomain}/services/ws/service/${serviceId}/`);
         socket.onerror = (errorEvent) => {
             console.dir(errorEvent);
             console.error('WebSocket error (toString):', errorEvent.toString());
@@ -273,7 +273,7 @@ export function ServiceDetailsView({ serviceId }) {
 
 
     useEffect(() => {
-        const socket = new WebSocket(`wss://${CONFIG.apiHost}/api/projects/ws/tracks/`);
+        const socket = new WebSocket(`${CONFIG.wsProtocol}://${CONFIG.wsHost}/${CONFIG.wsDomain}/projects/ws/tracks/`);
         socket.onerror = (errorEvent) => {
             console.dir(errorEvent);
             console.error('WebSocket error (toString):', errorEvent.toString());

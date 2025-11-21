@@ -14,6 +14,17 @@ from .models import (
 from .models_sync import ProjectSync
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+from api_projects.event_messages import (
+    message_project_default_material,
+    message_project_reminder,
+    message_project_default_guide_product,
+    message_project_stage,
+    message_project_task_stage,
+    message_project,
+    message_project_default_task,
+    message_project_tracking,
+    message_project_notification_user,
+)
 import json
 
 
@@ -24,50 +35,13 @@ import json
 def project_default_material_saved(sender, document, **kwargs):
     created = kwargs.get('created', False)
     channel_layer = get_channel_layer()
-    event = {
-        'type': 'project_default_material_update',
-        'message': {
-            'type': 'created' if created else 'updated',
-            "item": {
-                "id": str(document.id),
-                "name": document.name,
-                "description": document.description,
-                "price": document.price,
-                "isActive": document.is_active,
-                "createdTime": document.created_time,
-                "lastModifiedTime": document.last_modified_time,
-                "quantity": document.quantity,
-                "isPackaged": document.is_packaged,
-                "packageQuantity": document.package_quantity,
-                "defaultGuideProducts": document.default_guide_products,
-            }
-
-        }
-    }
+    event = message_project_default_material('created' if created else 'updated', document)
     async_to_sync(channel_layer.group_send)('project_default_material', serialize_datetime(event))
     
 
 def project_default_material_deleted(sender, document, **kwargs):
     channel_layer = get_channel_layer()
-    event = {
-        'type': 'project_default_material_update',
-        'message': {
-            'type': 'deleted',
-            "item": {
-                "id": str(document.id),
-                "name": document.name,
-                "description": document.description,
-                "price": document.price,
-                "isActive": document.is_active,
-                "createdTime": document.created_time,
-                "lastModifiedTime": document.last_modified_time,
-                "quantity": document.quantity,
-                "isPackaged": document.is_packaged,
-                "packageQuantity": document.package_quantity,
-                "defaultGuideProducts": document.default_guide_products,
-            }
-        }
-    }
+    event = message_project_default_material('deleted', document)
     async_to_sync(channel_layer.group_send)('project_default_material', serialize_datetime(event))
 
 
@@ -78,46 +52,13 @@ def project_default_material_deleted(sender, document, **kwargs):
 def project_reminder_saved(sender, document, **kwargs):
     created = kwargs.get('created', False)
     channel_layer = get_channel_layer()
-    event = {
-        'type': 'project_reminder_update',
-        'message': {
-            'type': 'created' if created else 'updated',
-            "item": {
-                "id": str(document.id),
-                "project": document.project,
-                "projectDefaultTask": document.project_default_task,
-                "userReporter": document.user_reporter,
-                "notes": document.notes,
-                "date": document.date,
-                "createdTime": document.created_time,
-                "lastModifiedTime": document.last_modified_time,
-                "isActive": document.is_active,
-            }
-
-        }
-    }
+    event = message_project_reminder('created' if created else 'updated', document)
     async_to_sync(channel_layer.group_send)('project_reminder', serialize_datetime(event))
     
 
 def project_reminder_deleted(sender, document, **kwargs):
     channel_layer = get_channel_layer()
-    event = {
-        'type': 'project_reminder_update',
-        'message': {
-            'type': 'deleted',
-            "item": {
-                "id": str(document.id),
-                "project": document.project,
-                "projectDefaultTask": document.project_default_task,
-                "userReporter": document.user_reporter,
-                "notes": document.notes,
-                "date": document.date,
-                "createdTime": document.created_time,
-                "lastModifiedTime": document.last_modified_time,
-                "isActive": document.is_active,
-            }
-        }
-    }
+    event = message_project_reminder('deleted', document)
     async_to_sync(channel_layer.group_send)('project_reminder', serialize_datetime(event))
 
 
@@ -128,42 +69,13 @@ def project_reminder_deleted(sender, document, **kwargs):
 def project_default_guide_product_saved(sender, document, **kwargs):
     created = kwargs.get('created', False)
     channel_layer = get_channel_layer()
-    event = {
-        'type': 'project_default_guide_product_update',
-        'message': {
-            'type': 'created' if created else 'updated',
-            "item": {
-                "id": str(document.id),
-                "name": document.name,
-                "price": document.price,
-                "description": document.description,
-                "isActive": document.is_active,
-                "createdTime": document.created_time,
-                "lastModifiedTime": document.last_modified_time,
-            }
-
-        }
-    }
+    event = message_project_default_guide_product('created' if created else 'updated', document)
     async_to_sync(channel_layer.group_send)('project_default_guide_product', serialize_datetime(event))
     
 
 def project_default_guide_product_deleted(sender, document, **kwargs):
     channel_layer = get_channel_layer()
-    event = {
-        'type': 'project_default_guide_product_update',
-        'message': {
-            'type': 'deleted',
-            "item": {
-                "id": str(document.id),
-                "name": document.name,
-                "price": document.price,
-                "description": document.description,
-                "isActive": document.is_active,
-                "createdTime": document.created_time,
-                "lastModifiedTime": document.last_modified_time,
-            }
-        }
-    }
+    event = message_project_default_guide_product('deleted', document)
     async_to_sync(channel_layer.group_send)('project_default_guide_product', serialize_datetime(event))
 
 ##########################################################################
@@ -173,42 +85,13 @@ def project_default_guide_product_deleted(sender, document, **kwargs):
 def project_stage_saved(sender, document, **kwargs):
     created = kwargs.get('created', False)
     channel_layer = get_channel_layer()
-    event = {
-        'type': 'project_stage_update',
-        'message': {
-            'type': 'created' if created else 'updated',
-            "item": {
-                "id": str(document.id),
-                "name": document.name,
-                "description": document.description,
-                "order": document.order,
-                "otherName": document.other_name,
-                "isActive": document.is_active,
-                "lastModifiedTime": document.last_modified_time,
-            }
-
-        }
-    }
+    event = message_project_stage('created' if created else 'updated', document)
     async_to_sync(channel_layer.group_send)('project_stage', serialize_datetime(event))
     
 
 def project_stage_deleted(sender, document, **kwargs):
     channel_layer = get_channel_layer()
-    event = {
-        'type': 'project_stage_update',
-        'message': {
-            'type': 'deleted',
-            "item": {
-                "id": str(document.id),
-                "name": document.name,
-                "description": document.description,
-                "order": document.order,
-                "otherName": document.other_name,
-                "isActive": document.is_active,
-                "lastModifiedTime": document.last_modified_time,
-            }
-        }
-    }
+    event = message_project_stage('deleted', document)
     async_to_sync(channel_layer.group_send)('project_stage', serialize_datetime(event))
     
     
@@ -219,36 +102,13 @@ def project_stage_deleted(sender, document, **kwargs):
 def project_task_stage_saved(sender, document, **kwargs):
     created = kwargs.get('created', False)
     channel_layer = get_channel_layer()
-    event = {
-        'type': 'project_task_stage_update',
-        'message': {
-            'type': 'created' if created else 'updated',
-            "item": {
-                "id": str(document.id),
-                "name": document.name,
-                "description": document.description,
-                "isActive": document.is_active,
-            }
-
-        }
-    }
+    event = message_project_task_stage('created' if created else 'updated', document)
     async_to_sync(channel_layer.group_send)('project_task_stage', serialize_datetime(event))
 
 
 def project_task_stage_deleted(sender, document, **kwargs):
     channel_layer = get_channel_layer()
-    event = {
-        'type': 'project_task_stage_update',
-        'message': {
-            'type': 'deleted',
-            "item": {
-                "id": str(document.id),
-                "name": document.name,
-                "description": document.description,
-                "isActive": document.is_active,
-            }
-        }
-    }
+    event = message_project_task_stage('deleted', document)
     async_to_sync(channel_layer.group_send)('project_task_stage', serialize_datetime(event))
     
     
@@ -259,102 +119,13 @@ def project_task_stage_deleted(sender, document, **kwargs):
 def project_saved(sender, document, **kwargs):
     created = kwargs.get('created', False)
     channel_layer = get_channel_layer()
-    event = {
-        'type': 'project_update',
-        'message': {
-            'type': 'created' if created else 'updated',
-            "item": {
-                "id": str(document.id),
-                "name": document.name,
-                "number": document.number,
-                "description": document.description,
-                "referenceNumber": document.reference_number,
-                "salesOrder": document.sales_order,
-                "phone": document.phone,
-                "lastModifiedTime": document.last_modified_time,
-                "stageHistory": document.stage_history,
-                "userReporter": document.user_reporter,
-                "usersAssignees": document.users_assignees,
-                "userInstaller": document.user_installer,
-                "startDate": document.start_date,
-                "endDate": document.end_date,
-                "currentStage": document.current_stage,
-                "projectAttachments": document.project_attachments,
-                "projectTasks": document.project_tasks,
-                "projectDefaultTasks": document.project_default_tasks,
-                "projectComments": document.project_comments,
-                "projectHistory": document.project_history,
-                "address": document.address,
-                "isActive": document.is_active,
-                "hasPermission": document.has_permission,
-                "userManager": document.user_manager,
-                "allProductsMarked": document.all_products_marked,
-                "allWindowsMarked": document.all_windows_marked,
-                "allScrewMarked": document.all_screw_marked,
-                "allTrashMarked": document.all_trash_marked,
-                "feedback": document.feedback,
-                "workScope": document.work_scope,
-                "projectMaterials": document.project_materials,
-                "projectGuideProducts": document.project_guide_products,
-                "projectMaterialsOtherNotes": document.project_materials_other_notes,
-                "inspectionDate": document.inspection_date,
-                "finishPermissionDate": document.finish_permission_date,
-                "isPartDays": document.is_part_days,
-                "duration": document.duration,
-            }
-
-        }
-    }
+    event = message_project('created' if created else 'updated', document)
     async_to_sync(channel_layer.group_send)('project', serialize_datetime(event))
 
 
 def project_deleted(sender, document, **kwargs):
     channel_layer = get_channel_layer()
-    event = {
-        'type': 'project_update',
-        'message': {
-            'type': 'deleted',
-            "item": {
-                "id": str(document.id),
-                "name": document.name,
-                "number": document.number,
-                "description": document.description,
-                "referenceNumber": document.reference_number,
-                "salesOrder": document.sales_order,
-                "phone": document.phone,
-                "lastModifiedTime": document.last_modified_time,
-                "stageHistory": document.stage_history,
-                "userReporter": document.user_reporter,
-                "usersAssignees": document.users_assignees,
-                "userInstaller": document.user_installer,
-                "startDate": document.start_date,
-                "endDate": document.end_date,
-                "currentStage": document.current_stage,
-                "projectAttachments": document.project_attachments,
-                "projectTasks": document.project_tasks,
-                "projectDefaultTasks": document.project_default_tasks,
-                "projectComments": document.project_comments,
-                "projectHistory": document.project_history,
-                "address": document.address,
-                "isActive": document.is_active,
-                "hasPermission": document.has_permission,
-                "userManager": document.user_manager,
-                "allProductsMarked": document.all_products_marked,
-                "allWindowsMarked": document.all_windows_marked,
-                "allScrewMarked": document.all_screw_marked,
-                "allTrashMarked": document.all_trash_marked,
-                "feedback": document.feedback,
-                "workScope": document.work_scope,
-                "projectMaterials": document.project_materials,
-                "projectGuideProducts": document.project_guide_products,
-                "projectMaterialsOtherNotes": document.project_materials_other_notes,
-                "inspectionDate": document.inspection_date,
-                "finishPermissionDate": document.finish_permission_date,
-                "isPartDays": document.is_part_days,
-                "duration": document.duration,
-            }
-        }
-    }
+    event = message_project('deleted', document)
     async_to_sync(channel_layer.group_send)('project', serialize_datetime(event))
     
     
@@ -366,50 +137,13 @@ def project_deleted(sender, document, **kwargs):
 def project_default_task_saved(sender, document, **kwargs):
     created = kwargs.get('created', False)
     channel_layer = get_channel_layer()
-    event = {
-        'type': 'project_default_task_update',
-        'message': {
-            'type': 'created' if created else 'updated',
-            "item": {
-                "id": str(document.id),
-                "name": document.name,
-                "number": document.number,
-                "description": document.description,
-                "order": document.order,
-                "projectStage": document.project_stage,
-                "projectStageStatus": document.project_stage_status,
-                "createdTime": document.created_time,
-                "lastModifiedTime": document.last_modified_time,
-                "isActive": document.is_active,
-                "hasAttachments": document.has_attachments,
-            }
-
-        }
-    }
+    event = message_project_default_task('created' if created else 'updated', document)
     async_to_sync(channel_layer.group_send)('project_default_task', serialize_datetime(event))
 
 
 def project_default_task_deleted(sender, document, **kwargs):
     channel_layer = get_channel_layer()
-    event = {
-        'type': 'project_default_task_update',
-        'message': {
-            'type': 'deleted',
-            "item": {
-                "id": str(document.id),
-                "name": document.name,
-                "number": document.number,
-                "description": document.description,
-                "order": document.order,
-                "projectStage": document.project_stage,
-                "projectStageStatus": document.project_stage_status,
-                "createdTime": document.created_time,
-                "lastModifiedTime": document.last_modified_time,
-                "isActive": document.is_active,
-                "hasAttachments": document.has_attachments,
-            }
-        }
-    }
+    event = message_project_default_task('deleted', document)
     async_to_sync(channel_layer.group_send)('project_default_task', serialize_datetime(event))
     
     
@@ -421,38 +155,13 @@ def project_default_task_deleted(sender, document, **kwargs):
 def project_tracking_saved(sender, document, **kwargs):
     created = kwargs.get('created', False)
     channel_layer = get_channel_layer()
-    event = {
-        'type': 'project_tracking_update',
-        'message': {
-            'type': 'created' if created else 'updated',
-            "item": {
-                "id": str(document.id),
-                "userReporter": document.user_reporter,
-                "action": document.action,
-                "createdTime": document.created_time,
-                "managedData": document.managed_data,
-            }
-
-        }
-    }
+    event = message_project_tracking('created' if created else 'updated', document)
     async_to_sync(channel_layer.group_send)('project_tracking', serialize_datetime(event))
 
 
 def project_tracking_deleted(sender, document, **kwargs):
     channel_layer = get_channel_layer()
-    event = {
-        'type': 'project_tracking_update',
-        'message': {
-            'type': 'deleted',
-            "item": {
-                "id": str(document.id),
-                "userReporter": document.user_reporter,
-                "action": document.action,
-                "createdTime": document.created_time,
-                "managedData": document.managed_data,
-            }
-        }
-    }
+    event = message_project_tracking('deleted', document)
     async_to_sync(channel_layer.group_send)('project_tracking', serialize_datetime(event))
     
 
@@ -464,105 +173,14 @@ def project_by_id_saved(sender, document, **kwargs):
     created = kwargs.get('created', False)
     channel_layer = get_channel_layer()
     group_name = f"project_{str(document.id)}"
-    event = {
-        'type': 'project_update',
-        'message': {
-            'type': 'created' if created else 'updated',
-            "item": {
-                "id": str(document.id),
-                "name": document.name,
-                "number": document.number,
-                "description": document.description,
-                "referenceNumber": document.reference_number,
-                "salesOrder": document.sales_order,
-                "phone": document.phone,
-                "createdTime": document.created_time,
-                "lastModifiedTime": document.last_modified_time,
-                "stageHistory": document.stage_history,
-                "userReporter": document.user_reporter,
-                "usersAssignees": document.users_assignees,
-                "userInstaller": document.user_installer,
-                "startDate": document.start_date,
-                "endDate": document.end_date,
-                "currentStage": document.current_stage,
-                "projectAttachments": document.project_attachments,
-                "projectTasks": document.project_tasks,
-                "projectDefaultTasks": document.project_default_tasks,
-                "projectComments": document.project_comments,
-                "projectHistory": document.project_history,
-                "address": document.address,
-                "isActive": document.is_active,
-                "hasPermission": document.has_permission,
-                "userManager": document.user_manager,
-                "allProductsMarked": document.all_products_marked,
-                "allWindowsMarked": document.all_windows_marked,
-                "allScrewMarked": document.all_screw_marked,
-                "allTrashMarked": document.all_trash_marked,
-                "feedback": document.feedback,
-                "workScope": document.work_scope,
-                "projectMaterials": document.project_materials,
-                "projectGuideProducts": document.project_guide_products,
-                "projectMaterialsOtherNotes": document.project_materials_other_notes,
-                "inspectionDate": document.inspection_date,
-                "finishPermissionDate": document.finish_permission_date,
-                "isPartDays": document.is_part_days,
-                "duration": document.duration,
-            }
-
-        }
-    }
+    event = message_project('created' if created else 'updated', document)
     async_to_sync(channel_layer.group_send)(group_name, serialize_datetime(event))
     
 
 def project_by_id_deleted(sender, document, **kwargs):
     channel_layer = get_channel_layer()
     group_name = f"project_{str(document.id)}"
-    event = {
-        'type': 'project_update',
-        'message': {
-            'type': 'deleted',
-            "item": {
-                "id": str(document.id),
-                "name": document.name,
-                "number": document.number,
-                "description": document.description,
-                "referenceNumber": document.reference_number,
-                "salesOrder": document.sales_order,
-                "phone": document.phone,
-                "createdTime": document.created_time,
-                "lastModifiedTime": document.last_modified_time,
-                "stageHistory": document.stage_history,
-                "userReporter": document.user_reporter,
-                "usersAssignees": document.users_assignees,
-                "userInstaller": document.user_installer,
-                "startDate": document.start_date,
-                "endDate": document.end_date,
-                "currentStage": document.current_stage,
-                "projectAttachments": document.project_attachments,
-                "projectTasks": document.project_tasks,
-                "projectDefaultTasks": document.project_default_tasks,
-                "projectComments": document.project_comments,
-                "projectHistory": document.project_history,
-                "address": document.address,
-                "isActive": document.is_active,
-                "hasPermission": document.has_permission,
-                "userManager": document.user_manager,
-                "allProductsMarked": document.all_products_marked,
-                "allWindowsMarked": document.all_windows_marked,
-                "allScrewMarked": document.all_screw_marked,
-                "allTrashMarked": document.all_trash_marked,
-                "feedback": document.feedback,
-                "workScope": document.work_scope,
-                "projectMaterials": document.project_materials,
-                "projectGuideProducts": document.project_guide_products,
-                "projectMaterialsOtherNotes": document.project_materials_other_notes,
-                "inspectionDate": document.inspection_date,
-                "finishPermissionDate": document.finish_permission_date,
-                "isPartDays": document.is_part_days,
-                "duration": document.duration,
-            }
-        }
-    }
+    event = message_project('deleted', document)
     async_to_sync(channel_layer.group_send)(group_name, serialize_datetime(event))
     
 ##########################################################################    
@@ -572,42 +190,13 @@ def project_by_id_deleted(sender, document, **kwargs):
 def project_notification_user_saved(sender, document, **kwargs):
     created = kwargs.get('created', False)
     channel_layer = get_channel_layer()
-    event = {
-        'type': 'project_notification_user_update',
-        'message': {
-            'type': 'created' if created else 'updated',
-            "item": {
-                "id": str(document.id),
-                "notification": document.notification,
-                "username": document.username,
-                "user": document.user,
-                "read": document.read,
-                "createdTime": document.created_time,
-                "lastModifiedTime": document.last_modified_time,
-            }
-
-        }
-    }
+    event = message_project_notification_user('created' if created else 'updated', document)
     async_to_sync(channel_layer.group_send)('project_notification_user', serialize_datetime(event))
 
 
 def project_notification_user_deleted(sender, document, **kwargs):
     channel_layer = get_channel_layer()
-    event = {
-        'type': 'project_notification_user_update',
-        'message': {
-            'type': 'deleted',
-            "item": {
-                "id": str(document.id),
-                "notification": document.notification,
-                "username": document.username,
-                "user": document.user,
-                "read": document.read,
-                "createdTime": document.created_time,
-                "lastModifiedTime": document.last_modified_time,
-            }
-        }
-    }
+    event = message_project_notification_user('deleted', document)
     async_to_sync(channel_layer.group_send)('project_notification_user', serialize_datetime(event))
     
     
@@ -652,9 +241,16 @@ def sync_project(sender, document, **kwargs):
         'feedback': document.feedback,
         'work_scope': document.work_scope,
         'inspection_date': document.inspection_date,
+        'inspection_end_date': document.inspection_end_date,
+        'inspection_duration': document.inspection_duration,
+        'inspection_is_part_days': document.inspection_is_part_days,
         'finish_permission_date': document.finish_permission_date,
+        'finish_permission_end_date': document.finish_permission_end_date,
+        'finish_permission_duration': document.finish_permission_duration,
+        'finish_permission_is_part_days': document.finish_permission_is_part_days,
         'is_part_days': document.is_part_days,
         'current_stage': document.current_stage,
+        'work_orders': document.work_orders,
     }
     
     ProjectSync._get_collection().replace_one(

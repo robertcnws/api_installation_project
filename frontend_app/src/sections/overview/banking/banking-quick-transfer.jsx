@@ -269,7 +269,16 @@ function ConfirmTransferDialog({
 }) {
   return (
     <Dialog open={open} fullWidth maxWidth="xs" onClose={onClose}>
-      <DialogTitle>Transfer to</DialogTitle>
+      <DialogTitle>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Box className="dialog-title-icon">
+            <Iconify icon="mdi:bank-transfer" />
+          </Box>
+          <Typography variant="h6" sx={{ fontWeight: 600 }}>
+            Transfer to
+          </Typography>
+        </Box>
+      </DialogTitle>
 
       <Box sx={{ px: 3, gap: 3, display: 'flex', flexDirection: 'column' }}>
         <Box sx={{ gap: 2, display: 'flex', alignItems: 'center' }}>

@@ -8,10 +8,13 @@ import Box from '@mui/material/Box';
 import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
+import Typography from '@mui/material/Typography';
 import LoadingButton from '@mui/lab/LoadingButton';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
+
+import { Iconify } from 'src/components/iconify';
 
 import { CONFIG } from 'src/config-global';
 
@@ -119,7 +122,16 @@ export function UserQuickChangePasswordForm({ currentUser, open, onClose, isSame
       PaperProps={{ sx: { maxWidth: 720 } }}
     >
       <Form methods={methods} onSubmit={onSubmit}>
-        <DialogTitle>Quick User Change Password</DialogTitle>
+        <DialogTitle>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Box className="dialog-title-icon">
+              <Iconify icon="mdi:lock-reset" />
+            </Box>
+            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+              Quick User Change Password
+            </Typography>
+          </Box>
+        </DialogTitle>
 
         <DialogContent>
           <Alert variant="outlined" severity="info" sx={{ mb: 3 }}>

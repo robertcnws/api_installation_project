@@ -176,8 +176,11 @@ export function ServiceAttachmentsModalView({
                     justifyContent: 'space-between',
                 }}>
                     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'left', gap: 0.5 }}>
-                        <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1 }}>
-                            <Typography variant="h6" sx={{ flexGrow: 1 }}>
+                        <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, alignItems: 'center' }}>
+                            <Box className="dialog-title-icon">
+                                <Iconify icon="mdi:paperclip" />
+                            </Box>
+                            <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 600 }}>
                                 Attachments in Service {displayService?.name}
                             </Typography>
                             {displayService?.isClosed && (

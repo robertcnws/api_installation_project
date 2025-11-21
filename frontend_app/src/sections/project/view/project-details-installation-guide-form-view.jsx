@@ -129,7 +129,7 @@ export function ProjectDetailsInstallationGuideFormView({
   
 
   useEffect(() => {
-    const socket = new WebSocket(`wss://${CONFIG.apiHost}/api/projects/ws/project/${project?.id}/`);
+    const socket = new WebSocket(`${CONFIG.wsProtocol}://${CONFIG.wsHost}/${CONFIG.wsDomain}/projects/ws/project/${project?.id}/`);
     socket.onerror = (errorEvent) => {
       console.dir(errorEvent);
       console.error('WebSocket error (toString):', errorEvent.toString());

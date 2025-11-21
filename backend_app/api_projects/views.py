@@ -16,6 +16,7 @@ from .repository import (
     project_task_repository,
     project_task_stage_repository,
     project_tracking_repository,
+    project_work_orders_repository,
     
 )
     
@@ -680,3 +681,33 @@ def delete_default_material(request, id):
 @permission_classes([AllowAny])
 def delete_default_materials(request):
     return project_default_material_repository.delete_default_materials(request)
+
+
+#############################################
+# MANAGE WORK ORDER
+#############################################
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def manage_work_order(request, id):
+    return project_work_orders_repository.manage_project_work_order(request, id)
+
+
+#############################################
+# DELETE WORK ORDER
+#############################################
+
+@api_view(['DELETE'])
+@permission_classes([AllowAny])
+def delete_work_order(request, project_id, id):
+    return project_work_orders_repository.delete_project_work_order(request, project_id, id)
+
+
+#############################################
+# FINISH WORK ORDER
+#############################################
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def finish_work_order(request, project_id, id):
+    return project_work_orders_repository.finish_project_work_order(request, project_id, id)

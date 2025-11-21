@@ -146,7 +146,7 @@ export function ServiceStageListView() {
   }, [loadedServiceStages]);
 
   useEffect(() => {
-    const socket = new WebSocket(`wss://${CONFIG.apiHost}/api/services/ws/service-stages/`);
+    const socket = new WebSocket(`${CONFIG.wsProtocol}://${CONFIG.wsHost}/${CONFIG.wsDomain}/services/ws/service-stages/`);
     // socket.onopen = () => {
     //   console.log('WebSocket connected');
     // };

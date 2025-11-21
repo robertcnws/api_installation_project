@@ -11,14 +11,13 @@ import Card from '@mui/material/Card';
 import Dialog from '@mui/material/Dialog';
 import { useTheme } from '@mui/material/styles';
 import DialogTitle from '@mui/material/DialogTitle';
+import { Box, Typography } from '@mui/material';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 import { useSetState } from 'src/hooks/use-set-state';
 
 import { fDate, fIsAfter, fIsBetween } from 'src/utils/format-time';
-import { verifyPermissions, listRolesAndSubroles } from 'src/utils/check-permissions';
 
-import { CONFIG } from 'src/config-global';
 import { DashboardContent } from 'src/layouts/dashboard';
 import { CALENDAR_COLOR_OPTIONS } from 'src/_mock/_calendar';
 import { updateEvent, useGetProjectEvents } from 'src/actions/calendar';
@@ -287,7 +286,16 @@ export function ProjectCalendarView({ projects, isOnlyWeek }) {
         }}
       >
         <DialogTitle sx={{ minHeight: 76 }}>
-          {openForm && <> {currentEvent?.id ? 'Edit' : 'Add'} {currentEvent?.namedType} event</>}
+          {openForm && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Box className="dialog-title-icon">
+                <Iconify icon="mdi:calendar" />
+              </Box>
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                {currentEvent?.id ? 'Edit' : 'Add'} {currentEvent?.namedType} event
+              </Typography>
+            </Box>
+          )}
         </DialogTitle>
 
         <ProjectCalendarForm

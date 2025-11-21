@@ -88,7 +88,7 @@ export function MeasurementView() {
   }, [loadedMeasurements]);
 
   useEffect(() => {
-    const socket = new WebSocket(`wss://${CONFIG.apiHost}/api/measurements/ws/measurements/`);
+    const socket = new WebSocket(`${CONFIG.wsProtocol}://${CONFIG.wsHost}/${CONFIG.wsDomain}/measurements/ws/measurements/`);
     socket.onerror = (errorEvent) => {
       console.dir(errorEvent);
       console.error('WebSocket error (toString):', errorEvent.toString());

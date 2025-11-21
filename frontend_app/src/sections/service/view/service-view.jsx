@@ -145,7 +145,7 @@ export function ServiceView() {
   }, [loadedServices, loadedProjects]);
 
   useEffect(() => {
-    const socket = new WebSocket(`wss://${CONFIG.apiHost}/api/services/ws/services/`);
+    const socket = new WebSocket(`${CONFIG.wsProtocol}://${CONFIG.wsHost}/${CONFIG.wsDomain}/services/ws/services/`);
     socket.onerror = (errorEvent) => {
       console.dir(errorEvent);
       console.error('WebSocket error (toString):', errorEvent.toString());

@@ -265,9 +265,14 @@ export function ProjectEditModalTaskView({ projectId, open, onClose }) {
                             width: '100%'
                         }}
                     >
-                        <Typography variant="h6">
-                            Update Task {project?.name}
-                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                            <Box className="dialog-title-icon">
+                                <Iconify icon="mdi:clipboard-text-outline" />
+                            </Box>
+                            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                                Update Task {project?.name}
+                            </Typography>
+                        </Box>
                         <IconButton onClick={onClose}>
                             <Iconify icon="eva:close-fill" />
                         </IconButton>

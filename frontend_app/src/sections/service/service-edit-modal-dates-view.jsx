@@ -399,7 +399,16 @@ export function ServiceEditModalDatesView({
 
     const renderService = (
         <Dialog fullWidth maxWidth="xs" open={open} onClose={onClose}>
-            <DialogTitle>{isEdit ? 'Update' : 'Add'} {isStartDate ? 'Start' : 'Closing'} date to Service {service?.name} </DialogTitle>
+            <DialogTitle>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Box className="dialog-title-icon">
+                        <Iconify icon="mdi:calendar" />
+                    </Box>
+                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                        {isEdit ? 'Update' : 'Add'} {isStartDate ? 'Start' : 'Closing'} date to Service {service?.name}
+                    </Typography>
+                </Box>
+            </DialogTitle>
 
             <Form methods={methods} onSubmit={onSubmit}>
 

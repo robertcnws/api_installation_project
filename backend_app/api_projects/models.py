@@ -139,6 +139,7 @@ class ProjectView(Document):
         'strict': False,   
     }
     
+    
 class Project(Document):
     name = StringField(max_length=255, required=True)
     number = StringField(max_length=255, required=True)
@@ -174,10 +175,17 @@ class Project(Document):
     project_guide_products = ListField(DynamicField(), default=list, null=True)
     project_materials_other_notes = StringField(null=True)
     inspection_date = DateTimeField(null=True)
+    inspection_end_date = DateTimeField(null=True)
+    inspection_duration = IntField(default=0, null=True)  # Duration in days
+    inspection_is_part_days = BooleanField(default=False, null=True)
     finish_permission_date = DateTimeField(null=True)
-    is_part_days = BooleanField(default=False)
+    finish_permission_end_date = DateTimeField(null=True)
+    finish_permission_duration = IntField(default=0, null=True)  # Duration in days
+    finish_permission_is_part_days = BooleanField(default=False, null=True)
+    is_part_days = BooleanField(default=False, null=True)
     phone = StringField(max_length=255, null=True)
     duration = IntField(default=0, null=True)  # Duration in days
+    work_orders = ListField(DynamicField(), default=list, null=True)
     
     meta = {
         'collection': 'project',

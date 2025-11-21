@@ -24,6 +24,7 @@ import { CONFIG } from 'src/config-global';
 
 import { toast } from 'src/components/snackbar';
 import { Form, Field, schemaHelper } from 'src/components/hook-form';
+import { Iconify } from 'src/components/iconify';
 
 // ----------------------------------------------------------------------
 
@@ -202,7 +203,16 @@ export function SalesOrderCreateProjectDialogForm({ currentProject, loadedUsers,
       PaperProps={{ sx: { maxWidth: 1220 } }}
     >
       <Form methods={methods} onSubmit={onSubmit}>
-        <DialogTitle>Creating an Installation from {currentSalesOrder?.salesorder_number}</DialogTitle>
+        <DialogTitle>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Box className="dialog-title-icon">
+              <Iconify icon="tdesign:folder-setting-filled" />
+            </Box>
+            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+              Creating an Installation from {currentSalesOrder?.salesorder_number}
+            </Typography>
+          </Box>
+        </DialogTitle>
 
         <DialogContent>
           <Box

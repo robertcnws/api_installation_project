@@ -116,7 +116,7 @@ export function ProjectView() {
   }, [loadedProjects]);
 
   useEffect(() => {
-    const socket = new WebSocket(`wss://${CONFIG.apiHost}/api/projects/ws/projects/`);
+    const socket = new WebSocket(`${CONFIG.wsProtocol}://${CONFIG.wsHost}/${CONFIG.wsDomain}/projects/ws/projects/`);
     socket.onerror = (errorEvent) => {
       console.dir(errorEvent);
       console.error('WebSocket error (toString):', errorEvent.toString());
@@ -360,9 +360,9 @@ export function ProjectView() {
           <Iconify icon="mingcute:dot-grid-fill" />
         </ToggleButton>
 
-        <ToggleButton value="calendar">
+        {/* <ToggleButton value="calendar">
           <Iconify icon="ion:calendar-outline" />
-        </ToggleButton>
+        </ToggleButton> */}
 
         {!isInstaller(userLogged?.data?.user_role?.name) && (
           <ToggleButton value="kanban">

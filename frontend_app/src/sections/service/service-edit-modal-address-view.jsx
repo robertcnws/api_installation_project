@@ -8,7 +8,7 @@ import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import { LoadingButton } from '@mui/lab';
 import Button from '@mui/material/Button';
-import { Dialog, DialogTitle, DialogActions } from '@mui/material';
+import { Dialog, DialogTitle, DialogActions, Typography } from '@mui/material';
 
 import { useRouter } from 'src/routes/hooks';
 
@@ -20,6 +20,7 @@ import { Form, Field, schemaHelper } from 'src/components/hook-form';
 
 import { LoadingContext } from 'src/auth/context/loading-context';
 import { useDataContext } from 'src/auth/context/data/data-context';
+import { Iconify } from 'src/components/iconify';
 
 
 // ----------------------------------------------------------------------
@@ -56,7 +57,7 @@ export function ServiceEditModalAddressView({
                 id: itemById?.id || '',
                 name: itemById?.name || '',
                 number: itemById?.number || '',
-                address: itemById?.address || '',   
+                address: itemById?.address || '',
             }));
         }
     }, [itemById, setServiceData]);
@@ -142,44 +143,53 @@ export function ServiceEditModalAddressView({
 
     const renderService = (
         <Dialog fullWidth maxWidth="md" open={open} onClose={onClose}>
-                <DialogTitle>{isEdit ? 'Update' : 'Add'} Address to Service {serviceData?.name} </DialogTitle>
+            <DialogTitle>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Box className="dialog-title-icon">
+                        <Iconify icon="mdi:map-marker" />
+                    </Box>
+                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                        {isEdit ? 'Update' : 'Add'} Address to Service {serviceData?.name}
+                    </Typography>
+                </Box>
+            </DialogTitle>
 
-                <Form methods={methods} onSubmit={onSubmit}>
+            <Form methods={methods} onSubmit={onSubmit}>
 
-                    <Stack
-                        spacing={2.5}
-                        justifyContent="center"
-                        sx={{ p: 2.5 }}
-                    >
+                <Stack
+                    spacing={2.5}
+                    justifyContent="center"
+                    sx={{ p: 2.5 }}
+                >
 
-                        <Box sx={{ flexDirection: !isMobile ? 'row' : 'column', display: 'flex' }}>
-                            
-                            <Box sx={{ width: '100%', color: 'text.secondary', mt: !isMobile ? 0 : 2, ml: !isMobile ? 2 : 0 }}>
-                                <Field.Text
-                                    name="address"
-                                    label="Address"
-                                    control={control}
-                                    fullWidth
-                                    multiline
-                                    rows={3}
-                                    placeholder="Enter address"
-                                />
-                            </Box>
+                    <Box sx={{ flexDirection: !isMobile ? 'row' : 'column', display: 'flex' }}>
+
+                        <Box sx={{ width: '100%', color: 'text.secondary', mt: !isMobile ? 0 : 2, ml: !isMobile ? 2 : 0 }}>
+                            <Field.Text
+                                name="address"
+                                label="Address"
+                                control={control}
+                                fullWidth
+                                multiline
+                                rows={3}
+                                placeholder="Enter address"
+                            />
                         </Box>
-                    </Stack>
-                    <DialogActions>
-                        <LoadingButton type="submit" variant="contained" loading={isSubmitting}>
-                            {isEdit ? 'Update' : 'Add'}
-                        </LoadingButton>
-                        {/* <Button onClick={onClose}>
+                    </Box>
+                </Stack>
+                <DialogActions>
+                    <LoadingButton type="submit" variant="contained" loading={isSubmitting}>
+                        {isEdit ? 'Update' : 'Add'}
+                    </LoadingButton>
+                    {/* <Button onClick={onClose}>
                             Delete
                         </Button> */}
-                        <Button variant="outlined" onClick={onClose}>
-                            Cancel
-                        </Button>
-                    </DialogActions>
-                </Form>
-            </Dialog>
+                    <Button variant="outlined" onClick={onClose}>
+                        Cancel
+                    </Button>
+                </DialogActions>
+            </Form>
+        </Dialog>
     )
 
     return (

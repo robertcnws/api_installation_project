@@ -288,8 +288,8 @@ export function ProjectDetailsContent({
                       ) : 'normal'
                     }}
                   >
-                    {fDate(project?.startDate)} 
-                    <b> ({project?.duration ? (project?.duration === 1 ? '1 day' : `${project?.duration} days`) : fDuration(project?.startDate, project?.endDate)})</b> 
+                    {fDate(project?.startDate)}
+                    <b> ({project?.duration ? (project?.duration === 1 ? '1 day' : `${project?.duration} days`) : fDuration(project?.startDate, project?.endDate)})</b>
                     <br />
                     <Label variant="filled" sx={{ bgcolor: 'whitesmoke', color: 'text.primary' }}>
                       {project?.isPartDays ? 'Part Days' : 'Full Days'}
@@ -339,90 +339,6 @@ export function ProjectDetailsContent({
             </TableCell>
           </TableRow>
 
-          {/* <TableRow>
-            <TableCell>
-              <Typography variant="subtitle2" color="text.secondary">Estimated Closing Date:</Typography>
-            </TableCell>
-            <TableCell>
-              <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, justifyContent: 'space-between' }}>
-                {project?.endDate ? (
-                  <Typography
-                    variant="subtitle2"
-                    color={
-                      project?.endDate
-                        ? (
-                          (fIsAfter(dayjs(new Date()), dayjs(project?.endDate).format('YYYY-MM-DD')) &&
-                            (
-                              project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.preparation.toLowerCase()) ||
-                              project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.coordination.toLowerCase()) ||
-                              project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.installation.toLowerCase())
-                            )
-                          )
-                            ? 'error.main'
-                            : 'text.primary'
-                        )
-                        : 'text.primary'
-                    }
-                    sx={{
-                      fontWeight: project?.endDate ? (
-                        (fIsAfter(dayjs(new Date()), dayjs(project?.endDate).format('YYYY-MM-DD')) &&
-                          (
-                            project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.preparation.toLowerCase()) ||
-                            project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.coordination.toLowerCase()) ||
-                            project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.installation.toLowerCase())
-                          )
-                        )
-                          ? 'bold'
-                          : 'normal'
-                      ) : 'normal'
-                    }}
-                  >
-                    {fDate(project?.endDate)}
-                  </Typography>
-                ) : (
-                  <Iconify icon="fluent-mdl2:date-time" color="warning" width={20} sx={{ ml: 0.5, mt: 0.5 }} />
-                )}
-
-              </Box>
-            </TableCell>
-            <TableCell sx={{ textAlign: 'right', maxWidth: '30px' }}>
-              {(project?.endDate && (verifyPermissions(
-                listPermissions,
-                CONFIG.permissions.system,
-                CONFIG.permissions.moduleProjects,
-                CONFIG.permissions.operationEditClosingDate
-              ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
-                  <IconButton variant="text" color="primary" size="small" sx={{ ml: 0, maxWidth: 10 }}
-                    onClick={() => {
-                      setIsStartDate(false)
-                      setIsInspectionDate(false)
-                      setOpenDialogs({ ...openDialogs, date: true })
-                    }}
-                  >
-                    <Iconify icon="fluent:calendar-edit-32-regular" color="primary" width={22} />
-                  </IconButton>
-                )}
-              {(!project?.endDate && (verifyPermissions(
-                listPermissions,
-                CONFIG.permissions.system,
-                CONFIG.permissions.moduleProjects,
-                CONFIG.permissions.operationEditClosingDate
-              ) || listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
-                  <IconButton variant="text" color="warning" size="small" sx={{ ml: 0, maxWidth: 10 }}
-                    onClick={() => {
-                      setIsStartDate(false)
-                      setIsInspectionDate(false)
-                      setOpenDialogs({ ...openDialogs, date: true })
-                    }}
-                  >
-                    <Iconify icon="zondicons:date-add" color="warning" width={20} />
-                  </IconButton>
-                )}
-            </TableCell>
-          </TableRow> */}
-
-
-
           <TableRow>
             <TableCell>
               <Typography variant="subtitle2" color="text.secondary">Has Permission?</Typography>
@@ -463,6 +379,11 @@ export function ProjectDetailsContent({
                     {project?.inspectionDate ? (
                       <Typography variant="subtitle2" color="text.primary">
                         {fDate(project?.inspectionDate)}
+                        <b> ({project?.inspectionDuration ? (project?.inspectionDuration === 1 ? '1 day' : `${project?.inspectionDuration} days`) : fDuration(project?.inspectionDate, project?.inspectionEndDate)})</b>
+                        <br />
+                        <Label variant="filled" sx={{ bgcolor: 'whitesmoke', color: 'text.primary' }}>
+                          {project?.inspectionIsPartDays ? 'Part Days' : 'Full Days'}
+                        </Label>
                       </Typography>
                     ) : (
                       <Iconify icon="fluent-mdl2:date-time" color="warning" width={20} sx={{ ml: 0.5, mt: 0.5 }} />
@@ -516,6 +437,11 @@ export function ProjectDetailsContent({
                     {project?.finishPermissionDate ? (
                       <Typography variant="subtitle2" color="text.primary">
                         {fDate(project?.finishPermissionDate)}
+                        <b> ({project?.finishPermissionDuration ? (project?.finishPermissionDuration === 1 ? '1 day' : `${project?.finishPermissionDuration} days`) : fDuration(project?.finishPermissionDate, project?.finishPermissionEndDate)})</b>
+                        <br />
+                        <Label variant="filled" sx={{ bgcolor: 'whitesmoke', color: 'text.primary' }}>
+                          {project?.finishPermissionIsPartDays ? 'Part Days' : 'Full Days'}
+                        </Label>
                       </Typography>
                     ) : (
                       <>

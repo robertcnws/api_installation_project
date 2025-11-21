@@ -63,8 +63,15 @@ class ProjectViewType(MongoengineObjectType):
     end_date = graphene.String()     
     start_date = graphene.String()
     inspection_date = graphene.String()
+    inspection_end_date = graphene.String()
+    inspection_duration = graphene.Int()
+    inspection_is_part_days = graphene.Boolean()
     finish_permission_date = graphene.String()
+    finish_permission_end_date = graphene.String()
+    finish_permission_duration = graphene.Int()
+    finish_permission_is_part_days = graphene.Boolean()
     duration = graphene.Int()
+    work_orders = JSONDateTime()
     
     def resolve_created_time(self, info):
         dt = self._data.get('created_time') 
@@ -186,6 +193,28 @@ class ProjectViewType(MongoengineObjectType):
     def resolve_duration(self, info):
         return self._data.get('duration', 0) 
     
+    def resolve_work_orders(self, info):
+        return self._data.get('work_orders', [])
+    
+    def resolve_inspection_end_date(self, info):
+        dt = self._data.get('inspection_end_date')
+        return serialize_datetime(dt)
+    
+    def resolve_finish_permission_end_date(self, info):
+        dt = self._data.get('finish_permission_end_date')
+        return serialize_datetime(dt)
+    
+    def resolve_inspection_duration(self, info):
+        return self._data.get('inspection_duration', 0)
+    
+    def resolve_inspection_is_part_days(self, info):
+        return self._data.get('inspection_is_part_days', False)
+    
+    def resolve_finish_permission_duration(self, info):
+        return self._data.get('finish_permission_duration', 0)
+    
+    def resolve_finish_permission_is_part_days(self, info):
+        return self._data.get('finish_permission_is_part_days', False)
 
 class ProjectType(MongoengineObjectType):
     class Meta:
@@ -210,8 +239,15 @@ class ProjectType(MongoengineObjectType):
     end_date = graphene.String()     
     start_date = graphene.String()
     inspection_date = graphene.String()
+    inspection_end_date = graphene.String()
+    inspection_duration = graphene.Int()
+    inspection_is_part_days = graphene.Boolean()
     finish_permission_date = graphene.String()
+    finish_permission_end_date = graphene.String()
+    finish_permission_duration = graphene.Int()
+    finish_permission_is_part_days = graphene.Boolean()
     duration = graphene.Int()
+    work_orders = JSONDateTime()
     
     def resolve_created_time(self, info):
         dt = self.created_time
@@ -281,8 +317,31 @@ class ProjectType(MongoengineObjectType):
     
     def resolve_duration(self, info):
         return self.duration or 0
+
+    def resolve_work_orders(self, info):
+        return self.work_orders or []
     
+    def resolve_inspection_end_date(self, info):
+        dt = self.inspection_end_date
+        return serialize_datetime(dt)
     
+    def resolve_finish_permission_end_date(self, info):
+        dt = self.finish_permission_end_date
+        return serialize_datetime(dt)
+    
+    def resolve_inspection_duration(self, info):
+        return self.inspection_duration or 0
+
+    def resolve_inspection_is_part_days(self, info):
+        return self.inspection_is_part_days or False
+    
+    def resolve_finish_permission_duration(self, info):
+        return self.finish_permission_duration or 0
+    
+    def resolve_finish_permission_is_part_days(self, info):
+        return self.finish_permission_is_part_days or False
+
+
 class ProjectSyncType(MongoengineObjectType):
     class Meta:
         model = ProjectSync
@@ -306,8 +365,15 @@ class ProjectSyncType(MongoengineObjectType):
     start_date = graphene.String()
     end_date = graphene.String()
     inspection_date = graphene.String()
+    inspection_end_date = graphene.String()
     finish_permission_date = graphene.String()
+    finish_permission_end_date = graphene.String()
+    inspection_duration = graphene.Int()
+    inspection_is_part_days = graphene.Boolean()
+    finish_permission_duration = graphene.Int()
+    finish_permission_is_part_days = graphene.Boolean()
     duration = graphene.Int()
+    work_orders = JSONDateTime()
     
     
     def resolve_created_time(self, info):
@@ -378,3 +444,26 @@ class ProjectSyncType(MongoengineObjectType):
     
     def resolve_duration(self, info):
         return self.duration or 0
+    
+    def resolve_work_orders(self, info):
+        return self.work_orders or []
+    
+    def resolve_inspection_end_date(self, info):
+        dt = self.inspection_end_date
+        return serialize_datetime(dt)
+    
+    def resolve_finish_permission_end_date(self, info):
+        dt = self.finish_permission_end_date
+        return serialize_datetime(dt)
+    
+    def resolve_inspection_duration(self, info):
+        return self.inspection_duration or 0
+    
+    def resolve_inspection_is_part_days(self, info):
+        return self.inspection_is_part_days or False
+
+    def resolve_finish_permission_duration(self, info):
+        return self.finish_permission_duration or 0
+
+    def resolve_finish_permission_is_part_days(self, info):
+        return self.finish_permission_is_part_days or False

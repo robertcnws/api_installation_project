@@ -4,7 +4,7 @@ import { useMemo, useState, useEffect, useContext, useCallback } from 'react';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
-import { Grid, Dialog, DialogTitle, DialogActions } from '@mui/material';
+import { Grid, Dialog, DialogTitle, DialogActions, Typography } from '@mui/material';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
@@ -230,8 +230,18 @@ export function ServiceEditModalAttachmentsView({
 
     const renderService = (
         <Dialog fullWidth maxWidth="md" open={open} onClose={onClose}>
-            <DialogTitle>{listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.serviceStaff) ? service?.serviceAttachments?.length > 0 ? 'Update' : 'Add' : ''} Attachments to Service {service?.name} </DialogTitle>
-
+            <DialogTitle>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Box className="dialog-title-icon">
+                        <Iconify icon="codex:file" />
+                    </Box>
+                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                        {listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.serviceStaff) ?
+                            service?.serviceAttachments?.length > 0 ?
+                                'Update' : 'Add' : ''} Attachments to Service {service?.name}
+                    </Typography>
+                </Box>
+            </DialogTitle>
             <Stack
                 spacing={2.5}
                 justifyContent="center"

@@ -144,7 +144,7 @@ export function DefaultGuideProductListView() {
   }, [loadedDefaultGuideProducts]);
 
   useEffect(() => {
-    const socket = new WebSocket(`wss://${CONFIG.apiHost}/api/projects/ws/default-guide-products/`);
+    const socket = new WebSocket(`${CONFIG.wsProtocol}://${CONFIG.wsHost}/${CONFIG.wsDomain}/projects/ws/default-guide-products/`);
     socket.onerror = (errorEvent) => {
       console.dir(errorEvent);
       console.error('WebSocket error (toString):', errorEvent.toString());

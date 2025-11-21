@@ -7,7 +7,8 @@ import {
     IconButton,
     DialogTitle,
     DialogActions,
-    DialogContent
+    DialogContent,
+    Typography
 } from '@mui/material';
 
 import { Iconify } from 'src/components/iconify';
@@ -62,7 +63,16 @@ function FileViewerDialogComponent({
                 onClose={onClose}
                 PaperProps={{ sx: { position: 'relative', height: '100vh' } }}
             >
-                <DialogTitle>Error</DialogTitle>
+                <DialogTitle>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <Box className="dialog-title-icon">
+                            <Iconify icon="mdi:alert-circle" />
+                        </Box>
+                        <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                            Error
+                        </Typography>
+                    </Box>
+                </DialogTitle>
                 <DialogContent>
                     Could not load the file. Please check the file URL and try again.
                 </DialogContent>

@@ -103,7 +103,7 @@ export function UserListView() {
   }, [loadedUsers]);
 
   useEffect(() => {
-    const socket = new WebSocket(`wss://${CONFIG.apiHost}/api/users/ws/users/`);
+    const socket = new WebSocket(`${CONFIG.wsProtocol}://${CONFIG.wsHost}/${CONFIG.wsDomain}/users/ws/users/`);
     // socket.onopen = () => {
     //   console.log('WebSocket connected');
     // };
