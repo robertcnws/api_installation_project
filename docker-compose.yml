@@ -81,9 +81,9 @@ services:
       - ./backend_app/static:/app/staticfiles
     ports:
       - "8001:8000"
-    depends_on:
-      - mongodb_installation
-      - redis_installation
+    # depends_on:
+    #   - mongodb_installation
+    #   - redis_installation
     env_file:
       - ./backend_app/.env
     networks:

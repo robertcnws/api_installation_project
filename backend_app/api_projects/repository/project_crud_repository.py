@@ -492,9 +492,7 @@ def update_project(request, id):
         include_fields.append('project_comments')
     
     start_date = parse_custom_date(logger, data.get('startDate')) if data.get('startDate') else project.start_date
-    
     end_date = project.end_date
-    
     if data.get('startDate'):
         include_fields.append('start_date')
         if data.get('duration'):
@@ -509,18 +507,40 @@ def update_project(request, id):
                     end_date = project.end_date
             except ValueError:
                 return Response({'error': 'Invalid duration value'}, status=400)
-        
-    # end_date = parse_custom_date(logger, data.get('endDate')) if data.get('endDate') else project.end_date
-    # if data.get('endDate'):
-    #     include_fields.append('start_date')
     
     inspection_date = parse_custom_date(logger, data.get('inspectionDate')) if data.get('inspectionDate') else project.inspection_date
+    inspection_end_date = project.inspection_end_date
     if data.get('inspectionDate'):
         include_fields.append('inspection_date')
+        if data.get('inspectionDuration'):
+            try:
+                duration = int(data.get('inspectionDuration', 0))
+                if duration > 0:
+                    new_duration = duration - 1 if duration else 0
+                    inspection_end_date = inspection_date + timezone.timedelta(days=new_duration)
+                    inspection_end_date = parse_custom_date(logger, inspection_end_date)
+                    include_fields.append('inspection_end_date')
+                else:
+                    inspection_end_date = project.inspection_end_date
+            except ValueError:
+                return Response({'error': 'Invalid inspection duration value'}, status=400)
     
     finish_permission_date = parse_custom_date(logger, data.get('finishPermissionDate')) if data.get('finishPermissionDate') else project.finish_permission_date
-    if data.get('finishPermissionDate'):
-        include_fields.append('finish_permission_date')
+    finish_permission_end_date = project.finish_permission_end_date
+    if data.get('finishPermissionEndDate'):
+        include_fields.append('finish_permission_end_date')
+        if data.get('finishPermissionDuration'):
+            try:
+                duration = int(data.get('finishPermissionDuration', 0))
+                if duration > 0:
+                    new_duration = duration - 1 if duration else 0
+                    finish_permission_end_date = finish_permission_date + timezone.timedelta(days=new_duration)
+                    finish_permission_end_date = parse_custom_date(logger, finish_permission_end_date)
+                    include_fields.append('finish_permission_end_date')
+                else:
+                    finish_permission_end_date = project.finish_permission_end_date
+            except ValueError:
+                return Response({'error': 'Invalid finish permission duration value'}, status=400)
         
     
     is_part_days_str = data.get('isPartDays', '')
@@ -528,6 +548,18 @@ def update_project(request, id):
         is_part_days = True if is_part_days_str.lower() == 'true' else False
         if data.get('isPartDays') and is_part_days != project.is_part_days:
             include_fields.append('is_part_days')
+            
+    inspection_is_part_days_str = data.get('inspectionIsPartDays', '')
+    if inspection_is_part_days_str:
+        inspection_is_part_days = True if inspection_is_part_days_str.lower() == 'true' else False
+        if data.get('inspectionIsPartDays') and inspection_is_part_days != project.inspection_is_part_days:
+            include_fields.append('inspection_is_part_days')
+            
+    finish_permission_is_part_days_str = data.get('finishPermissionIsPartDays', '')
+    if finish_permission_is_part_days_str:
+        finish_permission_is_part_days = True if finish_permission_is_part_days_str.lower() == 'true' else False
+        if data.get('finishPermissionIsPartDays') and finish_permission_is_part_days != project.finish_permission_is_part_days:
+            include_fields.append('finish_permission_is_part_days')
     
     user_reporter = json.loads(data.get('userReporter', None)) if data.get('userReporter') else project.user_reporter
     
@@ -612,9 +644,15 @@ def update_project(request, id):
     project.project_default_tasks = project_default_tasks if project_default_tasks else project.project_default_tasks
     project.project_comments = project_comments if project_comments else project.project_comments
     project.inspection_date = inspection_date if inspection_date else project.inspection_date
+    project.inspection_end_date = inspection_end_date if data.get('inspectionDuration') else project.inspection_end_date
+    project.inspection_is_part_days = inspection_is_part_days if inspection_is_part_days_str else project.inspection_is_part_days
     project.finish_permission_date = finish_permission_date if finish_permission_date else project.finish_permission_date
+    project.finish_permission_end_date = finish_permission_end_date if data.get('finishPermissionDuration') else project.finish_permission_end_date
+    project.finish_permission_is_part_days = finish_permission_is_part_days if finish_permission_is_part_days_str else project.finish_permission_is_part_days
     project.is_part_days = is_part_days if is_part_days_str else project.is_part_days
     project.duration = duration if data.get('duration') else project.duration
+    project.inspection_duration = duration if data.get('inspectionDuration') else project.inspection_duration
+    project.finish_permission_duration = duration if data.get('finishPermissionDuration') else project.finish_permission_duration
         
     project.save()
     

@@ -68,12 +68,12 @@ export function useGetProjectEvents(projects = [], type = 'installation') {
       const endDate = type === 'installation' || type === 'service' ?
         dayjs(dayjs(project.endDate).format('YYYY-MM-DD')).add(23, 'hours').add(59, 'minutes').format('YYYY-MM-DD HH:mm:ss') :
         type === 'inspection' ?
-          dayjs(dayjs(project.inspectionDate).format('YYYY-MM-DD')).add(23, 'hours').add(59, 'minutes').format('YYYY-MM-DD HH:mm:ss') :
+          dayjs(dayjs(project.inspectionEndDate).format('YYYY-MM-DD')).add(23, 'hours').add(59, 'minutes').format('YYYY-MM-DD HH:mm:ss') :
           type === 'firstCheckMeasurement' ?
             dayjs(dayjs(project.firstDate).format('YYYY-MM-DD')).add(23, 'hours').add(59, 'minutes').format('YYYY-MM-DD HH:mm:ss') :
             type === 'secondCheckMeasurement' ?
               dayjs(dayjs(project.checkDate).format('YYYY-MM-DD')).add(23, 'hours').add(59, 'minutes').format('YYYY-MM-DD HH:mm:ss') :
-              dayjs(dayjs(project.finishPermissionDate).format('YYYY-MM-DD')).add(23, 'hours').add(59, 'minutes').format('YYYY-MM-DD HH:mm:ss');
+              dayjs(dayjs(project.finishPermissionEndDate).format('YYYY-MM-DD')).add(23, 'hours').add(59, 'minutes').format('YYYY-MM-DD HH:mm:ss');
 
       return {
         ...project,

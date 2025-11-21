@@ -221,7 +221,7 @@ export function MeasurementDetailsView({ measurementId }) {
     }, [loadedTracks, listSelectedTracks.length]);
 
     useEffect(() => {
-        const socket = new WebSocket(`wss://${CONFIG.apiHost}/api/measurements/ws/measurement/${itemById?.id}/`);
+        const socket = new WebSocket(`${CONFIG.wsProtocol}://${CONFIG.wsHost}/${CONFIG.wsDomain}/measurements/ws/measurement/${itemById?.id}/`);
         socket.onerror = (errorEvent) => {
             console.dir(errorEvent);
             console.error('WebSocket error (toString):', errorEvent.toString());
@@ -260,7 +260,7 @@ export function MeasurementDetailsView({ measurementId }) {
 
 
     useEffect(() => {
-        const socket = new WebSocket(`wss://${CONFIG.apiHost}/api/projects/ws/tracks/`);
+        const socket = new WebSocket(`${CONFIG.wsProtocol}://${CONFIG.wsHost}/${CONFIG.wsDomain}/projects/ws/tracks/`);
         socket.onerror = (errorEvent) => {
             console.dir(errorEvent);
             console.error('WebSocket error (toString):', errorEvent.toString());

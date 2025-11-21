@@ -1,41 +1,43 @@
-FROM python:3.12
+# ./django/Dockerfile
+FROM --platform=$BUILDPLATFORM python:3.12-bookworm
 
-ENV PYTHONUNBUFFERED=1
-ENV PYTHONPATH=/app
-
-ENV TZ=America/New_York
-
-RUN ln -fs /usr/share/zoneinfo/$TZ /etc/localtime && \
-    dpkg-reconfigure -f noninteractive tzdata
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PYTHONPATH=/app
 
 WORKDIR /app
 
-COPY requirements.txt /app/
+ARG TARGETARCH
+ARG TOOLS_VER=100.13.0
 
-RUN pip install --upgrade pip
-RUN pip install gunicorn
-RUN pip install uvicorn
-RUN pip install -r requirements.txt
+RUN set -eux; \
+    apt-get update && apt-get install -y --no-install-recommends curl ca-certificates tar xz-utils && rm -rf /var/lib/apt/lists/*; \
+    case "$TARGETARCH" in \
+      amd64)  MARCH=amd64 ;; \
+      arm64)  MARCH=arm64 ;; \
+      *) echo "Unsupported TARGETARCH: $TARGETARCH" && exit 1 ;; \
+    esac; \
+    BASE_URL="https://fastdl.mongodb.org/tools/db"; \
+    for DIST in ubuntu2204 debian11 ubuntu2004; do \
+      URL="$BASE_URL/mongodb-database-tools-${DIST}-${MARCH}-${TOOLS_VER}.tgz"; \
+      echo "Trying $URL"; \
+      if curl -fSL "$URL" -o /tmp/tools.tgz; then echo "Downloaded $URL"; break; fi; \
+    done; \
+    [ -s /tmp/tools.tgz ] || (echo "No se pudo descargar mongodb-database-tools para $MARCH" && exit 1); \
+    tar -xzf /tmp/tools.tgz -C /tmp; \
+    mv /tmp/mongodb-database-tools-*/bin/* /usr/local/bin/; \
+    rm -rf /tmp/tools.tgz /tmp/mongodb-database-tools-*; \
+    apt-get purge -y tar xz-utils || true; apt-get autoremove -y || true
 
-# ------- MongoDB tools (keyring + repo soportado) -------
-RUN apt-get update && apt-get install -y wget curl ca-certificates gnupg lsb-release && \
-    rm -rf /var/lib/apt/lists/*
-
-RUN install -d -m 0755 /etc/apt/keyrings && \
-    curl -fsSL https://pgp.mongodb.com/server-7.0.asc | gpg --dearmor -o /etc/apt/keyrings/mongodb-server-7.0.gpg
-
-RUN echo "deb [arch=amd64,arm64 signed-by=/etc/apt/keyrings/mongodb-server-7.0.gpg] https://repo.mongodb.org/apt/debian bookworm/mongodb-org/7.0 main" \
-    | tee /etc/apt/sources.list.d/mongodb-org-7.0.list
-
-RUN apt-get update && apt-get install -y mongodb-database-tools && \
-    rm -rf /var/lib/apt/lists/*
-# --------------------------------------------------------
-
-RUN mkdir -p /tmp/mongo_backup
+COPY requirements.txt ./
+RUN set -eux; pip install --upgrade pip && pip install --no-cache-dir gunicorn uvicorn && pip install --no-cache-dir -r requirements.txt
 
 COPY . /app/
+RUN mkdir -p /tmp/mongo_backup
 
-EXPOSE 8001
+EXPOSE 8000
 
 CMD ["sh", "-c", "python manage.py makemigrations --no-input && \
                   python manage.py migrate --no-input && \
@@ -44,4 +46,4 @@ CMD ["sh", "-c", "python manage.py makemigrations --no-input && \
                   python manage.py sync_scripts && \
                   celery -A system_installation_project worker --loglevel=info -E & \
                   celery -A system_installation_project beat --loglevel=info & \
-                  gunicorn system_installation_project.asgi:application -w 3 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8001"]
+                  gunicorn system_installation_project.asgi:application -w 3 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000"]

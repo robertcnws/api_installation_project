@@ -146,7 +146,7 @@ export function StageTaskListView() {
   }, [loadedStagesTask]);
 
   useEffect(() => {
-    const socket = new WebSocket(`wss://${CONFIG.apiHost}/api/projects/ws/stages-task/`);
+    const socket = new WebSocket(`${CONFIG.wsProtocol}://${CONFIG.wsHost}/${CONFIG.wsDomain}/projects/ws/stages-task/`);
     // socket.onopen = () => {
     //   console.log('WebSocket connected');
     // };

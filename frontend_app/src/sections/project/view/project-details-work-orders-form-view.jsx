@@ -414,7 +414,7 @@ export function ProjectDetailsWorkOrdersFormView({
         }
       />
       <ConfirmDialog
-        open={confirmFinishorkOrder.value}
+        open={confirmFinishWorkOrder.value}
         onClose={() => {
           confirmFinishWorkOrder.onFalse();
         }}

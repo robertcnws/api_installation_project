@@ -191,7 +191,10 @@ export function CalendarForm({ currentEvent, colorOptions, onClose }) {
                 disabled
               />
 
-              {(currentEvent?.type === 'installation' || currentEvent?.type === 'service') ? (
+              {(currentEvent?.type === 'installation' ||
+                currentEvent?.type === 'service' ||
+                currentEvent?.type === 'finishPermission' ||
+                currentEvent?.type === 'inspection') ? (
                 <>
                   <Field.MobileDateTimePicker
                     name="end"

@@ -38,7 +38,13 @@ const GET_ALL_PROJECTS = gql`
       projectGuideProducts
       projectMaterialsOtherNotes
       inspectionDate
+      inspectionEndDate
+      inspectionDuration
+      inspectionIsPartDays
       finishPermissionDate
+      finishPermissionEndDate
+      finishPermissionDuration
+      finishPermissionIsPartDays
       isPartDays
       duration
       workOrders
@@ -84,7 +90,13 @@ const GET_PROJECT_BY_ID = gql`
       projectGuideProducts
       projectMaterialsOtherNotes
       inspectionDate
+      inspectionEndDate
+      inspectionDuration
+      inspectionIsPartDays
       finishPermissionDate
+      finishPermissionEndDate
+      finishPermissionDuration
+      finishPermissionIsPartDays
       isPartDays
       duration
       workOrders

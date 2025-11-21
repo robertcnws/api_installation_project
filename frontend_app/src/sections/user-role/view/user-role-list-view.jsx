@@ -147,7 +147,7 @@ export function UserRoleListView() {
   }, [loadedUserRoles]);
 
   useEffect(() => {
-    const socket = new WebSocket(`wss://${CONFIG.apiHost}/api/users/ws/user-roles/`);
+    const socket = new WebSocket(`${CONFIG.wsProtocol}://${CONFIG.wsHost}/${CONFIG.wsDomain}/users/ws/user-roles/`);
     // socket.onopen = () => {
     //   console.log('WebSocket connected');
     // };
