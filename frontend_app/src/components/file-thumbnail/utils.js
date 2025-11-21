@@ -3,17 +3,17 @@ import { CONFIG } from 'src/config-global';
 // ----------------------------------------------------------------------
 
 // Define more types here
-const FORMAT_PDF = ['pdf'];
-const FORMAT_TEXT = ['txt'];
-const FORMAT_PHOTOSHOP = ['psd'];
-const FORMAT_WORD = ['doc', 'docx'];
-const FORMAT_EXCEL = ['xls', 'xlsx'];
-const FORMAT_ZIP = ['zip', 'rar', 'iso'];
-const FORMAT_ILLUSTRATOR = ['ai', 'esp'];
-const FORMAT_POWERPOINT = ['ppt', 'pptx'];
-const FORMAT_AUDIO = ['wav', 'aif', 'mp3', 'aac'];
-const FORMAT_IMG = ['jpg', 'jpeg', 'gif', 'bmp', 'png', 'svg', 'webp'];
-const FORMAT_VIDEO = ['m4v', 'avi', 'mpg', 'mp4', 'webm'];
+const FORMAT_PDF = ['pdf', 'PDF'];
+const FORMAT_TEXT = ['txt', 'text', 'md', 'markdown', 'log', 'TXT', 'TEXT', 'MD', 'MARKDOWN', 'LOG'];
+const FORMAT_PHOTOSHOP = ['psd', 'PSD'];
+const FORMAT_WORD = ['doc', 'docx', 'dot', 'dotx', 'DOC', 'DOCX', 'DOT', 'DOTX', 'docm', 'dotm', 'pages', 'PAGES'];
+const FORMAT_EXCEL = ['xls', 'xlsx', 'xlsm', 'XLS', 'XLSX', 'XLSM', 'csv', 'CSV'];
+const FORMAT_ZIP = ['zip', 'rar', 'iso', 'tar', 'gz', '7z', 'ZIP', 'RAR', 'ISO', 'TAR', 'GZ', '7Z'];
+const FORMAT_ILLUSTRATOR = ['ai', 'esp', 'ait', 'AI', 'ESP', 'AIT'];
+const FORMAT_POWERPOINT = ['ppt', 'pptx', 'pptm', 'PPT', 'PPTX', 'PPTM', 'ppsx', 'pps', 'potx', 'potm', 'pot', 'PPSX', 'PPS', 'POTX', 'POTM'];
+const FORMAT_AUDIO = ['wav', 'aif', 'mp3', 'aac', 'ogg', 'flac', 'wma', 'm4a', 'WAV', 'AIF', 'MP3', 'AAC', 'OGG', 'FLAC', 'WMA', 'M4A'];
+const FORMAT_IMG = ['jpg', 'jpeg', 'gif', 'bmp', 'png', 'svg', 'webp', 'JPG', 'JPEG', 'GIF', 'BMP', 'PNG', 'SVG', 'WEBP'];
+const FORMAT_VIDEO = ['m4v', 'avi', 'mpg', 'mp4', 'webm', 'mov', 'wmv', 'flv', 'M4V', 'AVI', 'MPG', 'MP4', 'WEBM', 'MOV', 'WMV', 'FLV'];
 
 const iconUrl = (icon) => `${CONFIG.assetsDir}/assets/icons/files/${icon}.svg`;
 

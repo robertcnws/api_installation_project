@@ -47,10 +47,20 @@ export function ProjectDetailsAttachmentView({
 
     const finalStages = useMemo(() => {
         if (loadedStages) {
-            return loadedStages.filter((stage) => stage.name.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) === -1);
+            const filteredStages = loadedStages.filter(
+                (stage) =>
+                    stage.name.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) === -1 &&
+                    stage.otherName !== null &&
+                    stage.otherName !== ''
+
+            );
+            if (!project?.hasPermission) {
+                return filteredStages.filter((stage) => stage.name.toLowerCase().indexOf(CONFIG.stages.permission.toLowerCase()) === -1);
+            }
+            return filteredStages;
         }
         return [];
-    }, [loadedStages]);
+    }, [loadedStages, project?.hasPermission]);
 
     useEffect(() => {
         if (refetchProject) {

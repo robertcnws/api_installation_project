@@ -21,15 +21,20 @@ export function AuthProvider({ children }) {
       const accessToken = sessionStorage.getItem(STORAGE_KEY);
       const refreshToken = sessionStorage.getItem(STORAGE_KEY_REFRESH);
 
+      // console.log('Access Token:', accessToken);
+      // console.log('Refresh Token:', refreshToken);
+
+      // console.log('Is Access Token Valid:', isValidToken(accessToken));
+
       if (accessToken && isValidToken(accessToken)) {
-
-        setSession(accessToken, refreshToken);
-
+        const resp = await setSession(accessToken, refreshToken);
+        if (!resp) {
+          throw new Error('Failed to set session');
+        }
         const res = await axios.get(endpoints.auth.me);
-
         const { user } = res.data;
-
         setState({ user: { ...user, accessToken }, loading: false });
+
       } else {
         setState({ user: null, loading: false });
       }

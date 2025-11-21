@@ -94,7 +94,7 @@ export function KanbanView({
     if (tasks) {
       const initialTasks = tasks.map((task) => ({
         ...task,
-        beforeNoMatter: tasksBeforeNoMatter.includes(task.service_default_task.name.toLowerCase()),
+        beforeNoMatter: true,
       }));
       if (isInstaller(userLogged?.data?.user_role?.name)) {
         const selectedTasks = initialTasks.filter(

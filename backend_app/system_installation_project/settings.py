@@ -15,6 +15,7 @@ from celery.schedules import crontab
 from .mongo_setup import (
     connect_mongo
 )
+from datetime import timedelta
 import os
 import environ
 import warnings 
@@ -134,6 +135,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'channels',
     'graphene_django',
+    # 'rest_framework_simplejwt.token_blacklist',
     'api_integration',
     'api_authorization',
     # 'api_projects',
@@ -152,6 +154,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.middleware.gzip.GZipMiddleware',
     'api_authorization.middleware.MongoAuthMiddleware',
     'api_authorization.middleware.MongoConnectionMiddleware',
 ]
@@ -257,8 +260,20 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'api_authorization.authentication.RevocationCheckJWTAuthentication',
+        # 'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=59),  # 1 hour
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ACCESS_TOKEN_LIFETIME_REMEMBER': timedelta(days=30),
+    'REFRESH_TOKEN_LIFETIME_REMEMBER': timedelta(days=60),
+    'ROTATE_REFRESH_TOKENS': False,
+    'BLACKLIST_AFTER_ROTATION': False,
+    'USER_ID_FIELD': 'id',  
+    'USER_ID_CLAIM': 'user_id',
 }
 
 FRONTEND_URL = env('FRONTEND_URL', default='')
@@ -285,6 +300,10 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': crontab(minute=0, hour=8, day_of_week='*'),
         # 'schedule': crontab(minute='*/2', hour='7-17', day_of_week='*'),
     },
+    # 'run-task-sequence-5min': {
+    #     'task': 'api_projects_async_task_sequence.tasks.task_sequence_5min',
+    #     'schedule': crontab(minute='*/5', hour='7-17', day_of_week='*'),
+    # },
 }
 
 
@@ -340,6 +359,14 @@ TASK_SERVICE_UPLOAD_REPAIR = env('TASK_SERVICE_UPLOAD_REPAIR', default='Upload R
 TASK_SERVICE_ASSIGN_CREW = env('TASK_SERVICE_ASSIGN_CREW', default='Assign Crew')
 TASK_SERVICE_UPLOAD_ISSUES = env('TASK_SERVICE_UPLOAD_ISSUES', default='Upload Issues')
 TASK_SERVICE_SCHEDULE_DATE = env('TASK_SERVICE_SCHEDULE_DATE', default='Schedule Date')
+
+# USER ROLES
+ROLE_SUPERADMIN = env('ROLE_SUPERADMIN', default='Superadmin')
+ROLE_ADMINISTRATOR = env('ROLE_ADMINISTRATOR', default='Administrator')
+ROLE_INSTALLER =env('ROLE_INSTALLER', default='Installer')
+ROLE_SERVICE_STAFF = env('ROLE_SERVICE_STAFF', default='Service Staff')
+ROLE_WAREHOUSE_STAFF = env('ROLE_WAREHOUSE_STAFF', default='Warehouse Staff')
+ROLE_PROJECT_MANAGER = env('ROLE_PROJECT_MANAGER', default='Project Manager')
 
 # MONGOENGINE
 

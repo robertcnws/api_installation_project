@@ -67,20 +67,23 @@ export function MeasurementTable({
   const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
 
   const TABLE_HEAD = [
-    { id: 'firstDate', label: 'First Measurement Date' },
+    // { id: 'firstDate', label: 'First Measurement Date' },
     { id: 'checkDate', label: 'Check Date' },
     { id: 'number', label: 'Number' },
     { id: 'customer', label: 'Customer' },
+    { id: 'status', label: 'Status' },
     { id: 'service_project', label: 'Associated At' },
     { id: 'address', label: 'Address' },
+    { id: 'lastModifiedTime', label: 'Updated At' },
     { id: '', width: 88 },
   ];
 
   const TABLE_HEAD_MOBILE = [
-    { id: 'firstDate', label: 'First Measurement Date' },
+    // { id: 'firstDate', label: 'First Measurement Date' },
     { id: 'checkDate', label: 'Check Date' },
     { id: 'number', label: 'Number' },
     { id: 'customer', label: 'Customer' },
+    { id: 'status', label: 'Status' },
     { id: '' },
   ];
 

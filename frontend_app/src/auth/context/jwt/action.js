@@ -26,9 +26,11 @@ export const signInWithPassword = async ({ email, password }) => {
   }
 };
 
-export const signInWithUsernameAndPassword = async ({ username, password }) => {
+export const signInWithUsernameAndPassword = async ({ username, password, rememberMe }) => {
   try {
-    const params = { username, password };
+    const params = { username, password, rememberMe };
+
+    // console.log('params:', params);
 
     const res = await axiosInstanceBackend.post(endpoints.auth.token, params, {
       headers: {
@@ -37,12 +39,20 @@ export const signInWithUsernameAndPassword = async ({ username, password }) => {
       },
     });
 
-    if (res.status === 200) {
+    if (res.data && res.data.access && res.data.refresh) {
+      // console.log('Response data:', res.data);
       localStorage.setItem('accessToken', res.data.access);
       localStorage.setItem('refreshToken', res.data.refresh);
-      setSession(res.data.access, res.data.refresh);
+      const resSession = await setSession(res.data.access, res.data.refresh);
+
+      if (!resSession) {
+        throw new Error('Failed to set session');
+      }
+
+      // console.log('Session set successfully:', resSession);
 
       const accessToken = res.data.access;
+      
 
       if (!accessToken) {
         throw new Error('Access token not found in response');
@@ -66,7 +76,6 @@ export const signInWithUsernameAndPassword = async ({ username, password }) => {
         sessionStorage.setItem('userLogged', JSON.stringify(loggedUser));
         localStorage.setItem('userLogged', JSON.stringify(loggedUser));
       }
-      // setSession(accessToken);
     }
 
   } catch (error) {

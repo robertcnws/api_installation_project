@@ -1,5 +1,6 @@
 import axios from 'axios';
-import { useMemo, useState, useEffect, useContext, useCallback } from 'react';
+import dayjs from 'dayjs';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
@@ -15,8 +16,8 @@ import { useBoolean } from 'src/hooks/use-boolean';
 import { useSetState } from 'src/hooks/use-set-state';
 
 import { fIsAfter, fIsBetween } from 'src/utils/format-time';
-import { listRolesAndSubroles } from 'src/utils/check-permissions';
 import { getServiceInstaller } from 'src/utils/service-tasks-utils';
+import { isServiceStaff, isAdministrator, listRolesAndSubroles } from 'src/utils/check-permissions';
 
 import { CONFIG } from 'src/config-global';
 import { PROJECT_TYPE_OPTIONS } from 'src/_mock';
@@ -28,7 +29,6 @@ import { EmptyContent } from 'src/components/empty-content';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 import { useTable, rowInPage, getComparator } from 'src/components/table';
 
-import { LoadingContext } from 'src/auth/context/loading-context';
 import { useDataContext } from 'src/auth/context/data/data-context';
 
 import { ServiceTable } from '../service-table';
@@ -39,13 +39,12 @@ import { ServiceFilters } from '../service-filters';
 import { ServiceFiltersResult } from '../service-filters-result';
 
 
+
 // import { ServiceNewFolderDialog } from '../service-new-folder-dialog';
 
 // ----------------------------------------------------------------------
 
 export function ServiceView() {
-
-  const { isMobile } = useContext(LoadingContext);
 
   localStorage.setItem('backFromServiceDetails', 'services');
 
@@ -54,18 +53,20 @@ export function ServiceView() {
     refetchServices,
     loadingServices,
     loadedUsers,
+    loadedSuperadminUsers,
     loadedServiceStages,
+    loadedProjects,
     // loadedServiceStagesTask,
     // listPermissions,
     // refetchSalesOrders,
   } = useDataContext();
 
-  const table = useTable({ 
+  const table = useTable({
     defaultCurrentPage: parseInt(localStorage.getItem('servicePage'), 10) || 0,
     defaultRowsPerPage: parseInt(localStorage.getItem('serviceRowsPerPage'), 10) || 10,
-    defaultDense: true, 
-    defaultOrder: 'asc', 
-    defaultOrderBy: 'startDate' 
+    defaultDense: true,
+    defaultOrder: 'asc',
+    defaultOrderBy: 'startDate'
   });
 
   const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
@@ -83,33 +84,68 @@ export function ServiceView() {
 
   const openInstallerFilter = useBoolean();
 
+  const openUserManagerFilter = useBoolean();
+
+  const openCreatedByFilter = useBoolean();
+
   const confirm = useBoolean();
-
-  const confirmStaff = useBoolean();
-
-  const [isWarehouseStaff, setIsWarehouseStaff] = useState(false);
-
-  const upload = useBoolean();
 
   const [view, setView] = useState(localStorage.getItem('serviceView') || 'list');
 
   const [tableData, setTableData] = useState([]);
 
+  const allCreatorsUsers = useMemo(() => [
+    ...loadedUsers.filter(
+      user => isServiceStaff(user.userRole.name) || isAdministrator(user.userRole.name)
+    ),
+    ...loadedSuperadminUsers,
+  ], [loadedUsers, loadedSuperadminUsers]);
+
   useEffect(() => {
     if (refetchServices) {
       refetchServices();
     }
-    setTableData(loadedServices || []);
-  }, [refetchServices, loadedServices]);
+    const mappedServices = loadedServices?.map(
+      (item) => ({
+        ...item,
+        associatedProject: loadedProjects?.map(
+          (project) => ({
+            id: project.id,
+            name: project.name,
+            number: project.number,
+            salesOrderId: project.salesOrder?.salesorder_id,
+          })
+        ).find(
+          (project) => project?.salesOrderId === item.salesOrder?.salesorder_id
+        ) ?? null
+      }
+      )) || [];
+    setTableData(mappedServices || []);
+  }, [refetchServices, loadedServices, loadedProjects]);
 
   useEffect(() => {
     if (loadedServices) {
-      setTableData(loadedServices);
+      const mappedServices = loadedServices?.map(
+        (item) => ({
+          ...item,
+          associatedProject: loadedProjects?.map(
+            (project) => ({
+              id: project.id,
+              name: project.name,
+              number: project.number,
+              salesOrderId: project.salesOrder?.salesorder_id,
+            })
+          ).find(
+            (project) => project?.salesOrderId === item.salesOrder?.salesorder_id
+          ) ?? null
+        }
+        )) || [];
+      setTableData(mappedServices || []);
     }
-  }, [loadedServices]);
+  }, [loadedServices, loadedProjects]);
 
   useEffect(() => {
-    const socket = new WebSocket(`wss://${CONFIG.apiHost}/api/services/ws/services/`);
+    const socket = new WebSocket(`${CONFIG.wsProtocol}://${CONFIG.wsHost}/${CONFIG.wsDomain}/services/ws/services/`);
     socket.onerror = (errorEvent) => {
       console.dir(errorEvent);
       console.error('WebSocket error (toString):', errorEvent.toString());
@@ -117,14 +153,26 @@ export function ServiceView() {
     socket.onmessage = (event) => {
       const message = JSON.parse(event.data);
       if (message.type === 'created' || message.type === 'updated') {
+        const incoming = message.item;
+        const associatedProject = loadedProjects
+          ?.map(proj => ({
+            id: proj.id,
+            name: proj.name,
+            number: proj.number,
+            salesOrderId: proj.salesOrder?.salesorder_id,
+          }))
+          .find(proj => proj.salesOrderId === incoming.salesOrder?.salesorder_id) || null;
+
+        const enriched = { ...incoming, associatedProject };
+
         setTableData((prevData) => {
-          const existingItemIndex = prevData.findIndex(item => String(item.id) === String(message.item.id));
-          if (existingItemIndex !== -1) {
-            const updatedData = [...prevData];
-            updatedData[existingItemIndex] = message.item;
-            return updatedData;
+          const idx = prevData.findIndex(x => String(x.id) === String(incoming.id));
+          if (idx !== -1) {
+            const copy = [...prevData];
+            copy[idx] = enriched;
+            return copy;
           }
-          return [message.item, ...prevData];
+          return [enriched, ...prevData];
         });
       }
       else if (message.type === 'deleted') {
@@ -136,17 +184,27 @@ export function ServiceView() {
         socket.close();
       }
     };
-  }, []);
+  }, [loadedProjects]);
 
   const filters = useSetState({
     list: localStorage.getItem('serviceFilterList') || 'in progress',
     name: localStorage.getItem('serviceFilterName') || '',
     type: JSON.parse(localStorage.getItem('serviceFilterType')) || [],
-    startDate: localStorage.getItem('serviceFilterStartDate') || null,
-    endDate: localStorage.getItem('serviceFilterEndDate') || null,
+    startDate: localStorage.getItem('serviceFilterStartDate') ? dayjs(localStorage.getItem('serviceFilterStartDate')) : null,
+    endDate: localStorage.getItem('serviceFilterEndDate') ? dayjs(localStorage.getItem('serviceFilterEndDate')) : null,
     byFactory: localStorage.getItem('serviceFilterByFactory') === 'true' || false,
     notByFactory: localStorage.getItem('serviceFilterNotByFactory') === 'true' || false,
+    associatedToProject: localStorage.getItem('serviceFilterAssociatedToProject') === 'true' || false,
+    notAssociatedToProject: localStorage.getItem('serviceFilterNotAssociatedToProject') === 'true' || false,
     installer: JSON.parse(localStorage.getItem('serviceFilterInstaller')) || {
+      id: null,
+      name: null,
+    },
+    userManager: JSON.parse(localStorage.getItem('serviceFilterUserManager')) || {
+      id: null,
+      name: null,
+    },
+    createdBy: JSON.parse(localStorage.getItem('serviceFilterCreatedBy')) || {
       id: null,
       name: null,
     },
@@ -184,6 +242,8 @@ export function ServiceView() {
     filters.state.type.length > 0 ||
     (!!filters.state.startDate && !!filters.state.endDate) ||
     (!!filters.state.installer.id && !!filters.state.installer.name) ||
+    (!!filters.state.userManager.id && !!filters.state.userManager.name) ||
+    (!!filters.state.createdBy.id && !!filters.state.createdBy.name) ||
     filters.state.custom.hasPermission ||
     filters.state.custom.isPreparation?.value ||
     filters.state.custom.isRepair?.value ||
@@ -192,7 +252,9 @@ export function ServiceView() {
     filters.state.custom.isClosing?.value ||
     filters.state.custom.hasComments ||
     filters.state.byFactory ||
-    filters.state.notByFactory;
+    filters.state.notByFactory ||
+    filters.state.associatedToProject ||  
+    filters.state.notAssociatedToProject;
 
   const notFound = (!dataFiltered.length && canReset) || !dataFiltered.length;
 
@@ -315,6 +377,7 @@ export function ServiceView() {
       <ServiceFilters
         filters={filters}
         loadedUsers={loadedUsers}
+        allCreatorsUsers={allCreatorsUsers}
         dateError={dateError}
         onResetPage={table.onResetPage}
         openDateRange={openDateRange.value}
@@ -323,6 +386,12 @@ export function ServiceView() {
         openInstallerFilter={openInstallerFilter.value}
         onOpenInstallerFilter={openInstallerFilter.onTrue}
         onCloseInstallerFilter={openInstallerFilter.onFalse}
+        openUserManagerFilter={openUserManagerFilter.value}
+        onOpenUserManagerFilter={openUserManagerFilter.onTrue}
+        onCloseUserManagerFilter={openUserManagerFilter.onFalse}
+        openCreatedByFilter={openCreatedByFilter.value}
+        onOpenCreatedByFilter={openCreatedByFilter.onTrue}
+        onCloseCreatedByFilter={openCreatedByFilter.onFalse}
         options={{ types: PROJECT_TYPE_OPTIONS }}
       />
 
@@ -499,7 +568,22 @@ export function ServiceView() {
 }
 
 function applyFilter({ inputData, comparator, filters, dateError }) {
-  const { list, name, type, startDate, endDate, byFactory, notByFactory, installer, custom } = filters;
+
+  const {
+    list,
+    name,
+    type,
+    startDate,
+    endDate,
+    byFactory,
+    notByFactory,
+    associatedToProject,
+    notAssociatedToProject,
+    installer,
+    userManager,
+    createdBy,
+    custom
+  } = filters;
 
   const stabilizedThis = inputData.map((el, index) => [el, index]);
 
@@ -514,12 +598,12 @@ function applyFilter({ inputData, comparator, filters, dateError }) {
   if (list) {
     if (list === 'in progress') {
       inputData = inputData.filter(
-        (file) => file.currentStage.name.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) === -1 && !file.isClosed
+        (file) => file.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) === -1 && !file.isClosed
       );
     }
     else if (list === 'finished') {
       inputData = inputData.filter(
-        (file) => file.currentStage.name.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) !== -1 && !file.isClosed
+        (file) => file.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) !== -1 && !file.isClosed
       );
     }
     else if (list === 'closed') {
@@ -530,17 +614,17 @@ function applyFilter({ inputData, comparator, filters, dateError }) {
   }
 
   if (name) {
-    inputData = inputData.filter(
-      (file) => file.name.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
-        file.number.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
-        file.salesOrder.salesorder_id.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
-        file.salesOrder.salesorder_number.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
-        file.salesOrder.customer_id.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
-        file.salesOrder.customer_name.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
-        file.address.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
-        JSON.stringify(file.userManager).toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
-        JSON.stringify(file.usersAssignees).toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
-        JSON.stringify(file.currentStage).toLowerCase().indexOf(name.toLowerCase()) !== -1
+    inputData = inputData?.filter(
+      (file) => file?.name?.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
+        file?.number?.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
+        file?.salesOrder?.salesorder_id?.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
+        file?.salesOrder?.salesorder_number?.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
+        file?.salesOrder?.customer_id?.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
+        file?.salesOrder?.customer_name?.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
+        file?.address?.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
+        JSON.stringify(file?.userManager)?.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
+        JSON.stringify(file?.usersAssignees)?.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
+        JSON.stringify(file?.currentStage)?.toLowerCase().indexOf(name.toLowerCase()) !== -1
     );
   }
 
@@ -560,7 +644,7 @@ function applyFilter({ inputData, comparator, filters, dateError }) {
       const normalizedStageFilters = stageFilters.map(stage => stage.toLowerCase());
       inputData = inputData.filter(file => {
         if (file.currentStage && file.currentStage.name) {
-          return normalizedStageFilters.includes(file.currentStage.name.toLowerCase());
+          return normalizedStageFilters.includes(file.currentStage?.name?.toLowerCase());
         }
         return false;
       });
@@ -575,11 +659,39 @@ function applyFilter({ inputData, comparator, filters, dateError }) {
     inputData = inputData.filter(file => !file.byFactory);
   }
 
+  if (associatedToProject && !notAssociatedToProject) {
+    inputData = inputData.filter(file => file.associatedProject && file.associatedProject.id);
+  }
+
+  if (notAssociatedToProject && !associatedToProject) {
+    inputData = inputData.filter(file => !file.associatedProject || !file.associatedProject.id);
+  }
+
   if (installer.id) {
     inputData = inputData.filter((file) => {
       const installerId = getServiceInstaller(file, CONFIG)?.id;
       if (installerId) {
         return String(installerId) === String(installer.id);
+      }
+      return false;
+    });
+  }
+
+  if (userManager.id) {
+    inputData = inputData.filter((file) => {
+      const userManagerId = file?.userManager?.id;
+      if (userManagerId) {
+        return String(userManagerId) === String(userManager.id);
+      }
+      return false;
+    });
+  }
+
+  if (createdBy.id) {
+    inputData = inputData.filter((file) => {
+      const createdById = file?.createdBy?.id;
+      if (createdById) {
+        return String(createdById) === String(createdBy.id);
       }
       return false;
     });
@@ -599,13 +711,13 @@ function applyFilter({ inputData, comparator, filters, dateError }) {
     inputData = inputData.filter(file => {
       const { currentStage } = file;
       if (currentStage && currentStage.name) {
-        if (custom.isPreparation.value && currentStage.name.toLowerCase().indexOf(custom.isPreparation.name.toLowerCase()) !== -1) {
+        if (custom.isPreparation.value && currentStage?.name?.toLowerCase().indexOf(custom.isPreparation.name.toLowerCase()) !== -1) {
           return true;
         }
-        if (custom.isRepair.value && currentStage.name.toLowerCase().indexOf(custom.isRepair.name.toLowerCase()) !== -1) {
+        if (custom.isRepair.value && currentStage?.name?.toLowerCase().indexOf(custom.isRepair.name.toLowerCase()) !== -1) {
           return true;
         }
-        if (custom.isClosing.value && currentStage.name.toLowerCase().indexOf(custom.isClosing.name.toLowerCase()) !== -1) {
+        if (custom.isClosing.value && currentStage?.name?.toLowerCase().indexOf(custom.isClosing.name.toLowerCase()) !== -1) {
           return true;
         }
       }

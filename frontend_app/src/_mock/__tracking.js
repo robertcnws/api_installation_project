@@ -16,7 +16,7 @@ const GET_ALL_TRACKS = gql`
 
 export const useTrackingQuery = () => {
 
-  const { loading, error, data, startPolling, stopPolling, refetch } = useQuery(GET_ALL_TRACKS, {
+  const { loading, error, data, refetch } = useQuery(GET_ALL_TRACKS, {
     context: {
       clientName: 'Projects',
     },

@@ -14,10 +14,10 @@ import { useNotifications, NotificationsProvider } from './contexts/notification
 import { useServiceIssues, ServiceIssuesProvider } from './contexts/service-issue-context';
 import { useServiceStages, ServiceStagesProvider } from './contexts/service-stage-context';
 import { useProjectReminders, ProjectRemindersProvider } from './contexts/project-reminder-context';
+import { useDefaultMaterials, DefaultMaterialsProvider } from './contexts/default-material-context';
 import { useProjectPermissions, ProjectPermissionsProvider } from './contexts/project-permission-context';
 import { useServiceDefaultTasks, ServiceDefaultTasksProvider } from './contexts/service-default-task-context';
 import { useDefaultGuideProducts, DefaultGuideProductsProvider } from './contexts/default-guide-product-context';
-import { useDefaultMaterials, DefaultMaterialsProvider } from './contexts/default-material-context';
 
 const DataContext = createContext();
 export const useDataContext = () => useContext(DataContext);
@@ -25,49 +25,49 @@ export function DataProvider({ children }) {
   return (
     <UserProvider>
       <UserRolesProvider>
-        <NotificationsProvider>
           <ProjectsProvider>
             <ServicesProvider>
               <MeasurementsProvider>
-                <StagesProvider>
-                  <StageTasksProvider>
-                    <ProjectPermissionsProvider>
-                      <ProjectRemindersProvider>
-                        <DefaultTasksProvider>
-                          <DefaultGuideProductsProvider>
-                            <DefaultMaterialsProvider>
-                              <ServiceStagesProvider>
-                                <ServiceDefaultTasksProvider>
-                                  <ServiceIssuesProvider>
-                                    <TracksProvider>
-                                      <IntegrationProvider>
-                                        <CombineProviders>{children}</CombineProviders>
-                                      </IntegrationProvider>
-                                    </TracksProvider>
-                                  </ServiceIssuesProvider>
-                                </ServiceDefaultTasksProvider>
-                              </ServiceStagesProvider>
-                            </DefaultMaterialsProvider>
-                          </DefaultGuideProductsProvider>
-                        </DefaultTasksProvider>
-                      </ProjectRemindersProvider>
-                    </ProjectPermissionsProvider>
-                  </StageTasksProvider>
-                </StagesProvider> 
+                <NotificationsProvider>
+                  <StagesProvider>
+                    <StageTasksProvider>
+                      <ProjectPermissionsProvider>
+                        <ProjectRemindersProvider>
+                          <DefaultTasksProvider>
+                            <DefaultGuideProductsProvider>
+                              <DefaultMaterialsProvider>
+                                <ServiceStagesProvider>
+                                  <ServiceDefaultTasksProvider>
+                                    <ServiceIssuesProvider>
+                                      <TracksProvider>
+                                        <IntegrationProvider>
+                                          <CombineProviders>{children}</CombineProviders>
+                                        </IntegrationProvider>
+                                      </TracksProvider>
+                                    </ServiceIssuesProvider>
+                                  </ServiceDefaultTasksProvider>
+                                </ServiceStagesProvider>
+                              </DefaultMaterialsProvider>
+                            </DefaultGuideProductsProvider>
+                          </DefaultTasksProvider>
+                        </ProjectRemindersProvider>
+                      </ProjectPermissionsProvider>
+                    </StageTasksProvider>
+                  </StagesProvider> 
+                </NotificationsProvider>
               </MeasurementsProvider>
             </ServicesProvider>
           </ProjectsProvider>
-        </NotificationsProvider>
       </UserRolesProvider>
     </UserProvider>
   );
 }
 
 function CombineProviders({ children }) {
-  const { userLogged, loadedUsers, refetchUsers, loadingUsers, errorUsers } = useAuth();
+  const { userLogged, loadedUsers, refetchUsers, loadingUsers, errorUsers, loadedSuperadminUsers } = useAuth();
   const { loadedUserRoles, refetchUserRoles, loadingUserRoles, errorUserRoles } = useUserRoles();
   const { loadedNotifications, refetchNotifications, loadingNotifications, errorNotifications } = useNotifications();
-  const { loadedProjects, refetchProjects, loadingProjects, errorProjects } = useProjects();
+  const { loadedProjects, refetchProjects, loadingProjects, errorProjects, hasMoreProjects, loadMoreProjects } = useProjects();
   const { loadedServices, refetchServices, loadingServices, errorServices } = useServices();
   const { loadedPermissions, listPermissions, refetchPermissions, loadedSalesOrders, setLoadedSalesOrders, isLoadingSalesOrders } = useIntegration();
   const { loadedMeasurements, refetchMeasurements, loadingMeasurements, errorMeasurements } = useMeasurements();
@@ -91,10 +91,13 @@ function CombineProviders({ children }) {
     refetchUsers,
     loadingUsers,
     errorUsers,
+    loadedSuperadminUsers,
     loadedProjects,
     refetchProjects,
     loadingProjects,
     errorProjects,
+    hasMoreProjects,
+    loadMoreProjects,
     loadedServices,
     refetchServices,
     loadingServices,
@@ -158,10 +161,13 @@ function CombineProviders({ children }) {
     refetchUsers,
     loadingUsers,
     errorUsers,
+    loadedSuperadminUsers,
     loadedProjects,
     refetchProjects,
     loadingProjects,
     errorProjects,
+    hasMoreProjects,
+    loadMoreProjects,
     loadedServices,
     refetchServices,
     loadingServices,
@@ -395,15 +401,15 @@ function CombineProviders({ children }) {
 //       project.usersAssignees.some((user) => user.username === userLogged?.data.username) ||
 //       project.userManager.username === userLogged?.data.username
 //     );
-//     if (userLogged?.data.user_role.name.toLowerCase().indexOf(CONFIG.roles.installer.toLowerCase()) !== -1) {
+//     if (userLogged?.data?.user_role?.name.toLowerCase().indexOf(CONFIG.roles.installer.toLowerCase()) !== -1) {
 //       finalProjects = sortedProjects.filter((project) =>
 //       (
 //         (
-//           project.currentStage.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1 &&
+//           project.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1 &&
 //           project.usersAssignees.some((user) => user.username === userLogged?.data.username)
 //         ) ||
 //         (
-//           project.currentStage.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 &&
+//           project.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 &&
 //           totalPercentageProjectStage(project, CONFIG.stages.coordination, CONFIG) >= 50 && 
 //           project.usersAssignees.some((user) => user.username === userLogged?.data.username)
 //         )

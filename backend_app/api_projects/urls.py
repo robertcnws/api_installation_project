@@ -3,11 +3,11 @@ from django.urls import path
 from django.conf.urls.static import static
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
-from graphene_django.views import GraphQLView
-from .schema import schema
+from system_installation_project.graphql.orjson_graphql_view import ORJSONGraphQLView
+from .schema_ini import schema
 from . import views
 urlpatterns = [
-    path('graphql/', csrf_exempt(GraphQLView.as_view(graphiql=True, schema=schema))),
+    path('graphql/', csrf_exempt(ORJSONGraphQLView.as_view(graphiql=True, schema=schema))),
     path('delete/file/<str:id>/project/<str:folder>/<str:file>/', views.delete_project_file, name='delete_project_file'),
     path('delete/file/<str:projectId>/project/<str:id>/task/<str:folder>/<str:file>/', views.delete_default_task_file, name='delete_default_task_file'),
     # PROJECTS
@@ -26,6 +26,9 @@ urlpatterns = [
     path('update/project/<str:id>/remove-date/', views.remove_date_project, name='remove_date_project'),
     path('update/project/<str:id>/change-installer/', views.change_installer_project, name='change_installer_project'),
     path('update/project/<str:id>/change-description/', views.change_description_project, name='change_description_project'),
+    path('update/project/<str:id>/manage-work-order/', views.manage_work_order, name='manage_work_order'),
+    path('delete/project/<str:project_id>/work-order/<str:id>/', views.delete_work_order, name='delete_work_order'),
+    path('finish/project/<str:project_id>/work-order/<str:id>/', views.finish_work_order, name='finish_work_order'),
     path('delete/project/<str:id>/', views.delete_project, name='delete_project'),
     path('delete/projects/', views.delete_projects, name='delete_projects'),
     path('delete/project/<str:id>/user/<str:userId>/', views.delete_project_user, name='delete_project_user'),

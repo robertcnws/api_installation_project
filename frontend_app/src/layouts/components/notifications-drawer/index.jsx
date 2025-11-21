@@ -15,6 +15,8 @@ import IconButton from '@mui/material/IconButton';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
+import { isInstaller } from 'src/utils/check-permissions';
+
 import { CONFIG } from 'src/config-global';
 
 import { Label } from 'src/components/label';
@@ -28,20 +30,45 @@ import { useDataContext } from 'src/auth/context/data/data-context';
 import { NotificationItem } from './notification-item';
 
 
-
-
 // ----------------------------------------------------------------------
 
 export function NotificationsDrawer({ sx, ...other }) {
 
   const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
 
+  const filterNotifications = (notifications, projects, services, measurements, user) => {
+    const projectsIds = projects?.map((project) => project?.id);
+
+    const servicesIds = services?.map((service) => service?.id);
+
+    const measurementsIds = measurements?.map((measurement) => measurement?.id);
+
+    const allIds = [...projectsIds, ...servicesIds, ...measurementsIds];
+
+    const isInstallerRole = isInstaller(user?.data?.user_role?.name);
+    if (!notifications || !allIds?.length) return [];
+
+    if (!isInstallerRole && !user) return notifications;
+    
+    return notifications?.filter((notification) => {
+      const itemId = notification?.notification?.info_id;
+      if (!itemId || !allIds?.includes(itemId)) return false;
+      return true;
+    });
+
+  }
+
   const {
     loadedNotifications: userNotifications,
     refetchNotifications,
+    loadedProjects: projects,
+    loadedServices: services,
+    loadedMeasurements: measurements,
   } = useDataContext();
 
   const [notifications, setNotifications] = useState(null);
+
+  const [websocketChange, setWebsocketChange] = useState(false);
 
   useEffect(() => {
     if (refetchNotifications) {
@@ -57,7 +84,7 @@ export function NotificationsDrawer({ sx, ...other }) {
   }, [userNotifications, userLogged]);
 
   useEffect(() => {
-    const socket = new WebSocket(`wss://${CONFIG.apiHost}/api/projects/ws/project-notification-users/`);
+    const socket = new WebSocket(`${CONFIG.wsProtocol}://${CONFIG.wsHost}/${CONFIG.wsDomain}/projects/ws/project-notification-users/`);
     socket.onerror = (errorEvent) => {
       console.dir(errorEvent);
       console.error('WebSocket error (toString):', errorEvent.toString());
@@ -73,11 +100,14 @@ export function NotificationsDrawer({ sx, ...other }) {
             return updatedData;
           }
           const pData = prevData?.filter((notif) => notif.user.username === userLogged?.data.username && String(notif.id) !== String(message.item.id));
-          return [message.item, ...pData];
+          const updatedNotifications = [message.item, ...pData];
+          return updatedNotifications;
         });
+        setWebsocketChange(true);
       }
       else if (message.type === 'deleted') {
         setNotifications((prevData) => prevData.filter(item => String(item.id) !== String(message.item.id)));
+        setWebsocketChange(true);
       }
     };
     return () => {
@@ -85,7 +115,16 @@ export function NotificationsDrawer({ sx, ...other }) {
         socket.close();
       }
     };
-  }, [userLogged]);
+  }, [userLogged, projects, services, measurements]);
+
+  useEffect(() => {
+    if (websocketChange) {
+      setNotifications(
+        filterNotifications(userNotifications, projects, services, measurements, userLogged)
+      );
+      setWebsocketChange(false);
+    }
+  }, [websocketChange, userLogged, projects, services, measurements, userNotifications]);
 
 
   const drawer = useBoolean();
@@ -122,13 +161,22 @@ export function NotificationsDrawer({ sx, ...other }) {
     }
   }, [notifications, userLogged]);
 
-  const totalUnRead = notifications?.filter(
-    (notif) => notif.user.username === userLogged?.data.username && notif.username !== userLogged?.data.username
-  ).filter((item) => item.read === false).length;
+  const totalAll = useMemo(
+    () => notifications?.filter(
+      (notif) => notif.user.username === userLogged?.data.username && notif.username !== userLogged?.data.username).length,
+    [notifications, userLogged]);
 
-  const totalRead = notifications?.filter(
-    (notif) => notif.user.username === userLogged?.data.username && notif.username !== userLogged?.data.username
-  ).filter((item) => item.read === true).length;
+  const totalUnRead = useMemo(
+    () => notifications?.filter(
+      (notif) => notif.user.username === userLogged?.data.username && notif.username !== userLogged?.data.username
+    ).filter((item) => item.read === false).length,
+    [notifications, userLogged]);
+
+  const totalRead = useMemo(
+    () => notifications?.filter(
+      (notif) => notif.user.username === userLogged?.data.username && notif.username !== userLogged?.data.username
+    ).filter((item) => item.read === true).length,
+    [notifications, userLogged]);
 
   const handleMarkAllAsRead = useCallback(
     async () => {
@@ -163,12 +211,7 @@ export function NotificationsDrawer({ sx, ...other }) {
     }, [notifications, userLogged, currentTab]);
 
   const TABS = [
-    { 
-      value: 'all', 
-      label: 'All', 
-      count: notifications?.filter(
-        (notif) => notif.user.username === userLogged?.data.username && notif.username !== userLogged?.data.username).length 
-      },
+    { value: 'all', label: 'All', count: totalAll },
     { value: 'unread', label: 'Unread', count: totalUnRead },
     { value: 'archived', label: 'Archived', count: totalRead },
   ];

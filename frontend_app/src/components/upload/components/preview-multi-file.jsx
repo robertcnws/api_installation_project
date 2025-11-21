@@ -31,6 +31,8 @@ export function MultiFilePreview({
   isProject = true,
   isService = false,
   moduleType,
+  customWidth = 80,
+  customHeight = 80,
   ...other
 }) {
 
@@ -117,8 +119,8 @@ export function MultiFilePreview({
                     () => onDownload?.(file) : null
                 }
                 sx={{
-                  width: 80,
-                  height: 80,
+                  width: customWidth,
+                  height: customHeight,
                   border: (theme) => `solid 1px ${varAlpha(theme.vars.palette.grey['500Channel'], 0.16)}`,
                 }}
                 slotProps={{ icon: { width: 40, height: 40, } }}

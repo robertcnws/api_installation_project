@@ -17,6 +17,7 @@ import { listRolesAndSubroles } from 'src/utils/check-permissions';
 
 import { CONFIG } from 'src/config-global';
 
+import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 import { usePopover, CustomPopover } from 'src/components/custom-popover';
@@ -30,6 +31,7 @@ import { usePopover, CustomPopover } from 'src/components/custom-popover';
 
 export function MeasurementDetailsToolbar({
   measurement,
+  tabs,
   backLink,
   editLink,
   openEdit,
@@ -89,63 +91,107 @@ export function MeasurementDetailsToolbar({
           sx={{ mr: -3 }}
         /> */}
         <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-          <Typography variant="h6">
-            MEASUREMENTS ({measurement?.number}) FOR {
-            measurement?.service?.number ? 'SERVICE # ' : measurement?.project?.number ? 'INSTALLATION # ' : 'CUSTOMER '
-            } {
-              measurement?.service?.number ? `${measurement?.service?.number}-${measurement?.service?.version}` : 
-              measurement?.project?.number ? `${measurement?.project?.number}` : measurement?.customer?.name
-            }
-          </Typography>
+          <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'left', gap: 1 }}>
+            <Typography variant="h6">
+              MEASUREMENTS ({measurement?.number}) FOR {
+                measurement?.service?.number ? 'SERVICE # ' : measurement?.project?.number ? 'INSTALLATION # ' : 'CUSTOMER '
+              } {
+                measurement?.service?.number ? `${measurement?.service?.number}-${measurement?.service?.version}` :
+                  measurement?.project?.number ? `${measurement?.project?.number}` : measurement?.customer?.name
+              }
+            </Typography>
+            <Label
+              variant="soft"
+              color={
+                measurement?.status === 'finished' ? 'success' :
+                  measurement?.status === 'in progress' ? 'warning' :
+                    'default'
+              }
+              sx={{
+                gap: 0.5,
+                textTransform: 'uppercase',
+                mt: 0.2,
+              }}
+            >
+              <Iconify
+                icon={
+                  measurement?.status === 'finished' ? 'nrk:media-media-complete' :
+                    measurement?.status === 'in progress' ? 'grommet-icons:in-progress' :
+                      'bx:error'
+                } width={16} height={16}
+              />
+              {measurement?.status ? measurement?.status : 'No Status'}
+            </Label>
+          </Box>
           <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'left' }}>
-            {indexInMeasurementFilteredList - 1 >= 0 && (
-              <Tooltip
-                title={`
-                    Previous measurement: ${measurementFilteredList?.[indexInMeasurementFilteredList - 1]?.number} ${' '}
+            <Tooltip
+              title={
+                indexInMeasurementFilteredList <= 0 ? '' :
+                  `Previous measurement: ${measurementFilteredList?.[indexInMeasurementFilteredList - 1]?.number} ${' '}
                     (${measurementFilteredList?.[indexInMeasurementFilteredList - 1]?.customerName})`
-                }
-                arrow>
+              }
+              arrow>
+              <span>
                 <IconButton
+                  disabled={indexInMeasurementFilteredList <= 0}
                   sx={{
                     '&:hover': {
                       boxShadow: 'none',
                       backgroundColor: 'transparent',
                     },
+                    cursor: indexInMeasurementFilteredList <= 0 ? 'not-allowed' : 'pointer',
+                    '&.Mui-disabled': {
+                      cursor: 'not-allowed !important',
+                      pointerEvents: 'auto',
+                    },
+                    color: indexInMeasurementFilteredList <= 0 ? 'text.disabled' : 'text.primary',
                   }}
                   onClick={() => {
                     const id = measurementFilteredList?.[indexInMeasurementFilteredList - 1]?.id;
                     localStorage.setItem('measurementId', id);
                     localStorage.setItem('backFromMeasurementDetails', 'measurements');
+                    // tabs?.setValue('overview');
                     router.push(paths.dashboard.measurement.details(id));
                   }} color='default'>
                   <Iconify icon="mdi-light:skip-previous" />
                 </IconButton>
-              </Tooltip>
-            )}
-            {indexInMeasurementFilteredList + 1 < measurementFilteredList?.length && (
-              <Tooltip
-                title={`
-                  Next measurement: ${measurementFilteredList?.[indexInMeasurementFilteredList + 1]?.number} ${' '}
+              </span>
+            </Tooltip>
+
+            <Tooltip
+              title={
+                indexInMeasurementFilteredList >= measurementFilteredList.length - 1 ? '' :
+                  `Next measurement: ${measurementFilteredList?.[indexInMeasurementFilteredList + 1]?.number} ${' '}
                   (${measurementFilteredList?.[indexInMeasurementFilteredList + 1]?.customerName})
                   `}
-                arrow>
+              arrow>
+              <span>
                 <IconButton
+                  disabled={indexInMeasurementFilteredList >= measurementFilteredList.length - 1}
                   sx={{
                     '&:hover': {
                       boxShadow: 'none',
                       backgroundColor: 'transparent',
                     },
+                    cursor: indexInMeasurementFilteredList >= measurementFilteredList.length - 1 ? 'not-allowed' : 'pointer',
+                    '&.Mui-disabled': {
+                      cursor: 'not-allowed !important',
+                      pointerEvents: 'auto',
+                    },
+                    color: indexInMeasurementFilteredList >= measurementFilteredList.length - 1 ? 'text.disabled' : 'text.primary',
                   }}
                   onClick={() => {
                     const id = measurementFilteredList?.[indexInMeasurementFilteredList + 1]?.id;
                     localStorage.setItem('measurementId', id);
                     localStorage.setItem('backFromMeasurementDetails', 'measurements');
+                    // tabs?.setValue('overview');
                     router.push(paths.dashboard.measurement.details(id));
                   }} color='default'>
                   <Iconify icon="mdi-light:skip-next" />
                 </IconButton>
-              </Tooltip>
-            )}
+              </span>
+            </Tooltip>
+
             <Tooltip title='List measurements' arrow>
               <IconButton
                 sx={{
@@ -153,6 +199,8 @@ export function MeasurementDetailsToolbar({
                     boxShadow: 'none',
                     backgroundColor: 'transparent',
                   },
+                  cursor: 'pointer',
+                  color: 'text.primary',
                 }}
                 onClick={popoverMeasurementList.onOpen}
                 color='default'>

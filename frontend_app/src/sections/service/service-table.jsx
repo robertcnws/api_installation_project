@@ -39,20 +39,15 @@ export function ServiceTable({
   notFound,
   onDeleteRow,
   onCloseRow,
-  // onKanbanView,
   onViewRow,
   dataFiltered,
   onOpenConfirm,
   loadedUsers,
   loadedServiceStages,
   loadedStagesTask,
-  // listPermissions,
   setTableData,
   refetchServices,
   loadedServices,
-  // onOpenConfirmStaff,
-  // isWarehouseStaff,
-  // setIsWarehouseStaff,
   ...other
 }) {
   const {
@@ -78,11 +73,12 @@ export function ServiceTable({
 
   const TABLE_HEAD = [
     { id: 'startDate', label: 'Date & Duration' },
-    { id: 'number', label: 'Number' },
+    // { id: 'number', label: 'Number' },
     { id: 'byFactory', label: 'By Factory?' },
     { id: 'installedByUs', label: 'Installed By Us?' },
     { id: 'name', label: 'Name' },
-    { id: 'createdTime', label: 'Created At' },
+    { id: 'createdBy', label: 'Created By' },
+    { id: 'userManager', label: 'Responsible' },
     { id: 'currentStage', label: 'Stage' },
     ...((loadedServiceStages || []).map((stage) => ({
       id: stage.id,
@@ -90,6 +86,9 @@ export function ServiceTable({
       order: stage.order,
       width: 10,
     }))),
+    { id: 'createdTime', label: 'Created At' },
+    { id: 'lastModifiedTime', label: 'Updated At' },
+    { id : 'associatedProject', label: 'Associated To' },
     { id: '', width: 88 },
   ];
 
@@ -97,6 +96,7 @@ export function ServiceTable({
     { id: 'startDate', label: 'Start Date' },
     { id: 'duration', label: 'Duration' },
     { id: 'number', label: 'Number' },
+    { id : 'associatedProject', label: 'Associated To' },
     { id: '' },
   ];
 
@@ -121,38 +121,11 @@ export function ServiceTable({
             )
           }
           action={
-            <>
-
-              {/* <Tooltip title="Set Warehouse Staff" arrow>
-                <IconButton color="info" onClick={() => {
-                  setIsWarehouseStaff(true);
-                  onOpenConfirmStaff()
-                }}>
-                  <Iconify icon="mdi:warehouse" />
-                </IconButton>
-              </Tooltip> */}
-
-              {/* <Tooltip title="Set Installation Staff" arrow>
-                <IconButton color="secondary" onClick={() => {
-                  setIsWarehouseStaff(false);
-                  onOpenConfirmStaff()
-                }}>
-                  <Iconify icon="fluent-emoji-high-contrast:mechanic" />
-                </IconButton>
-              </Tooltip> */}
-
-              {/* <Tooltip title="Delete" arrow>
-                <IconButton color="error" onClick={onOpenConfirm}>
-                  <Iconify icon="solar:trash-bin-trash-bold" />
-                </IconButton>
-              </Tooltip> */}
-
-              <Tooltip title="Delete" arrow>
+            <Tooltip title="Delete" arrow>
                 <IconButton color="error" onClick={onOpenConfirm}>
                   <Iconify icon="solar:trash-bin-trash-bold" />
                 </IconButton>
               </Tooltip>
-            </>
           }
           sx={{
             pl: 1,

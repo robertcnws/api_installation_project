@@ -17,6 +17,9 @@ export const CONFIG = {
   frontendHost: import.meta.env.VITE_FRONTEND_HOST ?? '',
   frontendUrl: import.meta.env.VITE_FRONTEND_URL ?? '',
   frontendPort: import.meta.env.VITE_FRONTEND_PORT ?? 3000,
+  wsProtocol: import.meta.env.VITE_WEBSOCKET_PROTOCOL ?? 'ws',
+  wsHost: import.meta.env.VITE_WEBSOCKET_HOST ?? '',
+  wsDomain: import.meta.env.VITE_WEBSOCKET_DOMAIN ?? '',
   permissions: {
     system: import.meta.env.VITE_PERMISSION_SYSTEM_NAME ?? '',
     moduleSalesOrders: import.meta.env.VITE_PERMISSION_MODULE_SALES_ORDERS_NAME ?? '',

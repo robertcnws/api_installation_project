@@ -9,7 +9,13 @@ const ProjectsContext = createContext();
 export const useProjects = () => useContext(ProjectsContext);
 
 export function ProjectsProvider({ children }) {
-  const { data: projects = [], refetch: refetchProjects, loading: loadingProjects, error: errorProjects } = useProjectsQuery();
+  const { 
+    data: projects = [], 
+    refetch: refetchProjects, 
+    loading: loadingProjects, 
+    error: errorProjects,
+  } = useProjectsQuery();
+
   const { userLogged, loadedUsers } = useAuth();
 
   const loadedProjects = useFilteredProjects(projects, loadedUsers, userLogged);
@@ -18,12 +24,12 @@ export function ProjectsProvider({ children }) {
     loadedProjects, 
     refetchProjects, 
     loadingProjects, 
-    errorProjects 
+    errorProjects,
 }), [
     loadedProjects, 
     refetchProjects, 
     loadingProjects, 
-    errorProjects
+    errorProjects,
 ]);
 
   return <ProjectsContext.Provider value={value}>{children}</ProjectsContext.Provider>;

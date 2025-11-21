@@ -22,10 +22,10 @@ import { ServiceDetailsContentOverview } from './service-details-content-overvie
 
 // ----------------------------------------------------------------------
 
-export function ServiceNewFormFromProject({ 
+export function ServiceNewFormFromProject({
   salesOrder,
   open,
-  setOpen, 
+  setOpen,
 }) {
 
   const router = useRouter();
@@ -47,6 +47,15 @@ export function ServiceNewFormFromProject({
   const [serviceNotes, setServiceNotes] = useState(null);
 
   const [fileToRemove, setFileToRemove] = useState(null);
+
+  const [serviceAddress, setServiceAddress] = useState('');
+
+  const [servicePlace, setServicePlace] = useState('');
+
+  const [serviceBooleanValues, setServiceBooleanValues] = useState({
+    hasToPay: false,
+    byFactory: false,
+  });
 
   const confirm = useBoolean();
 
@@ -79,6 +88,10 @@ export function ServiceNewFormFromProject({
     formData.append('salesOrder', JSON.stringify(salesOrder) || '');
     formData.append('userReporter', JSON.stringify(userLogged?.data) || '');
     formData.append('issuedProducts', JSON.stringify(selectedListItems.filter((item) => item.selected)) || '');
+    formData.append('address', serviceAddress || '');
+    formData.append('hasToPay', serviceBooleanValues.hasToPay || false);
+    formData.append('byFactory', serviceBooleanValues.byFactory || false);
+    formData.append('servicePlace', JSON.stringify(servicePlace) || '');
 
     try {
       const promise = axios.post(`${CONFIG.apiUrl}/services/create/service/`, formData, {
@@ -108,7 +121,19 @@ export function ServiceNewFormFromProject({
       setIsSubmiting(false);
       console.error(error);
     }
-  }, [salesOrder, selectedListItems, userLogged, router, serviceType, serviceFiles, serviceNotes, setOpen]);
+  }, [
+    salesOrder, 
+    selectedListItems, 
+    userLogged, 
+    router, 
+    serviceType, 
+    serviceFiles, 
+    serviceNotes, 
+    serviceAddress,
+    serviceBooleanValues,
+    servicePlace,
+    setOpen
+  ]);
 
 
   const handleDownloadFile = (file) => {
@@ -155,6 +180,12 @@ export function ServiceNewFormFromProject({
             setServiceFiles={setServiceFiles}
             serviceNotes={serviceNotes}
             setServiceNotes={setServiceNotes}
+            serviceBooleanValues={serviceBooleanValues}
+            setServiceBooleanValues={setServiceBooleanValues}
+            serviceAddress={serviceAddress}
+            setServiceAddress={setServiceAddress}
+            servicePlace={servicePlace}
+            setServicePlace={setServicePlace}
             handleDownloadFile={handleDownloadFile}
             handleClickRemoveFile={handleClickRemoveFile}
           />

@@ -8,7 +8,7 @@ import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import { LoadingButton } from '@mui/lab';
 import Button from '@mui/material/Button';
-import { Dialog, DialogTitle, DialogActions } from '@mui/material';
+import { Dialog, DialogTitle, DialogActions, Typography } from '@mui/material';
 
 import { CONFIG } from 'src/config-global';
 import { useServiceByIdQuery } from 'src/_mock/__services';
@@ -18,6 +18,7 @@ import { Form, Field, schemaHelper } from 'src/components/hook-form';
 
 import { LoadingContext } from 'src/auth/context/loading-context';
 import { useDataContext } from 'src/auth/context/data/data-context';
+import { Iconify } from 'src/components/iconify';
 
 
 // ----------------------------------------------------------------------
@@ -52,7 +53,7 @@ export function ServiceEditModalRefNumberView({
                 id: itemById?.id || '',
                 name: itemById?.name || '',
                 number: itemById?.number || '',
-                refNumber: itemById?.salesOrder?.reference_number || '',   
+                refNumber: itemById?.salesOrder?.reference_number || '',
             }));
         }
     }, [itemById, setServiceData]);
@@ -68,7 +69,7 @@ export function ServiceEditModalRefNumberView({
             id: itemById?.id || '',
             name: itemById?.name || '',
             number: itemById?.number || '',
-            refNumber: itemById?.salesOrder?.reference_number || '',   
+            refNumber: itemById?.salesOrder?.reference_number || '',
         }),
         [itemById]
     );
@@ -95,7 +96,7 @@ export function ServiceEditModalRefNumberView({
                 id: itemById.id || '',
                 name: itemById.name || '',
                 number: itemById.number || '',
-                refNumber: itemById?.salesOrder?.reference_number || '',   
+                refNumber: itemById?.salesOrder?.reference_number || '',
             });
         }
     }, [itemById, userLogged?.data, reset]);
@@ -138,42 +139,51 @@ export function ServiceEditModalRefNumberView({
 
     const renderService = (
         <Dialog fullWidth maxWidth="md" open={open} onClose={onClose}>
-                <DialogTitle>{isEdit ? 'Update' : 'Add'} REF Number to Service {serviceData?.name} </DialogTitle>
+            <DialogTitle>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Box className="dialog-title-icon">
+                        <Iconify icon="mdi:clipboard-text-outline" />
+                    </Box>
+                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                        {isEdit ? 'Update' : 'Add'} REF Number to Service {serviceData?.name}
+                    </Typography>
+                </Box>
+            </DialogTitle>
 
-                <Form methods={methods} onSubmit={onSubmit}>
+            <Form methods={methods} onSubmit={onSubmit}>
 
-                    <Stack
-                        spacing={2.5}
-                        justifyContent="center"
-                        sx={{ p: 2.5 }}
-                    >
+                <Stack
+                    spacing={2.5}
+                    justifyContent="center"
+                    sx={{ p: 2.5 }}
+                >
 
-                        <Box sx={{ flexDirection: !isMobile ? 'row' : 'column', display: 'flex' }}>
-                            
-                            <Box sx={{ width: '100%', color: 'text.secondary', mt: !isMobile ? 0 : 2, ml: !isMobile ? 2 : 0 }}>
-                                <Field.Text
-                                    name="refNumber"
-                                    label="Reference Number"
-                                    control={control}
-                                    fullWidth
-                                    placeholder="Enter reference number"
-                                />
-                            </Box>
+                    <Box sx={{ flexDirection: !isMobile ? 'row' : 'column', display: 'flex' }}>
+
+                        <Box sx={{ width: '100%', color: 'text.secondary', mt: !isMobile ? 0 : 2, ml: !isMobile ? 2 : 0 }}>
+                            <Field.Text
+                                name="refNumber"
+                                label="Reference Number"
+                                control={control}
+                                fullWidth
+                                placeholder="Enter reference number"
+                            />
                         </Box>
-                    </Stack>
-                    <DialogActions>
-                        <LoadingButton type="submit" variant="contained" loading={isSubmitting}>
-                            {isEdit ? 'Update' : 'Add'}
-                        </LoadingButton>
-                        {/* <Button onClick={onClose}>
+                    </Box>
+                </Stack>
+                <DialogActions>
+                    <LoadingButton type="submit" variant="contained" loading={isSubmitting}>
+                        {isEdit ? 'Update' : 'Add'}
+                    </LoadingButton>
+                    {/* <Button onClick={onClose}>
                             Delete
                         </Button> */}
-                        <Button variant="outlined" onClick={onClose}>
-                            Cancel
-                        </Button>
-                    </DialogActions>
-                </Form>
-            </Dialog>
+                    <Button variant="outlined" onClick={onClose}>
+                        Cancel
+                    </Button>
+                </DialogActions>
+            </Form>
+        </Dialog>
     )
 
     return (

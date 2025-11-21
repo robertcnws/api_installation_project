@@ -1,37 +1,37 @@
-import dayjs from 'dayjs';
-import React, { useMemo, useState, useContext, useCallback } from 'react';
+import React, { useMemo, useContext, useCallback } from 'react';
 
 import Stack from '@mui/material/Stack';
 import Divider from '@mui/material/Divider';
 import MenuList from '@mui/material/MenuList';
 import MenuItem from '@mui/material/MenuItem';
 import Checkbox from '@mui/material/Checkbox';
-import { Button, Tooltip } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
+import { Box, Button, Tooltip } from '@mui/material';
 import TableRow, { tableRowClasses } from '@mui/material/TableRow';
 import TableCell, { tableCellClasses } from '@mui/material/TableCell';
+
+import { paths } from 'src/routes/paths';
+import { useRouter } from 'src/routes/hooks';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 import { useDoubleClick } from 'src/hooks/use-double-click';
 import { useCopyToClipboard } from 'src/hooks/use-copy-to-clipboard';
 
-import { fDate } from 'src/utils/format-time';
+import { fDate, fTime, fDateTime } from 'src/utils/format-time';
 import { listRolesAndSubroles } from 'src/utils/check-permissions';
-import { paths } from 'src/routes/paths';
 
 import { CONFIG } from 'src/config-global';
 import { varAlpha } from 'src/theme/styles';
 
+import { Label } from 'src/components/label';
 import { toast } from 'src/components/snackbar';
 import { Iconify } from 'src/components/iconify';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 import { usePopover, CustomPopover } from 'src/components/custom-popover';
 
 import { LoadingContext } from 'src/auth/context/loading-context';
-import { Label } from 'src/components/label';
-import { useRouter } from 'src/routes/hooks';
 
 // import { ProjectShareDialog } from './project-share-dialog';
 // import { ProjectFileDetails } from './project-file-details';
@@ -73,7 +73,7 @@ export function MeasurementTableRow({
   const popover = usePopover();
 
   const handleSeeAssociated = useCallback(() => {
-    if (row?.project?.id ) {
+    if (row?.project?.id) {
       localStorage.setItem('projectId', row?.project?.id);
       localStorage.setItem('backFromProjectDetails', 'measurements');
       router.push(paths.dashboard.project.details(row?.project?.id));
@@ -83,7 +83,7 @@ export function MeasurementTableRow({
       localStorage.setItem('backFromServiceDetails', 'measurements');
       router.push(paths.dashboard.service.details(row?.service?.id));
     }
-    else  {
+    else {
       confirmCustomerAssociated.onTrue();
     }
   }, [router, row, confirmCustomerAssociated]);
@@ -147,7 +147,7 @@ export function MeasurementTableRow({
             />
           </TableCell>
         )}
-        <TableCell
+        {/* <TableCell
           onClick={onViewRow}
           sx={{
             whiteSpace: 'nowrap',
@@ -166,7 +166,7 @@ export function MeasurementTableRow({
             </Tooltip>
           )}
 
-        </TableCell>
+        </TableCell> */}
 
         <TableCell
           onClick={onViewRow}
@@ -242,6 +242,38 @@ export function MeasurementTableRow({
           </Stack>
         </TableCell>
 
+        <TableCell
+          // onClick={handleClick} 
+          onClick={onViewRow}
+          sx={{
+            whiteSpace: 'nowrap',
+            cursor: 'pointer',
+            fontWeight: 'inherit',
+          }}
+          align='center'
+        >
+          <Stack direction="row" alignItems="center" spacing={2}>
+            <Label
+              variant="soft"
+              color={
+                row?.status === 'finished' ? 'success' :
+                  row?.status === 'in progress' ? 'warning' :
+                    'default'
+              }
+              sx={{ cursor: 'pointer', gap: 0.5, textTransform: 'capitalize' }}
+            >
+              <Iconify
+                icon={
+                  row?.status === 'finished' ? 'nrk:media-media-complete' :
+                    row?.status === 'in progress' ? 'grommet-icons:in-progress' :
+                      'bx:error'
+                } width={14} height={14}
+              />
+              {row?.status ? row?.status : 'No Status'}
+            </Label>
+          </Stack>
+        </TableCell>
+
         {!isMobile && (
           <>
             <TableCell
@@ -251,8 +283,11 @@ export function MeasurementTableRow({
                 cursor: 'pointer',
                 fontWeight: 'inherit',
               }}
+              align='center'
             >
-              <Tooltip title="Click to see details..." arrow>
+              <Tooltip title={
+                `Click to see details of ${row?.project?.number ? row?.project?.name : row?.service?.number ? row?.service?.name : 'Customer'}...`
+              } arrow>
                 <Stack direction="row" alignItems="center" spacing={2}>
                   <Typography
                     noWrap
@@ -264,7 +299,7 @@ export function MeasurementTableRow({
                     }}
                   >
                     <Label
-                      variant="soft"
+                      variant="outlined"
                       color={
                         row?.project?.id ? 'success' :
                           row?.service?.id ? 'warning' :
@@ -273,8 +308,8 @@ export function MeasurementTableRow({
                       sx={{ cursor: 'pointer' }}
                     >
                       {
-                        row?.project?.id ? `Installation: ${row?.project?.number}` :
-                          row?.service?.id ? `Service: ${row?.service?.number}` :
+                        row?.project?.id ? `${row?.project?.number}` :
+                          row?.service?.id ? `${row?.service?.number}` :
                             'To Customer'
                       }
                     </Label>
@@ -307,6 +342,34 @@ export function MeasurementTableRow({
                   {row?.address ? row?.address : 'No Address'}
                 </Typography>
               </Stack>
+            </TableCell>
+            <TableCell
+              // onClick={handleClick} 
+              onClick={() => {
+                localStorage.removeItem('projectReminderTab');
+                onViewRow();
+              }}
+              sx={{
+                whiteSpace: 'nowrap',
+                cursor: 'pointer',
+                fontSize: '0.75rem',
+              }}
+              align='center'
+            >
+              {/* {fDate(row?.salesOrder.date)} */}
+              {fDateTime(row?.lastModifiedTime) ?
+                <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                  <Box component="span" sx={{ typography: 'caption', color: 'text.primary' }} >
+                    {fDate(row?.lastModifiedTime)}
+                  </Box>
+                  <Box component="span" sx={{ typography: 'caption', color: 'text.secondary' }}>
+                    {fTime(row?.lastModifiedTime)}
+                  </Box>
+                </Box> :
+                <Tooltip title="No Updated Datetime" arrow>
+                  <Iconify icon="ph:calendar-x-bold" sx={{ color: 'error.main' }} />
+                </Tooltip>
+              }
             </TableCell>
           </>
         )}

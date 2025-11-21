@@ -63,11 +63,9 @@ export function ProjectTable({
     order,
     orderBy,
     rowsPerPage,
-    //
     selected,
     onSelectRow,
     onSelectAllRows,
-    //
     onSort,
     onChangeDense,
     onChangePage,
@@ -91,6 +89,7 @@ export function ProjectTable({
       order: stage.order,
       width: 10,
     }))),
+    { id: 'lastModifiedTime', label: 'Updated At' },
     { id: '', width: 88 },
   ];
 

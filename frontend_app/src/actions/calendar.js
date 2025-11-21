@@ -50,7 +50,11 @@ export function useGetProjectEvents(projects = [], type = 'installation') {
   const currentProjects = useMemo(() => projects || [], [projects]);
 
   const getAvailableColor = useCallback(() => {
-    const index = type === 'installation' ? 2 : type === 'inspection' ? 1 : type === 'service' ? 3 : 0;
+    const index = type === 'installation' ? 2 :
+      type === 'inspection' ? 1 :
+        type === 'service' ? 3 :
+          type === 'firstCheckMeasurement' ? 10 :
+            type === 'secondCheckMeasurement' ? 12 : 0;
     return ALL_COLORS[index];
   }, [type]);
 
@@ -61,19 +65,28 @@ export function useGetProjectEvents(projects = [], type = 'installation') {
       }
       const color = colorMappingRef.current[project.id];
 
-      const endDate = dayjs(project.endDate).add(23, 'hours').add(59, 'minutes').format('YYYY-MM-DD HH:mm:ss');
+      const endDate = type === 'installation' || type === 'service' ?
+        dayjs(dayjs(project.endDate).format('YYYY-MM-DD')).add(23, 'hours').add(59, 'minutes').format('YYYY-MM-DD HH:mm:ss') :
+        type === 'inspection' ?
+          dayjs(dayjs(project.inspectionEndDate).format('YYYY-MM-DD')).add(23, 'hours').add(59, 'minutes').format('YYYY-MM-DD HH:mm:ss') :
+          type === 'firstCheckMeasurement' ?
+            dayjs(dayjs(project.firstDate).format('YYYY-MM-DD')).add(23, 'hours').add(59, 'minutes').format('YYYY-MM-DD HH:mm:ss') :
+            type === 'secondCheckMeasurement' ?
+              dayjs(dayjs(project.checkDate).format('YYYY-MM-DD')).add(23, 'hours').add(59, 'minutes').format('YYYY-MM-DD HH:mm:ss') :
+              dayjs(dayjs(project.finishPermissionEndDate).format('YYYY-MM-DD')).add(23, 'hours').add(59, 'minutes').format('YYYY-MM-DD HH:mm:ss');
 
       return {
         ...project,
         id: project.id,
         title: project.name,
         start: type === 'installation' || type === 'service' ?
-          project.startDate : type === 'inspection' ?
-            project.inspectionDate : project.finishPermissionDate,
-        end: type === 'inspection' ?
-          project.inspectionDate : type === 'finishPermission' ?
-            project.finishPermissionDate : project.endDate ?
-            endDate : '9999-12-31',
+          dayjs(project.startDate).format('YYYY-MM-DD') : type === 'inspection' ?
+            dayjs(project.inspectionDate).format('YYYY-MM-DD') :
+            type === 'firstCheckMeasurement' ?
+              project.firstDate :
+              type === 'secondCheckMeasurement' ?
+                project.checkDate : project.finishPermissionDate,
+        end: endDate,
         textColor: color,
         color,
       };

@@ -6,7 +6,9 @@ import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
 import { LoadingButton } from '@mui/lab';
 import Button from '@mui/material/Button';
-import { Avatar, Dialog, TextField, DialogTitle, Autocomplete, DialogActions } from '@mui/material';
+import { Avatar, Dialog, TextField, DialogTitle, Autocomplete, DialogActions, Typography } from '@mui/material';
+
+import { Iconify } from 'src/components/iconify';
 
 import { isInstaller, isWarehouseStaff } from 'src/utils/check-permissions';
 
@@ -139,7 +141,16 @@ export function MeasurementEditModalUserManagerView({
 
     const renderProject = (
         <Dialog fullWidth maxWidth="md" open={open} onClose={onClose}>
-            <DialogTitle>{isEdit ? 'Update' : 'Add'} {isFirstAssignee ? ' First User' : ' Check User'} to Measurement {measurementData?.number} </DialogTitle>
+            <DialogTitle>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Box className="dialog-title-icon">
+                        <Iconify icon="mdi:account-cog" />
+                    </Box>
+                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                        {isEdit ? 'Update' : 'Add'} {isFirstAssignee ? ' First User' : ' Check User'} to Measurement {measurementData?.number}
+                    </Typography>
+                </Box>
+            </DialogTitle>
 
             <Stack
                 spacing={2.5}

@@ -6,6 +6,7 @@ from dateutil import parser
 from collections import defaultdict
 from .models import ProjectNotification, ProjectNotificationUser
 from api_authorization.models import LoginUser
+from django.conf import settings
 import json
 import random
 
@@ -51,7 +52,9 @@ def transform_dict_to_camelcase(data):
 def serialize_datetime(value):
     if isinstance(value, datetime):
         if timezone.is_naive(value):
-            value = timezone.make_aware(value, dt_timezone.utc) 
+            local_tz = timezone.get_current_timezone()
+            # local_tz = dt_timezone.utc
+            value = timezone.make_aware(value, local_tz) 
         local_dt = timezone.localtime(value)  
         return local_dt.isoformat()
     elif isinstance(value, dict):
@@ -90,6 +93,10 @@ def create_default_task_number(order):
 
 def parse_custom_date(logger, date_str):
     try:
+        if not date_str:
+            return None
+        if isinstance(date_str, datetime):
+            return date_str
         return parser.parse(date_str)
     except Exception as e:
         if logger:
@@ -214,3 +221,43 @@ def find_task_in_stage(tasks, stage, position=0):
     elif isinstance(position, str):
         if position == 'last':
             return filtered_tasks[-1] if filtered_tasks else None
+        
+
+def get_project_installers(project):
+    installers = None
+    if project:
+        installers = [project.user_installer] if project.user_installer else None
+        if installers is None:
+            all_tasks = project.project_default_tasks if project.project_default_tasks else []
+            installation_tasks = [
+                task for task in all_tasks if \
+                task.get('project_default_task', {}).get('project_stage', {}).get('name', '').lower() == settings.INSTALLATION_STAGE.lower()
+            ]
+            installer_task = next(
+                (
+                    task for task in installation_tasks if \
+                    task.get('project_default_task', {}).get('name', '').lower() == settings.TASK_START_INSTALLATION.lower() or \
+                    task.get('project_default_task', {}).get('name', '').lower() == settings.TASK_FINISH_INSTALLATION.lower() or \
+                    task.get('project_default_task', {}).get('name', '').lower() == settings.TASK_COMPLETE_SATISFACTION_FORM.lower()
+                ), 
+                None
+            )
+            if installer_task:
+                user_assignees = installer_task['users_assignees']
+                if user_assignees:
+                    installers = [
+                        user_assignee for user_assignee in user_assignees if user_assignee.get('user_role', {}).get('name', '').lower() == settings.ROLE_INSTALLER.lower()
+                    ]
+    return installers
+
+
+class DateTimeJSONEncoder(json.JSONEncoder):
+    def default(self, o):
+        if isinstance(o, datetime):
+            if timezone.is_naive(o):
+                o = timezone.make_aware(o, dt_timezone.utc)
+            return timezone.localtime(o).isoformat()
+        return super().default(o)
+
+def serializing_datetime(obj):
+    return json.loads(json.dumps(obj, cls=DateTimeJSONEncoder))

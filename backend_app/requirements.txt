@@ -29,6 +29,7 @@ gunicorn==23.0.0
 h11==0.14.0
 kombu==5.4.2
 mongoengine==0.29.1
+orjson
 packaging==24.2
 Pillow
 prompt_toolkit==3.0.48
@@ -46,3 +47,4 @@ uvicorn==0.34.0
 vine==5.1.0
 wcwidth==0.2.13
 websockets==12.0
+zipstream-new

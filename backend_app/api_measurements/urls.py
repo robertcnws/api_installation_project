@@ -21,6 +21,9 @@ urlpatterns = [
     path('update/measurement/<str:id>/change-phone-number/', views.change_phone_number, name='change_phone_number'),
     path('delete/measurement/<str:id>/', views.delete_measurement, name='delete_measurement'),
     path('delete/measurements/', views.delete_measurements, name='delete_measurements'),
+    path('create/measurement/<str:id>/comment/', views.create_comment, name='create_comment'),
+    path('edit/measurement/<str:measurementId>/comment/<str:id>/', views.edit_comment, name='edit_comment'),
+    path('delete/measurement/<str:measurementId>/comment/<str:id>/', views.delete_comment, name='delete_comment'),
     
     
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import dayjs from 'dayjs';
 import { useMemo, useState, useEffect, useContext, useCallback } from 'react';
 
 import Stack from '@mui/material/Stack';
@@ -40,15 +41,11 @@ import { ProjectNewFolderDialog } from '../project-new-folder-dialog';
 import { ProjectEditModalManageStaffView } from './project-edit-modal-manage-staff-view';
 
 
-
-
 // ----------------------------------------------------------------------
 
 export function ProjectView() {
 
   const { isMobile } = useContext(LoadingContext);
-
-  
 
   localStorage.setItem('backFromProjectDetails', 'projects');
 
@@ -105,12 +102,12 @@ export function ProjectView() {
 
   const [tableData, setTableData] = useState([]);
 
-  // useEffect(() => {
-  //   if (refetchProjects) {
-  //     refetchProjects();
-  //   }
-  //   setTableData(loadedProjects || []);
-  // }, [refetchProjects, loadedProjects]);
+  useEffect(() => {
+    if (refetchProjects) {
+      refetchProjects();
+    }
+    setTableData(loadedProjects || []);
+  }, [refetchProjects, loadedProjects]);
 
   useEffect(() => {
     if (loadedProjects) {
@@ -119,7 +116,7 @@ export function ProjectView() {
   }, [loadedProjects]);
 
   useEffect(() => {
-    const socket = new WebSocket(`wss://${CONFIG.apiHost}/api/projects/ws/projects/`);
+    const socket = new WebSocket(`${CONFIG.wsProtocol}://${CONFIG.wsHost}/${CONFIG.wsDomain}/projects/ws/projects/`);
     socket.onerror = (errorEvent) => {
       console.dir(errorEvent);
       console.error('WebSocket error (toString):', errorEvent.toString());
@@ -134,6 +131,13 @@ export function ProjectView() {
             updatedData[existingItemIndex] = message.item;
             return updatedData;
           }
+          const isInstallerRole = isInstaller(userLogged?.data?.user_role?.name);
+          if (isInstallerRole) {
+            const projInstaller = getProjectInstaller(message.item, CONFIG);
+            if (projInstaller && projInstaller.id && projInstaller.username && projInstaller.username !== userLogged?.data?.username) {
+              return [...prevData];
+            }
+          }
           return [message.item, ...prevData];
         });
       }
@@ -146,14 +150,14 @@ export function ProjectView() {
         socket.close();
       }
     };
-  }, []);
+  }, [userLogged?.data?.user_role?.name, userLogged?.data?.username]);
 
   const filters = useSetState({
     list: localStorage.getItem('projectFilterList') || 'in progress',
     name: localStorage.getItem('projectFilterName') || '',
     type: JSON.parse(localStorage.getItem('projectFilterType')) || [],
-    startDate: localStorage.getItem('projectFilterStartDate') || null,
-    endDate: localStorage.getItem('projectFilterEndDate') || null,
+    startDate: localStorage.getItem('projectFilterStartDate') ? dayjs(localStorage.getItem('projectFilterStartDate')) : null,
+    endDate: localStorage.getItem('projectFilterEndDate') ? dayjs(localStorage.getItem('projectFilterEndDate')) : null,
     installer: JSON.parse(localStorage.getItem('projectFilterInstaller')) || {
       id: null,
       name: null,
@@ -356,9 +360,9 @@ export function ProjectView() {
           <Iconify icon="mingcute:dot-grid-fill" />
         </ToggleButton>
 
-        <ToggleButton value="calendar">
+        {/* <ToggleButton value="calendar">
           <Iconify icon="ion:calendar-outline" />
-        </ToggleButton>
+        </ToggleButton> */}
 
         {!isInstaller(userLogged?.data?.user_role?.name) && (
           <ToggleButton value="kanban">
@@ -380,8 +384,6 @@ export function ProjectView() {
   );
 
   const [titleLinearProgress, setTitleLinearProgress] = useState('Loading installations data...');
-
-  
 
   return (
     <>
@@ -558,25 +560,25 @@ function applyFilter({ inputData, comparator, filters, dateError }) {
 
   if (list) {
     if (list === 'in progress') {
-      inputData = inputData.filter((file) => file.currentStage.name.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) === -1);
+      inputData = inputData.filter((file) => file.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) === -1);
     }
     else if (list === 'finished') {
-      inputData = inputData.filter((file) => file.currentStage.name.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) !== -1);
+      inputData = inputData.filter((file) => file.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) !== -1);
     }
   }
 
   if (name) {
-    inputData = inputData.filter(
-      (file) => file.name.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
-        file.number.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
-        file.salesOrder.salesorder_id.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
-        file.salesOrder.salesorder_number.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
-        file.salesOrder.customer_id.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
-        file.salesOrder.customer_name.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
-        file.address.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
-        JSON.stringify(file.userManager).toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
-        JSON.stringify(file.usersAssignees).toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
-        JSON.stringify(file.currentStage).toLowerCase().indexOf(name.toLowerCase()) !== -1
+    inputData = inputData?.filter(
+      (file) => file?.name?.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
+        file?.number?.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
+        file?.salesOrder?.salesorder_id?.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
+        file?.salesOrder?.salesorder_number?.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
+        file?.salesOrder?.customer_id?.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
+        file?.salesOrder?.customer_name?.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
+        file?.address?.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
+        JSON.stringify(file?.userManager)?.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
+        JSON.stringify(file?.usersAssignees)?.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
+        JSON.stringify(file?.currentStage)?.toLowerCase().indexOf(name.toLowerCase()) !== -1
     );
   }
 
@@ -596,7 +598,7 @@ function applyFilter({ inputData, comparator, filters, dateError }) {
       const normalizedStageFilters = stageFilters.map(stage => stage.toLowerCase());
       inputData = inputData.filter(file => {
         if (file.currentStage && file.currentStage.name) {
-          return normalizedStageFilters.includes(file.currentStage.name.toLowerCase());
+          return normalizedStageFilters.includes(file.currentStage?.name?.toLowerCase());
         }
         return false;
       });
@@ -618,7 +620,7 @@ function applyFilter({ inputData, comparator, filters, dateError }) {
   }
 
   if (custom.hasComments) {
-    inputData = inputData.filter(file => file.projectComments.length > 0);
+    inputData = inputData.filter(file => file?.projectComments?.length > 0);
   }
 
   if (!dateError) {
@@ -631,19 +633,19 @@ function applyFilter({ inputData, comparator, filters, dateError }) {
     inputData = inputData.filter(file => {
       const { currentStage } = file;
       if (currentStage && currentStage.name) {
-        if (custom.isPreparation.value && currentStage.name.toLowerCase().indexOf(custom.isPreparation.name.toLowerCase()) !== -1) {
+        if (custom.isPreparation.value && currentStage?.name?.toLowerCase().indexOf(custom.isPreparation.name.toLowerCase()) !== -1) {
           return true;
         }
-        if (custom.isCoordination.value && currentStage.name.toLowerCase().indexOf(custom.isCoordination.name.toLowerCase()) !== -1) {
+        if (custom.isCoordination.value && currentStage?.name?.toLowerCase().indexOf(custom.isCoordination.name.toLowerCase()) !== -1) {
           return true;
         }
-        if (custom.isInstallation.value && currentStage.name.toLowerCase().indexOf(custom.isInstallation.name.toLowerCase()) !== -1) {
+        if (custom.isInstallation.value && currentStage?.name?.toLowerCase().indexOf(custom.isInstallation.name.toLowerCase()) !== -1) {
           return true;
         }
-        if (custom.isPermission.value && currentStage.name.toLowerCase().indexOf(custom.isPermission.name.toLowerCase()) !== -1) {
+        if (custom.isPermission.value && currentStage?.name?.toLowerCase().indexOf(custom.isPermission.name.toLowerCase()) !== -1) {
           return true;
         }
-        if (custom.isClosing.value && currentStage.name.toLowerCase().indexOf(custom.isClosing.name.toLowerCase()) !== -1) {
+        if (custom.isClosing.value && currentStage?.name?.toLowerCase().indexOf(custom.isClosing.name.toLowerCase()) !== -1) {
           return true;
         }
       }

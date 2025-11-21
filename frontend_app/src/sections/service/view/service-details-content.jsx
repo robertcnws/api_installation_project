@@ -11,9 +11,9 @@ import { Box, Chip, Table, Radio, Button, Switch, Tooltip, TableRow, ListItem, T
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
-import { fDate, fIsAfter, fDuration, fDateTime } from 'src/utils/format-time';
 import { getServiceInstaller } from 'src/utils/service-tasks-utils';
 import { filteredDescriptionJson } from 'src/utils/project-tasks-utils';
+import { fDate, fIsAfter, fDuration, fDateTime } from 'src/utils/format-time';
 import { isInstaller, listRolesAndSubroles } from 'src/utils/check-permissions';
 
 import { CONFIG } from 'src/config-global';
@@ -344,7 +344,7 @@ export function ServiceDetailsContent({
 
           )}
 
-          {service?.userManager?.name && (
+          {(service?.userManager?.name && !service?.byFactory) && (
 
             <TableRow>
               <TableCell>
@@ -389,80 +389,84 @@ export function ServiceDetailsContent({
 
           )}
 
-          <TableRow>
-            <TableCell>
-              <Typography variant="subtitle2" color="text.secondary">Estimated Start Date:</Typography>
-            </TableCell>
-            <TableCell>
-              <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, justifyContent: 'space-between' }}>
-                {service?.startDate ? (
-                  <Typography
-                    variant="subtitle2"
-                    color={
-                      service?.endDate
-                        ? (
-                          (fIsAfter(dayjs(new Date()), dayjs(service?.endDate).format('YYYY-MM-DD')) &&
+          {!service?.byFactory && (
+
+            <TableRow>
+              <TableCell>
+                <Typography variant="subtitle2" color="text.secondary">Estimated Start Date:</Typography>
+              </TableCell>
+              <TableCell>
+                <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, justifyContent: 'space-between' }}>
+                  {service?.startDate ? (
+                    <Typography
+                      variant="subtitle2"
+                      color={
+                        service?.endDate
+                          ? (
+                            (fIsAfter(dayjs(new Date()).format('YYYY-MM-DD'), dayjs(service?.endDate).format('YYYY-MM-DD')) &&
+                              (
+                                service?.currentStage?.name.toLowerCase().includes(CONFIG.stages.preparation.toLowerCase()) ||
+                                service?.currentStage?.name.toLowerCase().includes('repair')
+                              )
+                            )
+                              ? 'error.main'
+                              : 'text.primary'
+                          )
+                          : 'text.primary'
+                      }
+                      sx={{
+                        fontWeight: service?.endDate ? (
+                          (fIsAfter(dayjs(new Date()).format('YYYY-MM-DD'), dayjs(service?.endDate).format('YYYY-MM-DD')) &&
                             (
                               service?.currentStage?.name.toLowerCase().includes(CONFIG.stages.preparation.toLowerCase()) ||
                               service?.currentStage?.name.toLowerCase().includes('repair')
                             )
                           )
-                            ? 'error.main'
-                            : 'text.primary'
-                        )
-                        : 'text.primary'
-                    }
-                    sx={{
-                      fontWeight: service?.endDate ? (
-                        (fIsAfter(dayjs(new Date()), dayjs(service?.endDate).format('YYYY-MM-DD')) &&
-                          (
-                            service?.currentStage?.name.toLowerCase().includes(CONFIG.stages.preparation.toLowerCase()) ||
-                            service?.currentStage?.name.toLowerCase().includes('repair')
-                          )
-                        )
-                          ? 'bold'
-                          : 'normal'
-                      ) : 'normal'
-                    }}
-                  >
-                    {fDate(service?.startDate)} <b>({fDuration(service?.startDate, service?.endDate)})</b> <br />
-                    <Label variant="filled" sx={{ bgcolor: 'whitesmoke', color: 'text.primary' }}>
-                      {service?.isPartDays ? 'Part Days' : 'Full Days'}
-                    </Label>
-                  </Typography>
-                ) : (
-                  <Iconify icon="fluent-mdl2:date-time" color="warning" width={20} sx={{ ml: 0.5, mt: 0.5 }} />
-                )}
+                            ? 'bold'
+                            : 'normal'
+                        ) : 'normal'
+                      }}
+                    >
+                      {fDate(service?.startDate)} <b>({fDuration(service?.startDate, service?.endDate)})</b> <br />
+                      <Label variant="filled" sx={{ bgcolor: 'whitesmoke', color: 'text.primary' }}>
+                        {service?.isPartDays ? 'Part Days' : 'Full Days'}
+                      </Label>
+                    </Typography>
+                  ) : (
+                    <Iconify icon="fluent-mdl2:date-time" color="warning" width={20} sx={{ ml: 0.5, mt: 0.5 }} />
+                  )}
 
-              </Box>
-            </TableCell>
-            <TableCell sx={{ textAlign: 'right', maxWidth: '30px' }}>
-              {(service?.startDate &&
-                (listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
-                  <IconButton variant="text" color="primary" size="small" sx={{ ml: 0, maxWidth: 10 }}
-                    onClick={() => {
-                      setIsStartDate(true)
-                      setIsInspectionDate(false)
-                      setOpenDialogs({ ...openDialogs, date: true })
-                    }}
-                  >
-                    <Iconify icon="fluent:calendar-edit-32-regular" color="primary" width={22} />
-                  </IconButton>
-                )}
-              {(!service?.startDate &&
-                (listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
-                  <IconButton variant="text" color="warning" size="small" sx={{ ml: 0, maxWidth: 10 }}
-                    onClick={() => {
-                      setIsStartDate(true)
-                      setIsInspectionDate(false)
-                      setOpenDialogs({ ...openDialogs, date: true })
-                    }}
-                  >
-                    <Iconify icon="zondicons:date-add" color="warning" width={20} />
-                  </IconButton>
-                )}
-            </TableCell>
-          </TableRow>
+                </Box>
+              </TableCell>
+              <TableCell sx={{ textAlign: 'right', maxWidth: '30px' }}>
+                {(service?.startDate &&
+                  (listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
+                    <IconButton variant="text" color="primary" size="small" sx={{ ml: 0, maxWidth: 10 }}
+                      onClick={() => {
+                        setIsStartDate(true)
+                        setIsInspectionDate(false)
+                        setOpenDialogs({ ...openDialogs, date: true })
+                      }}
+                    >
+                      <Iconify icon="fluent:calendar-edit-32-regular" color="primary" width={22} />
+                    </IconButton>
+                  )}
+                {(!service?.startDate &&
+                  (listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
+                    <IconButton variant="text" color="warning" size="small" sx={{ ml: 0, maxWidth: 10 }}
+                      onClick={() => {
+                        setIsStartDate(true)
+                        setIsInspectionDate(false)
+                        setOpenDialogs({ ...openDialogs, date: true })
+                      }}
+                    >
+                      <Iconify icon="zondicons:date-add" color="warning" width={20} />
+                    </IconButton>
+                  )}
+              </TableCell>
+            </TableRow>
+
+          )}
 
           <TableRow>
             <TableCell colSpan={3}>
@@ -1013,23 +1017,52 @@ export function ServiceDetailsContent({
         >
           <b>Attachments:</b>
         </Typography>
-        <Label
-          variant="filled"
-          sx={{
-            bgcolor: 'whitesmoke',
-            color: service?.serviceAttachments?.length > 0 ? 'success.main' : 'warning.main',
-            cursor: 'pointer',
-            '&:hover': {
-              bgcolor: 'text.lighter',
+        <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 0.5 }}>
+          <Label
+            variant="filled"
+            sx={{
+              bgcolor: 'whitesmoke',
               color: service?.serviceAttachments?.length > 0 ? 'success.main' : 'warning.main',
-            },
-          }}
-          onClick={() => {
-            setOpenDialogs({ ...openDialogs, editAttachments: true });
-          }}
-        >
-          {listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator) ? service?.serviceAttachments?.length > 0 ? 'Edit' : 'Add' : ''} Files
-        </Label>
+              cursor: 'pointer',
+              '&:hover': {
+                bgcolor: 'text.lighter',
+                color: service?.serviceAttachments?.length > 0 ? 'success.main' : 'warning.main',
+              },
+            }}
+            onClick={() => {
+              setOpenDialogs({ ...openDialogs, editAttachments: true });
+            }}
+          >
+            <Typography
+              variant="filled"
+              sx={{
+                bgcolor: 'whitesmoke',
+                color: service?.serviceAttachments?.length > 0 ? 'success.main' : 'warning.main',
+                cursor: 'pointer',
+                '&:hover': {
+                  bgcolor: 'text.lighter',
+                  color: service?.serviceAttachments?.length > 0 ? 'success.main' : 'warning.main',
+                },
+                fontWeight: 'bold',
+              }}
+            >
+              {listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator) ? service?.serviceAttachments?.length > 0 ? 'Edit' : 'Add' : ''} Files
+            </Typography>
+          </Label>
+          {service?.serviceAttachments?.length > 0 && (
+            <IconButton
+              sx={{
+                color: service?.serviceAttachments?.length > 0 ? 'success.main' : 'warning.main',
+              }}
+              onClick={() => {
+                setOpenDialogs({ ...openDialogs, editAttachments: true });
+              }}
+            >
+              <Iconify icon="material-symbols:file-open" color="primary" width={22} />
+            </IconButton>
+          )}
+        </Box>
+
       </Box>
       <Box sx={{ display: 'flex', flexDirection: 'row', gap: 2, }}>
         <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, mt: 0, mb: -1, textAlign: 'right' }}>

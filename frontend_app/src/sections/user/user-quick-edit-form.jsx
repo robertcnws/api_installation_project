@@ -10,10 +10,13 @@ import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 import MenuItem from '@mui/material/MenuItem';
+import Typography from '@mui/material/Typography';
 import LoadingButton from '@mui/lab/LoadingButton';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
+
+import { Iconify } from 'src/components/iconify';
 
 import { createDefaultPermissions } from 'src/utils/check-permissions';
 
@@ -144,7 +147,16 @@ export function UserQuickEditForm({ currentUser, open, onClose }) {
       PaperProps={{ sx: { maxWidth: 920 } }}
     >
       <Form methods={methods} onSubmit={onSubmit}>
-        <DialogTitle>Quick User Info Update</DialogTitle>
+        <DialogTitle>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Box className="dialog-title-icon">
+              <Iconify icon="mdi:account-edit" />
+            </Box>
+            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+              Quick User Info Update
+            </Typography>
+          </Box>
+        </DialogTitle>
 
         <DialogContent>
           <Alert variant="outlined" severity="info" sx={{ mb: 3 }}>

@@ -11,7 +11,6 @@ import Button from '@mui/material/Button';
 import Tooltip from '@mui/material/Tooltip';
 import IconButton from '@mui/material/IconButton';
 import { Avatar, Typography } from '@mui/material';
-import LoadingButton from '@mui/lab/LoadingButton';
 import DialogActions from '@mui/material/DialogActions';
 
 import { paths } from 'src/routes/paths';
@@ -21,6 +20,7 @@ import { useBoolean } from 'src/hooks/use-boolean';
 
 import { uuidv4 } from 'src/utils/uuidv4';
 import { fDate, fIsAfter } from 'src/utils/format-time';
+import { isInstaller } from 'src/utils/check-permissions';
 import { getProjectInstaller } from 'src/utils/project-tasks-utils';
 import { getServiceInstaller } from 'src/utils/service-tasks-utils';
 
@@ -77,25 +77,35 @@ export function CalendarForm({ currentEvent, colorOptions, onClose }) {
 
   const dateError = useMemo(() =>
     currentEvent?.type === 'installation' || currentEvent?.type === 'service' ? fIsAfter(values.start, values.end) :
-      currentEvent?.type === 'inspection' ? fIsAfter(currentEvent?.startDate, values.start) : fIsAfter(currentEvent?.inspectionDate, values.start),
+      currentEvent?.type === 'inspection' ?
+        fIsAfter(dayjs(currentEvent?.startDate).format('YYYY-MM-DD'), dayjs(values.start).format('YYYY-MM-DD')) :
+        fIsAfter(dayjs(currentEvent?.inspectionDate).format('YYYY-MM-DD'), dayjs(values.start).format('YYYY-MM-DD')),
     [currentEvent, values.start, values.end]
   );
 
   const handleDetails = useCallback(
     (id) => {
-      const fieldId = currentEvent?.type === 'service' ? 'serviceId' : 'projectId';
+      const fieldId = currentEvent?.type === 'service' ? 'serviceId' :
+        currentEvent?.type.toLowerCase().indexOf('measurement') !== -1 ? 'measurementId' : 'projectId';
+      const field = currentEvent?.type === 'service' ? 'Service' :
+        currentEvent?.type.toLowerCase().indexOf('measurement') !== -1 ? 'Measurement' : 'Project';
       localStorage.setItem(fieldId, id);
-      localStorage.setItem('backFromProjectDetails', 'calendarDashboard');
-      if (currentEvent?.type !== 'service') {
-        router.push(paths.dashboard.project.details(id));
-      }
-      else {
+      localStorage.setItem(`backFrom${field}Details`, 'calendarDashboard');
+      if (currentEvent && currentEvent?.type === 'service') {
         router.push(paths.dashboard.service.details(id));
       }
+      else if (currentEvent && currentEvent?.type?.toLowerCase().indexOf('measurement') !== -1) {
+        router.push(paths.dashboard.measurement.details(id));
+      }
+      else {
+        router.push(paths.dashboard.project.details(id));
+      }
 
-    }, [router, currentEvent?.type]);
+    }, [router, currentEvent]);
 
   const onSubmit = handleSubmit(async (data) => {
+    const utcStart = dayjs(data?.start).utc();
+    const utcEnd = data?.end ? dayjs(data?.end).utc() : null;
     const eventData = {
       id: currentEvent?.id ? currentEvent?.id : uuidv4(),
       // color: data?.color,
@@ -103,14 +113,18 @@ export function CalendarForm({ currentEvent, colorOptions, onClose }) {
       // allDay: data?.allDay,
       description: data?.description,
       notes: data?.description,
-      end: data?.end,
-      start: data?.start,
-      endDate: currentEvent.type === 'installation' || currentEvent.type === 'service' ? data?.end : null,
-      startDate: currentEvent.type === 'installation' || currentEvent.type === 'service' ? data?.start : null,
-      inspectionDate: currentEvent.type === 'inspection' ? data?.start : null,
-      finishPermissionDate: currentEvent.type === 'finishPermission' ? data?.start : null,
+      end: utcEnd ? utcEnd.format('YYYY-MM-DD') : null,
+      start: utcStart.format('YYYY-MM-DD'),
+      // endDate: currentEvent.type === 'installation' || currentEvent.type === 'service' ? data?.end : null,
+      startDate: currentEvent.type === 'installation' || currentEvent.type === 'service' ? utcStart.format('YYYY-MM-DD') : null,
+      duration: currentEvent.type === 'installation' || currentEvent.type === 'service' ?
+        dayjs(utcEnd.format('YYYY-MM-DD')).diff(dayjs(utcStart.format('YYYY-MM-DD')), 'day') + 1 : null,
+      inspectionDate: currentEvent.type === 'inspection' ? utcStart.format('YYYY-MM-DD') : null,
+      finishPermissionDate: currentEvent.type === 'finishPermission' ? utcStart.format('YYYY-MM-DD') : null,
       name: currentEvent?.originalName,
     };
+
+    // console.log('eventData', eventData);
 
     try {
       if (!dateError) {
@@ -153,79 +167,86 @@ export function CalendarForm({ currentEvent, colorOptions, onClose }) {
   return (
     <>
       <Form methods={methods} onSubmit={onSubmit}>
-        <Scrollbar sx={{ p: 3, bgcolor: 'background.neutral' }}>
-          <Stack spacing={3}>
-            <Field.Text name="title" label="Title" />
+        {currentEvent?.type?.toLowerCase().indexOf('measurement') === -1 && (
+          <Scrollbar sx={{ p: 3, bgcolor: 'background.neutral' }}>
+            <Stack spacing={3}>
+              <Field.Text name="title" label="Title" disabled />
 
-            <Field.Text
-              name='description'
-              label={currentEvent?.type !== 'service' ? 'Description' : 'Notes'}
-              multiline rows={3}
-            />
+              <Field.Text
+                name='description'
+                label={currentEvent?.type !== 'service' ? 'Description' : 'Notes'}
+                multiline rows={3}
+                disabled
+              />
 
-            {/* <Field.Switch name="allDay" label="All day" /> */}
+              {/* <Field.Switch name="allDay" label="All day" /> */}
 
-            <Field.MobileDateTimePicker
-              name="start"
-              label={
-                currentEvent?.type === 'installation' || currentEvent?.type === 'service' ? 'Start date' :
-                  currentEvent?.type === 'inspection' ? 'Inspection date' : 'Finish date'
-              }
-              minDate={dayjs(currentEvent?.salesOrder?.date)}
-            />
+              <Field.MobileDateTimePicker
+                name="start"
+                label={
+                  currentEvent?.type === 'installation' || currentEvent?.type === 'service' ? 'Start date' :
+                    currentEvent?.type === 'inspection' ? 'Inspection date' : 'Finish date'
+                }
+                minDate={dayjs(currentEvent?.salesOrder?.date)}
+                disabled
+              />
 
-            {(currentEvent?.type === 'installation' || currentEvent?.type === 'service') ? (
-              <>
-                <Field.MobileDateTimePicker
-                  name="end"
-                  label="End date"
-                  minDate={dayjs(currentEvent?.salesOrder?.date)}
-                  slotProps={{
-                    textField: {
-                      error: dateError,
-                      helperText: dateError ? 'End date must be later than start date' : null,
-                    },
-                  }}
-                />
-                {(currentEvent?.type !== 'service' && getProjectInstaller(currentEvent, CONFIG)?.name) && (
-                  <Box sx={{ display: 'flex', mb: 1, p: 1, justifyContent: 'flex-start' }}>
-                    <Typography variant="caption" sx={{ color: 'text.secondary', mr: 1, mt: 1.5 }}>
-                      Installer:
-                    </Typography>
-                    <Label sx={{ display: 'flex', minHeight: 40 }}>
-                      <Avatar
-                        src={getProjectInstaller(currentEvent, CONFIG).avatarUrl || getProjectInstaller(currentEvent, CONFIG).avatar_url}
-                        sx={{ width: 24, height: 24, mr: 1 }} />
-                      {getProjectInstaller(currentEvent, CONFIG).name}
-                    </Label>
-                  </Box>
-                )}
-                {(currentEvent?.type === 'service' && getServiceInstaller(currentEvent, CONFIG)?.name) && (
-                  <Box sx={{ display: 'flex', mb: 1, p: 1, justifyContent: 'flex-start' }}>
-                    <Typography variant="caption" sx={{ color: 'text.secondary', mr: 1, mt: 1.5 }}>
-                      Service Crew:
-                    </Typography>
-                    <Label sx={{ display: 'flex', minHeight: 40 }}>
-                      <Avatar
-                        src={getServiceInstaller(currentEvent, CONFIG).avatarUrl || getServiceInstaller(currentEvent, CONFIG).avatar_url}
-                        sx={{ width: 24, height: 24, mr: 1 }} />
-                      {getServiceInstaller(currentEvent, CONFIG).name}
-                    </Label>
-                  </Box>
-                )}
-              </>
+              {(currentEvent?.type === 'installation' ||
+                currentEvent?.type === 'service' ||
+                currentEvent?.type === 'finishPermission' ||
+                currentEvent?.type === 'inspection') ? (
+                <>
+                  <Field.MobileDateTimePicker
+                    name="end"
+                    label="End date"
+                    minDate={dayjs(currentEvent?.salesOrder?.date)}
+                    slotProps={{
+                      textField: {
+                        error: dateError,
+                        helperText: dateError ? 'End date must be later than start date' : null,
+                      },
+                    }}
+                    disabled
+                  />
+                  {(currentEvent?.type !== 'service' && getProjectInstaller(currentEvent, CONFIG)?.name) && (
+                    <Box sx={{ display: 'flex', mb: 1, p: 1, justifyContent: 'flex-start' }}>
+                      <Typography variant="caption" sx={{ color: 'text.secondary', mr: 1, mt: 1.5 }}>
+                        Installer:
+                      </Typography>
+                      <Label sx={{ display: 'flex', minHeight: 40 }}>
+                        <Avatar
+                          src={getProjectInstaller(currentEvent, CONFIG).avatarUrl || getProjectInstaller(currentEvent, CONFIG).avatar_url}
+                          sx={{ width: 24, height: 24, mr: 1 }} />
+                        {getProjectInstaller(currentEvent, CONFIG).name}
+                      </Label>
+                    </Box>
+                  )}
+                  {(currentEvent?.type === 'service' && getServiceInstaller(currentEvent, CONFIG)?.name) && (
+                    <Box sx={{ display: 'flex', mb: 1, p: 1, justifyContent: 'flex-start' }}>
+                      <Typography variant="caption" sx={{ color: 'text.secondary', mr: 1, mt: 1.5 }}>
+                        Service Crew:
+                      </Typography>
+                      <Label sx={{ display: 'flex', minHeight: 40 }}>
+                        <Avatar
+                          src={getServiceInstaller(currentEvent, CONFIG).avatarUrl || getServiceInstaller(currentEvent, CONFIG).avatar_url}
+                          sx={{ width: 24, height: 24, mr: 1 }} />
+                        {getServiceInstaller(currentEvent, CONFIG).name}
+                      </Label>
+                    </Box>
+                  )}
+                </>
 
-            ) : (
-              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                {
-                  currentEvent?.type === 'inspection' ? 'Inspection date' : 'Finish date'
-                } must be the same or after {
-                  currentEvent?.type === 'inspection' ? fDate(currentEvent?.startDate) : fDate(currentEvent?.inspectionDate)
-                } ({currentEvent?.type === 'inspection' ? 'Installation date' : 'Inspection date'})
-              </Typography>
-            )}
+              ) : (
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                  {
+                    currentEvent?.type === 'inspection' ? 'Inspection date' : 'Finish date'
+                  } must be the same or after {
+                    currentEvent?.type === 'inspection' ? fDate(currentEvent?.startDate) : fDate(currentEvent?.inspectionDate)
+                  } ({currentEvent?.type === 'inspection' ? 'Installation date' : 'Inspection date'})
+                </Typography>
+              )}
 
-            {/* <Controller
+              {/* <Controller
             name="color"
             control={control}
             render={({ field }) => (
@@ -236,28 +257,34 @@ export function CalendarForm({ currentEvent, colorOptions, onClose }) {
               />
             )}
           /> */}
-          </Stack>
-        </Scrollbar>
+            </Stack>
+          </Scrollbar>
+        )}
 
         <DialogActions sx={{ flexShrink: 0 }}>
-          {!!currentEvent?.id && (
-            <Tooltip title="Delete event">
-              <IconButton onClick={confirmDelete.onTrue} color="error">
-                <Iconify icon="solar:trash-bin-trash-bold" />
-              </IconButton>
-            </Tooltip>
-          )}
+          {(!!currentEvent?.id && currentEvent?.type.toLowerCase().indexOf('measurement') === -1 &&
+            !isInstaller(userLogged?.data?.user_role?.name)) && (
+              <Tooltip title="Delete event">
+                <IconButton onClick={confirmDelete.onTrue} color="error">
+                  <Iconify icon="solar:trash-bin-trash-bold" />
+                </IconButton>
+              </Tooltip>
+            )}
 
           <Box sx={{ flexGrow: 1 }} />
 
-          <LoadingButton
-            type="submit"
-            variant="contained"
-            loading={isSubmitting}
-            disabled={dateError}
-          >
-            Save changes
-          </LoadingButton>
+          {/* {currentEvent?.type.toLowerCase().indexOf('measurement') === -1 && (
+
+            <LoadingButton
+              type="submit"
+              variant="contained"
+              loading={isSubmitting}
+              disabled={dateError}
+            >
+              Save changes
+            </LoadingButton>
+
+          )} */}
 
           <Button
             variant="contained"
@@ -280,7 +307,9 @@ export function CalendarForm({ currentEvent, colorOptions, onClose }) {
         title="Delete"
         content={
           <>
-            Are you sure want to delete {currentEvent?.type !== 'service' ? 'installation project' : 'service'}  <strong> {currentEvent?.name} </strong>?
+            Are you sure want to delete {
+              currentEvent?.type !== 'service' ? 'installation project' : 'service'
+            }  <strong> {currentEvent?.name} </strong>?
           </>
         }
         action={

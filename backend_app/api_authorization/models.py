@@ -1,6 +1,7 @@
 # tu_app/models.py
 
 import mongoengine
+
 from mongoengine import (
     Document, 
     StringField, 
@@ -12,6 +13,7 @@ from django.contrib.auth.hashers import (
     make_password, 
     check_password
 )
+from django.utils import timezone
     
 class LoginUser(Document):
     username = StringField(max_length=150, unique=True, required=True)
@@ -58,3 +60,13 @@ class LoginUser(Document):
 
     def __str__(self):
         return self.username
+
+class RevokedToken(Document):
+    jti          = StringField(required=True, unique=True)
+    revoked_at   = DateTimeField(default=timezone.now)
+
+    meta = {
+        'collection': 'revoked_tokens',
+        'indexes': ['jti']
+    }
+

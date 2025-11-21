@@ -3,9 +3,10 @@ import React, { useMemo, useEffect, useContext, createContext } from 'react';
 import { _mock } from 'src/_mock/_mock';
 import { useUsersQuery } from 'src/_mock/__users';
 
-import { useAvailableUsers } from '../hooks/use-available-user';
+import { useAvailableUsers, useSuperadminUsers } from '../hooks/use-available-user';
 
 const UserContext = createContext();
+
 export const useAuth = () => useContext(UserContext);
 
 export function UserProvider({ children }) {
@@ -23,6 +24,8 @@ export function UserProvider({ children }) {
 
   const loadedUsers = useAvailableUsers(initialUsers, userLogged);
 
+  const loadedSuperadminUsers = useSuperadminUsers(initialUsers);
+
   useEffect(() => {
     if (userLogged) {
       const me = loadedUsers.find(u => u.username === userLogged.data.username);
@@ -39,13 +42,15 @@ export function UserProvider({ children }) {
     loadedUsers, 
     refetchUsers, 
     loadingUsers, 
-    errorUsers 
+    errorUsers,
+    loadedSuperadminUsers, 
   }), [
     userLogged, 
     loadedUsers, 
     refetchUsers, 
     loadingUsers, 
-    errorUsers
+    errorUsers,
+    loadedSuperadminUsers,
   ]);
   
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;

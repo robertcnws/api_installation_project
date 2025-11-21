@@ -155,7 +155,7 @@ export function TaskDefaultListView() {
   }, [loadedDefaultTasks]);
 
   useEffect(() => {
-    const socket = new WebSocket(`wss://${CONFIG.apiHost}/api/projects/ws/project-default-tasks/`);
+    const socket = new WebSocket(`${CONFIG.wsProtocol}://${CONFIG.wsHost}/${CONFIG.wsDomain}/projects/ws/project-default-tasks/`);
     // socket.onopen = () => {
     //   console.log('WebSocket connected');
     // };

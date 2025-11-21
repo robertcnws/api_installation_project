@@ -6,13 +6,14 @@ import Stack from '@mui/material/Stack';
 import { LoadingButton } from '@mui/lab';
 import Button from '@mui/material/Button';
 import { Add, Remove } from '@mui/icons-material';
-import { Dialog, TextField, IconButton, DialogTitle, DialogActions, InputAdornment } from '@mui/material';
+import { Dialog, TextField, IconButton, DialogTitle, DialogActions, InputAdornment, Typography } from '@mui/material';
 
 import { CONFIG } from 'src/config-global';
 
 import { toast } from 'src/components/snackbar';
 
 import { LoadingContext } from 'src/auth/context/loading-context';
+import { Iconify } from 'src/components/iconify';
 
 
 // ----------------------------------------------------------------------
@@ -107,7 +108,16 @@ export function ServiceEditModalIssue({
         <Dialog fullWidth maxWidth="xs" open={open} onClose={() => {
             onClose();
         }}>
-            <DialogTitle>Edit issue {issue?.issue?.name} in product {item?.name} </DialogTitle>
+            <DialogTitle>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Box className="dialog-title-icon">
+                        <Iconify icon="pajamas:issue-type-maintenance" />
+                    </Box>
+                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                        Edit issue {issue?.issue?.name} in product {item?.name}
+                    </Typography>
+                </Box>
+            </DialogTitle>
 
             <Stack
                 spacing={2.5}

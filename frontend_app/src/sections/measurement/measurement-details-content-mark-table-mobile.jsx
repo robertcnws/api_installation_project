@@ -14,6 +14,7 @@ export function MeasurementDetailsContentMarkTableMobile({
     handleCheck,
     handleAddMark,
     handleIsNotValidMark,
+    handleAreNotValidMarks,
     confirmRemove,
     setSelectedMark,
     setSelectedMarkIndex,
@@ -230,7 +231,7 @@ export function MeasurementDetailsContentMarkTableMobile({
                                             <TableCell>ACTIONS</TableCell>
                                             <TableCell align="left" sx={{ fontSize: 14, color: theme.palette.text.secondary }}>
                                                 <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                    {(index === currentMarks.length - 1 && belongsToWorkingStaff(userLogged?.data?.uer_role?.name)) && (
+                                                    {/* {(index === currentMarks.length - 1 && belongsToWorkingStaff(userLogged?.data?.uer_role?.name)) && (
                                                         <Tooltip title="Add" placement="top" arrow>
                                                             <span>
                                                                 <IconButton
@@ -255,7 +256,7 @@ export function MeasurementDetailsContentMarkTableMobile({
                                                                 </IconButton>
                                                             </span>
                                                         </Tooltip>
-                                                    )}
+                                                    )} */}
                                                     {(!measurement?.project?.id &&
                                                         !measurement?.service?.id &&
                                                         belongsToWorkingStaff(userLogged?.data?.uer_role?.name)) && (
@@ -360,6 +361,40 @@ export function MeasurementDetailsContentMarkTableMobile({
 
                         </TableRow>
                     ))}
+                    <TableRow sx={{ backgroundColor: theme.palette.grey[100] }}>
+                        <TableCell />
+                        <TableCell align="left">
+                            {(belongsToWorkingStaff(userLogged?.data?.uer_role?.name)) && (
+                                <Tooltip title="Add new mark" placement="top" arrow>
+                                    <span>
+                                        <IconButton
+                                            sx={{
+                                                cursor: !handleAreNotValidMarks() ? 'pointer' : 'not-allowed',
+                                                '&.Mui-disabled': {
+                                                    cursor: 'not-allowed !important',
+                                                    pointerEvents: 'auto',
+                                                },
+                                                color: !handleAreNotValidMarks() ? theme.palette.secondary.main : theme.palette.grey[300],
+                                                fontSize: '0.95rem',
+                                                fontWeight: 600,
+                                            }}
+                                            size="small"
+                                            onClick={!handleAreNotValidMarks() ? () => {
+                                                handleAddMark();
+                                            } : undefined}
+                                            disabled={handleAreNotValidMarks()}>
+                                            <Iconify
+                                                icon="eva:plus-fill"
+                                                width={20}
+                                                height={20}
+                                                color={!handleAreNotValidMarks() ? theme.palette.secondary.main : theme.palette.grey[300]}
+                                            /> Add
+                                        </IconButton>
+                                    </span>
+                                </Tooltip>
+                            )}
+                        </TableCell>
+                    </TableRow>
                     <TableRow />
                 </TableBody>
 

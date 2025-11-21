@@ -60,6 +60,8 @@ export function StageTableRow({ row, selected, onEditRow, onSelectRow, onDeleteR
               </Label>
             </TableCell>
 
+            <TableCell sx={{ whiteSpace: 'nowrap' }} onClick={() => onEditRow()}>{row.otherName}</TableCell>
+
             <TableCell sx={{ whiteSpace: 'nowrap' }} onClick={() => onEditRow()}>{row.description}</TableCell>
 
           </>
@@ -92,6 +94,14 @@ export function StageTableRow({ row, selected, onEditRow, onSelectRow, onDeleteR
               onClick={() => onEditRow()}
             >
               {row.isActive ? 'Active' : 'Inactive'}
+            </Label><br />
+            Other Name: <Label
+              variant="soft"
+              color='default'
+              sx={{ cursor: 'pointer' }}
+              onClick={() => onEditRow()}
+            >
+              <u>{row.otherName}</u>
             </Label><br />
             Description: <Label
               sx={{ cursor: 'pointer' }}

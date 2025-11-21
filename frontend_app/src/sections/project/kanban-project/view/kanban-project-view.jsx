@@ -493,7 +493,7 @@ function adaptToKanbanData(projects, stages) {
     const colId = project.currentStage.id;
     if (colId && tasks[colId]) {
       const projectTasks = project.hasPermission ? project.projectDefaultTasks :
-        project.projectDefaultTasks.filter(
+        project.projectDefaultTasks?.filter(
           (task) => task.project_default_task.project_stage.name.toLowerCase().indexOf(CONFIG.stages.permission.toLowerCase()) === -1
         );
       const totalPercent = projectTasks.reduce((acc, task) => acc + task.percentage, 0);

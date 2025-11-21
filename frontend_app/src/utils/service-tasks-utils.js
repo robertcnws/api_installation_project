@@ -98,3 +98,22 @@ export const previousTasksInStatus = (task, serviceTasks, status) => {
     const tasks = previousTasks(task, serviceTasks);
     return tasks?.filter((t) => t.status === status);
 }
+
+export function getServiceAttachments(service, stageName = null) {
+    const attachmentType = stageName ? (
+        stageName.toLowerCase() === 'preparation' ? 
+        'issued' : stageName.toLowerCase()
+    ) : null;
+    const allAttachments = {
+        service: [],
+    }
+    const serviceAttachments = (attachmentType ?
+        service?.serviceAttachments?.filter(
+            (attachment) => attachment?.attachment_type?.toLowerCase() === attachmentType.toLowerCase()
+        ) :
+        service?.serviceAttachments) || [];
+
+    allAttachments.service = serviceAttachments;
+
+    return allAttachments;
+}

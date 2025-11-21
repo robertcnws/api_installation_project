@@ -1,4 +1,5 @@
 pipeline {
+
   triggers {
     githubPush()
   }
@@ -22,7 +23,8 @@ pipeline {
   }
 
   stages {
-    stage('Checkout & Stash') {
+
+    stage('1. Checkout & Stash') {
       agent any
       steps {
         checkout scm
@@ -30,7 +32,7 @@ pipeline {
       }
     }
 
-    stage('Verify agent groups') {
+    stage('2. Verify agent groups') {
       agent { label 'docker' }
       steps {
         sh 'echo "Users: $(id -un)"'
@@ -38,7 +40,7 @@ pipeline {
       }
     }
 
-    stage('Smoke Test Docker') {
+    stage('3. Smoke Test Docker') {
       agent { label 'docker' }
       steps {
         echo "🔍 Testing Docker from this agent in EC2..."
@@ -48,7 +50,7 @@ pipeline {
       }
     }
 
-    stage('Login to ECR') {
+    stage('4. Login to ECR') {
       agent { label 'docker' }
       steps {
         withCredentials([[
@@ -66,14 +68,14 @@ pipeline {
       }
     }
 
-    stage('Prune Docker') {
+    stage('5. Prune Docker') {
       agent { label 'docker' }
       steps {
         sh 'docker system prune -af || true'
       }
     }
 
-    stage('Build & Push Backend') {
+    stage('6. Build & Push Backend') {
       when { changeset "**/backend_app/**" }
       agent { label 'docker' }
       steps {
@@ -89,7 +91,7 @@ pipeline {
       }
     }
 
-    stage('Build & Push Frontend') {
+    stage('7. Build & Push Frontend') {
       when { changeset "**/frontend_app/**" }
       agent { label 'docker' }
       steps {
@@ -99,6 +101,7 @@ pipeline {
           withCredentials([file(credentialsId: env.AWS_FRONTEND_ENV_CRED_ID, variable: 'ENV_FILE')]) {
             sh 'cp $ENV_FILE .env'
           }
+          sh 'npm cache clean --force'
           sh 'npm ci'
           sh 'npm run lint -- --fix'
           sh 'npm run build'
@@ -111,7 +114,7 @@ pipeline {
       }
     }
 
-    stage('Deploy Backend') {
+    stage('8. Deploy Backend') {
       when { changeset "**/backend_app/**" }
       agent { label 'docker' }
       steps {
@@ -134,7 +137,7 @@ pipeline {
       }
     }
 
-    stage('Deploy Frontend') {
+    stage('9. Deploy Frontend') {
       when { changeset "**/frontend_app/**" }
       agent { label 'docker' }
       steps {
@@ -156,17 +159,55 @@ pipeline {
         }
       }
     }
-  }  
 
-  post {
-  success {
-    script {
-      if (currentBuild.changeSets.any { it.items }) {
+    stage('10. Verify Deployments') {
+      agent { label 'docker' }
+      steps {
+        withCredentials([[
+          $class: 'AmazonWebServicesCredentialsBinding',
+          credentialsId: 'aws-ecr-creds'
+        ]]) {
+          script {
+            def services = [env.AWS_BACKEND_SERVICE, env.AWS_FRONTEND_SERVICE]
+            services.each { svc ->
+              echo "⏳ Waiting for ${svc} to complete deployment…"
+              timeout(time: 10, unit: 'MINUTES') {
+                waitUntil {
+                  def state = sh(
+                    script: """
+                      docker run --rm \\
+                        -e AWS_ACCESS_KEY_ID \\
+                        -e AWS_SECRET_ACCESS_KEY \\
+                        -e AWS_DEFAULT_REGION \\
+                        amazon/aws-cli ecs describe-services \\
+                          --cluster ${env.AWS_CLUSTER} \\
+                          --services ${svc} \\
+                          --query "services[0].deployments[?status=='PRIMARY'].rolloutState" \\
+                          --output text
+                    """,
+                    returnStdout: true
+                  ).trim()
+                  
+                  echo "→ ${svc} rolloutState = ${state}"
+                    return (state == 'COMPLETED')
+                  }
+              }
+              echo "✅ ${svc} deployment COMPLETED"
+            }
+            echo "✅ Both deployments are COMPLETED"
+          }
+        }
+      }
+    }
+
+    stage('11. Notify') {
+      when { expression { currentBuild.currentResult == 'SUCCESS' } }
+      steps {
         emailext(
           mimeType: 'text/html',
           subject: "✅ Build #${env.BUILD_NUMBER} Success – ${env.JOB_NAME}",
           to: '$DEFAULT_RECIPIENTS',
-          from: 'Jenkins NWS CI/CD <nnws15815@gmail.com>',
+          from: 'Jenkins NWS CI/CD (API Installation Projects) <nnws15815@gmail.com>',
           body: '''<!DOCTYPE html>
               <html>
                 <head>
@@ -182,7 +223,7 @@ pipeline {
                 </head>
                 <body>
                   <div class="header">
-                    Jenkins CI/CD Notification
+                    Jenkins CI/CD Notification (API Installation Projects)
                   </div>
                   <div class="content">
                     <h1>Build #${BUILD_NUMBER} – Success 🎉</h1>
@@ -204,18 +245,18 @@ pipeline {
         )
       }
     }
-  }
-  failure {
-    emailext(
-      mimeType: 'text/html',
-      subject: "❌ Build #${env.BUILD_NUMBER} Failed – ${env.JOB_NAME}",
-      to: '$DEFAULT_RECIPIENTS',
-      from: 'Jenkins NWS CI/CD <nnws15815@gmail.com>',
-      body: '${FILE,path="failure_template.html"}'
-    )
-  }
-}
+  } 
 
-
+  post {
+    failure {
+      emailext(
+        mimeType: 'text/html',
+        subject: "❌ Build #${env.BUILD_NUMBER} Failed – ${env.JOB_NAME}",
+        to: '$DEFAULT_RECIPIENTS',
+        from: 'Jenkins NWS CI/CD (API Installation Projects) <nnws15815@gmail.com>',
+        body: '${FILE,path="failure_template.html"}'
+      )
+    }
+  }
 
 }    

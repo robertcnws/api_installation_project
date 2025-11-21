@@ -27,6 +27,7 @@ const SalesOrderListPage = lazy(() => import('src/pages/dashboard/sales-order/li
 const SalesOrderDetailsPage = lazy(() => import('src/pages/dashboard/sales-order/details'));
 // Projects
 const ProjectPage = lazy(() => import('src/pages/dashboard/project'));
+const ProjectAttachmentsPage = lazy(() => import('src/pages/dashboard/project/attachments'));
 const ProjectEditPage = lazy(() => import('src/pages/dashboard/project/edit'));
 const ProjectDetailsPage = lazy(() => import('src/pages/dashboard/project/details'));
 const KanbanPage = lazy(() => import('src/pages/dashboard/project/kanban-id'));
@@ -56,6 +57,7 @@ const DefaultMaterialListPage = lazy(() => import('src/pages/dashboard/default-m
 const DefaultMaterialCreatePage = lazy(() => import('src/pages/dashboard/default-material/new'));
 // Service
 const ServicePage = lazy(() => import('src/pages/dashboard/service'));
+const ServiceAttachmentsPage = lazy(() => import('src/pages/dashboard/service/attachments'));
 const ServiceCreatePage = lazy(() => import('src/pages/dashboard/service/new'));
 const ServiceDetailsPage = lazy(() => import('src/pages/dashboard/service/details'));
 // Measurement
@@ -162,6 +164,15 @@ export const dashboardRoutes = (listPermissions, user) => [
               CONFIG.permissions.moduleProjects,
               CONFIG.permissions.operationList
             ) || listRolesAndSubroles(user?.user_role?.name).includes(CONFIG.roles.projectManager) ? <ProjectPage /> : <Page403 />
+          },
+          {
+            path: 'attachments',
+            element: verifyPermissions(
+              listPermissions,
+              CONFIG.permissions.system,
+              CONFIG.permissions.moduleProjects,
+              CONFIG.permissions.operationList
+            ) || listRolesAndSubroles(user?.user_role?.name).includes(CONFIG.roles.projectManager) ? <ProjectAttachmentsPage /> : <Page403 />
           },
           {
             path: ':id/kanban',
@@ -608,6 +619,10 @@ export const dashboardRoutes = (listPermissions, user) => [
               {
                 path: 'list',
                 element: belongsToWorkingStaff(user?.user_role?.name) ? <ServicePage /> : <Page403 />,
+              },
+              {
+                path: 'attachments',
+                element: belongsToWorkingStaff(user?.user_role?.name) ? <ServiceAttachmentsPage /> : <Page403 />,
               },
               {
                 path: 'new',

@@ -25,7 +25,9 @@ const GET_ALL_MEASUREMENTS = gql`
       firstAssignee
       checkAssignee
       measurementAttachments
+      measurementComments
       generalNotes
+      status
     }
   }
 `;
@@ -53,7 +55,9 @@ const GET_MEASUREMENT_BY_ID = gql`
       firstAssignee
       checkAssignee
       measurementAttachments
+      measurementComments
       generalNotes
+      status
     }
   }
 `;

@@ -86,6 +86,55 @@ export function FileThumbnail({
     />
   );
 
+  const renderVideo = (
+    <Box
+      component="video"
+      src={previewUrl}
+      muted
+      loop
+      autoPlay
+      playsInline
+      controls={false}
+      sx={{
+        width: '100%',
+        height: '100%',
+        objectFit: 'cover',
+        borderRadius: 'inherit',
+        ...slotProps?.video,
+      }}
+    />
+  );
+
+  // PDF
+  const renderPdf = (
+    <Box component="embed"
+      src={previewUrl}
+      type="application/pdf"
+      className={fileThumbnailClasses.embed}
+      sx={{
+        width: 1,
+        height: 1,
+        ...slotProps?.embed
+      }} />
+  );
+
+  // Office docs
+  const officeViewerUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(previewUrl)}`;
+  const renderOffice = (
+    <iframe
+      title="Office Document Viewer"
+      src={officeViewerUrl}
+      className={fileThumbnailClasses.iframe}
+      style={{
+        width: '100%',
+        height: '100%',
+        border: 0,
+        ...slotProps?.iframe
+      }}
+      allowFullScreen
+    />
+  );
+
   const renderIcon = (
     <Box
       component="img"
@@ -94,6 +143,17 @@ export function FileThumbnail({
       sx={{ width: 1, height: 1, ...slotProps?.icon }}
     />
   );
+
+  let content;
+  if (imageView) {
+    if (format === 'image') content = renderImg;
+    else if (format === 'video') content = renderVideo;
+    else if (format === 'pdf') content = renderPdf;
+    else if (['word', 'excel', 'powerpoint'].includes(format)) content = renderOffice;
+    else content = renderIcon;
+  } else {
+    content = renderIcon;
+  }
 
   const renderContent = (
     <Box
@@ -112,8 +172,7 @@ export function FileThumbnail({
       }}
       {...other}
     >
-      {format === 'image' && imageView ? renderImg : renderIcon}
-
+      {content}
       {onRemove && (
         <RemoveButton
           onClick={onRemove}

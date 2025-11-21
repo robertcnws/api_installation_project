@@ -1,3 +1,4 @@
+
 import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
 import Stack from '@mui/material/Stack';
@@ -7,8 +8,8 @@ import LinearProgress from '@mui/material/LinearProgress';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
+import { fDate } from 'src/utils/format-time';
 import { fCurrency } from 'src/utils/format-number';
-import { fTime, fDate } from 'src/utils/format-time';
 import { availableTasks, totalPercentageProject } from 'src/utils/project-tasks-utils';
 
 import { CONFIG } from 'src/config-global';
@@ -29,11 +30,11 @@ export function RenderCellPrice({ params }) {
 export function RenderCellStage({ params, includeNameStage = false }) {
   return (
     <Label variant="soft" color={
-      (params?.row?.currentStage.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 && 'default') ||
-      (params?.row?.currentStage.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 && 'secondary') ||
-      (params?.row?.currentStage.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1 && 'info') ||
-      (params?.row?.currentStage.name.toLowerCase().indexOf(CONFIG.stages.permission.toLowerCase()) !== -1 && 'warning') ||
-      (params?.row?.currentStage.name.toLowerCase().indexOf(CONFIG.stages.closing.toLowerCase()) !== -1 && 'success') ||
+      (params?.row?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 && 'default') ||
+      (params?.row?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 && 'secondary') ||
+      (params?.row?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1 && 'info') ||
+      (params?.row?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.permission.toLowerCase()) !== -1 && 'warning') ||
+      (params?.row?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.closing.toLowerCase()) !== -1 && 'success') ||
       'error'}
     >
       {includeNameStage ? `Stage ${params?.row?.currentStage.name}` : params?.row?.currentStage.name}
@@ -52,9 +53,11 @@ export function RenderCellDate({ params }) {
       {params?.row?.startDate ? (
         <Stack spacing={0.5} sx={{ width: 1 }}>
           <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-            <Box component="span" sx={{ typography: 'caption', color: 'text.primary' }} >{fDate(params?.row?.startDate)}</Box>
+            <Box component="span" sx={{ typography: 'caption', color: 'text.primary' }} >
+              {fDate(params?.row?.startDate)}
+            </Box>
             <Box component="span" sx={{ typography: 'caption', color: 'text.secondary' }}>
-              {fTime(params?.row?.startDate)}
+              (<b>{params?.row?.duration}</b> {params?.row?.duration === 1 ? 'day' : 'days'})
             </Box>
           </Box>
         </Stack>
@@ -131,7 +134,7 @@ export function RenderCellProject({ params, onViewRow }) {
             >
               {params?.row?.name}
             </Link>
-            <br/>
+            <br />
             <Label
               color="default"
               variant="outlined"
@@ -184,7 +187,7 @@ export function RenderCellMobile({ params, onViewRow }) {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 1 }}>
       <RenderCellProject params={params} onViewRow={onViewRow} />
-      <RenderCellStage params={params} includeNameStage/>
+      <RenderCellStage params={params} includeNameStage />
       <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', gap: 1 }}>
         <RenderCellDate params={params} />
         <RenderCellPercentage params={params} />

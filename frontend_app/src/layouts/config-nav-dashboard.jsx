@@ -58,6 +58,7 @@ const ICONS = {
   calendarOverview: icon('ic-calendar-overview'),
   measurement: icon('ic-measurements'),
   defaultMaterial: icon('ic-material'),
+  statistics: icon('ic-statistics'),
 };
 
 const userLogged = JSON.parse(sessionStorage.getItem('userLogged'));
@@ -74,7 +75,8 @@ export const navData = () => [
   {
     subheader: 'Overview',
     items: [
-      { title: 'Analytics', path: paths.dashboard.general.analytics, icon: ICONS.analytics },
+      { title: 'Dashboard', path: paths.dashboard.general.analytics, icon: ICONS.dashboard },
+      { title: 'Analytics', path: paths.dashboard.general.analytics, icon: ICONS.statistics },
       { title: 'Calendar', path: paths.dashboard.general.calendar, icon: ICONS.calendarOverview },
     ],
   },
@@ -84,7 +86,7 @@ export const navData = () => [
   {
     subheader: 'Management',
     items: [
-      ...(userLogged && !isServiceStaff(userLogged?.data.user_role.name) ? [
+      ...(userLogged && !isServiceStaff(userLogged?.data?.user_role?.name) ? [
         {
           title: 'Installations',
           path: paths.dashboard.project.root,
@@ -94,10 +96,16 @@ export const navData = () => [
               title: 'List',
               path: paths.dashboard.project.list,
             },
+            ...((userLogged && !isInstaller(userLogged?.data?.user_role?.name)) ? [
+              {
+                title: 'Attachments',
+                path: paths.dashboard.project.attachments,
+              },
+            ] : []),
           ],
         },
       ] : []),
-      ...(userLogged && belongsToWorkingStaff(userLogged?.data.user_role.name) ? [
+      ...(userLogged && belongsToWorkingStaff(userLogged?.data?.user_role?.name) ? [
         {
           title: 'Services',
           path: paths.dashboard.service.root,
@@ -108,6 +116,10 @@ export const navData = () => [
               path: paths.dashboard.service.list,
             },
             ...((userLogged && !isInstaller(userLogged?.data?.user_role?.name)) ? [
+              {
+                title: 'Attachments',
+                path: paths.dashboard.service.attachments,
+              },
               {
                 title: 'Create',
                 path: paths.dashboard.service.new
@@ -135,7 +147,7 @@ export const navData = () => [
           ],
         },
       ] : []),
-      ...(userLogged && listRolesAndSubroles(userLogged?.data.user_role.name).includes(CONFIG.roles.administrator) ? [
+      ...(userLogged && listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator) ? [
         {
           title: 'Sales Orders',
           path: paths.dashboard.salesOrder.root,
@@ -148,7 +160,7 @@ export const navData = () => [
           ],
         },
       ] : []),
-      ...(userLogged && listRolesAndSubroles(userLogged?.data.user_role.name).includes(CONFIG.roles.projectManager) ? [
+      ...(userLogged && listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.projectManager) ? [
         {
           title: 'Users',
           path: paths.dashboard.user.root,
@@ -159,7 +171,7 @@ export const navData = () => [
           ],
         },
       ] : []),
-      ...(userLogged && listRolesAndSubroles(userLogged?.data.user_role.name).includes(CONFIG.roles.superadmin) ? [
+      ...(userLogged && listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.superadmin) ? [
         {
           title: 'Configuration',
           path: paths.dashboard.config.root,

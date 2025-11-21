@@ -71,7 +71,9 @@ export function NotificationItem({ notification, drawer }) {
       >
         <Box
           component="img"
-          src={`${CONFIG.assetsDir}/assets/icons/notification/ic-${notification.notification.type.replace(/_/g, '-')}.svg`}
+          src={
+            `${CONFIG.assetsDir}/assets/icons/notification/${notification.notification.module.replace(/_/g, '-')}/ic-${notification.notification.type.replace(/_/g, '-')}.svg`
+          }
           alt={notification.notification.type}
           sx={{ width: 24, height: 24 }}
         />

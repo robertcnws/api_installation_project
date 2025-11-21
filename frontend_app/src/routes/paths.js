@@ -86,6 +86,7 @@ export const paths = {
     project: {
       root: `${ROOTS.DASHBOARD}/installation`,
       list: `${ROOTS.DASHBOARD}/installation/list`,
+      attachments: `${ROOTS.DASHBOARD}/installation/attachments`,
       kanbanProject: `${ROOTS.DASHBOARD}/installation/kanban`,
       kanbanProjectId: (id) => `${ROOTS.DASHBOARD}/installation/${id}/kanban`,
       edit: (id) => `${ROOTS.DASHBOARD}/installation/${id}/edit`,
@@ -94,6 +95,7 @@ export const paths = {
     service: {
       root: `${ROOTS.DASHBOARD}/service`,
       list: `${ROOTS.DASHBOARD}/service/list`,
+      attachments: `${ROOTS.DASHBOARD}/service/attachments`,
       new: `${ROOTS.DASHBOARD}/service/new`,
       kanban: `${ROOTS.DASHBOARD}/service/kanban`,
       kanbanId: (id) => `${ROOTS.DASHBOARD}/service/${id}/kanban`,

@@ -3,7 +3,7 @@ import { useMemo, useState, useEffect, useCallback } from 'react';
 
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
-import { Box, Button, Dialog, MenuItem, MenuList, Typography, DialogActions, LinearProgress } from '@mui/material';
+import { Box, Button, Dialog, Tooltip, MenuItem, MenuList, Typography, DialogActions, LinearProgress } from '@mui/material';
 
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
@@ -11,6 +11,7 @@ import { useRouter } from 'src/routes/hooks';
 import { useTabs } from 'src/hooks/use-tabs';
 import { useBoolean } from 'src/hooks/use-boolean';
 
+import { fDate } from 'src/utils/format-time';
 import { getServiceInstaller } from 'src/utils/service-tasks-utils';
 import { filteredDescriptionJson } from 'src/utils/project-tasks-utils';
 import { extractDimensions } from 'src/utils/generate-installation-guide-pdf';
@@ -42,6 +43,7 @@ import { ServiceDetailsContentOverview } from '../service-details-content-overvi
 import { ServiceEditModalAttachmentsView } from '../service-edit-modal-attachments-view';
 
 
+
 // ----------------------------------------------------------------------
 
 export function ServiceDetailsView({ serviceId }) {
@@ -56,6 +58,7 @@ export function ServiceDetailsView({ serviceId }) {
         loadedServices,
         loadedTracks,
         loadedMeasurements,
+        loadedProjects,
     } = useDataContext();
 
     const [openDialogs, setOpenDialogs] = useState({
@@ -84,12 +87,17 @@ export function ServiceDetailsView({ serviceId }) {
         [loadedMeasurements, itemById]
     );
 
+    const associatedProject = useMemo(
+        () => loadedProjects?.find(p => p?.salesOrder?.salesorder_id === itemById?.salesOrder?.salesorder_id) || null,
+        [loadedProjects, itemById]
+    );
+
     const DETAILS_TABS = [
         { label: 'Overview', value: 'overview' },
         { label: 'Tasks', value: 'tasks' },
         // { label: 'Attachments', value: 'attachments' },
         { label: 'Comments & History', value: 'comments' },
-        ...associatedMeasurement ? [
+        ...(associatedProject || associatedMeasurement) ? [
             {
                 label: <>
                     <Box sx={{ display: 'flex', alignItems: 'center' }} onClick={morePopover.onOpen}>
@@ -105,19 +113,61 @@ export function ServiceDetailsView({ serviceId }) {
                         slotProps={{ arrow: { placement: 'left-top' } }}
                     >
                         <MenuList>
-                            <MenuItem
-                                onClick={() => {
-                                    morePopover.onClose();
-                                    localStorage.setItem('measurementId', associatedMeasurement?.id);
-                                    localStorage.setItem('backFromMeasurementDetails', 'service');
-                                    localStorage.setItem('backFromMeasurementDetailsProjectId', '');
-                                    localStorage.setItem('backFromMeasurementDetailsServiceId', itemById?.id);
-                                    router.push(paths.dashboard.measurement.details(associatedMeasurement?.id));
-                                }}
-                            >
-                                <Iconify icon="tdesign:measurement-1" />
-                                Measurements
-                            </MenuItem>
+                            {associatedProject && associatedProject?.id && (
+                                <MenuItem
+                                    key='projects'
+                                    onClick={() => {
+                                        morePopover.onClose();
+                                        localStorage.setItem('projectId', associatedProject?.id);
+                                        localStorage.setItem('backFromProjectDetails', 'serviceDetails');
+                                        localStorage.setItem('backFromProjectDetailsServiceId', itemById?.id);
+                                        localStorage.setItem('backFromServiceDetailsMeasurementId', '');
+                                        router.push(paths.dashboard.project.details(associatedProject?.id));
+                                    }}
+                                >
+                                    <Tooltip
+                                        title={
+                                            <>
+                                                <Typography variant="body2" color="background.neutral" sx={{ mb: 0 }}>
+                                                    Number: {associatedProject?.number}
+                                                </Typography>
+                                                <Typography variant="body2" color="background.neutral" sx={{ mb: 0 }}>
+                                                    Name: {associatedProject?.name}
+                                                </Typography>
+                                                <Typography variant="body2" color="background.neutral" sx={{ mb: 0 }}>
+                                                    Installation date: {fDate(associatedProject?.startDate) || 'N/A'}
+                                                </Typography>
+                                            </>
+                                        }
+                                        placement="right"
+                                        arrow
+                                    >
+                                        <Box component="span" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                            <Iconify icon="fluent-emoji-high-contrast:man-mechanic" />
+                                            <Typography component="span" variant="body2">
+                                                Installation {associatedProject?.name}
+                                            </Typography>
+                                        </Box>
+                                    </Tooltip>
+
+
+                                </MenuItem>
+                            )}
+                            {associatedMeasurement && associatedMeasurement?.id && (
+                                <MenuItem
+                                    onClick={() => {
+                                        morePopover.onClose();
+                                        localStorage.setItem('measurementId', associatedMeasurement?.id);
+                                        localStorage.setItem('backFromMeasurementDetails', 'service');
+                                        localStorage.setItem('backFromMeasurementDetailsProjectId', '');
+                                        localStorage.setItem('backFromMeasurementDetailsServiceId', itemById?.id);
+                                        router.push(paths.dashboard.measurement.details(associatedMeasurement?.id));
+                                    }}
+                                >
+                                    <Iconify icon="tdesign:measurement-1" />
+                                    Measurements
+                                </MenuItem>
+                            )}
                         </MenuList>
                     </CustomPopover >
                 </>,
@@ -189,7 +239,7 @@ export function ServiceDetailsView({ serviceId }) {
     }, [loadedTracks]);
 
     useEffect(() => {
-        const socket = new WebSocket(`wss://${CONFIG.apiHost}/api/services/ws/service/${serviceId}/`);
+        const socket = new WebSocket(`${CONFIG.wsProtocol}://${CONFIG.wsHost}/${CONFIG.wsDomain}/services/ws/service/${serviceId}/`);
         socket.onerror = (errorEvent) => {
             console.dir(errorEvent);
             console.error('WebSocket error (toString):', errorEvent.toString());
@@ -223,7 +273,7 @@ export function ServiceDetailsView({ serviceId }) {
 
 
     useEffect(() => {
-        const socket = new WebSocket(`wss://${CONFIG.apiHost}/api/projects/ws/tracks/`);
+        const socket = new WebSocket(`${CONFIG.wsProtocol}://${CONFIG.wsHost}/${CONFIG.wsDomain}/projects/ws/tracks/`);
         socket.onerror = (errorEvent) => {
             console.dir(errorEvent);
             console.error('WebSocket error (toString):', errorEvent.toString());
@@ -289,14 +339,18 @@ export function ServiceDetailsView({ serviceId }) {
 
 
     const totalTasks = useMemo(() => (
-        itemById?.serviceDefaultTasks?.filter((task) => task.service_default_task.is_active)?.length
+        itemById?.serviceDefaultTasks?.filter((task) => task.service_default_task?.is_active)?.length
         || 0), [itemById]
     );
 
 
     const tasks = useMemo(() =>
-        itemById?.serviceDefaultTasks?.filter((task) => task.service_default_task.is_active) || [], [itemById]
+        itemById?.serviceDefaultTasks?.filter((task) => task.service_default_task?.is_active) || [], [itemById]
     );
+
+    // console.log('itemById?.serviceDefaultTasks', itemById?.serviceDefaultTasks);
+
+    // console.log('tasks', tasks);
 
     const [openEdit, setOpenEdit] = useState(false);
 
@@ -421,10 +475,10 @@ export function ServiceDetailsView({ serviceId }) {
             console.error(error);
         }
     }, [
-        selectedSalesOrder, 
-        selectedListItems, 
-        userLogged, 
-        openSalesOrderModal, 
+        selectedSalesOrder,
+        selectedListItems,
+        userLogged,
+        openSalesOrderModal,
         itemById?.id,
         serviceBooleanValues?.hasToPay,
         serviceBooleanValues?.byFactory,
@@ -541,13 +595,17 @@ export function ServiceDetailsView({ serviceId }) {
                         <DashboardContent>
                             <ServiceDetailsToolbar
                                 service={itemById}
+                                tabs={tabs}
                                 backLink={
                                     localStorage.getItem('backFromServiceDetails') === 'analytics' ? paths.dashboard.general.analytics :
-                                        localStorage.getItem('backFromProjectDetails') === 'calendarDashboard' ? paths.dashboard.general.calendar :
+                                        localStorage.getItem('backFromServiceDetails') === 'calendarDashboard' ? paths.dashboard.general.calendar :
                                             localStorage.getItem('backFromServiceDetails') === 'projectDetails' ?
                                                 paths.dashboard.project.details(localStorage.getItem('projectId')) :
                                                 localStorage.getItem('backFromServiceDetails') === 'measurements' ?
-                                                    paths.dashboard.measurement.list : paths.dashboard.service.list
+                                                    paths.dashboard.measurement.list :
+                                                    localStorage.getItem('backFromServiceDetails') === 'measurementDetails' ?
+                                                        paths.dashboard.measurement.details(localStorage.getItem('backFromServiceDetailsMeasurementId')) :
+                                                        paths.dashboard.service.list
                                 }
                                 editLink={paths.dashboard.service.edit(`${itemById?.id}`)}
                                 openEdit={tabs.value === 'overview' ? openEdit : tabs.value === 'tasks' ? openEditTask : null}

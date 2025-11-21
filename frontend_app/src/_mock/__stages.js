@@ -10,6 +10,7 @@ const GET_ALL_STAGES = gql`
       isActive
       name
       order
+      otherName
     }
   }
 `;

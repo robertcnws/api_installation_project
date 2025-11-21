@@ -13,7 +13,9 @@ export function TracksProvider({ children }) {
     error: errorTracks 
   } = useTrackingQuery();
 
-  const loadedTracks = useMemo(() => tracks.filter((track) => track.action.toLowerCase().indexOf('login') === -1) || [], [tracks]);
+  // const loadedTracks = useMemo(() => tracks.filter((track) => track.action.toLowerCase().indexOf('login') === -1) || [], [tracks]);
+
+  const loadedTracks = useMemo(() => tracks || [], [tracks]);
 
   const value = useMemo(() => ({ 
     loadedTracks, 

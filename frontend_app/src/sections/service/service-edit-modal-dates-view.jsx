@@ -80,10 +80,10 @@ export function ServiceEditModalDatesView({
 
     useEffect(() => {
         if (service?.endDate) {
-            const diff = dayjs(service?.endDate).diff(dayjs(service?.startDate), 'day');
+            const diff = service?.duration ?? (dayjs(service?.endDate).diff(dayjs(service?.startDate), 'day'));
             setDiffDays(diff);
         }
-    }, [service?.endDate, service?.startDate]);
+    }, [service?.endDate, service?.startDate, service?.duration]);
 
     // const diffDays = useMemo(
     //     () => service?.endDate ? dayjs(service?.endDate).diff(dayjs(service?.startDate), 'day') : 1, [service?.endDate, service?.startDate]
@@ -114,7 +114,7 @@ export function ServiceEditModalDatesView({
     const handleDaysChange = (e) => {
         const days = parseInt(e.target.value, 10) || 1;
         setDaysToInstall(days);
-        const newEndDate = dayjs(service?.startDate).add(days - 1, 'day');
+        const newEndDate = dayjs(service?.startDate).add(days, 'day');
         setEndDate(newEndDate);
         setFormChanged(!Number.isNaN(days) && days > 0);
     };
@@ -139,6 +139,7 @@ export function ServiceEditModalDatesView({
             number: service?.number || '',
             userReporter: userLogged?.data,
             startDate: service?.startDate || null,
+            duration: service?.duration || dayjs(service?.endDate).diff(dayjs(service?.startDate), 'day') + 1 || 1,
             endDate: service?.endDate ? dayjs(service?.endDate).toISOString() : null,
             inspectionDate: service?.inspectionDate ? dayjs(service?.inspectionDate).toISOString() : null,
         }),
@@ -166,6 +167,7 @@ export function ServiceEditModalDatesView({
                 number: service.number || '',
                 userReporter: userLogged?.data,
                 startDate: service.startDate || null,
+                duration: service?.duration || 1,
                 endDate: service.endDate || null,
                 inspectionDate: service.inspectionDate || null,
             });
@@ -208,10 +210,11 @@ export function ServiceEditModalDatesView({
                 formData.append('endDate', fDate(endDate));
             }
             else {
-                const newEndDate = dayjs(selectedDate).add(daysToInstall - 1, 'day');
+                const newEndDate = dayjs(selectedDate).add(daysToInstall, 'day');
                 formData.append('endDate', fDate(newEndDate));
             }
             formData.append('isPartDays', isPartDays ? 'true' : 'false');
+            formData.append('duration', daysToInstall);
         }
 
 
@@ -344,7 +347,7 @@ export function ServiceEditModalDatesView({
                                                 min={1}
                                                 label="Duration days"
                                                 sx={{ width: '30%', mt: 1 }}
-                                                value={daysToInstall + 1}
+                                                value={daysToInstall}
                                                 onChange={handleDaysChange}
                                             />
 
@@ -396,7 +399,16 @@ export function ServiceEditModalDatesView({
 
     const renderService = (
         <Dialog fullWidth maxWidth="xs" open={open} onClose={onClose}>
-            <DialogTitle>{isEdit ? 'Update' : 'Add'} {isStartDate ? 'Start' : 'Closing'} date to Service {service?.name} </DialogTitle>
+            <DialogTitle>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Box className="dialog-title-icon">
+                        <Iconify icon="mdi:calendar" />
+                    </Box>
+                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                        {isEdit ? 'Update' : 'Add'} {isStartDate ? 'Start' : 'Closing'} date to Service {service?.name}
+                    </Typography>
+                </Box>
+            </DialogTitle>
 
             <Form methods={methods} onSubmit={onSubmit}>
 

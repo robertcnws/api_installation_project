@@ -9,7 +9,9 @@ import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
 import { LoadingButton } from '@mui/lab';
 import Button from '@mui/material/Button';
-import { Avatar, Dialog, DialogTitle, DialogActions } from '@mui/material';
+import { Avatar, Dialog, DialogTitle, DialogActions, Typography } from '@mui/material';
+
+import { Iconify } from 'src/components/iconify';
 
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
@@ -60,7 +62,7 @@ export function ProjectEditModalUserManagerView({
 
     const popover = usePopover();
 
-    const { data: itemById } = useProjectByIdQuery(item?.id, {
+    const { data: itemById, refetch: refetchProject } = useProjectByIdQuery(item?.id, {
         skip: !item?.id,
     });
 
@@ -222,7 +224,7 @@ export function ProjectEditModalUserManagerView({
                 return;
             }
 
-            // refetchProjects?.();
+            refetchProject?.();
 
             // reset();
 
@@ -235,7 +237,16 @@ export function ProjectEditModalUserManagerView({
 
     const renderProject = (
         <Dialog fullWidth maxWidth="md" open={open} onClose={onClose}>
-            <DialogTitle>{isEdit ? 'Update' : 'Add'} Manager to Project {projectData?.name} </DialogTitle>
+            <DialogTitle>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Box className="dialog-title-icon">
+                        <Iconify icon="mdi:account-supervisor" />
+                    </Box>
+                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                        {isEdit ? 'Update' : 'Add'} Manager to Project {projectData?.name}
+                    </Typography>
+                </Box>
+            </DialogTitle>
 
             <Form methods={methods} onSubmit={onSubmit}>
 

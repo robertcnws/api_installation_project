@@ -12,6 +12,7 @@ import { useTabs } from 'src/hooks/use-tabs';
 
 import { fDate } from 'src/utils/format-time';
 import { extractDimensions } from 'src/utils/generate-installation-guide-pdf';
+import { generateMeasurementProperties } from 'src/utils/measurement-tasks-utils';
 import { getProjectInstaller, filteredDescriptionJson } from 'src/utils/project-tasks-utils';
 import { isInstaller, isFinancialStaff, isWarehouseStaff, listRolesAndSubroles } from 'src/utils/check-permissions';
 
@@ -43,6 +44,8 @@ import { ProjectEditModalPhoneNumberView } from './project-edit-modal-phone-numb
 import { ProjectDetailsReleaseFormInstallerView } from './project-details-release-form-installer-view';
 import { ProjectDetailsInstallationGuideFormView } from './project-details-installation-guide-form-view';
 import { ProjectDetailsInstallationGuideFormInstallerView } from './project-details-installation-guide-form-installer-view';
+import { ProjectDetailsWorkOrdersFormView } from './project-details-work-orders-form-view';
+
 
 // ----------------------------------------------------------------------
 
@@ -72,6 +75,7 @@ export function ProjectDetailsView({ projectId }) {
         refNumber: false,
         installationTeam: false,
         description: false,
+        workOrder: false
     });
 
     const item = useMemo(() => loadedProjects?.find((project) => project.id === projectId), [loadedProjects, projectId]);
@@ -107,6 +111,7 @@ export function ProjectDetailsView({ projectId }) {
         [loadedServices, itemById]
     );
 
+
     const DETAILS_TABS = [
         { label: 'Overview', value: 'overview' },
         ...!isFinancialStaff(userLogged?.data?.user_role?.name) ? [
@@ -115,13 +120,18 @@ export function ProjectDetailsView({ projectId }) {
         ...(!isInstaller(userLogged?.data?.user_role?.name) &&
             !isFinancialStaff(userLogged?.data?.user_role?.name) &&
             !isWarehouseStaff(userLogged?.data?.user_role?.name)) ? [
+            { label: 'Work Orders', value: 'workOrders' },
+        ] : [],
+        ...(!isInstaller(userLogged?.data?.user_role?.name) &&
+            !isFinancialStaff(userLogged?.data?.user_role?.name) &&
+            !isWarehouseStaff(userLogged?.data?.user_role?.name)) ? [
             { label: 'Attachments', value: 'attachments' },
         ] : [],
-        ...((listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.installer) ||
-            listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.warehouseStaff)) &&
-            taskFinishInstallation?.status.toLowerCase().indexOf(CONFIG.taskStatus.finished.toLowerCase()) !== -1) ? [
-            { label: 'Release Form', value: 'releaseForm' },
-        ] : [],
+        // ...((listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.installer) ||
+        //     listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.warehouseStaff)) &&
+        //     taskFinishInstallation?.status.toLowerCase().indexOf(CONFIG.taskStatus.finished.toLowerCase()) !== -1) ? [
+        //     { label: 'Release Form', value: 'releaseForm' },
+        // ] : [],
         ...listRolesAndSubroles(userLogged?.data?.user_role?.name)
             .some(elem => [CONFIG.roles.installer, CONFIG.roles.warehouseStaff]) ? [
             { label: 'Installation Guide', value: 'installationGuide' },
@@ -229,7 +239,7 @@ export function ProjectDetailsView({ projectId }) {
     }, [loadedTracks]);
 
     useEffect(() => {
-        const socket = new WebSocket(`wss://${CONFIG.apiHost}/api/projects/ws/project/${projectId}/`);
+        const socket = new WebSocket(`${CONFIG.wsProtocol}://${CONFIG.wsHost}/${CONFIG.wsDomain}/projects/ws/project/${projectId}/`);
         socket.onerror = (errorEvent) => {
             console.dir(errorEvent);
             console.error('WebSocket error (toString):', errorEvent.toString());
@@ -263,7 +273,7 @@ export function ProjectDetailsView({ projectId }) {
 
 
     useEffect(() => {
-        const socket = new WebSocket(`wss://${CONFIG.apiHost}/api/projects/ws/tracks/`);
+        const socket = new WebSocket(`${CONFIG.wsProtocol}://${CONFIG.wsHost}/${CONFIG.wsDomain}/projects/ws/tracks/`);
         socket.onerror = (errorEvent) => {
             console.dir(errorEvent);
             console.error('WebSocket error (toString):', errorEvent.toString());
@@ -315,6 +325,8 @@ export function ProjectDetailsView({ projectId }) {
     );
 
     const totalAttachments = useMemo(() => qtyProjectAttachments + qtyTaskAttachments, [qtyProjectAttachments, qtyTaskAttachments]);
+
+    const totalWorkOrders = useMemo(() => itemById?.workOrders?.length || 0, [itemById]);
 
     const [selectedComments, setSelectedComments] = useState(false);
 
@@ -374,16 +386,8 @@ export function ProjectDetailsView({ projectId }) {
             const arrayDimensions = listItems?.map((i) => {
                 const propertiesJson = filteredDescriptionJson(i.description);
                 const dimensions = propertiesJson?.Size ? extractDimensions(i.description) : i.description ? extractDimensions(i.description) : null;
-                let config = ''
-                if (propertiesJson?.Config?.length > 0 || propertiesJson?.config?.length > 0) {
-                    config = propertiesJson?.Config || propertiesJson?.config;
-                }
-                else if (propertiesJson?.Size?.length > 0 || propertiesJson?.size?.length > 0) {
-                    const array = propertiesJson?.Size?.split(' ') || propertiesJson?.size?.split(' ');
-                    config = array[array.length - 1];
-                }
-                const sku = propertiesJson?.SKU || propertiesJson?.sku;
-                const type = sku?.split(' ')[0] || i?.description.split(' ')[0];
+                const { config, type } = generateMeasurementProperties(i, propertiesJson);
+
                 return {
                     ...i,
                     type,
@@ -407,6 +411,13 @@ export function ProjectDetailsView({ projectId }) {
             delete project.stageHistory;
             delete project.currentStage;
 
+            // console.log('arrayDimensions', arrayDimensions.map((it) => ({
+            //     name: it.name,
+            //     type: it.type,
+            //     dimensions: it.dimensions,
+            //     config: it.config,
+            // })));
+
             try {
                 const promise = axios.post(`${CONFIG.apiUrl}/measurements/create/measurement/`, {
                     project: JSON.stringify(project),
@@ -422,6 +433,7 @@ export function ProjectDetailsView({ projectId }) {
                     success: `Measurements generated!`,
                     error: `Error in generating measurements!`,
                 });
+                refetchProject?.();
                 return response.data;
 
             }
@@ -431,7 +443,7 @@ export function ProjectDetailsView({ projectId }) {
 
             return null;
 
-        }, [listItems, itemById, userLogged?.data]
+        }, [listItems, itemById, userLogged?.data, refetchProject]
     );
 
 
@@ -445,15 +457,21 @@ export function ProjectDetailsView({ projectId }) {
                     value={tab.value}
                     label={tab.label}
                     icon={
-                        (tab.value === 'tasks' || tab.value === 'attachments' || tab.value === 'comments') ? (
+                        (tab.value === 'tasks' ||
+                         tab.value === 'attachments' ||
+                         tab.value === 'comments' ||
+                         tab.value === 'workOrders'
+                        ) ? (
                             !isInstaller(userLogged?.data?.user_role?.name) ? (
                                 ((tab.value === 'tasks' && totalTasks > 0) ||
                                     (tab.value === 'attachments' && totalAttachments > 0) ||
+                                    (tab.value === 'workOrders' && totalWorkOrders > 0) ||
                                     (tab.value === 'comments' && totalComments > 0))
                                     ? (
                                         <Label variant="filled" color="primary">
                                             {tab.value === 'tasks' ? totalTasks :
-                                                tab.value === 'attachments' ? totalAttachments : totalComments}
+                                                tab.value === 'attachments' ? totalAttachments :
+                                                    tab.value === 'workOrders' ? totalWorkOrders : totalComments}
                                         </Label>
                                     ) : (
                                         ''
@@ -478,6 +496,7 @@ export function ProjectDetailsView({ projectId }) {
                             tab.value === 'attachments' ||
                             tab.value === 'comments' ||
                             tab.value === 'releaseForm' ||
+                            tab.value === 'workOrders' ||
                             tab.value === 'financial' ||
                             tab.value === 'installationGuide') && !itemById?.userManager?.username) {
                             setOpenValidationDialog(true);
@@ -533,10 +552,21 @@ export function ProjectDetailsView({ projectId }) {
                         <DashboardContent>
                             <ProjectDetailsToolbar
                                 project={itemById}
+                                tabs={tabs}
                                 backLink={
-                                    localStorage.getItem('backFromProjectDetails') === 'analytics' ? paths.dashboard.general.analytics :
-                                        localStorage.getItem('backFromProjectDetails') === 'calendarDashboard' ? paths.dashboard.general.calendar :
-                                            localStorage.getItem('backFromProjectDetails') === 'measurements' ? paths.dashboard.measurement.list : paths.dashboard.project.list
+                                    localStorage.getItem('backFromProjectDetails') === 'analytics' ?
+                                        paths.dashboard.general.analytics :
+                                        localStorage.getItem('backFromProjectDetails') === 'calendarDashboard' ?
+                                            paths.dashboard.general.calendar :
+                                            localStorage.getItem('backFromProjectDetails') === 'measurements' ?
+                                                paths.dashboard.measurement.list :
+                                                localStorage.getItem('backFromProjectDetails') === 'measurementDetails' ?
+                                                    paths.dashboard.measurement.details(localStorage.getItem('backFromProjectDetailsMeasurementId')) :
+                                                    localStorage.getItem('backFromProjectDetails') === 'serviceDetails' ?
+                                                        paths.dashboard.service.details(localStorage.getItem('backFromProjectDetailsServiceId')) :
+                                                        localStorage.getItem('backFromProjectDetails') === 'services' ?
+                                                            paths.dashboard.service.list :
+                                                            paths.dashboard.project.list
                                 }
                                 editLink={paths.dashboard.project.edit(`${itemById?.id}`)}
                                 openEdit={tabs.value === 'overview' ? openEdit : tabs.value === 'tasks' ? openEditTask : null}
@@ -544,6 +574,7 @@ export function ProjectDetailsView({ projectId }) {
                                 type={tabs.value === 'overview' || tabs.value === 'more' ? 'project' : tabs.value === 'tasks' ? 'tasks' : null}
                                 onDelete={() => onDelete(itemById?.id)}
                                 onGenerateMeasurements={() => generateMeasurements()}
+                                refetchProject={refetchProject}
                                 listPermissions={listPermissions}
                             />
                             {renderTabs}
@@ -566,6 +597,16 @@ export function ProjectDetailsView({ projectId }) {
                                     tasks={tasks ?? []}
                                     hasPermission={itemById?.hasPermission}
                                     listPermissions={listPermissions}
+                                />
+                            }
+
+                            {(tabs.value === 'workOrders' && itemById?.userManager?.username) &&
+                                <ProjectDetailsWorkOrdersFormView
+                                    project={itemById}
+                                    refetchProject={refetchProject}
+                                    listPermissions={listPermissions}
+                                    openDialogs={openDialogs}
+                                    setOpenDialogs={setOpenDialogs}
                                 />
                             }
 
@@ -655,7 +696,7 @@ export function ProjectDetailsView({ projectId }) {
                             onClose={() => setOpenDialogs({ ...openDialogs, address: false })}
                         />
                         <ProjectEditModalPhoneNumberView
-                            isEdit={itemById?.salesOrder?.customer?.phone || itemById?.salesOrder?.customer?.mobile}
+                            isEdit={itemById?.phone || itemById?.salesOrder?.customer?.phone || itemById?.salesOrder?.customer?.mobile}
                             projectId={itemById?.id}
                             open={openDialogs.phoneNumber}
                             onClose={() => setOpenDialogs({ ...openDialogs, phoneNumber: false })}
@@ -668,6 +709,7 @@ export function ProjectDetailsView({ projectId }) {
                         />
                         <ProjectEditModalDescriptionView
                             project={itemById}
+                            refetchProject={refetchProject}
                             open={openDialogs.description}
                             onClose={() => setOpenDialogs({ ...openDialogs, description: false })}
                         />

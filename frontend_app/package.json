@@ -50,7 +50,7 @@
     "@mui/icons-material": "^5.16.11",
     "@mui/lab": "^5.0.0-alpha.173",
     "@mui/material": "^5.16.7",
-    "@mui/system": "^6.1.7",
+    "@mui/system": "^5.18.0",
     "@mui/x-data-grid": "^7.13.0",
     "@mui/x-date-pickers": "^7.13.0",
     "@mui/x-tree-view": "^7.13.0",

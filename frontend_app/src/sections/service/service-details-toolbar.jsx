@@ -19,6 +19,7 @@ import { listRolesAndSubroles } from 'src/utils/check-permissions';
 
 import { CONFIG } from 'src/config-global';
 
+import { Label } from 'src/components/label';
 import { toast } from 'src/components/snackbar';
 import { Iconify } from 'src/components/iconify';
 import { ConfirmDialog } from 'src/components/custom-dialog';
@@ -36,6 +37,7 @@ import { useDataContext } from 'src/auth/context/data/data-context';
 
 export function ServiceDetailsToolbar({
   service,
+  tabs,
   backLink,
   editLink,
   openEdit,
@@ -159,51 +161,90 @@ export function ServiceDetailsToolbar({
           sx={{ mr: -3 }}
         /> */}
         <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-          <Typography variant="h6">SERVICE {service?.name}</Typography>
+          <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1 }}>
+            <Typography variant="h6">SERVICE {service?.name}</Typography>
+            {service?.isClosed && (
+              <Label color="error" sx={{ textTransform: 'uppercase', mt: 0.5, gap: 0.5 }}>
+                <Iconify icon="nrk:media-media-incomplete" width={16} />
+                Closed
+              </Label>
+            )}
+            {(!service?.isClosed && service?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) !== -1) && (
+              <Label color="success" sx={{ textTransform: 'uppercase', mt: 0.5, gap: 0.5 }}>
+                <Iconify icon="fluent-mdl2:completed" width={16} />
+                Finished
+              </Label>
+            )}
+          </Box>
           <Typography variant="caption" sx={{ color: 'text.secondary' }}>
             {service?.createdBy?.first_name ?
               `Created by ${service?.createdBy?.first_name || service?.createdBy?.firstName} ${service?.createdBy?.last_name || service?.createdBy?.lastName}` :
               `Created by ${service?.createdBy?.first_name || service?.userReporter?.firstName} ${service?.createdBy?.last_name || service?.userReporter?.lastName}`}
           </Typography>
           <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'left' }}>
-            {indexInServiceFilteredList - 1 >= 0 && (
-              <Tooltip title={`Previous service: ${serviceFilteredList?.[indexInServiceFilteredList - 1]?.name}`} arrow>
+
+            <Tooltip title={
+              indexInServiceFilteredList <= 0 ? '' :
+                `Previous service: ${serviceFilteredList?.[indexInServiceFilteredList - 1]?.name}`
+            } arrow>
+              <span>
                 <IconButton
+                  disabled={indexInServiceFilteredList <= 0}
                   sx={{
                     '&:hover': {
                       boxShadow: 'none',
                       backgroundColor: 'transparent',
                     },
+                    cursor: indexInServiceFilteredList <= 0 ? 'not-allowed' : 'pointer',
+                    '&.Mui-disabled': {
+                      cursor: 'not-allowed !important',
+                      pointerEvents: 'auto',
+                    },
+                    color: indexInServiceFilteredList <= 0 ? 'text.disabled' : 'text.primary',
                   }}
                   onClick={() => {
                     const id = serviceFilteredList?.[indexInServiceFilteredList - 1]?.id;
                     localStorage.setItem('serviceId', id);
                     localStorage.setItem('backFromServiceDetails', 'services');
+                    // tabs?.setValue('overview');
                     router.push(paths.dashboard.service.details(id));
                   }} color='default'>
                   <Iconify icon="mdi-light:skip-previous" />
                 </IconButton>
-              </Tooltip>
-            )}
-            {indexInServiceFilteredList + 1 < serviceFilteredList?.length && (
-              <Tooltip title={`Next service: ${serviceFilteredList?.[indexInServiceFilteredList + 1]?.name}`} arrow>
+              </span>
+            </Tooltip>
+
+            <Tooltip title={
+              indexInServiceFilteredList >= serviceFilteredList.length - 1 ? '' :
+                `Next service: ${serviceFilteredList?.[indexInServiceFilteredList + 1]?.name}`
+            } arrow>
+              <span>
                 <IconButton
+                  disabled={indexInServiceFilteredList >= serviceFilteredList.length - 1}
                   sx={{
                     '&:hover': {
                       boxShadow: 'none',
                       backgroundColor: 'transparent',
                     },
+                    cursor: indexInServiceFilteredList >= serviceFilteredList.length - 1 ? 'not-allowed' : 'pointer',
+                    '&.Mui-disabled': {
+                      cursor: 'not-allowed !important',
+                      pointerEvents: 'auto',
+                    },
+                    color: indexInServiceFilteredList >= serviceFilteredList.length - 1 ? 'text.disabled' : 'text.primary',
                   }}
                   onClick={() => {
                     const id = serviceFilteredList?.[indexInServiceFilteredList + 1]?.id;
                     localStorage.setItem('serviceId', id);
                     localStorage.setItem('backFromServiceDetails', 'services');
+                    // tabs?.setValue('overview');
                     router.push(paths.dashboard.service.details(id));
                   }} color='default'>
                   <Iconify icon="mdi-light:skip-next" />
                 </IconButton>
-              </Tooltip>
-            )}
+              </span>
+            </Tooltip>
+
             <Tooltip title='List services' arrow>
               <IconButton
                 sx={{
@@ -211,6 +252,8 @@ export function ServiceDetailsToolbar({
                     boxShadow: 'none',
                     backgroundColor: 'transparent',
                   },
+                  cursor: 'pointer',
+                  color: 'text.primary',
                 }}
                 onClick={popoverServiceList.onOpen}
                 color='default'>
@@ -290,7 +333,7 @@ export function ServiceDetailsToolbar({
 
         {(type === 'service' || type === 'tasks') && (
           <>
-            {(listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.serviceStaff) ||
+            {/* {(listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.serviceStaff) ||
               listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.projectManager)) && (
                 <Tooltip title='Generate Measurements' arrow>
                   <IconButton
@@ -305,7 +348,7 @@ export function ServiceDetailsToolbar({
                     <Iconify icon="tdesign:measurement-1" />
                   </IconButton>
                 </Tooltip>
-              )}
+              )} */}
             {(listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) && (
               <Tooltip title='Refetch Sales Order' arrow>
                 <IconButton

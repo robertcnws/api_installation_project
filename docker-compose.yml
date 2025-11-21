@@ -12,7 +12,7 @@ services:
       - mongodb_data:/data/db
       - ./mongo_db/init:/docker-entrypoint-initdb.d
     networks:
-      - net_installation
+      - shared-network
     deploy:
       resources:
         limits:
@@ -34,7 +34,32 @@ services:
     depends_on:
       - mongodb_installation
     networks:
-      - net_installation
+      - shared-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512m
+        reservations:
+          cpus: '0.25'
+          memory: 256m
+
+  adminmongo_installation:
+    build:
+      context: ./adminmongo
+    container_name: adminmongo_installation
+    restart: unless-stopped
+    ports:
+      - "8082:1234"
+    environment:
+      - CONN_NAME=mongo_conn
+      - DB_HOST=mongodb_installation
+      - DB_PORT=27017
+      - HOST=0.0.0.0
+    depends_on:
+      - mongodb_installation
+    networks:
+      - shared-network
     deploy:
       resources:
         limits:
@@ -56,13 +81,13 @@ services:
       - ./backend_app/static:/app/staticfiles
     ports:
       - "8001:8000"
-    depends_on:
-      - mongodb_installation
-      - redis_installation
+    # depends_on:
+    #   - mongodb_installation
+    #   - redis_installation
     env_file:
       - ./backend_app/.env
     networks:
-      - net_installation
+      - shared-network
 
   nginx_installation:
     image: nginx:latest
@@ -78,7 +103,7 @@ services:
     depends_on:
       - api_installation
     networks:
-      - net_installation
+      - shared-network
 
   redis_installation:
     image: redis:latest
@@ -89,12 +114,13 @@ services:
     volumes:
       - redis_data:/data
     networks:
-      - net_installation
+      - shared-network
 
 volumes:
   mongodb_data:
   redis_data:
 
 networks:
-  net_installation:
+  shared-network:
     driver: bridge
+    external: true

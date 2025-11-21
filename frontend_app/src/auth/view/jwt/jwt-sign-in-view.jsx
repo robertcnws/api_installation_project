@@ -4,14 +4,12 @@ import { useState, useContext } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 import Box from '@mui/material/Box';
-import Link from '@mui/material/Link';
 import Alert from '@mui/material/Alert';
 import IconButton from '@mui/material/IconButton';
 import LoadingButton from '@mui/lab/LoadingButton';
 import InputAdornment from '@mui/material/InputAdornment';
 
 import { useRouter } from 'src/routes/hooks';
-import { RouterLink } from 'src/routes/components';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
@@ -39,6 +37,7 @@ export const SignInSchema = zod.object({
     .string()
     .min(1, { message: 'Password is required!' })
     .min(5, { message: 'Password must be at least 6 characters!' }),
+  rememberMe: zod.boolean().optional(),
 });
 
 // ----------------------------------------------------------------------
@@ -58,6 +57,7 @@ export function JwtSignInView() {
     // email: 'demo@minimals.cc',
     username: '',
     password: '',
+    rememberMe: false,
   };
 
   const methods = useForm({
@@ -73,9 +73,8 @@ export function JwtSignInView() {
   const onSubmit = handleSubmit(async (data) => {
     try {
       // await signInWithPassword({ email: data.email, password: data.password });
-      await signInWithUsernameAndPassword({ username: data.username, password: data.password });
+      await signInWithUsernameAndPassword({ username: data.username, password: data.password, rememberMe: data.rememberMe });
       await checkUserSession?.();
-
       router.refresh();
     } catch (error) {
       console.error(error);
@@ -89,7 +88,7 @@ export function JwtSignInView() {
       <Field.Text name="username" label="Username" InputLabelProps={{ shrink: true }} />
 
       <Box gap={1.5} display="flex" flexDirection="column">
-        <Link
+        {/* <Link
           component={RouterLink}
           href="#"
           variant="body2"
@@ -97,7 +96,7 @@ export function JwtSignInView() {
           sx={{ alignSelf: 'flex-end' }}
         >
           Forgot password?
-        </Link>
+        </Link> */}
 
         <Field.Text
           name="password"
@@ -114,6 +113,19 @@ export function JwtSignInView() {
               </InputAdornment>
             ),
           }}
+        />
+
+        <Field.Checkbox
+          name="rememberMe"
+          label={
+            <span>
+              Remember me
+              {/* <Link component={RouterLink} href="#" variant="subtitle2" sx={{ ml: 1 }}>
+                Terms of Service
+              </Link> */}
+            </span>
+          }
+          sx={{ alignSelf: 'flex-start' }}
         />
       </Box>
 

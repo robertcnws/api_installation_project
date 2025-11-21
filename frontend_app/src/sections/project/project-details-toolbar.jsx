@@ -19,6 +19,7 @@ import { verifyPermissions, listRolesAndSubroles } from 'src/utils/check-permiss
 
 import { CONFIG } from 'src/config-global';
 
+import { Label } from 'src/components/label';
 import { toast } from 'src/components/snackbar';
 import { Iconify } from 'src/components/iconify';
 import { ConfirmDialog } from 'src/components/custom-dialog';
@@ -30,10 +31,12 @@ import { ProjectShareDialog } from './project-share-dialog';
 import { ServiceNewFormFromProject } from '../service/service-new-form-from-project';
 
 
+
 // ----------------------------------------------------------------------
 
 export function ProjectDetailsToolbar({
   project,
+  tabs,
   backLink,
   editLink,
   openEdit,
@@ -41,6 +44,7 @@ export function ProjectDetailsToolbar({
   type,
   onDelete,
   onGenerateMeasurements,
+  refetchProject,
   listPermissions,
   sx,
   ...other
@@ -52,7 +56,6 @@ export function ProjectDetailsToolbar({
     loadedMeasurements,
     refetchMeasurements,
     loadedServices,
-    refetchServices,
   } = useDataContext();
 
   const share = useBoolean();
@@ -110,7 +113,7 @@ export function ProjectDetailsToolbar({
       const services = loadedServices.filter(s => s.salesOrder?.salesorder_id === project?.salesOrder?.salesorder_id);
       if (services && services?.length > 0) {
         setAssociatedServices(services);
-      } 
+      }
     }
   }, [loadedServices, project]);
 
@@ -179,46 +182,79 @@ export function ProjectDetailsToolbar({
           sx={{ mr: -3 }}
         /> */}
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'left', justifyContent: 'space-between', gap: 0 }}>
-          <Typography variant="h6">INSTALLATION {project?.name}</Typography>
+          <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1 }}>
+            <Typography variant="h6">INSTALLATION {project?.name}</Typography>
+            {(project?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) !== -1) && (
+              <Label color="success" sx={{ textTransform: 'uppercase', mt: 0.5, gap: 0.5 }}>
+                <Iconify icon="fluent-mdl2:completed" width={16} />
+                Finished
+              </Label>
+            )}
+          </Box>
           <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'left' }}>
-            {indexInInstallationFilteredList - 1 >= 0 && (
-              <Tooltip title={`Previous installation: ${installationFilteredList?.[indexInInstallationFilteredList - 1]?.name}`} arrow>
+
+            <Tooltip title={
+              indexInInstallationFilteredList <= 0 ? '' :
+                `Previous installation: ${installationFilteredList?.[indexInInstallationFilteredList - 1]?.name}`
+            } arrow>
+              <span>
                 <IconButton
+                  disabled={indexInInstallationFilteredList <= 0}
                   sx={{
                     '&:hover': {
                       boxShadow: 'none',
                       backgroundColor: 'transparent',
                     },
+                    cursor: indexInInstallationFilteredList <= 0 ? 'not-allowed' : 'pointer',
+                    '&.Mui-disabled': {
+                      cursor: 'not-allowed !important',
+                      pointerEvents: 'auto',
+                    },
+                    color: indexInInstallationFilteredList <= 0 ? 'text.disabled' : 'text.primary',
                   }}
                   onClick={() => {
                     const id = installationFilteredList?.[indexInInstallationFilteredList - 1]?.id;
                     localStorage.setItem('projectId', id);
                     localStorage.setItem('backFromProjectDetails', 'projects');
+                    // tabs?.setValue('overview');
                     router.push(paths.dashboard.project.details(id));
                   }} color='default'>
                   <Iconify icon="mdi-light:skip-previous" />
                 </IconButton>
-              </Tooltip>
-            )}
-            {indexInInstallationFilteredList + 1 < installationFilteredList?.length && (
-              <Tooltip title={`Next installation: ${installationFilteredList?.[indexInInstallationFilteredList + 1]?.name}`} arrow>
+              </span>
+            </Tooltip>
+
+            <Tooltip title={
+              indexInInstallationFilteredList >= installationFilteredList.length - 1 ? '' :
+              `Next installation: ${installationFilteredList?.[indexInInstallationFilteredList + 1]?.name}`
+            } arrow>
+              <span>
                 <IconButton
+                  disabled={indexInInstallationFilteredList >= installationFilteredList.length - 1}
                   sx={{
                     '&:hover': {
                       boxShadow: 'none',
                       backgroundColor: 'transparent',
                     },
+                    cursor: indexInInstallationFilteredList >= installationFilteredList.length - 1 ? 'not-allowed' : 'pointer',
+                    '&.Mui-disabled': {
+                      cursor: 'not-allowed !important',
+                      pointerEvents: 'auto',
+                    },
+                    color: indexInInstallationFilteredList >= installationFilteredList.length - 1 ? 'text.disabled' : 'text.primary',
                   }}
                   onClick={() => {
                     const id = installationFilteredList?.[indexInInstallationFilteredList + 1]?.id;
                     localStorage.setItem('projectId', id);
                     localStorage.setItem('backFromProjectDetails', 'projects');
+                    // tabs?.setValue('overview');
                     router.push(paths.dashboard.project.details(id));
                   }} color='default'>
                   <Iconify icon="mdi-light:skip-next" />
                 </IconButton>
-              </Tooltip>
-            )}
+              </span>
+            </Tooltip>
+
             <Tooltip title='List installations' arrow>
               <IconButton
                 sx={{
@@ -226,6 +262,8 @@ export function ProjectDetailsToolbar({
                     boxShadow: 'none',
                     backgroundColor: 'transparent',
                   },
+                  cursor: 'pointer',
+                  color: 'text.primary',
                 }}
                 onClick={popoverInstallationList.onOpen}
                 color='default'>
@@ -522,6 +560,7 @@ export function ProjectDetailsToolbar({
                 localStorage.setItem('backFromMeasurementDetails', 'project');
                 localStorage.setItem('backFromMeasurementDetailsProjectId', project?.id);
                 localStorage.setItem('backFromMeasurementDetailsServiceId', '');
+                await refetchProject();
                 router.push(paths.dashboard.measurement.details(newMeas?.data?.id));
               }
             }}
@@ -542,7 +581,7 @@ export function ProjectDetailsToolbar({
                 This installation already has {associatedServices?.length} associated services:
                 {associatedServices?.map((service, index) => (
                   <React.Fragment key={`associatedService-${index}`}>
-                    <br key={`br-${index}`}/>
+                    <br key={`br-${index}`} />
                     <Link
                       key={index}
                       component={RouterLink}

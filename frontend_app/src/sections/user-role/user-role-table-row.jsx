@@ -117,7 +117,7 @@ export function UserRoleTableRow({ row, selected, onEditRow, onSelectRow, onDele
             }}
           >
             <Iconify icon="ph:pencil-line" />
-            Edit Stage
+            Edit Role
           </MenuItem>
           <MenuItem
             onClick={() => {
@@ -127,7 +127,7 @@ export function UserRoleTableRow({ row, selected, onEditRow, onSelectRow, onDele
             sx={{ color: 'error.main' }}
           >
             <Iconify icon="solar:trash-bin-trash-bold" />
-            Delete Stage
+            Delete Role
           </MenuItem>
 
         </MenuList>

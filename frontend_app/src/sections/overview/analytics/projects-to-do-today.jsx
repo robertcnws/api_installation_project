@@ -64,7 +64,7 @@ export function ProjectsToDoToday({
     const renderDialog = useCallback(
         ({ item, status }) => {
             const tasks = item.hasPermission ? item.projectDefaultTasks :
-                item.projectDefaultTasks.filter(
+                item.projectDefaultTasks?.filter(
                     h => h.project_default_task.project_stage.name.toLowerCase().indexOf(CONFIG.stages.permission.toLowerCase()) === -1
                 );
 
@@ -258,7 +258,7 @@ const Item = ({ item, sx, router, userLogged, ...other }) =>
                         </Typography>
                     </Box>
                     <br />
-                    {(item.projectDefaultTasks.length > 0 && !isInstaller(userLogged?.data?.user_role?.name)) && (
+                    {(item.projectDefaultTasks?.length > 0 && !isInstaller(userLogged?.data?.user_role?.name)) && (
                         <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', typography: 'body2', gap: 2 }}>
 
                             <Box
@@ -384,7 +384,7 @@ const Item = ({ item, sx, router, userLogged, ...other }) =>
 
 function calculateTotalStatus({ item, status }) {
     const tasks = item.hasPermission ? item.projectDefaultTasks :
-        item.projectDefaultTasks.filter(
+        item.projectDefaultTasks?.filter(
             h => h.project_default_task.project_stage.name.toLowerCase().indexOf(CONFIG.stages.permission.toLowerCase()) === -1
         );
     return tasks.reduce((acc, h) => {

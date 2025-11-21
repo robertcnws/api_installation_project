@@ -2,6 +2,7 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogActions from '@mui/material/DialogActions';
 import InputAdornment from '@mui/material/InputAdornment';
@@ -26,7 +27,16 @@ export function FileManagerShareDialog({
 
   return (
     <Dialog fullWidth maxWidth="xs" open={open} onClose={onClose} {...other}>
-      <DialogTitle> Invite </DialogTitle>
+      <DialogTitle>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Box className="dialog-title-icon">
+            <Iconify icon="mdi:share-variant" />
+          </Box>
+          <Typography variant="h6" sx={{ fontWeight: 600 }}>
+            Invite
+          </Typography>
+        </Box>
+      </DialogTitle>
 
       <Box sx={{ px: 3 }}>
         {onChangeInvite && (

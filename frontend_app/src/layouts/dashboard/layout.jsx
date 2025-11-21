@@ -7,6 +7,8 @@ import { iconButtonClasses } from '@mui/material/IconButton';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
+import { allLangs } from 'src/locales';
+
 import { Logo } from 'src/components/logo';
 import { useSettingsContext } from 'src/components/settings';
 
@@ -24,6 +26,7 @@ import { HeaderSection } from '../core/header-section';
 import { StyledDivider, useNavColorVars } from './styles';
 import { AccountDrawer } from '../components/account-drawer';
 import { SettingsButton } from '../components/settings-button';
+import { LanguagePopover } from '../components/language-popover';
 import { navData as dashboardNavData } from '../config-nav-dashboard';
 import { NotificationsDrawer } from '../components/notifications-drawer';
 
@@ -157,7 +160,7 @@ export function DashboardLayout({ sx, children, header, data }) {
                 {/* -- Searchbar -- */}
                 <Searchbar data={navData} />
                 {/* -- Language popover -- */}
-                {/* <LanguagePopover data={allLangs} /> */}
+                <LanguagePopover data={allLangs} />
                 {/* -- Notifications popover -- */}
                 <NotificationsDrawer />
                 {/* -- Contacts popover -- */}

@@ -25,6 +25,7 @@ class ProjectStage(Document):
     description = StringField(max_length=255, null=True)
     is_active = BooleanField(default=True)
     order = IntField(default=0)
+    other_name = StringField(max_length=255, null=True)
     created_time = DateTimeField(default=timezone.now, null=True)
     last_modified_time = DateTimeField(default=timezone.now, null=True)
     
@@ -97,7 +98,7 @@ class ProjectAttachment(Document):
     meta = {
         'collection': 'project_attachment',
         'indexes': [
-            'name', 'created_time', 'last_modified_time', 'is_active', 'user_upload', 'project', 'current_stage'
+            'name', 'created_time', 'last_modified_time', 'is_active'
         ],
         'verbose_name': 'Project Attachment',
         'verbose_name_plural': 'Project Attachments'
@@ -122,7 +123,7 @@ class ProjectMaterial(Document):
     meta = {
         'collection': 'project_material',
         'indexes': [
-            'name', 'created_time', 'last_modified_time', 'is_active', 'user_reporter', 'project'
+            'name', 'created_time', 'last_modified_time', 'is_active'
         ],
         'verbose_name': 'Project Material',
         'verbose_name_plural': 'Project Materials'
@@ -130,6 +131,14 @@ class ProjectMaterial(Document):
 
     def __str__(self):
         return self.name
+    
+
+class ProjectView(Document):
+    meta = {
+        'collection': 'project_view',
+        'strict': False,   
+    }
+    
     
 class Project(Document):
     name = StringField(max_length=255, required=True)
@@ -145,6 +154,7 @@ class Project(Document):
     user_installer = DynamicField(null=True)
     start_date = DateTimeField(null=True)
     end_date = DateTimeField(null=True)
+    duration = IntField(default=0, null=True)  # Duration in days
     current_stage = DynamicField(null=True)
     project_attachments = ListField(DynamicField(), default=list, null=True)
     project_tasks = ListField(DynamicField(), default=list, null=True)
@@ -165,45 +175,25 @@ class Project(Document):
     project_guide_products = ListField(DynamicField(), default=list, null=True)
     project_materials_other_notes = StringField(null=True)
     inspection_date = DateTimeField(null=True)
+    inspection_end_date = DateTimeField(null=True)
+    inspection_duration = IntField(default=0, null=True)  # Duration in days
+    inspection_is_part_days = BooleanField(default=False, null=True)
     finish_permission_date = DateTimeField(null=True)
-    is_part_days = BooleanField(default=False)
+    finish_permission_end_date = DateTimeField(null=True)
+    finish_permission_duration = IntField(default=0, null=True)  # Duration in days
+    finish_permission_is_part_days = BooleanField(default=False, null=True)
+    is_part_days = BooleanField(default=False, null=True)
+    phone = StringField(max_length=255, null=True)
+    duration = IntField(default=0, null=True)  # Duration in days
+    work_orders = ListField(DynamicField(), default=list, null=True)
     
     meta = {
         'collection': 'project',
         'indexes': [
-            'name', 
-            'number', 
             'created_time', 
-            'last_modified_time', 
             'is_active', 
             'user_reporter', 
-            'users_assignees', 
-            'user_installer',
-            'current_stage', 
-            'sales_order',
             'start_date',
-            'end_date',
-            'project_attachments',
-            'project_tasks',
-            'project_history',
-            'address',
-            'reference_number',
-            'project_comments',
-            'project_default_tasks',
-            'all_products_marked',
-            'all_windows_marked',
-            'all_screw_marked',
-            'all_trash_marked',
-            'feedback',
-            'work_scope',
-            'project_materials',
-            'project_guide_products',
-            'project_materials_other_notes',
-            'inspection_date',
-            'finish_permission_date',
-            'is_part_days',
-            'has_permission',
-            'user_manager',
         ],
         'verbose_name': 'Project',
         'verbose_name_plural': 'Projects'
@@ -224,7 +214,7 @@ class ProjectUser(Document):
     meta = {
         'collection': 'project_user',
         'indexes': [
-            'user', 'project', 'role', 'is_active', 'created_time', 'last_modified_time'
+            'user', 'role', 'is_active', 'created_time', 'last_modified_time'
         ],
         'verbose_name': 'Project User',
         'verbose_name_plural': 'Project Users'
@@ -262,7 +252,7 @@ class ProjectNotificationUser(Document):
     meta = {
         'collection': 'project_notification_user',
         'indexes': [
-            'notification', 'username', 'user', 'read', 'created_time', 'last_modified_time'
+            'username', 'read', 'created_time', 'last_modified_time'
         ],
         'verbose_name': 'Project Notification User',
         'verbose_name_plural': 'Project Notification Users'
@@ -285,7 +275,7 @@ class ProjectDefaultTask(Document):
     meta = {
         'collection': 'project_default_task',
         'indexes': [
-            'name', 'created_time', 'last_modified_time', 'is_active', 'project_stage', 'project_stage_status', 'number'
+            'name', 'created_time', 'last_modified_time', 'is_active', 'number'
         ],
         'verbose_name': 'Project Default Task',
         'verbose_name_plural': 'Project Default Tasks'
@@ -307,7 +297,7 @@ class ProjetDefaultTaskInfo(Document):
     meta = {
         'collection': 'project_default_task_info',
         'indexes': [
-            'project_default_task', 'created_time', 'last_modified_time', 'is_active', 'project', 'status', 'percentage', 'users_assignees'
+            'project_default_task', 'created_time', 'last_modified_time', 'is_active', 'status', 'percentage'
         ],
         'verbose_name': 'Project Default Task Info',
         'verbose_name_plural': 'Project Default Task Infos'
@@ -337,7 +327,7 @@ class ProjectTask(Document):
     meta = {
         'collection': 'project_task',
         'indexes': [
-            'name', 'number', 'created_time', 'last_modified_time', 'is_active', 'priority', 'project', 'current_stage', 'users_assignees', 'user_reporter'
+            'name', 'number', 'created_time', 'last_modified_time', 'is_active', 'priority'
         ],
         'verbose_name': 'Project Task',
         'verbose_name_plural': 'Project Tasks'
@@ -359,7 +349,7 @@ class ProjectTaskAttachment(Document):
     meta = {
         'collection': 'project_task_attachment',
         'indexes': [
-            'name', 'created_time', 'last_modified_time', 'is_active', 'due_project_stage', 'user_upload', 'project_task'
+            'name', 'created_time', 'last_modified_time', 'is_active'
         ],
         'verbose_name': 'Project Task Attachment',
         'verbose_name_plural': 'Project Task Attachments'
@@ -380,7 +370,7 @@ class ProjectTaskComment(Document):
     meta = {
         'collection': 'project_task_comment',
         'indexes': [
-            'comment', 'user_reporter', 'created_time', 'last_modified_time', 'project_default_task', 'is_active', 'project'
+            'comment', 'user_reporter', 'created_time', 'last_modified_time', 'is_active'
         ],
         'verbose_name': 'Project Task Comment',
         'verbose_name_plural': 'Project Task Comments'
@@ -419,7 +409,7 @@ class ProjectTaskHistory(Document):
     meta = {
         'collection': 'project_task_history',
         'indexes': [
-            'project_task', 'user_involved', 'project_stage_initial', 'project_stage_final', 'created_time', 'last_modified_time'
+            'created_time', 'last_modified_time'
         ],
         'verbose_name': 'Project Task History',
         'verbose_name_plural': 'Project Task Histories'
@@ -446,7 +436,17 @@ class ProjectPermissions(Document):
 
     def __str__(self):
         return self.name
+
+class ProjectTrackingView(Document):
+    action         = StringField()     
+    created_time   = DateTimeField()
+    managed_data   = DynamicField()
+    user_reporter  = DynamicField()
     
+    meta = {
+        'collection': 'project_tracking_view',
+        'strict': False,   
+    }   
     
 class ProjectTracking(Document):
     user_reporter = DynamicField(required=True)
@@ -527,7 +527,7 @@ class ProjectDefaultMaterial(Document):
     meta = {
         'collection': 'project_default_material',
         'indexes': [
-            'name', 'created_time', 'last_modified_time', 'is_active', 'is_packaged', 'package_quantity', 'default_guide_products'
+            'name', 'created_time', 'last_modified_time', 'is_active', 'is_packaged', 'package_quantity'
         ],
         'verbose_name': 'Project Default Material',
         'verbose_name_plural': 'Project Default Materials'

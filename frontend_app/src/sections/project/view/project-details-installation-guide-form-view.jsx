@@ -1,5 +1,4 @@
 import axios from 'axios';
-import stringSimilarity from 'string-similarity';
 import { z as zod } from 'zod';
 import isEqual from 'lodash.isequal';
 import { useForm, useWatch } from 'react-hook-form';
@@ -18,8 +17,8 @@ import { useBoolean } from 'src/hooks/use-boolean';
 
 import { fCurrency } from 'src/utils/format-number';
 import { listRolesAndSubroles } from 'src/utils/check-permissions';
-import { combineByName, createScopeArray, generateInstallationGuideFormReport } from 'src/utils/generate-installation-guide-pdf';
 import { buildMaterialsReport } from 'src/utils/project-tasks-utils';
+import { combineByName, createScopeArray, generateInstallationGuideFormReport } from 'src/utils/generate-installation-guide-pdf';
 
 import { CONFIG } from 'src/config-global';
 
@@ -130,7 +129,7 @@ export function ProjectDetailsInstallationGuideFormView({
   
 
   useEffect(() => {
-    const socket = new WebSocket(`wss://${CONFIG.apiHost}/api/projects/ws/project/${project?.id}/`);
+    const socket = new WebSocket(`${CONFIG.wsProtocol}://${CONFIG.wsHost}/${CONFIG.wsDomain}/projects/ws/project/${project?.id}/`);
     socket.onerror = (errorEvent) => {
       console.dir(errorEvent);
       console.error('WebSocket error (toString):', errorEvent.toString());

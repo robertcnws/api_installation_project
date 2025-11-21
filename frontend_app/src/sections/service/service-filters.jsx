@@ -9,8 +9,8 @@ import CardActionArea from '@mui/material/CardActionArea';
 import InputAdornment from '@mui/material/InputAdornment';
 import { Divider, Tooltip, MenuItem, MenuList, IconButton, Typography, ListItemIcon, ListItemText } from '@mui/material';
 
-import { isInstaller } from 'src/utils/check-permissions';
 import { fDateRangeShortLabel } from 'src/utils/format-time';
+import { isInstaller, isAdministrator } from 'src/utils/check-permissions';
 
 import { varAlpha } from 'src/theme/styles';
 
@@ -27,6 +27,7 @@ import { LoadingContext } from 'src/auth/context/loading-context';
 export function ServiceFilters({
   filters,
   loadedUsers,
+  allCreatorsUsers,
   options,
   dateError,
   onResetPage,
@@ -36,6 +37,12 @@ export function ServiceFilters({
   openInstallerFilter,
   onOpenInstallerFilter,
   onCloseInstallerFilter,
+  openUserManagerFilter,
+  onOpenUserManagerFilter,
+  onCloseUserManagerFilter,
+  openCreatedByFilter,
+  onOpenCreatedByFilter,
+  onCloseCreatedByFilter,
 }) {
 
   const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
@@ -65,7 +72,16 @@ export function ServiceFilters({
     if (custom.hasComments) active.push('Have comments');
     if (filters.state.startDate && filters.state.endDate) active.push(fDateRangeShortLabel(filters.state.startDate, filters.state.endDate));
     if (filters.state.name) active.push(`Matches: ${filters.state.name}`);
-    if (filters.state.installer.id) active.push(`Service Team: ${filters.state.installer.name}`);
+    if (filters.state.installer.id) active.push(`Team: ${filters.state.installer.name}`);
+    if (filters.state.userManager.id) active.push(`Responsible: ${filters.state.userManager.name}`);
+    if (filters.state.createdBy.id) active.push(`Creator: ${filters.state.createdBy.name}`);
+    if (custom.isPreparation.value) active.push('In Preparation Stage');
+    if (custom.isRepair.value) active.push('In Repair Stage');
+    if (custom.isClosing.value) active.push('In Closing Stage');
+    if (filters.state.byFactory) active.push('By Factory');
+    if (filters.state.notByFactory) active.push('Not by Factory');
+    if (filters.state.associatedToProject) active.push('Associated');
+    if (filters.state.notAssociatedToProject) active.push('Not Associated');
     return active.length > 0 ? `${name} Services (${active.join(', ')})` : `${name} services`;
   }, [custom, filters]);
 
@@ -99,6 +115,38 @@ export function ServiceFilters({
       localStorage.setItem('serviceFilterInstaller', JSON.stringify({ id, name: user?.name || '' }));
     },
     [loadedUsers, filters, onResetPage]
+  );
+
+  const handleFilterUserManager = useCallback(
+    (event) => {
+      const id = event.target.value;
+      onResetPage();
+      const user = loadedUsers.find((u) => u.id === id);
+      filters.setState({
+        userManager: {
+          id,
+          name: user?.name || ''
+        }
+      });
+      localStorage.setItem('serviceFilterUserManager', JSON.stringify({ id, name: user?.name || '' }));
+    },
+    [loadedUsers, filters, onResetPage]
+  );
+
+  const handleFilterCreatedBy = useCallback(
+    (event) => {
+      const id = event.target.value;
+      onResetPage();
+      const user = allCreatorsUsers.find((u) => u.id === id);
+      filters.setState({
+        createdBy: {
+          id,
+          name: user?.name || ''
+        }
+      });
+      localStorage.setItem('serviceFilterCreatedBy', JSON.stringify({ id, name: user?.name || '' }));
+    },
+    [allCreatorsUsers, filters, onResetPage]
   );
 
   const handleFilterCustom = useCallback((fieldName) => {
@@ -141,6 +189,20 @@ export function ServiceFilters({
         notByFactory: byFactory,
       });
       localStorage.setItem('serviceFilterNotByFactory', byFactory);
+    }
+    else if (fieldName === 'associatedToProject') {
+      const associatedToProject = !filters.state.associatedToProject;
+      filters.setState({
+        associatedToProject,
+      });
+      localStorage.setItem('serviceFilterAssociatedToProject', associatedToProject);
+    }
+    else if (fieldName === 'notAssociatedToProject') {
+      const notAssociatedToProject = !filters.state.notAssociatedToProject;
+      filters.setState({
+        notAssociatedToProject,
+      });
+      localStorage.setItem('serviceFilterNotAssociatedToProject', notAssociatedToProject);
     }
 
     setCustomFilterName(createCustomFilterName());
@@ -205,47 +267,170 @@ export function ServiceFilters({
         }
       >
         {!!filters.state.installer.id && !!filters.state.installer.name
-          ? `Service team: ${filters.state.installer.name}`
-          : 'Select service team'}
+          ? `Team: ${filters.state.installer.name}`
+          : 'Select team'}
       </Button>
 
       <ConfirmDialog
         open={openInstallerFilter}
         onClose={onCloseInstallerFilter}
-        title="Select service team"
+        title="Select team"
         content={
           <TextField
-              select
-              value={filters.state.installer.id || ''}
-              onChange={handleFilterInstaller}
-              placeholder="Select service team"
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Iconify icon="eva:search-fill" sx={{ color: 'text.disabled' }} />
-                  </InputAdornment>
-                ),
-              }}
-              sx={{ width: '100%' }}
-            >
-              {loadedUsers.filter((user) => isInstaller(user.userRole.name)).map((user) => (
-                <MenuItem key={user.id} value={user.id}>
-                  {user.name}
-                </MenuItem>
-              ))}
-            </TextField>
+            select
+            value={filters.state.installer.id || ''}
+            onChange={handleFilterInstaller}
+            placeholder="Select team"
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Iconify icon="eva:search-fill" sx={{ color: 'text.disabled' }} />
+                </InputAdornment>
+              ),
+            }}
+            sx={{ width: '100%' }}
+          >
+            {loadedUsers.filter((user) => isInstaller(user.userRole.name)).map((user) => (
+              <MenuItem key={user.id} value={user.id}>
+                {user.name}
+              </MenuItem>
+            ))}
+          </TextField>
         }
         action={
           <Button
-              variant="contained"
-              onClick={() => {
-                onCloseInstallerFilter();
-                filters.setState({ installer: { id: null, name: null } });
-              }}
-              color='warning'
-            >
-              Clear
-            </Button>
+            variant="contained"
+            onClick={() => {
+              // onCloseInstallerFilter();
+              filters.setState({ installer: { id: null, name: null } });
+              localStorage.removeItem('serviceFilterInstaller');
+            }}
+            color='warning'
+          >
+            Clear
+          </Button>
+        }
+      />
+    </>
+  );
+
+
+  const renderFilterResponsible = (
+    <>
+      <Button
+        color="inherit"
+        onClick={onOpenUserManagerFilter}
+        endIcon={
+          <Iconify
+            icon={openUserManagerFilter ? 'eva:arrow-ios-upward-fill' : 'eva:arrow-ios-downward-fill'}
+            sx={{ ml: -0.5 }}
+          />
+        }
+      >
+        {!!filters.state.userManager.id && !!filters.state.userManager.name
+          ? `Responsible: ${filters.state.userManager.name}`
+          : 'Select responsible'}
+      </Button>
+
+      <ConfirmDialog
+        open={openUserManagerFilter}
+        onClose={onCloseUserManagerFilter}
+        title="Select responsible"
+        content={
+          <TextField
+            select
+            value={filters.state.userManager.id || ''}
+            onChange={handleFilterUserManager}
+            placeholder="Select responsible"
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Iconify icon="eva:search-fill" sx={{ color: 'text.disabled' }} />
+                </InputAdornment>
+              ),
+            }}
+            sx={{ width: '100%' }}
+          >
+            {loadedUsers.filter((user) => isAdministrator(user.userRole.name)).map((user) => (
+              <MenuItem key={user.id} value={user.id}>
+                {user.name}
+              </MenuItem>
+            ))}
+          </TextField>
+        }
+        action={
+          <Button
+            variant="contained"
+            onClick={() => {
+              // onCloseUserManagerFilter();
+              filters.setState({ userManager: { id: null, name: null } });
+              localStorage.removeItem('serviceFilterUserManager');
+            }}
+            color='warning'
+          >
+            Clear
+          </Button>
+        }
+      />
+    </>
+  );
+
+
+  const renderFilterCreator = (
+    <>
+      <Button
+        color="inherit"
+        onClick={onOpenCreatedByFilter}
+        endIcon={
+          <Iconify
+            icon={openCreatedByFilter ? 'eva:arrow-ios-upward-fill' : 'eva:arrow-ios-downward-fill'}
+            sx={{ ml: -0.5 }}
+          />
+        }
+      >
+        {!!filters.state.createdBy.id && !!filters.state.createdBy.name
+          ? `Creator: ${filters.state.createdBy.name}`
+          : 'Select creator'}
+      </Button>
+
+      <ConfirmDialog
+        open={openCreatedByFilter}
+        onClose={onCloseCreatedByFilter}
+        title="Select creator"
+        content={
+          <TextField
+            select
+            value={filters.state.createdBy.id || ''}
+            onChange={handleFilterCreatedBy}
+            placeholder="Select creator"
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Iconify icon="eva:search-fill" sx={{ color: 'text.disabled' }} />
+                </InputAdornment>
+              ),
+            }}
+            sx={{ width: '100%' }}
+          >
+            {allCreatorsUsers.map((user) => (
+              <MenuItem key={user.id} value={user.id}>
+                {user.name}
+              </MenuItem>
+            ))}
+          </TextField>
+        }
+        action={
+          <Button
+            variant="contained"
+            onClick={() => {
+              // onCloseCreatedByFilter();
+              filters.setState({ createdBy: { id: null, name: null } });
+              localStorage.removeItem('serviceFilterCreatedBy');
+            }}
+            color='warning'
+          >
+            Clear
+          </Button>
         }
       />
     </>
@@ -267,12 +452,12 @@ export function ServiceFilters({
       >
         {!!filters.state.startDate && !!filters.state.endDate
           ? fDateRangeShortLabel(filters.state.startDate, filters.state.endDate)
-          : 'Select service date'}
+          : 'Select date'}
       </Button>
 
       <CustomDateRangePicker
         variant="calendar"
-        title="Select service date range"
+        title="Select date range"
         startDate={filters.state.startDate}
         endDate={filters.state.endDate}
         onChangeStartDate={handleFilterStartDate}
@@ -438,6 +623,7 @@ export function ServiceFilters({
                       value={filters.state.name}
                       onChange={handleFilterName}
                       placeholder="Search service(s) by NAME, NUMBER, CUSTOMER, RESPONSIBLE..."
+                      onKeyDown={(e) => e.stopPropagation()}
                       InputProps={{
                         startAdornment: (
                           <InputAdornment position="start">
@@ -462,6 +648,38 @@ export function ServiceFilters({
                       sx={{ width: '100%' }}
                     />
                   </Tooltip>
+                </Box>
+              </MenuItem>
+
+              <MenuItem sx={{ py: 0 }} key="factory-divider">
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', p: 0 }}>
+                  <Divider orientation="vertical" flexItem sx={{ color: 'text.disabled' }} >
+                    <ListItemText primary="Associated to Installations" />
+                  </Divider>
+                </Box>
+              </MenuItem>
+
+              <MenuItem sx={{ py: 0 }} key="associatedToProject" onClick={() => handleFilterCustom('associatedToProject')}>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <ListItemIcon>
+                    <CheckBox
+                      checked={filters.state.associatedToProject}
+                      onChange={() => handleFilterCustom('associatedToProject')}
+                    />
+                  </ListItemIcon>
+                  <ListItemText primary="Associated to Installation?" />
+                </Box>
+              </MenuItem>
+
+              <MenuItem sx={{ py: 0 }} key="notAssociatedToProject" onClick={() => handleFilterCustom('notAssociatedToProject')}>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <ListItemIcon>
+                    <CheckBox
+                      checked={filters.state.notAssociatedToProject}
+                      onChange={() => handleFilterCustom('notAssociatedToProject')}
+                    />
+                  </ListItemIcon>
+                  <ListItemText primary="Not associated to Installation?" />
                 </Box>
               </MenuItem>
 
@@ -699,6 +917,8 @@ export function ServiceFilters({
       <Stack spacing={1} direction="row" alignItems="center" justifyContent="flex-end" flexGrow={1}>
         {!isInstaller(userLogged?.data?.user_role?.name) && (
           <>
+            {renderFilterCreator}
+            {renderFilterResponsible}
             {renderFilterInstaller}
             {renderFilterDate()}
           </>
