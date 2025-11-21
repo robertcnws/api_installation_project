@@ -7,31 +7,3 @@ COPY nginx.prod.conf /etc/nginx/conf.d/default.conf
 EXPOSE 3030
 
 CMD ["nginx", "-g", "daemon off;"]
-
-
-# FROM node:20 AS build
-
-# ENV TZ=America/New_York
-
-# RUN ln -fs /usr/share/zoneinfo/$TZ /etc/localtime && \
-#     dpkg-reconfigure -f noninteractive tzdata
-    
-# WORKDIR /app
-
-# COPY package*.json ./
-
-# RUN npm install
-
-# COPY . .
-
-# RUN npm run build
-
-# FROM nginx:alpine AS production
-
-# COPY --from=build /app/dist /usr/share/nginx/html
-
-# COPY nginx.prod.conf /etc/nginx/conf.d/default.conf
-
-# EXPOSE 3030
-
-# CMD ["nginx", "-g", "daemon off;"]
