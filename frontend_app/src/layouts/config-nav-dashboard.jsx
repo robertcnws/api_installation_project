@@ -76,7 +76,7 @@ export const navData = () => [
     subheader: 'Overview',
     items: [
       { title: 'Dashboard', path: paths.dashboard.general.analytics, icon: ICONS.dashboard },
-      { title: 'Analytics', path: paths.dashboard.general.analytics, icon: ICONS.statistics },
+      { title: 'Metrics', path: paths.dashboard.general.metrics, icon: ICONS.statistics },
       { title: 'Calendar', path: paths.dashboard.general.calendar, icon: ICONS.calendarOverview },
     ],
   },

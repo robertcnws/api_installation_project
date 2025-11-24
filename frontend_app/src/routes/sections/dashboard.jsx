@@ -14,7 +14,8 @@ import { AuthGuard } from 'src/auth/guard';
 
 // Overview
 const IndexPage = lazy(() => import('src/pages/dashboard'));
-const OverviewAnalyticsPage = lazy(() => import('src/pages/dashboard/analytics'));
+const OverviewDashboardPage = lazy(() => import('src/pages/dashboard/dashboard'));
+const OverviewAnalyticMetricsPage = lazy(() => import('src/pages/dashboard/analytics'));
 const CalendarPage = lazy(() => import('src/pages/dashboard/calendar'));
 // User
 const UserProfilePage = lazy(() => import('src/pages/dashboard/user/profile'));
@@ -88,10 +89,10 @@ const layoutContent = (
 export const dashboardRoutes = (listPermissions, user) => [
   {
     path: 'dashboard',
-    element: CONFIG.auth.skip ? <OverviewAnalyticsPage /> : <AuthGuard>{layoutContent}</AuthGuard>,
+    element: CONFIG.auth.skip ? <OverviewDashboardPage /> : <AuthGuard>{layoutContent}</AuthGuard>,
     children: [
       {
-        element: <OverviewAnalyticsPage />,
+        element: <OverviewDashboardPage />,
         index: true
       },
       {
@@ -101,7 +102,16 @@ export const dashboardRoutes = (listPermissions, user) => [
           CONFIG.permissions.system,
           CONFIG.permissions.moduleDashboards,
           CONFIG.permissions.operationList
-        ) || listRolesAndSubroles(user?.user_role?.name).includes(CONFIG.roles.projectManager) ? <OverviewAnalyticsPage /> : <Page403 />
+        ) || listRolesAndSubroles(user?.user_role?.name).includes(CONFIG.roles.projectManager) ? <OverviewDashboardPage /> : <Page403 />
+      },
+      {
+        path: 'metrics',
+        element: verifyPermissions(
+          listPermissions,
+          CONFIG.permissions.system,
+          CONFIG.permissions.moduleDashboards,
+          CONFIG.permissions.operationList
+        ) || listRolesAndSubroles(user?.user_role?.name).includes(CONFIG.roles.projectManager) ? <OverviewAnalyticMetricsPage /> : <Page403 />
       },
       {
         path: 'calendar',
