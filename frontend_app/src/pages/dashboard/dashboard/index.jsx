@@ -2,11 +2,11 @@ import { Helmet } from 'react-helmet-async';
 
 import { CONFIG } from 'src/config-global';
 
-import { OverviewAnalyticMetricsView } from 'src/sections/overview/analytics/view';
+import { OverviewAnalyticsView } from 'src/sections/overview/dashboard/view';
 
 // ----------------------------------------------------------------------
 
-const metadata = { title: `Metrics - ${CONFIG.appName}` };
+const metadata = { title: `Dashboard - ${CONFIG.appName}` };
 
 export default function Page() {
   return (
@@ -14,7 +14,7 @@ export default function Page() {
       <Helmet>
         <title> {metadata.title}</title>
       </Helmet>                           
-      <OverviewAnalyticMetricsView />
+      <OverviewAnalyticsView />
     </>
   );
 }

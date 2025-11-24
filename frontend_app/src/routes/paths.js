@@ -66,6 +66,7 @@ export const paths = {
       app: `${ROOTS.DASHBOARD}/app`,
       analytics: `${ROOTS.DASHBOARD}/analytics`,
       calendar: `${ROOTS.DASHBOARD}/calendar`,
+      metrics: `${ROOTS.DASHBOARD}/metrics`,
     },
     user: {
       root: `${ROOTS.DASHBOARD}/user`,

@@ -91,7 +91,7 @@ export function CalendarToolbar({
             Add Note
           </Button>
 
-          <Button size="small" color="error" variant="contained" onClick={onToday}>
+          <Button size="small" color="warning" variant="contained" onClick={onToday}>
             Today
           </Button>
 
