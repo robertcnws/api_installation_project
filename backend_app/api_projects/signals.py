@@ -10,6 +10,7 @@ from .models import (
     ProjectDefaultGuideProduct,
     ProjectReminder,
     ProjectDefaultMaterial,
+    ProjectCalendarNotes,
 )
 from .models_sync import ProjectSync
 from asgiref.sync import async_to_sync
@@ -24,8 +25,26 @@ from api_projects.event_messages import (
     message_project_default_task,
     message_project_tracking,
     message_project_notification_user,
+    message_project_calendar_notes,
 )
 import json
+
+
+##########################################################################
+# ProjectCalendarNotes
+##########################################################################
+
+def project_calendar_notes_saved(sender, document, **kwargs):
+    created = kwargs.get('created', False)
+    channel_layer = get_channel_layer()
+    event = message_project_calendar_notes('created' if created else 'updated', document)
+    async_to_sync(channel_layer.group_send)('project_calendar_notes', serialize_datetime(event))
+    
+    
+def project_calendar_notes_deleted(sender, document, **kwargs):
+    channel_layer = get_channel_layer()
+    event = message_project_calendar_notes('deleted', document)
+    async_to_sync(channel_layer.group_send)('project_calendar_notes', serialize_datetime(event))
 
 
 ##########################################################################
@@ -289,3 +308,6 @@ signals.post_delete.connect(project_default_material_deleted, sender=ProjectDefa
 
 signals.post_save.connect(sync_project, sender=Project)
 signals.post_delete.connect(delete_from_sync, sender=Project)
+
+signals.post_save.connect(project_calendar_notes_saved, sender=ProjectCalendarNotes)
+signals.post_delete.connect(project_calendar_notes_deleted, sender=ProjectCalendarNotes)

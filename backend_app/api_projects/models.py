@@ -535,3 +535,30 @@ class ProjectDefaultMaterial(Document):
 
     def __str__(self):
         return self.name
+    
+class ProjectCalendarNotes(Document):
+    name = StringField(max_length=255, required=True)
+    description = StringField(null=True)
+    start_date = DateTimeField(null=True)
+    end_date = DateTimeField(null=True)
+    duration = IntField(default=0, null=True)
+    user_manager = DynamicField(null=True)
+    user_installer = DynamicField(null=True)
+    user_assignees = ListField(DynamicField(), default=list, null=True)
+    user_reporter = DynamicField(null=True)
+    associated_events = ListField(DynamicField(), default=list, null=True)
+    is_active = BooleanField(default=True)
+    created_time = DateTimeField(default=timezone.now, null=True)
+    last_modified_time = DateTimeField(default=timezone.now, null=True)
+    
+    meta = {
+        'collection': 'project_calendar_notes',
+        'indexes': [
+            'name', 'created_time', 'last_modified_time', 'is_active'
+        ],
+        'verbose_name': 'Project Calendar Note',
+        'verbose_name_plural': 'Project Calendar Notes'
+    }
+
+    def __str__(self):
+        return self.name

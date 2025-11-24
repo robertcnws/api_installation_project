@@ -54,7 +54,9 @@ export function useGetProjectEvents(projects = [], type = 'installation') {
       type === 'inspection' ? 1 :
         type === 'service' ? 3 :
           type === 'firstCheckMeasurement' ? 10 :
-            type === 'secondCheckMeasurement' ? 12 : 0;
+            type === 'secondCheckMeasurement' ? 12 :
+              type === 'calendarNote' ? 15 :
+                type === 'workOrder' ? 14 : 0;
     return ALL_COLORS[index];
   }, [type]);
 
@@ -65,27 +67,47 @@ export function useGetProjectEvents(projects = [], type = 'installation') {
       }
       const color = colorMappingRef.current[project.id];
 
-      const endDate = type === 'installation' || type === 'service' ?
+      const endDate = type === 'installation' || type === 'service' || type === 'calendarNote' ?
         dayjs(dayjs(project.endDate).format('YYYY-MM-DD')).add(23, 'hours').add(59, 'minutes').format('YYYY-MM-DD HH:mm:ss') :
-        type === 'inspection' ?
-          dayjs(dayjs(project.inspectionEndDate).format('YYYY-MM-DD')).add(23, 'hours').add(59, 'minutes').format('YYYY-MM-DD HH:mm:ss') :
-          type === 'firstCheckMeasurement' ?
-            dayjs(dayjs(project.firstDate).format('YYYY-MM-DD')).add(23, 'hours').add(59, 'minutes').format('YYYY-MM-DD HH:mm:ss') :
-            type === 'secondCheckMeasurement' ?
-              dayjs(dayjs(project.checkDate).format('YYYY-MM-DD')).add(23, 'hours').add(59, 'minutes').format('YYYY-MM-DD HH:mm:ss') :
-              dayjs(dayjs(project.finishPermissionEndDate).format('YYYY-MM-DD')).add(23, 'hours').add(59, 'minutes').format('YYYY-MM-DD HH:mm:ss');
+        type === 'workOrder' ?
+          dayjs(dayjs(project.start_date).format('YYYY-MM-DD'))
+            .add(project.duration - 1, 'days')
+            .add(23, 'hours')
+            .add(59, 'minutes')
+            .format('YYYY-MM-DD HH:mm:ss') :
+          type === 'inspection' ?
+            dayjs(dayjs(project.inspectionEndDate).format('YYYY-MM-DD'))
+              .add(23, 'hours')
+              .add(59, 'minutes')
+              .format('YYYY-MM-DD HH:mm:ss') :
+            type === 'firstCheckMeasurement' ?
+              dayjs(dayjs(project.firstDate).format('YYYY-MM-DD'))
+                .add(23, 'hours')
+                .add(59, 'minutes')
+                .format('YYYY-MM-DD HH:mm:ss') :
+              type === 'secondCheckMeasurement' ?
+                dayjs(dayjs(project.checkDate).format('YYYY-MM-DD'))
+                  .add(23, 'hours')
+                  .add(59, 'minutes')
+                  .format('YYYY-MM-DD HH:mm:ss') :
+                dayjs(dayjs(project.finishPermissionEndDate).format('YYYY-MM-DD'))
+                  .add(23, 'hours')
+                  .add(59, 'minutes')
+                  .format('YYYY-MM-DD HH:mm:ss');
 
       return {
         ...project,
         id: project.id,
-        title: project.name,
-        start: type === 'installation' || type === 'service' ?
+        title: type === 'workOrder' ? `${project.projectName} - ${project.name}` : project.name,
+        start: type === 'installation' || type === 'service' || type === 'calendarNote' ?
           dayjs(project.startDate).format('YYYY-MM-DD') : type === 'inspection' ?
             dayjs(project.inspectionDate).format('YYYY-MM-DD') :
-            type === 'firstCheckMeasurement' ?
-              project.firstDate :
-              type === 'secondCheckMeasurement' ?
-                project.checkDate : project.finishPermissionDate,
+            type === 'workOrder' ?
+              project.start_date :
+              type === 'firstCheckMeasurement' ?
+                project.firstDate :
+                type === 'secondCheckMeasurement' ?
+                  project.checkDate : project.finishPermissionDate,
         end: endDate,
         textColor: color,
         color,

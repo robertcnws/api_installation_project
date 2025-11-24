@@ -201,3 +201,28 @@ def message_project_notification_user(msg_type, document):
 
         }
     }
+
+def message_project_calendar_notes(msg_type, document):
+    return {
+        'type': 'project_calendar_notes_update',
+        'message': {
+            'type': msg_type,
+            "item": {
+                "id": str(document.id),
+                "name": document.name,
+                "description": document.description,
+                "startDate": document.start_date,
+                "endDate": document.end_date,
+                "duration": document.duration,
+                "userManager": document.user_manager,
+                "userInstaller": document.user_installer,
+                "userAssignees": document.user_assignees,
+                "userReporter": document.user_reporter,
+                "associatedEvents": document.associated_events,
+                "isActive": document.is_active,
+                "createdTime": document.created_time,
+                "lastModifiedTime": document.last_modified_time,
+            }
+
+        }
+    }

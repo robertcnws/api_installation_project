@@ -18,6 +18,7 @@ import { useDefaultMaterials, DefaultMaterialsProvider } from './contexts/defaul
 import { useProjectPermissions, ProjectPermissionsProvider } from './contexts/project-permission-context';
 import { useServiceDefaultTasks, ServiceDefaultTasksProvider } from './contexts/service-default-task-context';
 import { useDefaultGuideProducts, DefaultGuideProductsProvider } from './contexts/default-guide-product-context';
+import { useCalendarNotes, CalendarNotesProvider } from './contexts/project-calendar-notes-context';
 
 const DataContext = createContext();
 export const useDataContext = () => useContext(DataContext);
@@ -25,6 +26,7 @@ export function DataProvider({ children }) {
   return (
     <UserProvider>
       <UserRolesProvider>
+        <CalendarNotesProvider>
           <ProjectsProvider>
             <ServicesProvider>
               <MeasurementsProvider>
@@ -58,6 +60,7 @@ export function DataProvider({ children }) {
               </MeasurementsProvider>
             </ServicesProvider>
           </ProjectsProvider>
+          </CalendarNotesProvider>
       </UserRolesProvider>
     </UserProvider>
   );
@@ -81,6 +84,12 @@ function CombineProviders({ children }) {
   const { loadedServiceStages, refetchServiceStages } = useServiceStages();
   const { loadedServiceDefaultTasks, refetchServiceDefaultTasks } = useServiceDefaultTasks();
   const { loadedServiceIssues, refetchServiceIssues } = useServiceIssues();
+  const { 
+    loadedCalendarNotes, 
+    refetchCalendarNotes, 
+    loadingCalendarNotes, 
+    errorCalendarNotes 
+  } = useCalendarNotes();
   const { loadedDefaultMaterials, refetchDefaultMaterials, loadingDefaultMaterials, errorDefaultMaterials } = useDefaultMaterials();
 
   // console.log('loadedPermissions', loadedPermissions);
@@ -155,6 +164,10 @@ function CombineProviders({ children }) {
     refetchDefaultMaterials,
     loadingDefaultMaterials,
     errorDefaultMaterials,
+    loadedCalendarNotes, 
+    refetchCalendarNotes, 
+    loadingCalendarNotes, 
+    errorCalendarNotes 
   }), [
     userLogged,
     loadedUsers,
@@ -225,6 +238,10 @@ function CombineProviders({ children }) {
     refetchDefaultMaterials,
     loadingDefaultMaterials,
     errorDefaultMaterials,
+    loadedCalendarNotes, 
+    refetchCalendarNotes, 
+    loadingCalendarNotes, 
+    errorCalendarNotes 
   ]);
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>;

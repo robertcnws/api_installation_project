@@ -17,6 +17,7 @@ from .repository import (
     project_task_stage_repository,
     project_tracking_repository,
     project_work_orders_repository,
+    project_calendar_notes_repository,
     
 )
     
@@ -711,3 +712,33 @@ def delete_work_order(request, project_id, id):
 @permission_classes([AllowAny])
 def finish_work_order(request, project_id, id):
     return project_work_orders_repository.finish_project_work_order(request, project_id, id)
+
+
+##############################################
+# CREATE PROJECT CALENDAR NOTE
+##############################################
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def create_project_calendar_note(request):
+    return project_calendar_notes_repository.create_project_calendar_note(request)
+
+
+##############################################
+# UPDATE PROJECT CALENDAR NOTE
+##############################################
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def update_project_calendar_note(request, id):
+    return project_calendar_notes_repository.update_project_calendar_note(request, id)
+
+
+##############################################
+# DELETE PROJECT CALENDAR NOTE
+##############################################
+
+@api_view(['DELETE'])
+@permission_classes([AllowAny])
+def delete_project_calendar_note(request, id):
+    return project_calendar_notes_repository.delete_project_calendar_note(request, id)

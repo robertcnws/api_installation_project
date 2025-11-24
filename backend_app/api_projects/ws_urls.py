@@ -11,6 +11,7 @@ from .consumers import (
     ProjectDefaultGuideProductConsumer,
     ProjectReminderConsumer,
     ProjectDefaultMaterialConsumer,
+    ProjectCalendarNotesConsumer,
 )
 
 websocket_urlpatterns = [
@@ -24,4 +25,5 @@ websocket_urlpatterns = [
     path('api/projects/ws/default-guide-products/', ProjectDefaultGuideProductConsumer.as_asgi(), name='ws_default_guide_products'),
     path('api/projects/ws/project-reminders/', ProjectReminderConsumer.as_asgi(), name='ws_project_reminders'),
     path('api/projects/ws/default-materials/', ProjectDefaultMaterialConsumer.as_asgi(), name='ws_default_materials'),
+    path('api/projects/ws/project-calendar-notes/', ProjectCalendarNotesConsumer.as_asgi(), name='ws_project_calendar_notes'),
 ]

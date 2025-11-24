@@ -17,6 +17,9 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from django.urls.conf import include
+from django.conf import settings
+from django.conf.urls.static import static
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from api_authorization import views
 
 urlpatterns = [
@@ -29,3 +32,6 @@ urlpatterns = [
     path('api/measurements/', include('api_measurements.urls')),
     path('api/health-check/', views.health_check, name='health_check'),
 ]
+
+urlpatterns += staticfiles_urlpatterns()
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
