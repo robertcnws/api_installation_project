@@ -42,6 +42,10 @@ urlpatterns = [
     path('mark-read/notifications/', views.mark_as_read_notifications, name='mark_as_read_notifications'),
     path('delete/notifications/', views.delete_notifications, name='delete_notifications'),
     path('download/files/', views.download_s3_archive, name='download_s3_archive'),
+    # PROJECT CALENDAR NOTES
+    path('create/project/calendar-note/', views.create_project_calendar_note, name='create_project_calendar_note'),
+    path('update/project/calendar-note/<str:id>/', views.update_project_calendar_note, name='update_project_calendar_note'),
+    path('delete/project/calendar-note/<str:id>/', views.delete_project_calendar_note, name='delete_project_calendar_note'),
     # PROJECT TASKS
     path('create/project/task/', views.create_project_task, name='create_project_task'),
     path('update/project/task/<str:id>/', views.update_project_task, name='update_project_task'),
@@ -84,4 +88,4 @@ urlpatterns = [
     # GET FILE URL FROM AWS S3
     path('get-file-url/', views.get_default_file_url, name='get_file_url'),
 
-] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+]

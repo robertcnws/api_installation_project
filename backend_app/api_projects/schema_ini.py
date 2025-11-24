@@ -12,6 +12,7 @@ from api_projects.schema_models.model_schema_project_default_guide_product impor
 from api_projects.schema_models.model_schema_project_default_material import ProjectDefaultMaterialType
 from api_projects.schema_models.model_schema_project_reminder import ProjectRemainder
 from api_projects.schema_models.model_schema_project_tracking import ProjectTrackingType, ProjectTrackingViewType
+from api_projects.schema_models.model_schema_project_calendar_notes import ProjectCalendarNotesType
 
 from .models import (
     ProjectStage, 
@@ -29,6 +30,7 @@ from .models import (
     ProjectReminder,
     ProjectDefaultMaterial,
     ProjectView,
+    ProjectCalendarNotes,
 )
 from .models_sync import (
     ProjectSync,
@@ -70,6 +72,7 @@ class Query(graphene.ObjectType):
     )
     
     all_project_default_materials = graphene.List(ProjectDefaultMaterialType)
+    all_project_calendar_notes = graphene.List(ProjectCalendarNotesType)
     
     def resolve_all_project_reminders(self, info, username=None):
         if username:
@@ -157,5 +160,8 @@ class Query(graphene.ObjectType):
         
     def resolve_all_project_default_materials(self, info):
         return list(ProjectDefaultMaterial.objects(is_active=True))
+    
+    def resolve_all_project_calendar_notes(self, info):
+        return list(ProjectCalendarNotes.objects(is_active=True))
 
 schema = graphene.Schema(query=Query)

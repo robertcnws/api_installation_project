@@ -26,4 +26,4 @@ urlpatterns = [
     path('delete/measurement/<str:measurementId>/comment/<str:id>/', views.delete_comment, name='delete_comment'),
     
     
-] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+]

@@ -150,11 +150,19 @@ export function CalendarForm({ currentEvent, colorOptions, onClose }) {
 
   const onDelete = useCallback(async () => {
     try {
-      const eventId = currentEvent?.id.split('-')[0];
+      const eventId = currentEvent?.type === 'workOrder' ?
+        currentEvent?.id.split('-')[1] :
+        currentEvent?.id.split('-')[0];
       const module = currentEvent?.type === 'service' ? 'service' : 'project';
-      await axios.delete(`${CONFIG.apiUrl}/${module}s/delete/${module}/${eventId}/`, {
+      const url = currentEvent?.type === 'workOrder' ?
+        `${CONFIG.apiUrl}/projects/delete/project/${currentEvent.projectId}/work-order/${eventId}/` :
+        `${CONFIG.apiUrl}/${module}s/delete/${module}/${eventId}/`;
+      const userReporter = currentEvent?.type === 'workOrder' ?
+        JSON.stringify(userLogged?.data) :
+        userLogged?.data;
+      await axios.delete(url, {
         data: {
-          userReporter: userLogged?.data
+          userReporter,
         },
       });
       toast.success('Delete success!');

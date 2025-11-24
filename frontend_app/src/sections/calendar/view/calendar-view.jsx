@@ -36,7 +36,69 @@ import { useCalendar } from '../hooks/use-calendar';
 import { CalendarToolbar } from '../calendar-toolbar';
 import { CalendarFilters } from '../calendar-filters';
 import { CalendarFiltersResult } from '../calendar-filters-result';
+import { CalendarNoteForm } from '../calendar-note-form';
 
+function useSocketList(url, setItems) {
+  useEffect(() => {
+    const socket = new WebSocket(url);
+
+    socket.onerror = (errorEvent) => {
+      console.dir(errorEvent);
+      console.error('WebSocket error (toString):', errorEvent.toString());
+    };
+
+    socket.onmessage = (event) => {
+      const message = JSON.parse(event.data);
+
+      if (message.type === 'created' || message.type === 'updated') {
+        setItems((prevData) => {
+          const idx = prevData.findIndex(
+            (item) => String(item.id) === String(message.item.id)
+          );
+
+          if (idx !== -1) {
+            const updated = [...prevData];
+            updated[idx] = message.item;
+            return updated;
+          }
+
+          return [message.item, ...prevData];
+        });
+      } else if (message.type === 'deleted') {
+        setItems((prevData) =>
+          prevData.filter((item) => String(item.id) !== String(message.item.id))
+        );
+      }
+    };
+
+    return () => {
+      try {
+        if (socket && socket.readyState === WebSocket.OPEN) {
+          socket.close();
+        }
+      } catch (e) {
+        console.error('Error closing socket', e);
+      }
+    };
+  }, [url, setItems]);
+}
+
+// ----------------------------------------------------------------------
+// Helper para measurements
+// ----------------------------------------------------------------------
+
+function getMeasurementContextText(measurement) {
+  if (measurement.project?.name) {
+    return `Installation ${measurement.project.name}`;
+  }
+  if (measurement.service?.name) {
+    return `Service ${measurement.service.name}`;
+  }
+  if (measurement.customer?.name) {
+    return `Customer ${measurement.customer.name}`;
+  }
+  return '';
+}
 
 // ----------------------------------------------------------------------
 
@@ -52,140 +114,59 @@ export function CalendarView() {
     loadedMeasurements,
     refetchMeasurements,
     loadingMeasurements,
+    loadedCalendarNotes,
+    refetchCalendarNotes,
+    loadingCalendarNotes,
   } = useDataContext();
 
   const [projects, setProjects] = useState([]);
   const [services, setServices] = useState([]);
   const [measurements, setMeasurements] = useState([]);
+  const [calendarNotes, setCalendarNotes] = useState([]);
+  // const [workOrders, setWorkOrders] = useState([]);
 
   useEffect(() => {
-    if (refetchProjects) {
-      refetchProjects();
-    }
+    if (refetchProjects) refetchProjects();
+    if (refetchServices) refetchServices();
+    if (refetchMeasurements) refetchMeasurements();
+    if (refetchCalendarNotes) refetchCalendarNotes();
+  }, [refetchProjects, refetchServices, refetchMeasurements, refetchCalendarNotes]);
+
+  useEffect(() => {
     setProjects(loadedProjects || []);
-  }, [refetchProjects, loadedProjects]);
+  }, [loadedProjects]);
 
   useEffect(() => {
-    if (loadedProjects && loadedProjects.length > 0) {
-      setProjects(loadedProjects);
-    }
-  }, [loadedProjects, setProjects]);
-
-  useEffect(() => {
-    if (refetchServices) {
-      refetchServices();
-    }
     setServices(loadedServices || []);
-  }, [refetchServices, loadedServices]);
+  }, [loadedServices]);
 
   useEffect(() => {
-    if (loadedServices && loadedServices.length > 0) {
-      setServices(loadedServices);
-    }
-  }, [loadedServices, setServices]);
-
-  useEffect(() => {
-    if (refetchMeasurements) {
-      refetchMeasurements();
-    }
     setMeasurements(loadedMeasurements || []);
-  }, [refetchMeasurements, loadedMeasurements]);
+  }, [loadedMeasurements]);
 
   useEffect(() => {
-    if (loadedMeasurements && loadedMeasurements.length > 0) {
-      setMeasurements(loadedMeasurements);
-    }
-  }, [loadedMeasurements, setMeasurements]);
+    setCalendarNotes(loadedCalendarNotes || []);
+  }, [loadedCalendarNotes]);
 
-  useEffect(() => {
-    const socket = new WebSocket(`${CONFIG.wsProtocol}://${CONFIG.wsHost}/${CONFIG.wsDomain}/projects/ws/projects/`);
-    socket.onerror = (errorEvent) => {
-      console.dir(errorEvent);
-      console.error('WebSocket error (toString):', errorEvent.toString());
-    };
-    socket.onmessage = (event) => {
-      const message = JSON.parse(event.data);
-      if (message.type === 'created' || message.type === 'updated') {
-        setProjects((prevData) => {
-          const existingItemIndex = prevData.findIndex(item => String(item.id) === String(message.item.id));
-          if (existingItemIndex !== -1) {
-            const updatedData = [...prevData];
-            updatedData[existingItemIndex] = message.item;
-            return updatedData;
-          }
-          return [message.item, ...prevData];
-        });
-      }
-      else if (message.type === 'deleted') {
-        setProjects((prevData) => prevData.filter(item => String(item.id) !== String(message.item.id)));
-      }
-    };
-    return () => {
-      if (socket && socket.readyState === WebSocket.OPEN) {
-        socket.close();
-      }
-    };
-  }, []);
+  useSocketList(
+    `${CONFIG.wsProtocol}://${CONFIG.wsHost}/${CONFIG.wsDomain}/projects/ws/projects/`,
+    setProjects
+  );
 
-  useEffect(() => {
-    const socket = new WebSocket(`${CONFIG.wsProtocol}://${CONFIG.wsHost}/${CONFIG.wsDomain}/services/ws/services/`);
-    socket.onerror = (errorEvent) => {
-      console.dir(errorEvent);
-      console.error('WebSocket error (toString):', errorEvent.toString());
-    };
-    socket.onmessage = (event) => {
-      const message = JSON.parse(event.data);
-      if (message.type === 'created' || message.type === 'updated') {
-        setServices((prevData) => {
-          const existingItemIndex = prevData.findIndex(item => String(item.id) === String(message.item.id));
-          if (existingItemIndex !== -1) {
-            const updatedData = [...prevData];
-            updatedData[existingItemIndex] = message.item;
-            return updatedData;
-          }
-          return [message.item, ...prevData];
-        });
-      }
-      else if (message.type === 'deleted') {
-        setServices((prevData) => prevData.filter(item => String(item.id) !== String(message.item.id)));
-      }
-    };
-    return () => {
-      if (socket && socket.readyState === WebSocket.OPEN) {
-        socket.close();
-      }
-    };
-  }, []);
+  useSocketList(
+    `${CONFIG.wsProtocol}://${CONFIG.wsHost}/${CONFIG.wsDomain}/services/ws/services/`,
+    setServices
+  );
 
-  useEffect(() => {
-    const socket = new WebSocket(`${CONFIG.wsProtocol}://${CONFIG.wsHost}/${CONFIG.wsDomain}/measurements/ws/measurements/`);
-    socket.onerror = (errorEvent) => {
-      console.dir(errorEvent);
-      console.error('WebSocket error (toString):', errorEvent.toString());
-    };
-    socket.onmessage = (event) => {
-      const message = JSON.parse(event.data);
-      if (message.type === 'created' || message.type === 'updated') {
-        setMeasurements((prevData) => {
-          const existingItemIndex = prevData.findIndex(item => String(item.id) === String(message.item.id));
-          if (existingItemIndex !== -1) {
-            const updatedData = [...prevData];
-            updatedData[existingItemIndex] = message.item;
-            return updatedData;
-          }
-          return [message.item, ...prevData];
-        });
-      }
-      else if (message.type === 'deleted') {
-        setMeasurements((prevData) => prevData.filter(item => String(item.id) !== String(message.item.id)));
-      }
-    };
-    return () => {
-      if (socket && socket.readyState === WebSocket.OPEN) {
-        socket.close();
-      }
-    };
-  }, []);
+  useSocketList(
+    `${CONFIG.wsProtocol}://${CONFIG.wsHost}/${CONFIG.wsDomain}/measurements/ws/measurements/`,
+    setMeasurements
+  );
+
+  useSocketList(
+    `${CONFIG.wsProtocol}://${CONFIG.wsHost}/${CONFIG.wsDomain}/projects/ws/project-calendar-notes/`,
+    setCalendarNotes
+  );
 
   const theme = useTheme();
 
@@ -206,6 +187,17 @@ export function CalendarView() {
     namedType: 'installation',
     icon: 'fluent-emoji-high-contrast:man-mechanic',
   })) || [], [projects]);
+
+  const calendarNotesProjects = useMemo(() => calendarNotes?.filter((cn) => cn.startDate).map((p) => ({
+    ...p,
+    id: `${p.id}-calendarNote`,
+    objectId: p.id,
+    originalName: p.name,
+    title: `Note ${p.name}`,
+    type: 'calendarNote',
+    namedType: 'calendar note',
+    icon: 'si:ai-note-duotone',
+  })) || [], [calendarNotes]);
 
   const inspectionProjects = useMemo(
     () => projects?.filter((project) => project.hasPermission && project.inspectionDate).map((p) => ({
@@ -245,67 +237,95 @@ export function CalendarView() {
     })) || [], [services]);
 
   const eventsFirstDateMeasurements = useMemo(
-    () => measurements
-      ?.filter(m => m.firstDate)
-      .map(measurement => {
-        let contextText = '';
-        if (measurement.project?.name) {
-          contextText = `Installation ${measurement.project.name}`;
-        } else if (measurement.service?.name) {
-          contextText = `Service ${measurement.service.name}`;
-        } else if (measurement.customer?.name) {
-          contextText = `Customer ${measurement.customer.name}`;
-        }
+    () =>
+      measurements
+        ?.filter((m) => m.firstDate)
+        .map((measurement) => {
+          const contextText = getMeasurementContextText(measurement);
 
-        return {
-          ...measurement,
-          id: `${measurement.id}-measurement`,
-          name: `${measurement.number} First Check Measurement for ${contextText}`,
-          originalName: `${measurement.number} First Check Measurement for ${contextText}`,
-          description: `${measurement.number} First Check Measurement for ${contextText}`,
-          title: `${measurement.number} First Check Measurement`,
-          start: measurement.firstDate,
-          end: measurement.firstDate,
-          allDay: true,
-          type: 'firstCheckMeasurement',
-          namedType: 'first check measurement',
-          icon: 'tdesign:measurement',
-        };
-      }) || [], [measurements]);
+          return {
+            ...measurement,
+            id: `${measurement.id}-measurement`,
+            name: `${measurement.number} First Check Measurement for ${contextText}`,
+            originalName: `${measurement.number} First Check Measurement for ${contextText}`,
+            description: `${measurement.number} First Check Measurement for ${contextText}`,
+            title: `${measurement.number} First Check Measurement`,
+            start: measurement.firstDate,
+            end: measurement.firstDate,
+            allDay: true,
+            type: 'firstCheckMeasurement',
+            namedType: 'first check measurement',
+            icon: 'tdesign:measurement',
+          };
+        }) || [],
+    [measurements]
+  );
 
   const eventsSecondDateMeasurements = useMemo(
-    () => measurements
-      ?.filter((m) => m.checkDate)
-      .map((measurement) => {
-        let contextText = '';
-        if (measurement.project?.name) {
-          contextText = `Installation ${measurement.project.name}`;
-        } else if (measurement.service?.name) {
-          contextText = `Service ${measurement.service.name}`;
-        } else if (measurement.customer?.name) {
-          contextText = `Customer ${measurement.customer.name}`;
-        }
+    () =>
+      measurements
+        ?.filter((m) => m.checkDate)
+        .map((measurement) => {
+          const contextText = getMeasurementContextText(measurement);
 
-        return {
-          ...measurement,
-          id: `${measurement.id}-measurement`,
-          name: `${measurement.number} Second Check Measurement for ${contextText}`,
-          originalName: `${measurement.number} Second Check Measurement for ${contextText}`,
-          description: `${measurement.number} Second Check Measurement for ${contextText}`,
-          title: `${measurement.number} Second Check Measurement`,
-          start: measurement.checkDate,
-          end: measurement.checkDate,
-          allDay: true,
-          type: 'secondCheckMeasurement',
-          namedType: 'second check measurement',
-          icon: 'tdesign:measurement-1',
-        }
-      }) || [], [measurements]);
+          return {
+            ...measurement,
+            id: `${measurement.id}-measurement`,
+            name: `${measurement.number} Second Check Measurement for ${contextText}`,
+            originalName: `${measurement.number} Second Check Measurement for ${contextText}`,
+            description: `${measurement.number} Second Check Measurement for ${contextText}`,
+            title: `${measurement.number} Second Check Measurement`,
+            start: measurement.checkDate,
+            end: measurement.checkDate,
+            allDay: true,
+            type: 'secondCheckMeasurement',
+            namedType: 'second check measurement',
+            icon: 'tdesign:measurement-1',
+          };
+        }) || [],
+    [measurements]
+  );
 
+  const workOrderProjects = useMemo(
+    () => {
+      const allActiveWorkOrders =
+        projects
+          ?.flatMap((project) =>
+            (project.workOrders || []).map((workOrder) => ({
+              ...workOrder,
+              projectName: project.name,
+              projectNumber: project.number,
+              projectId: project.id,
+              userManager: project.userManager,
+            }))
+          )
+          .filter((workOrder) => !workOrder.is_finished) || [];
+
+      return allActiveWorkOrders.map((wo) => ({
+        ...wo,
+        id: `${wo.projectId}-${wo.id}-workOrder`,
+        customTitle: `WO ${wo.projectName} - ${wo.name}`,
+        originalName: `${wo.projectName} - ${wo.name}`,
+        title: `Work Order ${wo.projectName} - ${wo.name}`,
+        type: 'workOrder',
+        namedType: 'work order',
+        icon: 'pajamas:work-item-maintenance',
+      }));
+    },
+    [projects]
+  );
 
   const {
     events: installEvents, eventsLoading: installEventsLoading
   } = useGetProjectEvents(installProjects, 'installation');
+
+  const {
+    events: calendarNoteEvents, eventsLoading: calendarNoteEventsLoading
+  } = useGetProjectEvents(calendarNotesProjects, 'calendarNote');
+
+  const {
+    events: workOrderEvents, eventsLoading: workOrderEventsLoading
+  } = useGetProjectEvents(workOrderProjects, 'workOrder');
 
   const {
     events: inspectionEvents, eventsLoading: inspectionEventsLoading
@@ -329,6 +349,8 @@ export function CalendarView() {
 
   const events = [
     ...installEvents,
+    ...calendarNoteEvents,
+    ...workOrderEvents,
     ...inspectionEvents,
     ...finishPermissionEvents,
     ...serviceEvents,
@@ -338,6 +360,8 @@ export function CalendarView() {
 
   const eventsLoading = (
     installEventsLoading ||
+    calendarNoteEventsLoading ||
+    workOrderEventsLoading ||
     inspectionEventsLoading ||
     finishPermissionEventsLoading ||
     serviceEventsLoading ||
@@ -450,11 +474,13 @@ export function CalendarView() {
 
     const projectInstaller = type === 'service' ?
       getServiceInstaller(info.event.extendedProps, CONFIG) :
-      type === 'firstCheckMeasurement' ?
-        info.event.extendedProps.firstAssignee :
-        type === 'secondCheckMeasurement' ?
-          info.event.extendedProps.checkAssignee :
-          getProjectInstaller(info.event.extendedProps, CONFIG);
+      type === 'workOrder' ?
+        info.event.extendedProps.user_assignee :
+        type === 'firstCheckMeasurement' ?
+          info.event.extendedProps.firstAssignee :
+          type === 'secondCheckMeasurement' ?
+            info.event.extendedProps.checkAssignee :
+            getProjectInstaller(info.event.extendedProps, CONFIG);
 
 
     const title = info.event.extendedProps.customTitle
@@ -627,7 +653,7 @@ export function CalendarView() {
 
             <Dialog
               fullWidth
-              maxWidth="xs"
+              maxWidth={currentEvent?.type !== 'calendarNote' ? 'sm' : 'md'}
               open={openForm}
               onClose={onCloseForm}
               transitionDuration={{
@@ -656,11 +682,19 @@ export function CalendarView() {
                 )}
               </DialogTitle>
 
-              <CalendarForm
-                currentEvent={currentEvent}
-                colorOptions={CALENDAR_COLOR_OPTIONS}
-                onClose={onCloseForm}
-              />
+              {currentEvent && currentEvent?.type !== 'calendarNote' && (
+                <CalendarForm
+                  currentEvent={currentEvent}
+                  colorOptions={CALENDAR_COLOR_OPTIONS}
+                  onClose={onCloseForm}
+                />
+              )}
+              {currentEvent && currentEvent?.type === 'calendarNote' && (
+                <CalendarNoteForm
+                  currentEvent={currentEvent}
+                  onClose={onCloseForm}
+                />
+              )}
             </Dialog>
 
             <CalendarFilters
