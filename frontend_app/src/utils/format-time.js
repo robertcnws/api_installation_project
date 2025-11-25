@@ -198,8 +198,14 @@ export function fDurationStats(arrayDates) {
   let count = 0;               // por si algún registro invalido lo saltamos
   let minDurationMs = null;    // solo duraciones < 1h
   let maxDurationMs = null;    // cualquier duración
+  let minProjectId = null;
+  let maxProjectId = null;
+  let minProjectName = null;
+  let maxProjectName = null;
+  let minProjectNumber = null;
+  let maxProjectNumber = null;
 
-  arrayDates.forEach(({ startDate, endDate }) => {
+  arrayDates.forEach(({ startDate, endDate, id, name, number }) => {
     const start = dayjs(startDate);
     const end = dayjs(endDate);
 
@@ -214,12 +220,18 @@ export function fDurationStats(arrayDates) {
     // MAX normal
     if (maxDurationMs === null || diff > maxDurationMs) {
       maxDurationMs = diff;
+      maxProjectId = id;
+      maxProjectName = name;
+      maxProjectNumber = number;
     }
 
     // MIN solo si es < 1 hora (3600000 ms)
     if (diff >= 3600000) {
       if (minDurationMs === null || diff < minDurationMs) {
         minDurationMs = diff;
+        minProjectId = id;
+        minProjectName = name;
+        minProjectNumber = number;
       }
     }
   });
@@ -230,6 +242,12 @@ export function fDurationStats(arrayDates) {
       averageDuration: null,
       minDuration: null,
       maxDuration: null,
+      minProjectId: null,
+      maxProjectId: null,
+      minProjectName: null,
+      maxProjectName: null,
+      minProjectNumber: null,
+      maxProjectNumber: null,
     };
   }
 
@@ -254,6 +272,12 @@ export function fDurationStats(arrayDates) {
     averageDuration,
     minDuration,
     maxDuration,
+    minProjectId,
+    maxProjectId,
+    minProjectName,
+    maxProjectName,
+    minProjectNumber,
+    maxProjectNumber,
   };
 }
 

@@ -12,6 +12,10 @@ import { varAlpha, bgGradient } from 'src/theme/styles';
 import { Iconify } from 'src/components/iconify';
 import { SvgColor } from 'src/components/svg-color';
 import { useMemo } from 'react';
+import { Link, Typography } from '@mui/material';
+import { Label } from 'src/components/label';
+import { useRouter } from 'src/routes/hooks';
+import { paths } from 'src/routes/paths';
 
 // ----------------------------------------------------------------------
 
@@ -21,11 +25,13 @@ export function AnalyticsMetricsStageSummary({
   title,
   data,
   allProjects,
-  color='primary',
+  color = 'primary',
   sx,
   ...other
 }) {
   const theme = useTheme();
+
+  const router = useRouter();
 
   const sortedTasks = useMemo(() => {
     const tasks = allProjects[0]?.projectDefaultTasks ?? [];
@@ -87,7 +93,13 @@ export function AnalyticsMetricsStageSummary({
           ? createdStart
           : lastModifiedStart;
 
-        return { startDate, endDate };
+        return {
+          startDate,
+          endDate,
+          id: project.id,
+          name: project.name,
+          number: project.number
+        };
       })
       .filter(Boolean);
   }, [allProjects, firstTask, lastTask]);
@@ -110,7 +122,17 @@ export function AnalyticsMetricsStageSummary({
   //   [arrayDates]
   // );
 
-  const { averageDuration, minDuration, maxDuration } = useMemo(
+  const {
+    averageDuration,
+    minDuration,
+    maxDuration,
+    minProjectId,
+    maxProjectId,
+    minProjectName,
+    maxProjectName,
+    minProjectNumber,
+    maxProjectNumber,
+  } = useMemo(
     () => fDurationStats(arrayDates),
     [arrayDates]
   );
@@ -153,11 +175,56 @@ export function AnalyticsMetricsStageSummary({
             Avg Duration: <b>{averageDuration ? `${averageDuration}` : 'N/A'}</b>
           </Box>
           <Box sx={{ fontSize: '14px' }}>
-            Min Duration: <b>{minDuration ? `${minDuration}` : 'N/A'}</b>
+            Min Duration: <b>{minDuration ? `${minDuration} ` : 'N/A'}</b><br />
+            <Link
+              variant="caption"
+              color="inherit"
+              noWrap 
+              sx={{ color: 'text.primary', cursor: 'pointer', fontSize: '11px', }}
+              href='#'
+              onClick={(e) => {
+                e.preventDefault();
+                localStorage.setItem('projectId', minProjectId);
+                router.push(paths.dashboard.project.details(minProjectId));
+              }}
+            >
+              {minProjectId && (`${minProjectName || 'Unnamed'}`)}
+            </Link>
           </Box>
+
           <Box sx={{ fontSize: '14px' }}>
-            Max Duration: <b>{maxDuration ? `${maxDuration}` : 'N/A'}</b>
+            Max Duration: <b>{maxDuration ? `${maxDuration} ` : 'N/A'}</b><br />
+            <Link
+              variant="caption"
+              color="inherit"
+              noWrap 
+              sx={{ color: 'text.primary', cursor: 'pointer', fontSize: '11px', }}
+              href='#'
+              onClick={(e) => {
+                e.preventDefault();
+                localStorage.setItem('projectId', maxProjectId);
+                router.push(paths.dashboard.project.details(maxProjectId));
+              }}
+            >
+              {maxProjectId && (`${maxProjectName || 'Unnamed'}`)}
+            </Link>
+            {/* <Label
+              variant="caption"
+              sx={{
+                color: 'text.secondary',
+                fontSize: '11px',
+                cursor: 'pointer'
+              }}
+              onClick={() => {
+                if (maxProjectId) {
+                  router.push(paths.dashboard.project.details(maxProjectId));
+                }
+              }}
+            >
+              {maxProjectId && (`${maxProjectName || 'Unnamed'}`)}
+            </Label> */}
           </Box>
+
         </Box>
       </Box>
 
