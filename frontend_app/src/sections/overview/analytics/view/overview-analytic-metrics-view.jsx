@@ -28,35 +28,8 @@ import { WelcomeMetricsTypography } from '../welcome-metrics-typography';
 import { ProjectsToDoToday } from '../projects-to-do-today';
 import { ProjectsStageToday } from '../projects-stage-today';
 import { AnalyticsMetricsWidgetSummary } from '../analytics-metrics-widget-summary';
+import { AnalyticsMetricsStageSummary } from '../analytics-metrics-stage-summary';
 
-
-const projectTypes = [
-  {
-    value: 'finished installations',
-    label: 'Finished Installations',
-    icon: 'mdi:store-complete-outline'
-  },
-  {
-    value: 'in progress installations',
-    label: 'In Progress Installations',
-    icon: 'streamline:business-progress-bar-2-remix'
-  },
-  {
-    value: 'finished services',
-    label: 'Finished Services',
-    icon: 'carbon:task-complete'
-  },
-  {
-    value: 'in progress services',
-    label: 'In Progress Services',
-    icon: 'ix:import-progress'
-  },
-  {
-    value: 'closed services',
-    label: 'Closed Services',
-    icon: 'material-symbols:tab-close-right-outline'
-  },
-]
 
 export function OverviewAnalyticMetricsView() {
   const router = useRouter();
@@ -134,7 +107,75 @@ export function OverviewAnalyticMetricsView() {
 
   const isInst = isInstaller(userLogged?.data?.user_role?.name);
 
-  if (loadingProjects || projects.length === 0 || 
+  const finishedProjects = useMemo(
+    () => projects?.filter((p) => p.currentStage?.name?.toLowerCase() === 'finished'),
+    [projects]
+  );
+
+  const inProgressProjects = useMemo(
+    () => projects?.filter((p) => p.currentStage?.name?.toLowerCase() !== 'finished'),
+    [projects]
+  );
+
+  const finishedServices = useMemo(
+    () => services?.filter((s) => s.currentStage?.name?.toLowerCase() === 'finished' && !s.isClosed),
+    [services]
+  );
+
+  const inProgressServices = useMemo(
+    () => services?.filter((s) => s.currentStage?.name?.toLowerCase() !== 'finished' && !s.isClosed),
+    [services]
+  );
+
+  const closedServices = useMemo(
+    () => services?.filter((s) => s.isClosed),
+    [services]
+  );
+
+  const projectTypes = useMemo(() => [
+    {
+      value: 'finished installations',
+      label: 'Finished Installations',
+      icon: 'mdi:store-complete-outline',
+      data: finishedProjects,
+    },
+    {
+      value: 'in progress installations',
+      label: 'In Progress Installations',
+      icon: 'streamline:business-progress-bar-2-remix',
+      data: inProgressProjects,
+    },
+    {
+      value: 'finished services',
+      label: 'Finished Services',
+      icon: 'carbon:task-complete',
+      data: finishedServices,
+    },
+    {
+      value: 'in progress services',
+      label: 'In Progress Services',
+      icon: 'ix:import-progress',
+      data: inProgressServices,
+    },
+    {
+      value: 'closed services',
+      label: 'Closed Services',
+      icon: 'material-symbols:tab-close-right-outline',
+      data: closedServices,
+    },
+  ], [finishedProjects, inProgressProjects, finishedServices, inProgressServices, closedServices]);
+
+  const projectStageTypes = useMemo(
+    () => Object.entries(CONFIG.stages).slice(0, 5).map(([key, label]) => ({
+      value: key,
+      label,
+      data: projects.filter((p) => p.currentStage?.name?.toLowerCase() === key.toLowerCase()),
+      icon: CONFIG.stageIcons[key] || 'mdi:progress-clock',
+    })),
+    [projects]
+  )
+
+  if (loadingProjects || projects.length === 0 ||
     loadingServices || services.length === 0 ||
     loadingMeasurements || measurements.length === 0) {
     return (
@@ -169,27 +210,49 @@ export function OverviewAnalyticMetricsView() {
       <WelcomeMetricsTypography userLogged={userLogged} />
 
       {!isInst ? (
-        <Grid container spacing={1}>
-          {projectTypes.map(({ value, label, icon }) => (
-            <Grid key={value} xs={12} sm={6} md={2.4}>
-              <AnalyticsMetricsWidgetSummary
-                sx={{ cursor: 'pointer' }}
-                title={label}
-                percent={0}
-                total={0}
-                quantity={0}
-                color='primary'
-                icon={
-                  <Iconify
-                    icon={icon}
-                    width={32}
-                    height={32}
-                  />
-                }
-              />
-            </Grid>
-          ))}
-        </Grid>
+        <Box sx={{ mb: 2 }}>
+          <Grid container spacing={1}>
+            {projectTypes.map(({ value, label, icon, data }) => (
+              <Grid key={value} xs={12} sm={6} md={2.4}>
+                <AnalyticsMetricsWidgetSummary
+                  sx={{ cursor: 'pointer' }}
+                  title={label}
+                  percent={0}
+                  total={0}
+                  quantity={data?.length}
+                  color='primary'
+                  icon={
+                    <Iconify
+                      icon={icon}
+                      width={32}
+                      height={32}
+                    />
+                  }
+                />
+              </Grid>
+            ))}
+          </Grid>
+          <Grid container spacing={1}>
+            {projectStageTypes.map(({ value, label, icon, data }) => (
+              <Grid key={value} xs={12} sm={6} md={2.4}>
+                <AnalyticsMetricsStageSummary
+                  sx={{ cursor: 'pointer' }}
+                  title={`In Stage: ${label}`}
+                  value={value}
+                  data={data}
+                  allProjects={projects}
+                  icon={
+                    <Iconify
+                      icon={icon}
+                      width={32}
+                      height={32}
+                    />
+                  }
+                />
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
       ) : (
         <Grid container xs={12} spacing={1} sx={{ mb: 1 }}>
           <Button

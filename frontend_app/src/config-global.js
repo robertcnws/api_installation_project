@@ -63,6 +63,15 @@ export const CONFIG = {
     finished: import.meta.env.VITE_STAGE_FINISHED ?? '',
     repair: import.meta.env.VITE_STAGE_REPAIR ?? '',
   },
+  stageIcons: {
+    preparation: 'hugeicons:start-up-01',
+    coordination: 'streamline-plump:3d-coordinate-axis-remix',
+    installation: 'mdi:settings-play-outline',
+    permission: 'icon-park-solid:permissions',
+    closing: 'carbon:right-panel-close-filled',
+    finished: 'octicon:tracked-by-closed-completed-16',
+    repair: 'mdi:tools-wrench-outline',
+  },
   taskStatus: {
     notStarted: import.meta.env.VITE_TASK_STATUS_NOT_STARTED ?? '',
     inProgress: import.meta.env.VITE_TASK_STATUS_IN_PROGRESS ?? '',
