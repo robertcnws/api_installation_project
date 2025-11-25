@@ -29,6 +29,7 @@ import { ProjectsToDoToday } from '../projects-to-do-today';
 import { ProjectsStageToday } from '../projects-stage-today';
 import { AnalyticsMetricsWidgetSummary } from '../analytics-metrics-widget-summary';
 import { AnalyticsMetricsStageSummary } from '../analytics-metrics-stage-summary';
+import { AnalyticsMetricsProjectSummary } from '../analytics-metrics-project-summary';
 
 
 export function OverviewAnalyticMetricsView() {
@@ -87,23 +88,22 @@ export function OverviewAnalyticMetricsView() {
     }
   }, [loadedMeasurements]);
 
-  // WS para servicios
-  useSocketList({
-    url: `${CONFIG.wsProtocol}://${CONFIG.wsHost}/${CONFIG.wsDomain}/services/ws/services/`,
-    setItems: setServices,
-  });
+  useSocketList(
+    `${CONFIG.wsProtocol}://${CONFIG.wsHost}/${CONFIG.wsDomain}/services/ws/services/`,
+    setServices
+  );
 
   // WS para proyectos
-  useSocketList({
-    url: `${CONFIG.wsProtocol}://${CONFIG.wsHost}/${CONFIG.wsDomain}/projects/ws/projects/`,
-    setItems: setProjects,
-  });
+  useSocketList(
+    `${CONFIG.wsProtocol}://${CONFIG.wsHost}/${CONFIG.wsDomain}/projects/ws/projects/`,
+    setProjects
+  );
 
   // WS para measurements
-  useSocketList({
-    url: `${CONFIG.wsProtocol}://${CONFIG.wsHost}/${CONFIG.wsDomain}/measurements/ws/measurements/`,
-    setItems: setMeasurements,
-  });
+  useSocketList(
+    `${CONFIG.wsProtocol}://${CONFIG.wsHost}/${CONFIG.wsDomain}/measurements/ws/measurements/`,
+    setMeasurements
+  );
 
   const isInst = isInstaller(userLogged?.data?.user_role?.name);
 
@@ -251,6 +251,22 @@ export function OverviewAnalyticMetricsView() {
                 />
               </Grid>
             ))}
+          </Grid>
+          <Grid container spacing={1}>
+            <Grid key='finished-installations-summary' xs={12} sm={6} md={6}>
+              <AnalyticsMetricsProjectSummary
+                sx={{ cursor: 'pointer' }}
+                title='Finished Installations Summary'
+                allProjects={projects}
+                icon={
+                  <Iconify
+                    icon='streamline-ultimate:engineer-project-superviser-1-bold'
+                    width={32}
+                    height={32}
+                  />
+                }
+              />
+            </Grid>
           </Grid>
         </Box>
       ) : (
