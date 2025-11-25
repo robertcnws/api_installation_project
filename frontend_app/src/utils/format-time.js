@@ -49,6 +49,216 @@ export function fDuration(startDate, endDate) {
     .replace('a year', '1 year');
 }
 
+export function fDurationInFormat(startDate, endDate) {
+  const start = dayjs(startDate);
+  const end = dayjs(endDate);
+
+  const years = end.diff(start, 'year');
+  start.add(years, 'year');
+  const months = end.diff(start, 'month');
+  start.add(months, 'month');
+  const days = end.diff(start, 'day');
+  start.add(days, 'day');
+  const hours = end.diff(start, 'hour');
+  start.add(hours, 'hour');
+  const minutes = end.diff(start, 'minute');
+  start.add(minutes, 'minute');
+  const seconds = end.diff(start, 'second');
+
+  const result = [];
+  if (years > 0) {
+    result.push(`${years} year${years > 1 ? 's' : ''}`);
+  }
+  if (months > 0) {
+    result.push(`${months} month${months > 1 ? 's' : ''}`);
+  }
+  if (days > 0) {
+    result.push(`${days} day${days > 1 ? 's' : ''}`);
+  }
+  if (hours > 0) {
+    result.push(`${hours} hr${hours > 1 ? 's' : ''}`);
+  }
+  if (minutes > 0) {
+    result.push(`${minutes} min${minutes > 1 ? 's' : ''}`);
+  }
+  if (seconds > 0) {
+    result.push(`${seconds} sec${seconds > 1 ? 's' : ''}`);
+  }
+
+  return result.join(' ');
+}
+
+export function fDurationFormatted(durationObj) {
+  const years = durationObj.years();
+  const months = durationObj.months();
+  const days = durationObj.days();
+  const hours = durationObj.hours();
+  const minutes = durationObj.minutes();
+  const seconds = durationObj.seconds();
+
+  const result = [];
+
+  if (years > 0) {
+    result.push(`${years} year${years > 1 ? 's' : ''}`);
+  }
+  if (months > 0) {
+    result.push(`${months} month${months > 1 ? 's' : ''}`);
+  }
+  if (days > 0) {
+    result.push(`${days} day${days > 1 ? 's' : ''}`);
+  }
+  if (hours > 0) {
+    result.push(`${hours} hr${hours > 1 ? 's' : ''}`);
+  }
+  if (minutes > 0) {
+    result.push(`${minutes} min${minutes > 1 ? 's' : ''}`);
+  }
+  // if (seconds > 0) {
+  //   result.push(`${seconds} sec${seconds > 1 ? 's' : ''}`);
+  // }
+
+  return result.slice(0, 3).join(' ');
+}
+
+// ----------------------------------------------------------------------
+
+export function fAverageDuration(arrayDates) {
+  if (!arrayDates || arrayDates.length === 0) {
+    return null;
+  }
+
+  const totalDuration = arrayDates.reduce((total, { startDate, endDate }) => {
+    const start = dayjs(startDate);
+    const end = dayjs(endDate);
+    const diff = end.diff(start);
+    return total + diff;
+  }, 0);
+
+  const averageDuration = totalDuration / arrayDates.length;
+
+  const durationObj = dayjs.duration(averageDuration);
+
+  return fDurationFormatted(durationObj);
+}
+
+export function fTypeDuration(arrayDates, typeDuration) {
+  if (!arrayDates || arrayDates.length === 0) {
+    return null;
+  }
+
+  let selectedDuration = null; // <-- Mucho mejor que 0 para distinguir sin errores
+
+  arrayDates.forEach(({ startDate, endDate }) => {
+    const start = dayjs(startDate);
+    const end = dayjs(endDate);
+    const diff = end.diff(start); // ms
+
+    // === Si estamos buscando el MINIMO ===
+    if (typeDuration === 'min') {
+      // ignorar valores menores a 1 hora (3600000 ms)
+      if (diff < 3600000) return;
+
+      // si aún no hay uno o este es menor, tomarlo
+      if (selectedDuration === null || diff < selectedDuration) {
+        selectedDuration = diff;
+      }
+
+      return;
+    }
+
+    // === Si estamos buscando el MAXIMO ===
+    if (typeDuration === 'max') {
+      if (selectedDuration === null || diff > selectedDuration) {
+        selectedDuration = diff;
+      }
+    }
+  });
+
+  // Si no se encontró un valor válido para min (todos < 1 min)
+  if (selectedDuration === null) {
+    return null;
+  }
+
+  const durationObj = dayjs.duration(selectedDuration);
+
+  return fDurationFormatted(durationObj);
+}
+
+
+export function fDurationStats(arrayDates) {
+  if (!arrayDates || arrayDates.length === 0) {
+    return {
+      averageDuration: null,
+      minDuration: null,
+      maxDuration: null,
+    };
+  }
+
+  let totalDuration = 0;       // suma de todos los diff
+  let count = 0;               // por si algún registro invalido lo saltamos
+  let minDurationMs = null;    // solo duraciones < 1h
+  let maxDurationMs = null;    // cualquier duración
+
+  arrayDates.forEach(({ startDate, endDate }) => {
+    const start = dayjs(startDate);
+    const end = dayjs(endDate);
+
+    if (!start.isValid() || !end.isValid()) return;
+
+    const diff = end.diff(start); // milisegundos
+
+    // acumulamos para el promedio
+    totalDuration += diff;
+    count += 1;
+
+    // MAX normal
+    if (maxDurationMs === null || diff > maxDurationMs) {
+      maxDurationMs = diff;
+    }
+
+    // MIN solo si es < 1 hora (3600000 ms)
+    if (diff >= 3600000) {
+      if (minDurationMs === null || diff < minDurationMs) {
+        minDurationMs = diff;
+      }
+    }
+  });
+
+  // si no hubo ni un registro válido
+  if (count === 0) {
+    return {
+      averageDuration: null,
+      minDuration: null,
+      maxDuration: null,
+    };
+  }
+
+  // promedio
+  const averageDuration =
+    totalDuration > 0
+      ? fDurationFormatted(dayjs.duration(totalDuration / count))
+      : null;
+
+  // min y max formateados
+  const minDuration =
+    minDurationMs !== null
+      ? fDurationFormatted(dayjs.duration(minDurationMs))
+      : null;
+
+  const maxDuration =
+    maxDurationMs !== null
+      ? fDurationFormatted(dayjs.duration(maxDurationMs))
+      : null;
+
+  return {
+    averageDuration,
+    minDuration,
+    maxDuration,
+  };
+}
+
+
+
 // ----------------------------------------------------------------------
 
 /** output: Apr 17 2022 12:00 am
