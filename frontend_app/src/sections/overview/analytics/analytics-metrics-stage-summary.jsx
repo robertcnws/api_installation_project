@@ -168,8 +168,6 @@ export function AnalyticsMetricsStageSummary({
         }}
       >
         <Box sx={{ flexGrow: 1, minWidth: 112 }}>
-
-          {/* <Box sx={{ typography: 'h4' }}>{fShortenNumber(total)}</Box> */}
           <Box sx={{ fontSize: '14px' }}>Current In Stage: <b>{data?.length || 0} installation(s)</b></Box>
           <Box sx={{ fontSize: '14px' }}>
             Avg Duration: <b>{averageDuration ? `${averageDuration}` : 'N/A'}</b>
