@@ -117,7 +117,7 @@ export function fDurationFormatted(durationObj) {
   //   result.push(`${seconds} sec${seconds > 1 ? 's' : ''}`);
   // }
 
-  return result.slice(0, 3).join(' ');
+  return result.slice(0, 2).join(' ');
 }
 
 // ----------------------------------------------------------------------

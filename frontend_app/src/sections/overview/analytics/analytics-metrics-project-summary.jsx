@@ -9,8 +9,6 @@ import { useTheme, alpha } from '@mui/material/styles';
 
 import { fIsAfter, fDurationStats } from 'src/utils/format-time';
 import { CONFIG } from 'src/config-global';
-import { varAlpha, bgGradient } from 'src/theme/styles';
-
 import { Iconify } from 'src/components/iconify';
 import { SvgColor } from 'src/components/svg-color';
 import { Label } from 'src/components/label';
@@ -19,11 +17,9 @@ import { paths } from 'src/routes/paths';
 
 // ----------------------------------------------------------------------
 
-export function AnalyticsMetricsStageSummary({
+export function AnalyticsMetricsProjectSummary({
   icon,
-  value,
   title,
-  data,
   allProjects,
   color = 'primary',
   sx,
@@ -32,20 +28,29 @@ export function AnalyticsMetricsStageSummary({
   const theme = useTheme();
   const router = useRouter();
 
-  const sortedTasks = useMemo(() => {
-    const tasks = allProjects?.[0]?.projectDefaultTasks ?? [];
+  const finishedProjects = useMemo(
+    () =>
+      Array.isArray(allProjects)
+        ? allProjects.filter(
+            (project) => project.currentStage?.name?.toLowerCase() === 'finished'
+          )
+        : [],
+    [allProjects]
+  );
 
-    return tasks
-      .filter((task) => {
-        const stageName = task?.project_default_task?.project_stage?.name;
-        return stageName?.toLowerCase() === value.toLowerCase();
-      })
-      .sort((a, b) => {
-        const orderA = a?.project_default_task?.order ?? 0;
-        const orderB = b?.project_default_task?.order ?? 0;
-        return orderA - orderB;
-      });
-  }, [allProjects, value]);
+  const sortedTasks = useMemo(() => {
+    const projectDefaultTasks =
+      allProjects && allProjects[0] && Array.isArray(allProjects[0].projectDefaultTasks)
+        ? allProjects[0].projectDefaultTasks
+        : [];
+    const tasks = [...projectDefaultTasks];
+
+    return tasks.sort((a, b) => {
+      const orderA = a?.project_default_task?.order ?? 0;
+      const orderB = b?.project_default_task?.order ?? 0;
+      return orderA - orderB;
+    });
+  }, [allProjects]);
 
   const firstTask = useMemo(
     () => (sortedTasks && sortedTasks.length > 0 ? sortedTasks[0] : null),
@@ -110,7 +115,7 @@ export function AnalyticsMetricsStageSummary({
     maxProjectNumber,
   } = useMemo(() => fDurationStats(arrayDates), [arrayDates]);
 
-  const installationsCount = data?.length || 0;
+  const finishedCount = finishedProjects?.length || 0;
 
   return (
     <Card
@@ -121,6 +126,7 @@ export function AnalyticsMetricsStageSummary({
         overflow: 'hidden',
         boxShadow: theme.customShadows?.z4 ?? theme.shadows[2],
         bgcolor: alpha(theme.palette[color].main, 0.03),
+        color: theme.palette.text.primary,
         ...sx,
       }}
       {...other}
@@ -139,23 +145,23 @@ export function AnalyticsMetricsStageSummary({
           }}
         >
           {icon || (
-            <Iconify icon="solar:chart-2-bold-duotone" width={22} height={22} color="inherit" />
+            <Iconify icon="solar:case-round-minimalistic-bold-duotone" width={22} height={22} />
           )}
         </Box>
 
         <Box sx={{ minWidth: 0 }}>
           <Typography variant="subtitle2" noWrap>
-            Current Summary
+            {title}
           </Typography>
           <Typography variant="caption" color="text.secondary" noWrap>
-            Stage: <b>{value}</b>
+            Project summary
           </Typography>
         </Box>
 
         <Box sx={{ flexGrow: 1 }} />
 
-        <Label color={installationsCount > 0 ? 'success' : 'default'} variant="soft">
-          {installationsCount} installation{installationsCount === 1 ? '' : 's'}
+        <Label color={finishedCount > 0 ? 'success' : 'default'} variant="soft">
+          {finishedCount} installations
         </Label>
       </Stack>
 
@@ -163,7 +169,8 @@ export function AnalyticsMetricsStageSummary({
 
       {/* Métricas */}
       <Stack spacing={1.5}>
-        {/* Avg duration */}
+
+        {/* Avg Duration */}
         <Box
           sx={{
             display: 'flex',
@@ -182,7 +189,7 @@ export function AnalyticsMetricsStageSummary({
           </Label>
         </Box>
 
-        {/* Min duration */}
+        {/* Min Duration */}
         <Box
           sx={{
             display: 'flex',
@@ -205,7 +212,7 @@ export function AnalyticsMetricsStageSummary({
                 color: 'text.primary',
                 cursor: minProjectId ? 'pointer' : 'default',
                 fontSize: '11px',
-                maxWidth: 150,
+                maxWidth: 160,
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
@@ -219,7 +226,9 @@ export function AnalyticsMetricsStageSummary({
                 router.push(paths.dashboard.project.details(minProjectId));
               }}
             >
-              {minProjectId ? `${minProjectName || 'Unnamed'}` : '—'}
+              {minProjectId
+                ? `${minProjectName || 'Unnamed'}`
+                : '—'}
             </Link>
           </Box>
 
@@ -230,7 +239,7 @@ export function AnalyticsMetricsStageSummary({
           </Label>
         </Box>
 
-        {/* Max duration */}
+        {/* Max Duration */}
         <Box
           sx={{
             display: 'flex',
@@ -253,7 +262,7 @@ export function AnalyticsMetricsStageSummary({
                 color: 'text.primary',
                 cursor: maxProjectId ? 'pointer' : 'default',
                 fontSize: '11px',
-                maxWidth: 150,
+                maxWidth: 160,
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
@@ -267,7 +276,9 @@ export function AnalyticsMetricsStageSummary({
                 router.push(paths.dashboard.project.details(maxProjectId));
               }}
             >
-              {maxProjectId ? `${maxProjectName || 'Unnamed'}` : '—'}
+              {maxProjectId
+                ? `${maxProjectName || 'Unnamed'}`
+                : '—'}
             </Link>
           </Box>
 
