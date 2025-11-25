@@ -30,6 +30,7 @@ import { ProjectsStageToday } from '../projects-stage-today';
 import { AnalyticsMetricsWidgetSummary } from '../analytics-metrics-widget-summary';
 import { AnalyticsMetricsStageSummary } from '../analytics-metrics-stage-summary';
 import { AnalyticsMetricsProjectSummary } from '../analytics-metrics-project-summary';
+import { AnalyticsMetricsServiceSummary } from '../analytics-metrics-service-summary';
 
 
 export function OverviewAnalyticMetricsView() {
@@ -261,6 +262,20 @@ export function OverviewAnalyticMetricsView() {
                 icon={
                   <Iconify
                     icon='streamline-ultimate:engineer-project-superviser-1-bold'
+                    width={32}
+                    height={32}
+                  />
+                }
+              />
+            </Grid>
+            <Grid key='finished-services-summary' xs={12} sm={6} md={6}>
+              <AnalyticsMetricsServiceSummary
+                sx={{ cursor: 'pointer' }}
+                title='Finished Services Summary'
+                allServices={services}
+                icon={
+                  <Iconify
+                    icon='fluent-mdl2:c-r-m-services'
                     width={32}
                     height={32}
                   />
