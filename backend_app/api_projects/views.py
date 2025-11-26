@@ -18,8 +18,12 @@ from .repository import (
     project_tracking_repository,
     project_work_orders_repository,
     project_calendar_notes_repository,
-    
 )
+
+from rest_framework.response import Response
+from rest_framework import status
+
+from api_projects.tasks import task_manage_profit_report
     
     
 #############################################
@@ -742,3 +746,25 @@ def update_project_calendar_note(request, id):
 @permission_classes([AllowAny])
 def delete_project_calendar_note(request, id):
     return project_calendar_notes_repository.delete_project_calendar_note(request, id)
+
+
+##############################################
+# TRIGGER PROFIT REBUILD
+##############################################
+
+@api_view(['POST'])
+@permission_classes([AllowAny])  # o la que uses
+def trigger_profit_rebuild(request):
+    """
+    Dispara el recálculo de profit de TODOS los proyectos en background.
+    """
+    async_result = task_manage_profit_report.delay(force_update=True)
+
+    return Response(
+        {
+            "message": "Profit report recalculation scheduled.",
+            "task_id": async_result.id,
+            "status": "scheduled",
+        },
+        status=status.HTTP_202_ACCEPTED,
+    )

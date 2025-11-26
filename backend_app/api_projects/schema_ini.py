@@ -13,6 +13,7 @@ from api_projects.schema_models.model_schema_project_default_material import Pro
 from api_projects.schema_models.model_schema_project_reminder import ProjectRemainder
 from api_projects.schema_models.model_schema_project_tracking import ProjectTrackingType, ProjectTrackingViewType
 from api_projects.schema_models.model_schema_project_calendar_notes import ProjectCalendarNotesType
+from api_projects.schema_models.model_schema_project_profit_report import ProjectProfitReportType
 
 from .models import (
     ProjectStage, 
@@ -31,12 +32,15 @@ from .models import (
     ProjectDefaultMaterial,
     ProjectView,
     ProjectCalendarNotes,
+    ProjectProfitReport,
 )
 from .models_sync import (
     ProjectSync,
 )
 from api_authorization.models import LoginUser
 from bson import ObjectId
+from datetime import datetime, time
+from django.utils import timezone
 
 class Query(graphene.ObjectType):
     all_project_permissions = graphene.List(ProjectPermissionsType)
@@ -73,6 +77,12 @@ class Query(graphene.ObjectType):
     
     all_project_default_materials = graphene.List(ProjectDefaultMaterialType)
     all_project_calendar_notes = graphene.List(ProjectCalendarNotesType)
+    all_project_profit_reports = graphene.List(ProjectProfitReportType)
+    profit_reports_by_date_range = graphene.List(
+        ProjectProfitReportType,
+        start_date=graphene.String(required=True),
+        end_date=graphene.String(required=True)
+    )
     
     def resolve_all_project_reminders(self, info, username=None):
         if username:
@@ -163,5 +173,30 @@ class Query(graphene.ObjectType):
     
     def resolve_all_project_calendar_notes(self, info):
         return list(ProjectCalendarNotes.objects(is_active=True))
+    
+    def resolve_all_project_profit_reports(self, info):
+        return list(ProjectProfitReport.objects().order_by('-created_time'))
+    
+    def resolve_profit_reports_by_date_range(self, info, start_date, end_date):
+        try:
+            date_from = datetime.strptime(start_date, "%Y-%m-%d").date()
+            date_to = datetime.strptime(end_date, "%Y-%m-%d").date()
+        except ValueError:
+            return ProjectProfitReport.objects.none()
+        
+        start_dt = datetime.combine(date_from, time.min)  # 00:00:00
+        end_dt = datetime.combine(date_to, time.max)      # 23:59:59.999999
+        
+        qs = ProjectProfitReport.objects(
+            __raw__={
+                "project_info.start_date": {
+                    "$gte": start_dt,
+                    "$lte": end_dt,
+                }
+            }
+        )
+
+        return qs.order_by('-created_time')
+            
 
 schema = graphene.Schema(query=Query)

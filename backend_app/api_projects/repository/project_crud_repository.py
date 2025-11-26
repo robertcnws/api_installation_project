@@ -1,3 +1,4 @@
+from api_projects.repository.project_profit_report_repository import manage_profit_report
 from rest_framework.response import Response
 from django.utils import timezone
 from django.conf import settings
@@ -248,6 +249,8 @@ def create_project(request):
             
             project.save()
             
+            manage_profit_report(str(project.id))
+            
             tracking = ProjectTracking(
                 user_reporter=user_reporter,
                 action=f'create project ({project.id} - {project.name})',
@@ -426,6 +429,7 @@ def create_projects(request):
                     duration=0,
                 )
                 project.save()
+                manage_profit_report(str(project.id))
                 tracking_info = transform_data_to_mongo(project, exclude_fields=['sales_order'])
                 list_tracking_info.append(tracking_info)
                 count += 1

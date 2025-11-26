@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from django.conf import settings
 from django.http import JsonResponse
+from api_projects.repository.project_profit_report_repository import manage_profit_report
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from api_projects.models import Project
@@ -224,6 +225,7 @@ def refetch_salesorder(request, project_id):
     if len(items_to_get) > 0:
         project.sales_order = items_to_get[0]
         project.save()
+        manage_profit_report(str(project.id), force_update=True)
     return JsonResponse({'message': 'Sales order refetched successfully'})
 
 

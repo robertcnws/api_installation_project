@@ -226,3 +226,25 @@ def message_project_calendar_notes(msg_type, document):
 
         }
     }
+    
+
+def message_project_profit_report(msg_type, document):
+    return {
+        'type': 'project_profit_report_update',
+        'message': {
+            'type': msg_type,
+            "item": {
+                "id": str(document.id),
+                "projectId": document.project_id,
+                "projectInfo": document.project_info,
+                "projectAmount": document.project_amount,
+                "installationAmount": document.installation_amount,
+                "installationCost": document.installation_cost,
+                "installationProfit": document.installation_profit,
+                "notes": document.notes,
+                "createdTime": document.created_time,
+                "lastModifiedTime": document.last_modified_time,
+            }
+
+        }
+    }

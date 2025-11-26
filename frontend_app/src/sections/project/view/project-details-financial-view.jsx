@@ -46,6 +46,7 @@ export function ProjectDetailsFinancialView({
     }, [refetchProject]);
 
     //  Sales Order
+    
     const totalItems = useMemo(() => project?.salesOrder?.line_items?.filter(
         (item) => item.line_item_type.toLowerCase().includes('good')
     ).reduce((total, item) => total + Number(item.item_total), 0), [project]);

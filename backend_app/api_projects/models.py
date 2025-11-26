@@ -562,3 +562,27 @@ class ProjectCalendarNotes(Document):
 
     def __str__(self):
         return self.name
+    
+    
+class ProjectProfitReport(Document):
+    project_id = StringField(required=True)
+    project_info = DynamicField(required=True)
+    project_amount = FloatField(default=0.0)
+    installation_amount = FloatField(default=0.0)
+    installation_cost = FloatField(default=0.0)
+    installation_profit = FloatField(default=0.0)
+    notes = StringField(null=True)
+    created_time = DateTimeField(default=timezone.now, null=True)
+    last_modified_time = DateTimeField(default=timezone.now, null=True)
+    
+    meta = {
+        'collection': 'project_profit_report',
+        'indexes': [
+            'project_id', 'created_time', 'last_modified_time'
+        ],
+        'verbose_name': 'Project Profit Report',
+        'verbose_name_plural': 'Project Profit Reports'
+    }
+
+    def __str__(self):
+        return f'Profit Report for {self.project.name}'
