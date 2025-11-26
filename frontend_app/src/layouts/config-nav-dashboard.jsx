@@ -59,6 +59,7 @@ const ICONS = {
   measurement: icon('ic-measurements'),
   defaultMaterial: icon('ic-material'),
   statistics: icon('ic-statistics'),
+  report: icon('ic-report'),
 };
 
 const userLogged = JSON.parse(sessionStorage.getItem('userLogged'));
@@ -76,8 +77,11 @@ export const navData = () => [
     subheader: 'Overview',
     items: [
       { title: 'Dashboard', path: paths.dashboard.general.analytics, icon: ICONS.dashboard },
-      { title: 'Metrics', path: paths.dashboard.general.metrics, icon: ICONS.statistics },
       { title: 'Calendar', path: paths.dashboard.general.calendar, icon: ICONS.calendarOverview },
+      ...(userLogged && listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.projectManager) ? [
+        { title: 'Metrics', path: paths.dashboard.general.metrics, icon: ICONS.statistics },
+        { title: 'Reports', path: paths.dashboard.general.metrics, icon: ICONS.report },
+      ] : []),
     ],
   },
   /**

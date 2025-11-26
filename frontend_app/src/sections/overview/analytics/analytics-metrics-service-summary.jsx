@@ -462,7 +462,7 @@ export function AnalyticsMetricsServiceSummary({
           sx={{
             flex: 1,
             minWidth: 0,
-            minHeight: 220,
+            minHeight: 120,
           }}
         >
           <Chart

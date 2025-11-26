@@ -776,12 +776,17 @@ def remove_date_project(request, id):
             info = 'start date'
             project.start_date = None
             project.end_date = None
+            project.duration = 0
         elif date_type in ['inspectionDate']:
             info = 'inspection date'
             project.inspection_date = None
+            project.inspection_end_date = None
+            project.inspection_duration = 0
         elif date_type in ['finishPermissionDate']:
             info = 'finish permission date'
             project.finish_permission_date = None
+            project.finish_permission_end_date = None
+            project.finish_permission_duration = 0
         project.save()
         
         tracking = ProjectTracking(

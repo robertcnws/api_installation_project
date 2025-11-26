@@ -1,6 +1,6 @@
 import axios from 'axios';
 import dayjs from 'dayjs';
-import { useMemo, useState, useEffect, useContext, useCallback } from 'react';
+import React, { useMemo, useState, useEffect, useContext, useCallback } from 'react';
 
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
@@ -93,6 +93,8 @@ export function ProjectView() {
   const [isWarehouseStaff, setIsWarehouseStaff] = useState(false);
 
   const upload = useBoolean();
+
+  const openTriggerDialog = useBoolean();
 
   // const [view, setView] = useState(
   //   isInstaller(userLogged?.data?.user_role?.name) ? 'grid' : localStorage.getItem('projectView') || 'list'
@@ -215,7 +217,7 @@ export function ProjectView() {
   const notFound = (!dataFiltered.length && canReset) || !dataFiltered.length;
 
   const handleChangeView = useCallback((event, newView) => {
-    if (newView !== null) {
+    if (newView !== null && newView !== 'trigger') {
       localStorage.setItem('projectView', newView);
       localStorage.removeItem('projectReminderTab');
       setView(newView);
@@ -328,6 +330,17 @@ export function ProjectView() {
     [router, dataFiltered]
   );
 
+  const handleTriggerAllProfits = useCallback(
+    async () => {
+
+      const promise = axios.post(`${CONFIG.apiUrl}/projects/update/projects/trigger-profit-rebuild/`);
+
+      await promise;
+
+      toast.success('Trigger profits rebuilt success!');
+      
+    }, []);
+
   const renderFilters = (
     <Stack
       spacing={2}
@@ -365,9 +378,16 @@ export function ProjectView() {
         </ToggleButton> */}
 
         {!isInstaller(userLogged?.data?.user_role?.name) && (
-          <ToggleButton value="kanban">
-            <Iconify icon="tabler:layout-kanban" />
-          </ToggleButton>
+          <React.Fragment key='kanban-trigger'>
+            <ToggleButton value="kanban">
+              <Iconify icon="tabler:layout-kanban" />
+            </ToggleButton>
+
+            <ToggleButton value="trigger" onClick={openTriggerDialog.onTrue}>
+              <Iconify icon="fluent-mdl2:trigger-auto" />
+            </ToggleButton>
+          </React.Fragment>
+
         )}
 
       </ToggleButtonGroup>
@@ -474,7 +494,7 @@ export function ProjectView() {
                     />
                   ) : view === 'calendar' ? (
                     <ProjectCalendarView projects={dataFiltered} isOnlyWeek={false} />
-                  ) : (
+                  ) : view === 'kanban' && (
                     <KanbanProjectView projects={dataFiltered} refetchProjects={refetchProjects} />
                   )}
                 </>
@@ -539,6 +559,31 @@ export function ProjectView() {
                 </Button>
               }
             />
+
+            <ConfirmDialog
+              open={openTriggerDialog.value}
+              onClose={openTriggerDialog.onFalse}
+              title="Update Cost & Profit Data"
+              content={
+                <>
+                  Are you sure want to update all installation project(s) with costs and profits?
+                </>
+              }
+              action={
+                <Button
+                  variant="contained"
+                  color="warning"
+                  onClick={async() => {
+                    await handleTriggerAllProfits();
+                    openTriggerDialog.onFalse();
+                    // setView('list');
+                  }}
+                >
+                  Update
+                </Button>
+              }
+            />
+
           </>
         )}
     </>

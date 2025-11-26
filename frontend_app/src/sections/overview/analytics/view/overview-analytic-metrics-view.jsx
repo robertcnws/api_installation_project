@@ -31,6 +31,7 @@ import { AnalyticsMetricsWidgetSummary } from '../analytics-metrics-widget-summa
 import { AnalyticsMetricsStageSummary } from '../analytics-metrics-stage-summary';
 import { AnalyticsMetricsProjectSummary } from '../analytics-metrics-project-summary';
 import { AnalyticsMetricsServiceSummary } from '../analytics-metrics-service-summary';
+import { AnalyticsMetricsProfitSummary } from '../analytics-metrics-profit-summary';
 
 
 export function OverviewAnalyticMetricsView() {
@@ -276,6 +277,21 @@ export function OverviewAnalyticMetricsView() {
                 icon={
                   <Iconify
                     icon='fluent-mdl2:c-r-m-services'
+                    width={32}
+                    height={32}
+                  />
+                }
+              />
+            </Grid>
+          </Grid>
+          <Grid container spacing={1}>
+            <Grid key='finished-profit-summary' xs={12} sm={12} md={12}>
+              <AnalyticsMetricsProfitSummary
+                sx={{ cursor: 'pointer' }}
+                title='Finished Profit Summary'
+                icon={
+                  <Iconify
+                    icon='la:file-invoice-dollar'
                     width={32}
                     height={32}
                   />
