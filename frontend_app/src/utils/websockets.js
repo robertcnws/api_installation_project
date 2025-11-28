@@ -44,3 +44,33 @@ export function useSocketList(url, setItems) {
     };
   }, [url, setItems]);
 }
+
+
+export function useSocketRefetch(url, refetch) {
+  useEffect(() => {
+    const socket = new WebSocket(url);
+
+    socket.onerror = (errorEvent) => {
+      console.dir(errorEvent);
+      console.error('WebSocket error (toString):', errorEvent.toString());
+    };
+
+    socket.onmessage = (event) => {
+      const message = JSON.parse(event.data);
+
+      if (message.type === 'created' || message.type === 'updated' || message.type === 'deleted') {
+        refetch();
+      }
+    };
+
+    return () => {
+      try {
+        if (socket && socket.readyState === WebSocket.OPEN) {
+          socket.close();
+        }
+      } catch (e) {
+        console.error('Error closing socket', e);
+      }
+    };
+  }, [url, refetch]);
+}

@@ -317,7 +317,7 @@ export function AnalyticsMetricsServiceSummary({
             {title}
           </Typography>
           <Typography variant="caption" color="text.secondary" noWrap>
-            Service summary
+            Services
           </Typography>
         </Box>
 

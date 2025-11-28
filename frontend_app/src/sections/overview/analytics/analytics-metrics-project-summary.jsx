@@ -317,7 +317,7 @@ export function AnalyticsMetricsProjectSummary({
             {title}
           </Typography>
           <Typography variant="caption" color="text.secondary" noWrap>
-            Project summary
+            Projects
           </Typography>
         </Box>
 
