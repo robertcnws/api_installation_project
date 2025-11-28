@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useContext, useMemo } from 'react';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
@@ -19,6 +19,10 @@ import { paths } from 'src/routes/paths';
 import { Chart } from 'src/components/chart';
 import { useProjectProfitReportsQuery } from 'src/_mock/__project_profit_report';
 import { fCurrency } from 'src/utils/format-number';
+import { LoadingContext } from 'src/auth/context/loading-context';
+import { useSocketRefetch } from 'src/utils/websockets';
+import { AnalyticsMetricsProfitChart } from './analytics-metrics-profit-chart';
+import { AnalyticsMetricsPercentChart } from './analytics-metrics-percent-chart';
 
 // ----------------------------------------------------------------------
 
@@ -31,11 +35,18 @@ export function AnalyticsMetricsProfitSummary({
 }) {
   const theme = useTheme();
   const router = useRouter();
+  const { isMobile } = useContext(LoadingContext);
 
   const {
     data: allProfitReports,
+    refetch: refetchAllProfitReports,
     loading: loadingAllProfitReports
   } = useProjectProfitReportsQuery();
+
+  useSocketRefetch(
+    `${CONFIG.wsProtocol}://${CONFIG.wsHost}/${CONFIG.wsDomain}/projects/ws/project-profit-reports/`,
+    refetchAllProfitReports
+  );
 
   const finishedCount = useMemo(() => allProfitReports?.length || 0, [allProfitReports]);
 
@@ -187,7 +198,7 @@ export function AnalyticsMetricsProfitSummary({
           }}
         >
           {icon || (
-            <Iconify icon="solar:case-round-minimalistic-bold-duotone" width={22} height={22} />
+            <Iconify icon="uil:chart-line" width={22} height={22} />
           )}
         </Box>
 
@@ -196,7 +207,7 @@ export function AnalyticsMetricsProfitSummary({
             {title}
           </Typography>
           <Typography variant="caption" color="text.secondary" noWrap>
-            Profit summary
+            Average, Min & Max cost/profit metrics
           </Typography>
         </Box>
 
@@ -282,6 +293,10 @@ export function AnalyticsMetricsProfitSummary({
             />
           </Box>
 
+          {isMobile && (
+            <Divider sx={{ gridColumn: '1 / -1', my: 1 }} />
+          )}
+
           {/* ====== ROW 2: PROJECT AMOUNT ====== */}
           <Box
             sx={{
@@ -333,6 +348,10 @@ export function AnalyticsMetricsProfitSummary({
             />
           </Box>
 
+          {isMobile && (
+            <Divider sx={{ gridColumn: '1 / -1', my: 1 }} />
+          )}
+
           {/* ====== ROW 3: INSTALLATION AMOUNT ====== */}
           <Box
             sx={{
@@ -383,6 +402,10 @@ export function AnalyticsMetricsProfitSummary({
               router={router}
             />
           </Box>
+
+          {isMobile && (
+            <Divider sx={{ gridColumn: '1 / -1', my: 1 }} />
+          )}
 
           {/* ====== ROW 4: INSTALLATION COST ====== */}
           <Box
@@ -437,7 +460,69 @@ export function AnalyticsMetricsProfitSummary({
         </Box>
       </Box>
 
+      <Box display="flex" flexDirection={ isMobile ? 'column' : 'row' } sx={{ mt: 3, gap: 2, width: '100%' }}>
 
+        <Box sx={{ width: '100%' }}>
+          <Stack direction="row" alignItems="center" spacing={1.5}>
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                bgcolor: alpha(theme.palette[color].main, 0.16),
+              }}
+            >
+              <Iconify icon="uil:chart-line" width={22} height={22} />
+            </Box>
+            <Box sx={{ minWidth: 0 }}>
+              <Typography variant="subtitle2" noWrap>
+                Last 9 months
+              </Typography>
+              <Typography variant="caption" color="text.secondary" noWrap>
+                Statistics chart
+              </Typography>
+            </Box>
+          </Stack>
+          <AnalyticsMetricsProfitChart
+            allProfitReports={allProfitReports}
+            isMobile={isMobile}
+          />
+        </Box>
+
+        <Box sx={{ width: '100%' }}>
+          <Stack direction="row" alignItems="center" spacing={1.5}>
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                bgcolor: alpha(theme.palette[color].main, 0.16),
+              }}
+            >
+              <Iconify icon="uil:chart-line" width={22} height={22} />
+            </Box>
+            <Box sx={{ minWidth: 0 }}>
+              <Typography variant="subtitle2" noWrap>
+                Historic profit & cost
+              </Typography>
+              <Typography variant="caption" color="text.secondary" noWrap>
+                Percentage (%) charts
+              </Typography>
+            </Box>
+          </Stack>
+          <AnalyticsMetricsPercentChart
+            allProfitReports={allProfitReports}
+            isMobile={isMobile}
+          />
+        </Box>
+
+      </Box>
 
       {/* Fondo decorativo */}
       <SvgColor
@@ -464,7 +549,7 @@ function ItemProfitTop({ topType, subTitle, projectId, projectName, profit, rout
         alignItems: 'flex-start',
         justifyContent: 'space-between',
         fontSize: 14,
-        width: '100%', 
+        width: '100%',
       }}
     >
       <Box sx={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
@@ -499,7 +584,7 @@ function ItemProfitTop({ topType, subTitle, projectId, projectName, profit, rout
         </Link>
       </Box>
 
-      <Label variant="outlined" color={profit > 0 ? 'success' : 'warning'} sx={{ mr: { xs: 0, md: 8 } }}>
+      <Label variant="outlined" color={profit > 0 ? 'success' : 'warning'} sx={{ mr: { xs: 0, md: 20 } }}>
         <Typography variant="caption" sx={{ fontWeight: 600 }}>
           {fCurrency(profit) || 'N/A'}
         </Typography>
@@ -516,13 +601,13 @@ function ItemProfit({ type, value }) {
         alignItems: 'center',
         justifyContent: 'space-between',
         fontSize: 14,
-        width: '100%', 
+        width: '100%',
       }}
     >
       <Typography variant="body2" color="text.secondary">
         {type}
       </Typography>
-      <Label variant="outlined" color={value > 0 ? 'success' : 'warning'} sx={{ px: 1.2, mr: { xs: 0, md: 8 } }}>
+      <Label variant="outlined" color={value > 0 ? 'success' : 'warning'} sx={{ px: 1.2, mr: { xs: 0, md: 20 } }}>
         <Typography variant="caption" sx={{ fontWeight: 600 }}>
           {fCurrency(value) || 'N/A'}
         </Typography>
