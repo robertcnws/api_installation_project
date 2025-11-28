@@ -17,6 +17,7 @@ const IndexPage = lazy(() => import('src/pages/dashboard'));
 const OverviewDashboardPage = lazy(() => import('src/pages/dashboard/dashboard'));
 const OverviewAnalyticMetricsPage = lazy(() => import('src/pages/dashboard/analytics'));
 const CalendarPage = lazy(() => import('src/pages/dashboard/calendar'));
+const OverviewReportsPage = lazy(() => import('src/pages/dashboard/reports'));
 // User
 const UserProfilePage = lazy(() => import('src/pages/dashboard/user/profile'));
 const UserCardsPage = lazy(() => import('src/pages/dashboard/user/cards'));
@@ -112,6 +113,15 @@ export const dashboardRoutes = (listPermissions, user) => [
           CONFIG.permissions.moduleDashboards,
           CONFIG.permissions.operationList
         ) || listRolesAndSubroles(user?.user_role?.name).includes(CONFIG.roles.projectManager) ? <OverviewAnalyticMetricsPage /> : <Page403 />
+      },
+      {
+        path: 'reports',
+        element: verifyPermissions(
+          listPermissions,
+          CONFIG.permissions.system,
+          CONFIG.permissions.moduleDashboards,
+          CONFIG.permissions.operationList
+        ) || listRolesAndSubroles(user?.user_role?.name).includes(CONFIG.roles.projectManager) ? <OverviewReportsPage /> : <Page403 />
       },
       {
         path: 'calendar',

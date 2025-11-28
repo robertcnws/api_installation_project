@@ -80,7 +80,7 @@ export const navData = () => [
       { title: 'Calendar', path: paths.dashboard.general.calendar, icon: ICONS.calendarOverview },
       ...(userLogged && listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.projectManager) ? [
         { title: 'Metrics', path: paths.dashboard.general.metrics, icon: ICONS.statistics },
-        { title: 'Reports', path: paths.dashboard.general.metrics, icon: ICONS.report },
+        { title: 'Reports', path: paths.dashboard.general.reports, icon: ICONS.report },
       ] : []),
     ],
   },
