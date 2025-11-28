@@ -505,7 +505,7 @@ export function AnalyticsMetricsProfitSummary({
                 bgcolor: alpha(theme.palette[color].main, 0.16),
               }}
             >
-              <Iconify icon="uil:chart-line" width={22} height={22} />
+              <Iconify icon="mdi:chart-arc" width={22} height={22} />
             </Box>
             <Box sx={{ minWidth: 0 }}>
               <Typography variant="subtitle2" noWrap>
