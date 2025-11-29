@@ -574,6 +574,7 @@ class ProjectProfitReport(Document):
     notes = StringField(null=True)
     created_time = DateTimeField(default=timezone.now, null=True)
     last_modified_time = DateTimeField(default=timezone.now, null=True)
+    has_been_edited = BooleanField(default=False)
     
     meta = {
         'collection': 'project_profit_report',

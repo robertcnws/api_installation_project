@@ -1,5 +1,22 @@
-import { Box, Card, IconButton, MenuItem, MenuList, Table, TableBody, TableCell, TableContainer, TableFooter, TableHead, TableRow, Typography } from "@mui/material";
-import { useMemo } from "react";
+import {
+    Box,
+    Dialog,
+    DialogContent,
+    DialogTitle,
+    IconButton,
+    MenuItem,
+    MenuList,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+    Tooltip,
+    Typography,
+} from "@mui/material";
+import React, { useCallback, useMemo, useState } from "react";
+
 import { CustomPopover, usePopover } from "src/components/custom-popover";
 import { Iconify } from "src/components/iconify";
 import { Scrollbar } from "src/components/scrollbar";
@@ -7,20 +24,21 @@ import {
     useTable,
     rowInPage,
     TableNoData,
-} from 'src/components/table';
+} from "src/components/table";
 import { TableCustomPaginationZohoStyleRow } from "src/components/table/table-pagination-custom-zoho-style-row";
+import { useBoolean } from "src/hooks/use-boolean";
 import { fCurrency, fNumber } from "src/utils/format-number";
+import { ReportsEditRow } from "./reports-edit-row";
+import { exportedRows, handleExportCSV, handleExportPDF, handleExportXLSX } from "./helpers-export";
 
-export function ReportsTable({
-    filteredData,
-    title,
-}) {
-
+export function ReportsTable({ filteredData, title }) {
     const table = useTable({ defaultDense: true });
-
     const popover = usePopover();
+    const openEdit = useBoolean();
+    const [selectedRow, setSelectedRow] = useState(null);
 
     const {
+        totalDuration,
         totalProjectAmount,
         totalInstallationAmount,
         totalInstallationCost,
@@ -29,6 +47,7 @@ export function ReportsTable({
         () =>
             filteredData.reduce(
                 (acc, report) => {
+                    acc.totalDuration += report.projectInfo?.duration || 0;
                     acc.totalProjectAmount += report.projectAmount || 0;
                     acc.totalInstallationAmount += report.installationAmount || 0;
                     acc.totalInstallationCost += report.installationCost || 0;
@@ -36,6 +55,7 @@ export function ReportsTable({
                     return acc;
                 },
                 {
+                    totalDuration: 0,
                     totalProjectAmount: 0,
                     totalInstallationAmount: 0,
                     totalInstallationCost: 0,
@@ -46,6 +66,7 @@ export function ReportsTable({
     );
 
     const {
+        totalDurationByPage,
         totalProjectAmountByPage,
         totalInstallationAmountByPage,
         totalInstallationCostByPage,
@@ -55,6 +76,7 @@ export function ReportsTable({
 
         return pageRows.reduce(
             (acc, report) => {
+                acc.totalDurationByPage += report.projectInfo?.duration || 0;
                 acc.totalProjectAmountByPage += report.projectAmount || 0;
                 acc.totalInstallationAmountByPage += report.installationAmount || 0;
                 acc.totalInstallationCostByPage += report.installationCost || 0;
@@ -62,6 +84,7 @@ export function ReportsTable({
                 return acc;
             },
             {
+                totalDurationByPage: 0,
                 totalProjectAmountByPage: 0,
                 totalInstallationAmountByPage: 0,
                 totalInstallationCostByPage: 0,
@@ -70,128 +93,314 @@ export function ReportsTable({
         );
     }, [filteredData, table.page, table.rowsPerPage]);
 
+    const handleOpenEditRow = useCallback(
+        (row) => {
+            setSelectedRow(row);
+            openEdit.onTrue();
+        },
+        [openEdit]
+    );
+
+    const exportFileName = `Reports_${title.replace(/\s+/g, "_")}`;
+    const exportRows = exportedRows(filteredData);
+
+    const handleExport = useCallback((type) => {
+        popover.onClose();
+        if (type === "csv") {
+            handleExportCSV(exportFileName, exportRows);
+        } else if (type === "xlsx") {
+            handleExportXLSX(exportFileName, exportRows);
+        } else if (type === "pdf") {
+            handleExportPDF(title, exportFileName, exportRows);
+        }
+    }, [exportFileName, exportRows, title, popover]);
 
     return (
-        <Box sx={{ mt: 2, width: '100%' }}>
-            {/* <Card sx={{ p: 2, mb: 2, boxShadow: 3 }}> */}
-            <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Typography variant="h6" sx={{ mb: 2 }}>
-                    {title}
-                </Typography>
-                <IconButton onClick={popover.onOpen}>
-                    <Iconify icon="mdi:download" width={24} height={24} />
-                </IconButton>
-                <CustomPopover open={popover.open} onClose={popover.onClose} anchorEl={popover.anchorEl}>
-                    <Box sx={{ p: 1 }}>
-                        <MenuList>
-                            <MenuItem key='save-csv' onClick={popover.onClose}>
-                                <Typography>Save as CSV</Typography>
-                            </MenuItem>
-                            <MenuItem key='save-xls' onClick={popover.onClose}>
-                                <Typography>Save as XLSX</Typography>
-                            </MenuItem>
-                            <MenuItem key='save-pdf' onClick={popover.onClose}>
-                                <Typography>Save as PDF</Typography>
-                            </MenuItem>
-                        </MenuList>
-                    </Box>
-                </CustomPopover>
-            </Box>
-            <Scrollbar>
-                <TableContainer sx={{ maxHeight: 600 }}>
-                    <Table stickyHeader size={table.dense ? 'small' : 'medium'}>
-                        <TableHead>
-                            <TableRow>
-                                <TableCell>CLIENT</TableCell>
-                                <TableCell>DAYS</TableCell>
-                                <TableCell>PROJECT AMOUNT</TableCell>
-                                <TableCell>INSTALLATION AMOUNT</TableCell>
-                                <TableCell>INSTALLATION COST</TableCell>
-                                <TableCell>INSTALLATION PROFIT</TableCell>
-                                <TableCell>NOTES</TableCell>
-                            </TableRow>
-                        </TableHead>
-                        {/* Table body content goes here */}
-                        <TableBody>
-                            {filteredData?.map((report) => (
-                                <TableRow hover key={report.id} sx={{ cursor: 'pointer' }}>
-                                    <TableCell>
-                                        {report.projectInfo.name}
-                                    </TableCell>
-                                    <TableCell>
-                                        {fNumber(report.projectInfo.duration)}
-                                    </TableCell>
-                                    <TableCell sx={{ color: report.projectAmount < 0 ? 'warning.dark' : 'inherit' }}>
-                                        {fCurrency(report.projectAmount)}
-                                    </TableCell>
-                                    <TableCell sx={{ color: report.installationAmount < 0 ? 'warning.dark' : 'inherit' }}>
-                                        {fCurrency(report.installationAmount)}
-                                    </TableCell>
-                                    <TableCell sx={{ color: report.installationCost < 0 ? 'warning.dark' : 'inherit' }}>
-                                        {fCurrency(report.installationCost)}
-                                    </TableCell>
-                                    <TableCell sx={{ color: report.installationProfit < 0 ? 'warning.dark' : 'inherit' }}>
-                                        {fCurrency(report.installationProfit)}
-                                    </TableCell>
-                                    <TableCell>{report.notes}</TableCell>
+        <>
+            <Box sx={{ mt: 2, width: "100%" }}>
+                <Box
+                    sx={{
+                        mb: 2,
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                    }}
+                >
+                    <Typography variant="h6" sx={{ mb: 2 }}>
+                        {title}
+                    </Typography>
+                    {filteredData?.length > 0 && (
+                        <React.Fragment key='download-reports'>
+                            <IconButton onClick={popover.onOpen}>
+                                <Iconify icon="mdi:download" width={24} height={24} />
+                            </IconButton>
+                            <CustomPopover
+                                open={popover.open}
+                                onClose={popover.onClose}
+                                anchorEl={popover.anchorEl}
+                            >
+                                <Box sx={{ p: 1 }}>
+                                    <MenuList>
+                                        <MenuItem key="save-csv" onClick={() => handleExport("csv")}>
+                                            <Typography>Save as CSV</Typography>
+                                        </MenuItem>
+                                        <MenuItem key="save-xls" onClick={() => handleExport("xlsx")}>
+                                            <Typography>Save as XLSX</Typography>
+                                        </MenuItem>
+                                        <MenuItem key="save-pdf" onClick={() => handleExport("pdf")}>
+                                            <Typography>Save as PDF</Typography>
+                                        </MenuItem>
+                                    </MenuList>
+                                </Box>
+                            </CustomPopover>
+                        </React.Fragment>
+                    )}
+                </Box>
+
+                <Scrollbar>
+                    <TableContainer sx={{ maxHeight: 600 }}>
+                        <Table stickyHeader size={table.dense ? "small" : "medium"}>
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell>CLIENT</TableCell>
+                                    <TableCell>DAYS</TableCell>
+                                    <TableCell>PROJECT AMOUNT</TableCell>
+                                    <TableCell>INSTALLATION AMOUNT</TableCell>
+                                    <TableCell>INSTALLATION COST</TableCell>
+                                    <TableCell>INSTALLATION PROFIT</TableCell>
+                                    <TableCell>NOTES</TableCell>
+                                    <TableCell />
                                 </TableRow>
-                            ))}
-                            <TableRow sx={{ height: table.emptyRows > 0 ? 53 * table.emptyRows : 0, bgcolor: 'background.neutral' }}>
-                                <TableCell colSpan={7} />
-                            </TableRow>
-                            <TableRow>
-                                <TableCell><b>TOTAL PAGE # {table.page + 1}</b></TableCell>
-                                <TableCell />
-                                <TableCell sx={{ color: totalProjectAmountByPage < 0 ? 'warning.dark' : 'inherit' }}>
-                                    {fCurrency(totalProjectAmountByPage)}
-                                </TableCell>
-                                <TableCell sx={{ color: totalInstallationAmountByPage < 0 ? 'warning.dark' : 'inherit' }}>
-                                    {fCurrency(totalInstallationAmountByPage)}
-                                </TableCell>
-                                <TableCell sx={{ color: totalInstallationCostByPage < 0 ? 'warning.dark' : 'inherit' }}>
-                                    {fCurrency(totalInstallationCostByPage)}
-                                </TableCell>
-                                <TableCell sx={{ color: totalInstallationProfitByPage < 0 ? 'warning.dark' : 'inherit' }}>
-                                    {fCurrency(totalInstallationProfitByPage)}
-                                </TableCell>
-                                <TableCell />
-                            </TableRow>
-                            <TableRow>
-                                <TableCell><b>TOTAL ALL</b></TableCell>
-                                <TableCell />
-                                <TableCell sx={{ color: totalProjectAmount < 0 ? 'warning.dark' : 'inherit' }}>
-                                    {fCurrency(totalProjectAmount)}
-                                </TableCell>
-                                <TableCell sx={{ color: totalInstallationAmount < 0 ? 'warning.dark' : 'inherit' }}>
-                                    {fCurrency(totalInstallationAmount)}
-                                </TableCell>
-                                <TableCell sx={{ color: totalInstallationCost < 0 ? 'warning.dark' : 'inherit' }}>
-                                    {fCurrency(totalInstallationCost)}
-                                </TableCell>
-                                <TableCell sx={{ color: totalInstallationProfit < 0 ? 'warning.dark' : 'inherit' }}>
-                                    {fCurrency(totalInstallationProfit)}
-                                </TableCell>
-                                <TableCell />
-                            </TableRow>
-                        </TableBody>
-                        <TableCustomPaginationZohoStyleRow
-                            columnsLength={7}
-                            data={filteredData}
-                            page={table.page}
-                            rowsPerPage={table.rowsPerPage}
-                            handleChangePage={(event, newPage) => {
-                                table.onChangePage(event, newPage);
-                            }}
-                            handleChangeRowsPerPage={(event) => {
-                                table.onChangeRowsPerPage(event);
-                            }}
-                            dense={table.dense}
-                            onChangeDense={table.onChangeDense}
+                            </TableHead>
+
+                            <TableBody>
+                                {filteredData?.length === 0 && (
+                                    <TableNoData notFound />
+                                )}
+                                {filteredData?.slice(
+                                    table.page * table.rowsPerPage,
+                                    table.page * table.rowsPerPage + table.rowsPerPage
+                                ).map((report) => (
+                                    <TableRow
+                                        hover
+                                        key={report.id}
+                                        sx={{ cursor: "pointer" }}
+                                        onClick={() => handleOpenEditRow(report)}
+                                    >
+                                        <TableCell>{report.projectInfo.name}</TableCell>
+                                        <TableCell>{fNumber(report.projectInfo.duration)}</TableCell>
+                                        <TableCell
+                                            sx={{
+                                                color:
+                                                    report.projectAmount < 0 ? "warning.dark" : "inherit",
+                                            }}
+                                        >
+                                            {fCurrency(report.projectAmount)}
+                                        </TableCell>
+                                        <TableCell
+                                            sx={{
+                                                color:
+                                                    report.installationAmount < 0
+                                                        ? "warning.dark"
+                                                        : "inherit",
+                                            }}
+                                        >
+                                            {fCurrency(report.installationAmount)}
+                                        </TableCell>
+                                        <TableCell
+                                            sx={{
+                                                color:
+                                                    report.installationCost < 0
+                                                        ? "warning.dark"
+                                                        : "inherit",
+                                            }}
+                                        >
+                                            {fCurrency(report.installationCost)}
+                                        </TableCell>
+                                        <TableCell
+                                            sx={{
+                                                color:
+                                                    report.installationProfit < 0
+                                                        ? "warning.dark"
+                                                        : "inherit",
+                                            }}
+                                        >
+                                            {fCurrency(report.installationProfit)}
+                                        </TableCell>
+                                        <TableCell>{report.notes}</TableCell>
+                                        <TableCell>
+                                            <Tooltip title={`Edit ${report?.projectInfo?.name} report`} arrow>
+                                                <IconButton
+                                                    variant="text"
+                                                    color="warning"
+                                                    size="small"
+                                                    sx={{
+                                                        ml: 1,
+                                                        '&:hover': {
+                                                            boxShadow: 'none',
+                                                            backgroundColor: 'transparent',
+                                                        },
+                                                    }}
+                                                >
+                                                    <Iconify icon="fluent:slide-text-edit-20-regular" color="primary" width={22} />
+                                                </IconButton>
+                                            </Tooltip>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+
+                                {filteredData?.length > 0 && (
+                                    <React.Fragment key='totals-reports'>
+                                        <TableRow
+                                            sx={{
+                                                height:
+                                                    table.emptyRows > 0 ? 53 * table.emptyRows : 0,
+                                                bgcolor: "background.neutral",
+                                            }}
+                                        >
+                                            <TableCell colSpan={8} />
+                                        </TableRow>
+
+                                        <TableRow>
+                                            <TableCell>
+                                                <b>TOTAL PAGE # {table.page + 1}</b>
+                                            </TableCell>
+                                            <TableCell>
+                                                <b>{fNumber(totalDurationByPage)}</b>
+                                            </TableCell>
+                                            <TableCell
+                                                sx={{
+                                                    color:
+                                                        totalProjectAmountByPage < 0
+                                                            ? "warning.dark"
+                                                            : "inherit",
+                                                }}
+                                            >
+                                                <b>{fCurrency(totalProjectAmountByPage)}</b>
+                                            </TableCell>
+                                            <TableCell
+                                                sx={{
+                                                    color:
+                                                        totalInstallationAmountByPage < 0
+                                                            ? "warning.dark"
+                                                            : "inherit",
+                                                }}
+                                            >
+                                                <b>{fCurrency(totalInstallationAmountByPage)}</b>
+                                            </TableCell>
+                                            <TableCell
+                                                sx={{
+                                                    color:
+                                                        totalInstallationCostByPage < 0
+                                                            ? "warning.dark"
+                                                            : "inherit",
+                                                }}
+                                            >
+                                                <b>{fCurrency(totalInstallationCostByPage)}</b>
+                                            </TableCell>
+                                            <TableCell
+                                                sx={{
+                                                    color:
+                                                        totalInstallationProfitByPage < 0
+                                                            ? "warning.dark"
+                                                            : "inherit",
+                                                }}
+                                            >
+                                                <b>{fCurrency(totalInstallationProfitByPage)}</b>
+                                            </TableCell>
+                                            <TableCell colSpan={2} />
+                                        </TableRow>
+
+                                        <TableRow>
+                                            <TableCell>
+                                                <b>TOTAL ALL</b>
+                                            </TableCell>
+                                            <TableCell>
+                                                <b>{fNumber(totalDuration)}</b>
+                                            </TableCell>
+                                            <TableCell
+                                                sx={{
+                                                    color:
+                                                        totalProjectAmount < 0
+                                                            ? "warning.dark"
+                                                            : "inherit",
+                                                }}
+                                            >
+                                                <b>{fCurrency(totalProjectAmount)}</b>
+                                            </TableCell>
+                                            <TableCell
+                                                sx={{
+                                                    color:
+                                                        totalInstallationAmount < 0
+                                                            ? "warning.dark"
+                                                            : "inherit",
+                                                }}
+                                            >
+                                                <b>{fCurrency(totalInstallationAmount)}</b>
+                                            </TableCell>
+                                            <TableCell
+                                                sx={{
+                                                    color:
+                                                        totalInstallationCost < 0
+                                                            ? "warning.dark"
+                                                            : "inherit",
+                                                }}
+                                            >
+                                                <b>{fCurrency(totalInstallationCost)}</b>
+                                            </TableCell>
+                                            <TableCell
+                                                sx={{
+                                                    color:
+                                                        totalInstallationProfit < 0
+                                                            ? "warning.dark"
+                                                            : "inherit",
+                                                }}
+                                            >
+                                                <b>{fCurrency(totalInstallationProfit)}</b>
+                                            </TableCell>
+                                            <TableCell colSpan={2} />
+                                        </TableRow>
+
+                                        <TableCustomPaginationZohoStyleRow
+                                            columnsLength={8}
+                                            data={filteredData}
+                                            page={table.page}
+                                            rowsPerPage={table.rowsPerPage}
+                                            handleChangePage={(event, newPage) => {
+                                                table.onChangePage(event, newPage);
+                                            }}
+                                            handleChangeRowsPerPage={(event) => {
+                                                table.onChangeRowsPerPage(event);
+                                            }}
+                                            dense={table.dense}
+                                            onChangeDense={table.onChangeDense}
+                                        />
+                                    </React.Fragment>
+                                )}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+                </Scrollbar>
+            </Box>
+
+            <Dialog
+                open={openEdit.value}
+                onClose={openEdit.onFalse}
+                maxWidth="sm"
+                fullWidth
+            >
+                <DialogTitle>
+                    {`Edit ${selectedRow?.projectInfo?.name} Report`}
+                </DialogTitle>
+                <DialogContent>
+                    {selectedRow && (
+                        <ReportsEditRow
+                            row={selectedRow}
+                            onCloseEdit={openEdit.onFalse}
                         />
-                    </Table>
-                </TableContainer>
-            </Scrollbar>
-            {/* </Card> */}
-        </Box>
+                    )}
+                </DialogContent>
+            </Dialog>
+        </>
     );
 }

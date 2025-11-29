@@ -17,6 +17,7 @@ urlpatterns = [
     path('update/projects/change-description-all-projects/', views.change_description_all_projects, name='change_description_all_projects'),
     path('update/projects/trigger-profit-rebuild/', views.trigger_profit_rebuild, name='trigger_profit_rebuild'),
     path('update/project/<str:id>/', views.update_project, name='update_project'),
+    path('update/project/<str:id>/manage-profit-report/', views.manage_profit_report, name='manage_profit_report'),
     path('update/project/<str:id>/change-permission/', views.change_project_permission, name='change_project_permission'),
     path('update/project/<str:id>/change-address/', views.change_project_address, name='change_project_address'),
     path('update/project/<str:id>/change-phone-number/', views.change_project_phone_number, name='change_project_phone_number'),

@@ -18,6 +18,7 @@ from .repository import (
     project_tracking_repository,
     project_work_orders_repository,
     project_calendar_notes_repository,
+    project_profit_report_repository,
 )
 
 from rest_framework.response import Response
@@ -768,3 +769,13 @@ def trigger_profit_rebuild(request):
         },
         status=status.HTTP_202_ACCEPTED,
     )
+    
+    
+##############################################
+# MANAGE PROFIT REPORT
+##############################################
+
+@api_view(['POST'])
+@permission_classes([AllowAny])  # o la que uses
+def manage_profit_report(request, id):
+    return project_profit_report_repository.update_profit_report(id, request)

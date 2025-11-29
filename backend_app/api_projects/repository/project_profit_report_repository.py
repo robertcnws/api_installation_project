@@ -1,6 +1,6 @@
 from datetime import timezone
-from api_projects.models import ProjectProfitReport, Project
-from api_projects.data_util import transform_data_to_mongo
+from api_projects.models import ProjectProfitReport, Project, ProjectTracking
+from api_projects.data_util import create_notification, transform_data_to_mongo
 from rest_framework.response import Response
 from django.utils import timezone
 from decimal import Decimal, InvalidOperation
@@ -12,6 +12,8 @@ from rest_framework.response import Response
 
 from api_projects.models import Project, ProjectProfitReport
 from api_projects.repository.project_profit_report_repository import transform_data_to_mongo  # ajusta import
+
+import json
 
 # ----------------------------------------------------------------------
 # Helper seguro para convertir a Decimal
@@ -41,7 +43,7 @@ def manage_profit_report(project_id: str, force_update=False) -> Response:
     if not project:
         return Response({'error': 'Project not found'}, status=400)
 
-    project_profit = ProjectProfitReport.objects(project_id=str(project.id)).first()
+    project_profit = ProjectProfitReport.objects(project_id=str(project.id), has_been_edited=False).first()
     if project_profit and not force_update:
         return Response(
             {'message': f'Project profit report for {project.name} already exists'},
@@ -138,6 +140,7 @@ def manage_profit_report(project_id: str, force_update=False) -> Response:
         installation_cost=total_installing,      # lo que te cuesta instalar
         installation_profit=total_profit,        # utilidad
         notes="",
+        has_been_edited=False,
         created_time=timezone.now(),
         last_modified_time=timezone.now(),
     )
@@ -146,4 +149,75 @@ def manage_profit_report(project_id: str, force_update=False) -> Response:
     return Response(
         {'message': f'Project profit report for {project.name} created successfully'},
         status=201
+    )
+    
+    
+def update_profit_report(id: str, request) -> Response:
+    project_profit = ProjectProfitReport.objects(id=id).first()
+    if not project_profit:
+        return Response({'error': 'Project report not found'}, status=400)
+    
+    data = request.data
+    
+    user_reporter = data.get("userReporter", "")
+    
+    if isinstance(user_reporter, str):
+        user_reporter = json.loads(user_reporter)
+    
+    notes = data.get("notes", "")
+    duration = data.get("duration", 0)
+    project_amount = data.get("projectAmount", 0)
+    installation_amount = data.get("installationAmount", 0)
+    installation_cost = data.get("installationCost", 0)
+    installation_profit = data.get("installationProfit", 0)
+    
+    
+    new_project_info = {
+        **project_profit.project_info,
+        "duration": duration,
+    }
+    project_profit.notes = notes
+    project_profit.project_info = new_project_info
+    project_profit.project_amount = project_amount
+    project_profit.installation_amount = installation_amount
+    project_profit.installation_cost = installation_cost
+    project_profit.installation_profit = installation_profit
+    project_profit.has_been_edited = True
+    project_profit.last_modified_time = timezone.now()
+    project_profit.save()
+    
+    tracking_info = transform_data_to_mongo(
+        project_profit,
+        include_fields=[
+            "id", 
+            "project_id", 
+            "project_info", 
+            "project_amount", 
+            "installation_amount", 
+            "installation_cost", 
+            "installation_profit", 
+            "notes"
+        ],
+    )
+    
+    if tracking_info:
+        tracking = ProjectTracking(
+            user_reporter=user_reporter,
+            action=f'Updated profit report for project {project_profit.project_info.get("name", "")}',
+            created_time=timezone.now(),
+            managed_data={
+                'data': tracking_info
+            },
+        )
+        tracking.save()
+    if user_reporter:
+        module = 'projects'
+        info = f'has updated profit report for project {project_profit.project_info.get("name", "")}'
+        info_id = project_profit.project_id
+        type = 'update_profit_report'
+        create_notification(module, info_id, info, type, user_reporter.get('username', ''))
+
+    return Response(
+        {'message': f'Project profit report updated successfully'},
+        status=200
     )
