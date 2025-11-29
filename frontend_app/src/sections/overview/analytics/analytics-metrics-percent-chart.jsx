@@ -8,27 +8,27 @@ import { Chart } from "src/components/chart";
 // - { profitReportsByDateRange: [...] }
 // - { data: { profitReportsByDateRange: [...] } }
 
-export function AnalyticsMetricsPercentChart({ allProfitReports, isMobile }) {
+export function AnalyticsMetricsPercentChart({ syncedReports, isMobile }) {
   const theme = useTheme();
 
   // Normalizar data de entrada
   const reports = useMemo(() => {
-    if (!allProfitReports) return [];
+    if (!syncedReports) return [];
 
-    if (Array.isArray(allProfitReports)) {
-      return allProfitReports;
+    if (Array.isArray(syncedReports)) {
+      return syncedReports;
     }
 
-    if (Array.isArray(allProfitReports?.profitReportsByDateRange)) {
-      return allProfitReports.profitReportsByDateRange;
+    if (Array.isArray(syncedReports?.profitReportsByDateRange)) {
+      return syncedReports.profitReportsByDateRange;
     }
 
-    if (Array.isArray(allProfitReports?.data?.profitReportsByDateRange)) {
-      return allProfitReports.data.profitReportsByDateRange;
+    if (Array.isArray(syncedReports?.data?.profitReportsByDateRange)) {
+      return syncedReports.data.profitReportsByDateRange;
     }
 
     return [];
-  }, [allProfitReports]);
+  }, [syncedReports]);
 
   // Totales globales
   const totals = useMemo(() => {

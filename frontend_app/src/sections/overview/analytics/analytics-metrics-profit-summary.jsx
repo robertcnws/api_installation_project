@@ -27,6 +27,7 @@ import { AnalyticsMetricsPercentChart } from './analytics-metrics-percent-chart'
 // ----------------------------------------------------------------------
 
 export function AnalyticsMetricsProfitSummary({
+  finishedProjects,
   icon,
   title,
   color = 'primary',
@@ -48,7 +49,11 @@ export function AnalyticsMetricsProfitSummary({
     refetchAllProfitReports
   );
 
-  const finishedCount = useMemo(() => allProfitReports?.length || 0, [allProfitReports]);
+  const syncedReports = useMemo(() => allProfitReports.filter(
+    (report) => finishedProjects.some(fp => fp.id === report.projectId)
+  ), [allProfitReports, finishedProjects]);
+
+  const finishedCount = useMemo(() => syncedReports?.length || 0, [syncedReports]);
 
   const {
     minProfit,
@@ -83,57 +88,58 @@ export function AnalyticsMetricsProfitSummary({
     if (loadingAllProfitReports) {
       return {};
     }
-    const minP = allProfitReports.reduce(
+
+    const minP = syncedReports.reduce(
       (min, report) => report.installationProfit < min.installationProfit ? report : min,
-      allProfitReports[0]
+      syncedReports[0]
     );
 
-    const maxP = allProfitReports.reduce(
+    const maxP = syncedReports.reduce(
       (max, report) => report.installationProfit > max.installationProfit ? report : max,
-      allProfitReports[0]
+      syncedReports[0]
     );
 
-    const totalProfit = allProfitReports.reduce((total, report) => total + report.installationProfit, 0);
-    const averageP = (totalProfit / allProfitReports.length);
+    const totalProfit = syncedReports.reduce((total, report) => total + report.installationProfit, 0);
+    const averageP = (totalProfit / syncedReports.length);
 
-    const minIA = allProfitReports.reduce(
+    const minIA = syncedReports.reduce(
       (min, report) => report.installationAmount < min.installationAmount ? report : min,
-      allProfitReports[0]
+      syncedReports[0]
     );
 
-    const maxIA = allProfitReports.reduce(
+    const maxIA = syncedReports.reduce(
       (max, report) => report.installationAmount > max.installationAmount ? report : max,
-      allProfitReports[0]
+      syncedReports[0]
     );
 
-    const totalIA = allProfitReports.reduce((total, report) => total + report.installationAmount, 0);
-    const averageIA = (totalIA / allProfitReports.length);
+    const totalIA = syncedReports.reduce((total, report) => total + report.installationAmount, 0);
+    const averageIA = (totalIA / syncedReports.length);
 
-    const minIC = allProfitReports.reduce(
+    const minIC = syncedReports.reduce(
       (min, report) => report.installationCost < min.installationCost ? report : min,
-      allProfitReports[0]
+      syncedReports[0]
     );
 
-    const maxIC = allProfitReports.reduce(
+    const maxIC = syncedReports.reduce(
       (max, report) => report.installationCost > max.installationCost ? report : max,
-      allProfitReports[0]
+      syncedReports[0]
     );
 
-    const totalIC = allProfitReports.reduce((total, report) => total + report.installationCost, 0);
-    const averageIC = (totalIC / allProfitReports.length);
+    const totalIC = syncedReports.reduce((total, report) => total + report.installationCost, 0);
+    const averageIC = (totalIC / syncedReports.length);
 
-    const minPA = allProfitReports.reduce(
+    const minPA = syncedReports.reduce(
       (min, report) => report.projectAmount < min.projectAmount ? report : min,
-      allProfitReports[0]
+      syncedReports[0]
     );
 
-    const maxPA = allProfitReports.reduce(
+    const maxPA = syncedReports.reduce(
       (max, report) => report.projectAmount > max.projectAmount ? report : max,
-      allProfitReports[0]
+      syncedReports[0]
     );
 
-    const totalPA = allProfitReports.reduce((total, report) => total + report.projectAmount, 0);
-    const averagePA = (totalPA / allProfitReports.length);
+    const totalPA = syncedReports.reduce((total, report) => total + report.projectAmount, 0);
+    const averagePA = (totalPA / syncedReports.length);
 
     return {
       minProfit: minP.installationProfit,
@@ -165,7 +171,7 @@ export function AnalyticsMetricsProfitSummary({
       maxProjectAmountProjectName: maxPA.projectInfo?.name,
       averageProjectAmount: averagePA,
     };
-  }, [allProfitReports, loadingAllProfitReports]);
+  }, [loadingAllProfitReports, syncedReports]);
 
 
   return (
@@ -460,7 +466,7 @@ export function AnalyticsMetricsProfitSummary({
         </Box>
       </Box>
 
-      <Box display="flex" flexDirection={ isMobile ? 'column' : 'row' } sx={{ mt: 3, gap: 2, width: '100%' }}>
+      <Box display="flex" flexDirection={isMobile ? 'column' : 'row'} sx={{ mt: 3, gap: 2, width: '100%' }}>
 
         <Box sx={{ width: '100%' }}>
           <Stack direction="row" alignItems="center" spacing={1.5}>
@@ -487,7 +493,7 @@ export function AnalyticsMetricsProfitSummary({
             </Box>
           </Stack>
           <AnalyticsMetricsProfitChart
-            allProfitReports={allProfitReports}
+            syncedReports={syncedReports}
             isMobile={isMobile}
           />
         </Box>
@@ -517,7 +523,7 @@ export function AnalyticsMetricsProfitSummary({
             </Box>
           </Stack>
           <AnalyticsMetricsPercentChart
-            allProfitReports={allProfitReports}
+            syncedReports={syncedReports}
             isMobile={isMobile}
           />
         </Box>

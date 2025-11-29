@@ -81,6 +81,7 @@
     "embla-carousel-react": "^8.2.0",
     "emoji-mart": "^5.6.0",
     "emoji-picker-react": "^4.12.0",
+    "file-saver": "^2.0.5",
     "firebase": "^10.13.0",
     "framer-motion": "^11.3.29",
     "graphql": "^16.9.0",
@@ -124,6 +125,7 @@
     "subscriptions-transport-ws": "^0.11.0",
     "swr": "^2.2.5",
     "turndown": "^7.2.0",
+    "xlsx": "^0.18.5",
     "yet-another-react-lightbox": "^3.21.4",
     "zod": "^3.23.8"
   },

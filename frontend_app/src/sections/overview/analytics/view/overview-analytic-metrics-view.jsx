@@ -288,7 +288,8 @@ export function OverviewAnalyticMetricsView() {
             <Grid key='finished-profit-summary' xs={12} sm={12} md={12}>
               <AnalyticsMetricsProfitSummary
                 sx={{ cursor: 'pointer' }}
-                title='Cost & Profit Summary'
+                finishedProjects={finishedProjects}
+                title='Finished Installations (Cost & Profit Summary)'
                 icon={
                   <Iconify
                     icon='la:file-invoice-dollar'

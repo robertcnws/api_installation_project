@@ -9,27 +9,27 @@ import { Chart } from "src/components/chart";
 // - { profitReportsByDateRange: [...] }
 // - { data: { profitReportsByDateRange: [...] } }
 
-export function AnalyticsMetricsProfitChart({ allProfitReports, isMobile }) {
+export function AnalyticsMetricsProfitChart({ syncedReports, isMobile }) {
     const theme = useTheme();
 
     // Normalizar la data de entrada a un simple array de reports
     const reports = useMemo(() => {
-        if (!allProfitReports) return [];
+        if (!syncedReports) return [];
 
-        if (Array.isArray(allProfitReports)) {
-            return allProfitReports;
+        if (Array.isArray(syncedReports)) {
+            return syncedReports;
         }
 
-        if (Array.isArray(allProfitReports?.profitReportsByDateRange)) {
-            return allProfitReports.profitReportsByDateRange;
+        if (Array.isArray(syncedReports?.profitReportsByDateRange)) {
+            return syncedReports.profitReportsByDateRange;
         }
 
-        if (Array.isArray(allProfitReports?.data?.profitReportsByDateRange)) {
-            return allProfitReports.data.profitReportsByDateRange;
+        if (Array.isArray(syncedReports?.data?.profitReportsByDateRange)) {
+            return syncedReports.data.profitReportsByDateRange;
         }
 
         return [];
-    }, [allProfitReports]);
+    }, [syncedReports]);
 
     // Helper para formatear en K / M (para labels numéricos)
     const formatShort = (rawVal) => {
