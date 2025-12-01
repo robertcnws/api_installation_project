@@ -213,6 +213,16 @@ export function OverviewReportsView() {
         }
     }, [reportType, normalizedReports, selectedMonth, selectedYear, selectedDateRange]);
 
+    const isTableVisible = useMemo(() => (
+        Boolean(reportType?.value === 'currentDay') ||
+        Boolean(reportType?.value === 'currentWeek') ||
+        Boolean(reportType?.value === 'currentMonth') ||
+        Boolean(reportType?.value === 'currentYear') ||
+        (reportType?.value === 'customMonth' && selectedMonth && selectedYear) ||
+        (reportType?.value === 'customYear' && selectedYear) ||
+        (reportType?.value === 'dateRange' && selectedDateRange?.startDate && selectedDateRange?.endDate)
+    ), [reportType, selectedMonth, selectedYear, selectedDateRange]);
+
     // Actualizar título cuando cambian filtros
     useEffect(() => {
         setTitle(buildTitle());
@@ -236,12 +246,12 @@ export function OverviewReportsView() {
                     setSelectedDateRange={setSelectedDateRange}
                 />
 
-                {/* {filteredData.length > 0 && ( */}
-                <ReportsTable
-                    filteredData={filteredData}
-                    title={title}
-                />
-                {/* )} */}
+                {isTableVisible && (
+                    <ReportsTable
+                        filteredData={filteredData}
+                        title={title}
+                    />
+                )}
             </Card>
         </DashboardContent>
     );
