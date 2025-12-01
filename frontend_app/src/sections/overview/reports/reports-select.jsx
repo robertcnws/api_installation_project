@@ -66,7 +66,7 @@ export function ReportsSelect({
             sx={{
                 display: "flex",
                 gap: 2,
-                mb: 2,
+                mb: 0,
                 flexDirection: { xs: "column", md: "row" },
                 width: "100%",
             }}
@@ -92,7 +92,7 @@ export function ReportsSelect({
             {reportType &&
                 (reportType.value === "customMonth" ||
                     reportType.value === "customYear") && (
-                    <Box sx={{ display: "flex", gap: 2, width: reportType.value === "customYear" ? "25%" : "100%" }}>
+                    <Box sx={{ display: "flex", gap: 2, width: reportType.value === "customYear" ? { xs: "100%", md: "25%" } : "100%" }}>
                         {reportType.value === "customMonth" && (
                             <Box sx={{ width: "50%" }}>
                                 <Autocomplete
