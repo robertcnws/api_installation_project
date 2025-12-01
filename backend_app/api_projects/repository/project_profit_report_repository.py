@@ -131,25 +131,27 @@ def manage_profit_report(project_id: str, force_update=False) -> Response:
             {'message': f'Project profit report for {project.name} updated successfully'},
             status=200
         )
+        
+    elif not project_profit:
 
-    project_profit = ProjectProfitReport(
-        project_id=str(project.id),
-        project_info=project_info,
-        project_amount=total_sales_order,      # monto total del proyecto
-        installation_amount=total_installation,  # lo que cobras por instalar
-        installation_cost=total_installing,      # lo que te cuesta instalar
-        installation_profit=total_profit,        # utilidad
-        notes="",
-        has_been_edited=False,
-        created_time=timezone.now(),
-        last_modified_time=timezone.now(),
-    )
-    project_profit.save()
+        project_profit = ProjectProfitReport(
+            project_id=str(project.id),
+            project_info=project_info,
+            project_amount=total_sales_order,      # monto total del proyecto
+            installation_amount=total_installation,  # lo que cobras por instalar
+            installation_cost=total_installing,      # lo que te cuesta instalar
+            installation_profit=total_profit,        # utilidad
+            notes="",
+            has_been_edited=False,
+            created_time=timezone.now(),
+            last_modified_time=timezone.now(),
+        )
+        project_profit.save()
 
-    return Response(
-        {'message': f'Project profit report for {project.name} created successfully'},
-        status=201
-    )
+        return Response(
+            {'message': f'Project profit report for {project.name} created successfully'},
+            status=201
+        )
     
     
 def update_profit_report(id: str, request) -> Response:
