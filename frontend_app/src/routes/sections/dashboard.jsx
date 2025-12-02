@@ -24,6 +24,9 @@ const UserCardsPage = lazy(() => import('src/pages/dashboard/user/cards'));
 const UserListPage = lazy(() => import('src/pages/dashboard/user/list'));
 const UserCreatePage = lazy(() => import('src/pages/dashboard/user/new'));
 const UserEditPage = lazy(() => import('src/pages/dashboard/user/edit'));
+// Installation Crew
+const InstallationCrewListPage = lazy(() => import('src/pages/dashboard/installation-crew/list'));
+const InstallationCrewCreatePage = lazy(() => import('src/pages/dashboard/installation-crew/new'));
 // Sales Orders
 const SalesOrderListPage = lazy(() => import('src/pages/dashboard/sales-order/list'));
 const SalesOrderDetailsPage = lazy(() => import('src/pages/dashboard/sales-order/details'));
@@ -623,6 +626,43 @@ export const dashboardRoutes = (listPermissions, user) => [
                 ).includes(
                   CONFIG.roles.projectManager
                 ) ? <UserEditPage /> : <Page403 />,
+              },
+            ],
+          },
+          {
+            path: 'install-crew',
+            children: [
+              {
+                element: listRolesAndSubroles(
+                  user?.user_role?.name
+                ).includes(
+                  CONFIG.roles.projectManager
+                ) ? <InstallationCrewListPage /> : <Page403 />,
+                index: true
+              },
+              {
+                path: 'list',
+                element: listRolesAndSubroles(
+                  user?.user_role?.name
+                ).includes(
+                  CONFIG.roles.projectManager
+                ) ? <InstallationCrewListPage /> : <Page403 />,
+              },
+              {
+                path: 'new',
+                element: listRolesAndSubroles(
+                  user?.user_role?.name
+                ).includes(
+                  CONFIG.roles.projectManager
+                ) ? <InstallationCrewCreatePage /> : <Page403 />,
+              },
+              {
+                path: ':id/edit',
+                element: listRolesAndSubroles(
+                  user?.user_role?.name
+                ).includes(
+                  CONFIG.roles.projectManager
+                ) ? <InstallationCrewCreatePage /> : <Page403 />,
               },
             ],
           },

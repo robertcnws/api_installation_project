@@ -144,18 +144,19 @@ export function AnalyticsMetricsStageSummary({
         </Box>
 
         <Box sx={{ minWidth: 0 }}>
-          <Typography variant="subtitle2" noWrap>
-            Current Summary
-          </Typography>
+          {/* <Typography variant="subtitle2" noWrap>
+            Stage
+          </Typography> */}
           <Typography variant="caption" color="text.secondary" noWrap>
-            Stage: <b>{value}</b>
+            <b>{value?.toUpperCase()}</b>
           </Typography>
         </Box>
 
         <Box sx={{ flexGrow: 1 }} />
 
         <Label color={installationsCount > 0 ? 'success' : 'default'} variant="soft">
-          {installationsCount} installation{installationsCount === 1 ? '' : 's'}
+          {installationsCount} 
+          {/* installation{installationsCount === 1 ? '' : 's'} */}
         </Label>
       </Stack>
 

@@ -248,3 +248,26 @@ def message_project_profit_report(msg_type, document):
 
         }
     }
+    
+def message_project_installation_crew(msg_type, document):
+    return {
+        'type': 'project_installation_crew_update',
+        'message': {
+            'type': msg_type,
+            "item": {
+                "id": str(document.id),
+                "name": document.name,
+                "description": document.description,
+                "usersInstallers": document.users_installers,
+                "usersHelpers": document.users_helpers,
+                "userReporter": document.user_reporter,
+                "isActive": document.is_active,
+                "createdTime": document.created_time,
+                "lastModifiedTime": document.last_modified_time,
+                "costByUnit": document.cost_by_unit,
+                "unit": document.unit,
+                "typeCrew": document.type_crew,
+            }
+
+        }
+    }
