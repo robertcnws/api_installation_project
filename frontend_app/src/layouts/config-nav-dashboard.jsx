@@ -60,6 +60,7 @@ const ICONS = {
   defaultMaterial: icon('ic-material'),
   statistics: icon('ic-statistics'),
   report: icon('ic-report'),
+  crew: icon('ic-crew'),
 };
 
 const userLogged = JSON.parse(sessionStorage.getItem('userLogged'));
@@ -172,6 +173,17 @@ export const navData = () => [
           children: [
             { title: 'List', path: paths.dashboard.user.list },
             { title: 'Create', path: paths.dashboard.user.new },
+          ],
+        },
+      ] : []),
+      ...(userLogged && listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.projectManager) ? [
+        {
+          title: 'Installation Crews',
+          path: paths.dashboard.installationCrew.root,
+          icon: ICONS.crew,
+          children: [
+            { title: 'List', path: paths.dashboard.installationCrew.list },
+            { title: 'Create', path: paths.dashboard.installationCrew.new },
           ],
         },
       ] : []),

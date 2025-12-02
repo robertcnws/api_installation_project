@@ -80,6 +80,13 @@ export const paths = {
         edit: `${ROOTS.DASHBOARD}/user/${MOCK_ID}/edit`,
       },
     },
+    installationCrew: {
+      root: `${ROOTS.DASHBOARD}/install-crew`,
+      new: `${ROOTS.DASHBOARD}/install-crew/new`,
+      list: `${ROOTS.DASHBOARD}/install-crew/list`,
+      edit: (id) => `${ROOTS.DASHBOARD}/install-crew/${id}/edit`,
+      details: (id) => `${ROOTS.DASHBOARD}/install-crew/${id}`,
+    },
     salesOrder: {
       root: `${ROOTS.DASHBOARD}/sales-order`,
       list: `${ROOTS.DASHBOARD}/sales-order/list`,

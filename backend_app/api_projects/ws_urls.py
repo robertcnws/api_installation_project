@@ -13,6 +13,7 @@ from .consumers import (
     ProjectDefaultMaterialConsumer,
     ProjectCalendarNotesConsumer,
     ProjectProfitReportConsumer,
+    ProjectInstallationCrewConsumer,
 )
 
 websocket_urlpatterns = [
@@ -28,4 +29,5 @@ websocket_urlpatterns = [
     path('api/projects/ws/default-materials/', ProjectDefaultMaterialConsumer.as_asgi(), name='ws_default_materials'),
     path('api/projects/ws/project-calendar-notes/', ProjectCalendarNotesConsumer.as_asgi(), name='ws_project_calendar_notes'),
     path('api/projects/ws/project-profit-reports/', ProjectProfitReportConsumer.as_asgi(), name='ws_project_profit_reports'),
+    path('api/projects/ws/project-installation-crews/', ProjectInstallationCrewConsumer.as_asgi(), name='ws_project_installation_crews'),
 ]

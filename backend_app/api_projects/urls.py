@@ -63,6 +63,11 @@ urlpatterns = [
     path('edit/default-task/<str:id>/', views.edit_default_task, name='edit_default_task'),
     path('delete/default-task/<str:id>/', views.delete_default_task, name='delete_default_task'),
     path('delete/default-tasks/', views.delete_default_tasks, name='delete_default_tasks'),
+    # PROJECT INSTALLATION CREWS
+    path('create/installation-crew/', views.create_project_installation_crew, name='create_project_installation_crew'),
+    path('edit/installation-crew/<str:id>/', views.edit_project_installation_crew, name='edit_project_installation_crew'),
+    path('delete/installation-crew/<str:id>/', views.delete_project_installation_crew, name='delete_project_installation_crew'),
+    path('delete/installation-crews/', views.delete_list_of_project_installation_crews, name='delete_list_of_project_installation_crews'),
     # PROJECT STAGES
     path('create/stage/', views.create_stage, name='create_stage'),
     path('edit/stage/<str:id>/', views.edit_stage, name='edit_stage'),

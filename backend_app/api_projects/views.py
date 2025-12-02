@@ -19,6 +19,7 @@ from .repository import (
     project_work_orders_repository,
     project_calendar_notes_repository,
     project_profit_report_repository,
+    project_installation_crew_repository,
 )
 
 from rest_framework.response import Response
@@ -779,3 +780,43 @@ def trigger_profit_rebuild(request):
 @permission_classes([AllowAny])  # o la que uses
 def manage_profit_report(request, id):
     return project_profit_report_repository.update_profit_report(id, request)
+
+
+##############################################
+# CREATE PROJECT INSTALLATION CREW
+##############################################
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def create_project_installation_crew(request):
+    return project_installation_crew_repository.create_project_installation_crew(request)
+
+
+#############################################
+# EDIT PROJECT INSTALLATION CREW
+#############################################
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def edit_project_installation_crew(request, id):
+    return project_installation_crew_repository.edit_project_installation_crew(request, id)
+
+
+#############################################
+# DELETE PROJECT INSTALLATION CREW
+#############################################
+
+@api_view(['DELETE'])
+@permission_classes([AllowAny])
+def delete_project_installation_crew(request, id):
+    return project_installation_crew_repository.delete_project_installation_crew(request, id)
+
+
+#############################################
+# DELETE LIST OF PROJECT INSTALLATION CREWS
+#############################################
+
+@api_view(['DELETE'])
+@permission_classes([AllowAny])
+def delete_list_of_project_installation_crews(request):
+    return project_installation_crew_repository.delete_project_installation_crews(request)

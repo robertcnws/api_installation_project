@@ -14,8 +14,10 @@ from api_projects.schema_models.model_schema_project_reminder import ProjectRema
 from api_projects.schema_models.model_schema_project_tracking import ProjectTrackingType, ProjectTrackingViewType
 from api_projects.schema_models.model_schema_project_calendar_notes import ProjectCalendarNotesType
 from api_projects.schema_models.model_schema_project_profit_report import ProjectProfitReportType
+from api_projects.schema_models.model_schema_project_installation_crew import ProjectInstallationCrewType
 
 from .models import (
+    ProjectInstallationCrew,
     ProjectStage, 
     ProjectRole, 
     Project, 
@@ -83,6 +85,7 @@ class Query(graphene.ObjectType):
         start_date=graphene.String(required=True),
         end_date=graphene.String(required=True)
     )
+    all_project_installation_crews = graphene.List(ProjectInstallationCrewType)
     
     def resolve_all_project_reminders(self, info, username=None):
         if username:
@@ -197,6 +200,9 @@ class Query(graphene.ObjectType):
         )
 
         return qs.order_by('-created_time')
+    
+    def resolve_all_project_installation_crews(self, info):
+        return list(ProjectInstallationCrew.objects.all())
             
 
 schema = graphene.Schema(query=Query)

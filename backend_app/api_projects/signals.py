@@ -12,6 +12,7 @@ from .models import (
     ProjectDefaultMaterial,
     ProjectCalendarNotes,
     ProjectProfitReport,
+    ProjectInstallationCrew,
 )
 from .models_sync import ProjectSync
 from asgiref.sync import async_to_sync
@@ -28,8 +29,24 @@ from api_projects.event_messages import (
     message_project_notification_user,
     message_project_calendar_notes,
     message_project_profit_report,
+    message_project_installation_crew
 )
 import json
+
+##########################################################################    
+# ProjectInstallationCrew
+##########################################################################
+
+def project_installation_crew_saved(sender, document, **kwargs):
+    created = kwargs.get('created', False)
+    channel_layer = get_channel_layer()
+    event = message_project_installation_crew('created' if created else 'updated', document)
+    async_to_sync(channel_layer.group_send)('project_installation_crew', serialize_datetime(event))
+    
+def project_installation_crew_deleted(sender, document, **kwargs):
+    channel_layer = get_channel_layer()
+    event = message_project_installation_crew('deleted', document)
+    async_to_sync(channel_layer.group_send)('project_installation_crew', serialize_datetime(event))
 
 ##########################################################################    
 # ProjectProfitReport
@@ -330,3 +347,6 @@ signals.post_delete.connect(project_calendar_notes_deleted, sender=ProjectCalend
 
 signals.post_save.connect(project_profit_report_saved, sender=ProjectProfitReport)
 signals.post_delete.connect(project_profit_report_deleted, sender=ProjectProfitReport)
+
+signals.post_save.connect(project_installation_crew_saved, sender=ProjectInstallationCrew)
+signals.post_delete.connect(project_installation_crew_deleted, sender=ProjectInstallationCrew)

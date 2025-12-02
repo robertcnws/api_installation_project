@@ -587,3 +587,29 @@ class ProjectProfitReport(Document):
 
     def __str__(self):
         return f'Profit Report for {self.project.name}'
+    
+    
+class ProjectInstallationCrew(Document):
+    name = StringField(max_length=255, required=True)
+    users_installers = ListField(DynamicField(), default=list, null=True)
+    users_helpers = ListField(DynamicField(), default=list, null=True)
+    cost_by_unit = FloatField(default=0.0)
+    unit = DynamicField(null=True)
+    type_crew = DynamicField(null=True)
+    description = StringField(null=True)
+    created_time = DateTimeField(default=timezone.now, null=True)
+    last_modified_time = DateTimeField(default=timezone.now, null=True)
+    is_active = BooleanField(default=True)
+    user_reporter = DynamicField(null=True)
+    
+    meta = {
+        'collection': 'project_installation_crew',
+        'indexes': [
+            'created_time', 'last_modified_time', 'is_active', 'name', 'type_crew'
+        ],
+        'verbose_name': 'Project Installation Crew',
+        'verbose_name_plural': 'Project Installation Crews'
+    }
+
+    def __str__(self):
+        return f'Installation Crew - {self.name}'    
