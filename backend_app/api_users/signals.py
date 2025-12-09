@@ -80,6 +80,7 @@ def user_saved(sender, document, **kwargs):
                 "userRole": document.user_role,
                 "username": document.username,
                 "zipCode": document.zip_code,
+                "installerInfo": document.installer_info,
             }
         }
     }
@@ -113,6 +114,7 @@ def user_deleted(sender, document, **kwargs):
                 "userRole": document.user_role,
                 "username": document.username,
                 "zipCode": document.zip_code,
+                "installerInfo": document.installer_info,
             }
         }
     }

@@ -596,6 +596,7 @@ class ProjectInstallationCrew(Document):
     cost_by_unit = FloatField(default=0.0)
     unit = DynamicField(null=True)
     type_crew = DynamicField(null=True)
+    type_working = DynamicField(null=True)
     description = StringField(null=True)
     created_time = DateTimeField(default=timezone.now, null=True)
     last_modified_time = DateTimeField(default=timezone.now, null=True)
@@ -605,7 +606,7 @@ class ProjectInstallationCrew(Document):
     meta = {
         'collection': 'project_installation_crew',
         'indexes': [
-            'created_time', 'last_modified_time', 'is_active', 'name', 'type_crew'
+            'created_time', 'last_modified_time', 'is_active', 'name', 'type_crew', 'type_working'
         ],
         'verbose_name': 'Project Installation Crew',
         'verbose_name_plural': 'Project Installation Crews'

@@ -14,7 +14,7 @@ import { Avatar, Dialog, DialogTitle, DialogActions, Typography } from '@mui/mat
 import { Iconify } from 'src/components/iconify';
 
 import { isInstaller } from 'src/utils/check-permissions';
-import { getProjectInstaller } from 'src/utils/project-tasks-utils';
+import { getProjectInstallers } from 'src/utils/project-tasks-utils';
 
 import { CONFIG } from 'src/config-global';
 
@@ -83,7 +83,7 @@ export function ProjectEditModalInstallationTeamView({
             id: project?.id || '',
             name: project?.name || '',
             number: project?.number || '',
-            installer: getProjectInstaller(project, CONFIG) || null,
+            installer: getProjectInstallers(project, CONFIG) || null,
         }),
         [project]
     );
@@ -110,7 +110,7 @@ export function ProjectEditModalInstallationTeamView({
                 id: project?.id || '',
                 name: project?.name || '',
                 number: project?.number || '',
-                installer: getProjectInstaller(project, CONFIG) || null,
+                installer: getProjectInstallers(project, CONFIG) || null,
             });
         }
     }, [project, userLogged?.data, reset]);

@@ -13,6 +13,7 @@ const GET_ALL_PROJECT_INSTALLATION_CREWS = gql`
       lastModifiedTime
       name
       typeCrew
+      typeWorking
       unit
       userReporter
       usersHelpers

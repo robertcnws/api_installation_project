@@ -13,7 +13,7 @@ import { useTabs } from 'src/hooks/use-tabs';
 import { fDate } from 'src/utils/format-time';
 import { extractDimensions } from 'src/utils/generate-installation-guide-pdf';
 import { generateMeasurementProperties } from 'src/utils/measurement-tasks-utils';
-import { getProjectInstaller, filteredDescriptionJson } from 'src/utils/project-tasks-utils';
+import { getProjectInstallers, filteredDescriptionJson, getProjectCrewTypes } from 'src/utils/project-tasks-utils';
 import { isInstaller, isFinancialStaff, isWarehouseStaff, listRolesAndSubroles } from 'src/utils/check-permissions';
 
 import { CONFIG } from 'src/config-global';
@@ -111,6 +111,8 @@ export function ProjectDetailsView({ projectId }) {
         [loadedServices, itemById]
     );
 
+    const itemTypeCrews = useMemo(() => getProjectCrewTypes(itemById) || [], [itemById]);
+
 
     const DETAILS_TABS = [
         { label: 'Overview', value: 'overview' },
@@ -132,13 +134,14 @@ export function ProjectDetailsView({ projectId }) {
         //     taskFinishInstallation?.status.toLowerCase().indexOf(CONFIG.taskStatus.finished.toLowerCase()) !== -1) ? [
         //     { label: 'Release Form', value: 'releaseForm' },
         // ] : [],
-        ...listRolesAndSubroles(userLogged?.data?.user_role?.name)
-            .some(elem => [CONFIG.roles.installer, CONFIG.roles.warehouseStaff]) ? [
-            { label: 'Installation Guide', value: 'installationGuide' },
-        ] : [],
-        ...listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.financialStaff) ? [
-            { label: 'Financial', value: 'financial' },
-        ] : [],
+        ...(listRolesAndSubroles(userLogged?.data?.user_role?.name)
+            .some(
+                elem => [CONFIG.roles.installer, CONFIG.roles.warehouseStaff]
+            ) && itemTypeCrews?.includes('subcontractor')) ?
+            [{ label: 'Installation Guide', value: 'installationGuide' },] : [],
+        // ...listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.financialStaff) ? [
+        //     { label: 'Financial', value: 'financial' },
+        // ] : [],
         { label: 'Comments & History', value: 'comments' },
         ...(associatedMeasurement || associatedServices?.length > 0) ? [
             {
@@ -421,7 +424,7 @@ export function ProjectDetailsView({ projectId }) {
             try {
                 const promise = axios.post(`${CONFIG.apiUrl}/measurements/create/measurement/`, {
                     project: JSON.stringify(project),
-                    installer: JSON.stringify(getProjectInstaller(itemById, CONFIG)),
+                    installer: JSON.stringify(getProjectInstallers(itemById, CONFIG)),
                     items: JSON.stringify(arrayDimensions),
                     userReporter: JSON.stringify(userLogged?.data),
                     salesOrder: JSON.stringify(itemById?.salesOrder),
@@ -458,9 +461,9 @@ export function ProjectDetailsView({ projectId }) {
                     label={tab.label}
                     icon={
                         (tab.value === 'tasks' ||
-                         tab.value === 'attachments' ||
-                         tab.value === 'comments' ||
-                         tab.value === 'workOrders'
+                            tab.value === 'attachments' ||
+                            tab.value === 'comments' ||
+                            tab.value === 'workOrders'
                         ) ? (
                             !isInstaller(userLogged?.data?.user_role?.name) ? (
                                 ((tab.value === 'tasks' && totalTasks > 0) ||
@@ -516,6 +519,11 @@ export function ProjectDetailsView({ projectId }) {
     );
 
     const [titleLinearProgress, setTitleLinearProgress] = useState(`Loading data from installation ${item?.name ? item?.name : ''}...`);
+
+
+
+
+    // console.log('itemTypeCrews', itemTypeCrews);
 
     return (
         <>
@@ -587,6 +595,7 @@ export function ProjectDetailsView({ projectId }) {
                                     listPermissions={listPermissions}
                                     openDialogs={openDialogs}
                                     setOpenDialogs={setOpenDialogs}
+                                    tabs={tabs}
                                 />
                             }
 
@@ -640,26 +649,27 @@ export function ProjectDetailsView({ projectId }) {
                                 ))}
 
                             {(tabs.value === 'installationGuide' && itemById?.userManager?.username) && (
-                                !isInstaller(userLogged?.data?.user_role?.name) ? (
-                                    <ProjectDetailsInstallationGuideFormView
-                                        project={itemById}
-                                        refetchProject={refetchProject}
-                                        listPermissions={listPermissions}
-                                        openDialogs={openDialogs}
-                                        setOpenDialogs={setOpenDialogs}
-                                        loadedDefaultGuideProducts={loadedDefaultGuideProducts}
-                                        loadedDefaultMaterials={loadedDefaultMaterials}
-                                    />
-                                ) : (
-                                    <ProjectDetailsInstallationGuideFormInstallerView
-                                        project={itemById}
-                                        refetchProject={refetchProject}
-                                        listPermissions={listPermissions}
-                                        openDialogs={openDialogs}
-                                        setOpenDialogs={setOpenDialogs}
-                                        loadedDefaultGuideProducts={loadedDefaultGuideProducts}
-                                    />
-                                ))}
+                                itemTypeCrews?.includes('subcontractor') && (
+                                    isInstaller(userLogged?.data?.user_role?.name) ? (
+                                        <ProjectDetailsInstallationGuideFormInstallerView
+                                            project={itemById}
+                                            refetchProject={refetchProject}
+                                            listPermissions={listPermissions}
+                                            openDialogs={openDialogs}
+                                            setOpenDialogs={setOpenDialogs}
+                                            loadedDefaultGuideProducts={loadedDefaultGuideProducts}
+                                        />
+                                    ) : (
+                                        <ProjectDetailsInstallationGuideFormView
+                                            project={itemById}
+                                            refetchProject={refetchProject}
+                                            listPermissions={listPermissions}
+                                            openDialogs={openDialogs}
+                                            setOpenDialogs={setOpenDialogs}
+                                            loadedDefaultGuideProducts={loadedDefaultGuideProducts}
+                                            loadedDefaultMaterials={loadedDefaultMaterials}
+                                        />
+                                    )))}
 
                             {(tabs.value === 'financial' &&
                                 itemById?.userManager?.username &&

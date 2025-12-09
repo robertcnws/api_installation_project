@@ -15,7 +15,7 @@ import { useBoolean } from 'src/hooks/use-boolean';
 import { useSetState } from 'src/hooks/use-set-state';
 
 import { fIsAfter, fIsBetween } from 'src/utils/format-time';
-import { getProjectInstaller, getProjectAttachments } from 'src/utils/project-tasks-utils';
+import { getProjectInstallers, getProjectAttachments } from 'src/utils/project-tasks-utils';
 
 import { CONFIG } from 'src/config-global';
 import { PROJECT_TYPE_OPTIONS } from 'src/_mock';
@@ -510,7 +510,7 @@ function applyFilter({ inputData, comparator, filters, dateError }) {
 
   if (installer.id) {
     inputData = inputData.filter((file) => {
-      const installerId = getProjectInstaller(file, CONFIG)?.id;
+      const installerId = getProjectInstallers(file, CONFIG)?.id;
       if (installerId) {
         return String(installerId) === String(installer.id);
       }

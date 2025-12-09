@@ -267,6 +267,7 @@ def message_project_installation_crew(msg_type, document):
                 "costByUnit": document.cost_by_unit,
                 "unit": document.unit,
                 "typeCrew": document.type_crew,
+                "typeWorking": document.type_working,
             }
 
         }

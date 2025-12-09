@@ -7,7 +7,7 @@ import Grid from '@mui/material/Unstable_Grid2';
 import Typography from '@mui/material/Typography';
 import ListItemText from '@mui/material/ListItemText';
 import { toast } from 'src/components/snackbar';
-import { Box, Table, Button, TableRow, TableBody, TableCell, TableHead, TextField, IconButton, TableFooter, TableContainer, Tooltip } from '@mui/material';
+import { Box, Table, Button, TableRow, TableBody, TableCell, TableHead, TextField, IconButton, TableFooter, TableContainer, Tooltip, Autocomplete, Avatar } from '@mui/material';
 
 import { fCurrency } from 'src/utils/format-number';
 import { fDate, fIsAfter } from 'src/utils/format-time';
@@ -26,11 +26,22 @@ import { Form, Field } from 'src/components/hook-form';
 import { LoadingContext } from 'src/auth/context/loading-context';
 
 import { ConfirmDialog } from 'src/components/custom-dialog';
+import { TableNoData } from 'src/components/table';
+import { getWorkOrderAssistants, getWorkOrderWorkers } from 'src/utils/project-tasks-utils';
 
 import { ProjectEditModalNotesView } from './project-edit-modal-notes-view';
 import { ProjectDetailsContentOverview } from '../project-details-content-overview';
 import { ProjectEditModalWorkOrderView } from './project-edit-modal-work-order-view';
 import { ProjectDetailsContentOverviewModalService } from '../project-details-content-overview-modal-service';
+
+
+const MOCK_WORK_TYPES = [
+  { id: 1, name: 'Installation' },
+  { id: 2, name: 'Finish' },
+  { id: 3, name: 'Inspection' },
+  { id: 4, name: 'Service' },
+  { id: 5, name: 'All' }
+];
 
 // ----------------------------------------------------------------------
 
@@ -65,13 +76,25 @@ export function ProjectDetailsWorkOrdersFormView({
 
   const openItems = useBoolean(false);
 
+  const openNotes = useBoolean(false);
+
   const confirmDeleteWorkOrder = useBoolean(false);
 
   const confirmFinishWorkOrder = useBoolean(false);
 
+  const [selectedWOType, setSelectedWOType] = useState({ id: 5, name: 'All' });
+
   const [selectedWorkOrder, setSelectedWorkOrder] = useState(null);
 
-  const handleOpenNotes = () => { };
+  const handleChangeWOType = (event, newValue) => {
+    const woType = newValue || { id: 5, name: 'All' };
+    setSelectedWOType(woType);
+    if (woType.name === 'All') {
+      setWorkOrders(toSortedWorkOrders(project?.workOrders));
+    } else {
+      setWorkOrders(toSortedWorkOrders(filterWorkOrdersByType(woType.name, project?.workOrders)));
+    }
+  }
 
   const handleOpenWorkOrder = (wo) => {
     setSelectedWorkOrder(wo);
@@ -97,7 +120,7 @@ export function ProjectDetailsWorkOrdersFormView({
   const handleFinishWorkOrder = async (wo) => {
     try {
       await axios.post(`${CONFIG.apiUrl}/projects/finish/project/${project.id}/work-order/${wo.id}/`, {
-          userReporter: JSON.stringify(userLogged?.data)
+        userReporter: JSON.stringify(userLogged?.data)
       });
       toast.success(`Finish ${wo.name} successfully!`);
       setWorkOrders((prev) => prev.filter((order) => order.id !== wo.id));
@@ -108,6 +131,21 @@ export function ProjectDetailsWorkOrdersFormView({
     }
   };
 
+  const colorToWOType = (woTypeName) => {
+    switch (woTypeName?.toLowerCase()) {
+      case 'installation':
+        return 'info';
+      case 'finish':
+        return 'success';
+      case 'inspection':
+        return 'warning';
+      case 'service':
+        return 'secondary';
+      default:
+        return 'default';
+    }
+  };
+
   const renderContent = (
     <Card sx={{ p: 3, gap: 1, display: 'flex', flexDirection: 'column', maxHeight: !isMobile ? 655 : 'auto', minHeight: !isMobile ? 655 : 'auto', overflow: 'auto' }}>
 
@@ -115,22 +153,38 @@ export function ProjectDetailsWorkOrdersFormView({
         {
           label: (
             <Stack spacing={1} direction="row">
-              <Typography variant='subtitle2'>Work Orders</Typography>
-              <Tooltip title="Add Work Order" arrow>
-                <IconButton variant="text" color="primary" size="small" sx={{
-                  // ml: -15, 
-                  minWidth: 15,
-                  mt: -1,
-                  '&:hover': {
-                    boxShadow: 'none',
-                    backgroundColor: 'transparent',
-                  },
-                }}
-                  onClick={() => setOpenDialogs({ ...openDialogs, workOrder: true })}
-                >
-                  <Iconify icon="icons8:plus" color="primary" width={25} />
-                </IconButton>
-              </Tooltip>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', flexDirection: 'row', width: '100%' }}>
+                <Box sx={{ display: 'flex', justifyContent: 'flex-start', flexDirection: 'row', width: '100%' }}>
+                  <Typography variant='subtitle2'>Work Orders</Typography>
+                  <Tooltip title="Add Work Order" arrow>
+                    <IconButton variant="text" color="primary" size="small" sx={{
+                      // ml: -15, 
+                      minWidth: 15,
+                      mt: -1,
+                      '&:hover': {
+                        boxShadow: 'none',
+                        backgroundColor: 'transparent',
+                      },
+                    }}
+                      onClick={() => setOpenDialogs({ ...openDialogs, workOrder: true })}
+                    >
+                      <Iconify icon="icons8:plus" color="primary" width={25} />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', flexDirection: 'row', width: '100%', gap: 2 }}>
+                  <Autocomplete
+                    size="small"
+                    options={MOCK_WORK_TYPES}
+                    getOptionLabel={(option) => option.name}
+                    isOptionEqualToValue={(option, value) => option.id === value.id}
+                    defaultValue={MOCK_WORK_TYPES[4]}
+                    sx={{ width: '100%', mt: -1 }}
+                    onChange={handleChangeWOType}
+                    renderInput={(params) => <TextField {...params} label="Filter WO Type" />}
+                  />
+                </Box>
+              </Box>
             </Stack>
           ),
           value: (
@@ -143,10 +197,11 @@ export function ProjectDetailsWorkOrdersFormView({
                         {!isMobile ? (
                           <>
                             <TableCell>Info</TableCell>
+                            <TableCell>WO Type</TableCell>
                             <TableCell>Description</TableCell>
                             <TableCell>Date & Duration</TableCell>
-                            <TableCell>Stage</TableCell>
-                            <TableCell>Assignee</TableCell>
+                            {/* <TableCell>Stage</TableCell> */}
+                            <TableCell>Assignee(s)</TableCell>
                             <TableCell>Product(s)</TableCell>
                             <TableCell />
                           </>
@@ -161,23 +216,54 @@ export function ProjectDetailsWorkOrdersFormView({
                       </TableRow>
                     </TableHead>
                     <TableBody>
+                      {workOrders.length === 0 && (
+                        <TableNoData notFound />
+                      )}
                       {workOrders.map((order, index) => (
                         <TableRow key={`item-${order?.id}`}>
                           {!isMobile ? (
                             <>
-                              <TableCell sx={{ width: 150 }}>
+                              <TableCell sx={{ width: 350, cursor: 'pointer' }} onClick={() => handleOpenWorkOrder(order)}>
                                 <Typography variant="body2">{order?.name || 'N/A'}</Typography>
+                              </TableCell>
+                              <TableCell sx={{ width: 150, cursor: 'pointer' }} onClick={() => handleOpenWorkOrder(order)}>
+                                <Box sx={{ display: 'flex', gap: 1, flexDirection: 'column' }}>
+                                  <Typography variant="body2">
+                                    <Label
+                                      color={colorToWOType(order?.work_type?.name)}
+                                      sx={{
+                                        bgcolor: `${colorToWOType(order?.work_type?.name)}.lighter`,
+                                        textTransform: 'capitalize'
+                                      }}
+                                    >
+                                      {order?.work_type?.name || 'N/A'}
+                                    </Label>
+                                  </Typography>
+                                  {order?.work_type?.name?.toLowerCase() === 'inspection' && (
+                                    <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                                      {order?.inspection_type?.name || 'N/A'}
+                                    </Typography>
+                                  )}
+                                </Box>
                               </TableCell>
                               <TableCell sx={{ width: 50 }}>
                                 {order?.description ? (
-                                  <Label color="warning" sx={{ cursor: 'pointer' }} onClick={() => {
-                                    handleOpenNotes(order)
-                                  }}>
+                                  <Label
+                                    color="warning"
+                                    sx={{
+                                      cursor: 'pointer',
+                                      bgcolor: 'transparent',
+                                      fontSize: 14
+                                    }}
+                                    onClick={() => {
+                                      setSelectedWorkOrder(order);
+                                      openNotes.onTrue();
+                                    }}>
                                     See Description
                                   </Label>
                                 ) : 'N/A'}
                               </TableCell>
-                              <TableCell sx={{ width: 200 }}>
+                              <TableCell sx={{ width: 200, cursor: 'pointer' }} onClick={() => handleOpenWorkOrder(order)}>
                                 <Box display="flex" flexDirection="column">
                                   <Typography variant="body2">
                                     {fDate(order?.start_date) || 'N/A'}
@@ -187,23 +273,56 @@ export function ProjectDetailsWorkOrdersFormView({
                                   </Typography>
                                 </Box>
                               </TableCell>
-                              <TableCell sx={{ width: 100 }}>
+                              {/* <TableCell sx={{ width: 100 }}>
                                 <Typography variant="body2">
                                   {order?.project_stage?.name || 'N/A'}
                                 </Typography>
-                              </TableCell>
-                              <TableCell sx={{ width: 200 }}>
-                                <Typography variant="body2">
-                                  {`${order?.user_assignee?.firstName} ${order?.user_assignee?.lastName}` || 'N/A'}
-                                </Typography>
+                              </TableCell> */}
+                              <TableCell sx={{ width: 200, cursor: 'pointer' }} onClick={() => handleOpenWorkOrder(order)}>
+                                <Box sx={{ display: 'flex', justifyContent: 'flex-start', flexDirection: 'column', gap: 0 }}>
+                                  <Box sx={{ display: 'flex', justifyContent: 'flex-start' }}>
+                                    <Typography variant="caption" sx={{ color: 'text.secondary', mr: 1 }}>
+                                      Installer(s):
+                                    </Typography>
+                                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                      {getWorkOrderWorkers(order).map((worker) => (
+                                        <Label key={worker.id}>
+                                          {worker.firstName || worker.first_name} {worker.lastName || worker.last_name}
+                                        </Label>
+                                      ))}
+                                    </Box>
+                                  </Box>
+                                  {getWorkOrderAssistants(order).length > 0 && (
+                                    <Box sx={{ display: 'flex', mt: 1, justifyContent: 'flex-start' }}>
+                                      <Typography variant="caption" sx={{ color: 'text.secondary', mr: 1 }}>
+                                        Assistant(s):
+                                      </Typography>
+
+                                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                        {getWorkOrderAssistants(order).map((worker, index2) => (
+                                          <Label key={`${worker.id}-${index2}`}>
+                                            {worker.name}
+                                          </Label>
+                                        ))}
+                                      </Box>
+                                    </Box>
+                                  )}
+                                </Box>
                               </TableCell>
                               <TableCell sx={{ width: 100 }}>
-                                <Label color={order?.items?.length > 0 ? 'success' : 'default'} sx={{ cursor: order?.items?.length > 0 ? 'pointer' : 'default' }} onClick={() => {
-                                  if (order?.items?.length > 0) {
-                                    setSelectedWorkOrder(order);
-                                    openItems.onTrue();
-                                  }
-                                }}>
+                                <Label
+                                  color={order?.items?.length > 0 ? 'success' : 'default'}
+                                  sx={{
+                                    cursor: order?.items?.length > 0 ? 'pointer' : 'default',
+                                    bgcolor: 'transparent',
+                                    fontSize: 14
+                                  }}
+                                  onClick={() => {
+                                    if (order?.items?.length > 0) {
+                                      setSelectedWorkOrder(order);
+                                      openItems.onTrue();
+                                    }
+                                  }}>
                                   {order?.items?.length > 0 ? `${order?.items?.length} Item(s)` : 'No Items'}
                                 </Label>
                               </TableCell>
@@ -219,7 +338,8 @@ export function ProjectDetailsWorkOrdersFormView({
                                 <Typography variant="h6">Description: </Typography>
                                 {order?.description ? (
                                   <Label color="warning" sx={{ cursor: 'pointer' }} onClick={() => {
-                                    handleOpenNotes(order)
+                                    setSelectedWorkOrder(order);
+                                    openNotes.onTrue();
                                   }}>
                                     See Description
                                   </Label>
@@ -235,15 +355,17 @@ export function ProjectDetailsWorkOrdersFormView({
                                   {order.duration || 'N/A'}
                                 </Label>
                                 <br />
-                                <Typography variant="h6">Stage: </Typography>
+                                {/* <Typography variant="h6">Stage: </Typography>
                                 <Label color="success" sx={{ bgcolor: 'transparent', justifyContent: 'flex-start' }}>
                                   {order.project_stage?.name || 'N/A'}
                                 </Label>
-                                <br />
-                                <Typography variant="h6">Assignee: </Typography>
-                                <Label color="success" sx={{ bgcolor: 'transparent', justifyContent: 'flex-start' }}>
-                                  {order.user_assignee?.firstName || 'N/A'}
-                                </Label>
+                                <br /> */}
+                                <Typography variant="h6">Assignee(s): </Typography>
+                                {order.users_assignees?.length > 0 ? order.users_assignees.map((assignee) => (
+                                  <Label key={assignee.id} color="default" sx={{ bgcolor: 'transparent', justifyContent: 'flex-start' }}>
+                                    {`${assignee.firstName} ${assignee.lastName}`}
+                                  </Label>
+                                )) : 'N/A'}
                                 <br />
                                 <Typography variant="h6">Product(s): </Typography>
                                 {order?.items?.length > 0 ? (
@@ -389,6 +511,13 @@ export function ProjectDetailsWorkOrdersFormView({
         title="Work Order Products"
         subtitle={`List of products associated with this work order ${selectedWorkOrder?.name} for sales order ${project?.name}`}
         iconTitle="mdi:package-variant-closed"
+        isLong
+      />
+      <ProjectEditModalNotesView
+        open={openNotes.value}
+        onClose={openNotes.onFalse}
+        item={selectedWorkOrder}
+        type="Work Order"
       />
       <ConfirmDialog
         open={confirmDeleteWorkOrder.value}
@@ -438,4 +567,10 @@ export function ProjectDetailsWorkOrdersFormView({
       />
     </>
   );
+}
+
+function filterWorkOrdersByType(type, workOrders = []) {
+  if (!type) return workOrders;
+  if (type.toLowerCase() === 'all') return workOrders;
+  return workOrders.filter((wo) => wo.work_type?.name?.toLowerCase() === type?.toLowerCase());
 }

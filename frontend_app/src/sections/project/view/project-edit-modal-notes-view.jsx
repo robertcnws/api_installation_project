@@ -20,12 +20,12 @@ export function ProjectEditModalNotesView({
     item,
     open,
     onClose,
-    onSubmitNotes,
+    onSubmitNotes = null,
     type,
 }) {
 
     const { isMobile } = useContext(LoadingContext);
-    
+
 
     const ProjectDialogSchema = zod.object({
         notes: zod.string().min(1, { message: 'Notes are required!' }),
@@ -33,7 +33,7 @@ export function ProjectEditModalNotesView({
 
     const defaultValues = useMemo(
         () => ({
-            notes: item?.notes || '',
+            notes: item?.notes || item?.description || '',
         }),
         [item]
     );
@@ -57,7 +57,7 @@ export function ProjectEditModalNotesView({
     useEffect(() => {
         if (item) {
             reset({
-                notes: item.notes || '',
+                notes: item?.notes || item?.description || '',
             });
         }
     }, [item, reset]);
@@ -68,46 +68,54 @@ export function ProjectEditModalNotesView({
         onClose();
     });
 
+    const dynamicTitle = useMemo(
+        () => (onSubmitNotes ? `${item?.notes || item?.description ? 'Update' : 'Add'} Notes to ` : 'View Notes of '),
+        [item, onSubmitNotes]
+    )
+
     const renderProject = (
         <Dialog fullWidth maxWidth="md" open={open} onClose={onClose}>
-                <DialogTitle>{item?.notes ? 'Update' : 'Add'} Notes to {type} {item?.name} </DialogTitle>
+            <DialogTitle>{dynamicTitle}{type} {item?.name} </DialogTitle>
 
-                <Form methods={methods} onSubmit={onSubmit}>
+            <Form methods={methods} onSubmit={onSubmit}>
 
-                    <Stack
-                        spacing={2.5}
-                        justifyContent="center"
-                        sx={{ p: 2.5 }}
-                    >
+                <Stack
+                    spacing={2.5}
+                    justifyContent="center"
+                    sx={{ p: 2.5 }}
+                >
 
-                        <Box sx={{ flexDirection: !isMobile ? 'row' : 'column', display: 'flex' }}>
-                            
-                            <Box sx={{ width: '100%', color: 'text.secondary', mt: !isMobile ? 0 : 2, ml: !isMobile ? 2 : 0 }}>
-                                <Field.Text
-                                    name="notes"
-                                    label="Notes"
-                                    control={control}
-                                    fullWidth
-                                    multiline
-                                    rows={3}
-                                    placeholder="Enter address"
-                                />
-                            </Box>
+                    <Box sx={{ flexDirection: !isMobile ? 'row' : 'column', display: 'flex' }}>
+
+                        <Box sx={{ width: '100%', color: 'text.secondary', mt: !isMobile ? 0 : 2, ml: !isMobile ? 2 : 0 }}>
+                            <Field.Text
+                                name="notes"
+                                label="Notes"
+                                control={control}
+                                fullWidth
+                                multiline
+                                rows={3}
+                                placeholder="Enter address"
+                                disabled={isSubmitting || !onSubmitNotes}
+                            />
                         </Box>
-                    </Stack>
-                    <DialogActions>
+                    </Box>
+                </Stack>
+                <DialogActions>
+                    {onSubmitNotes && (
                         <LoadingButton type="submit" variant="contained" loading={isSubmitting}>
-                            {item?.notes ? 'Update' : 'Add'}
+                            {item?.notes || item?.description ? 'Update' : 'Add'}
                         </LoadingButton>
-                        {/* <Button onClick={onClose}>
+                    )}
+                    {/* <Button onClick={onClose}>
                             Delete
                         </Button> */}
-                        <Button variant="outlined" onClick={onClose}>
-                            Cancel
-                        </Button>
-                    </DialogActions>
-                </Form>
-            </Dialog>
+                    <Button variant="outlined" onClick={onClose}>
+                        Cancel
+                    </Button>
+                </DialogActions>
+            </Form>
+        </Dialog>
     )
 
     return (

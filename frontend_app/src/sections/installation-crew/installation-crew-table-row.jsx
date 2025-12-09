@@ -71,10 +71,12 @@ export function InstallationCrewTableRow({ row, selected, onEditRow, onSelectRow
             </TableCell>
 
             <TableCell sx={{ whiteSpace: 'nowrap' }} onClick={() => onEditRow()}>
-              {fCurrency(row.costByUnit)} <b>({row.unit?.label})</b>
+              {fCurrency(row.costByUnit)} {row.costByUnit > 0 && <b>({row.unit?.label})</b>}
             </TableCell>
 
             <TableCell sx={{ whiteSpace: 'nowrap' }} onClick={() => onEditRow()}>{row.typeCrew?.label}</TableCell>
+
+            <TableCell sx={{ whiteSpace: 'nowrap' }} onClick={() => onEditRow()}>{row.typeWorking?.label}</TableCell>
 
             <TableCell onClick={() => onEditRow()}>
               <Label

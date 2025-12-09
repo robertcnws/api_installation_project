@@ -15,7 +15,7 @@ import { useBoolean } from 'src/hooks/use-boolean';
 
 import { fPercent } from 'src/utils/format-number';
 import { isInstaller } from 'src/utils/check-permissions';
-import { getProjectInstaller, totalPercentageProject } from 'src/utils/project-tasks-utils';
+import { getProjectInstallers, getWorkOrderWorkers, totalPercentageProject } from 'src/utils/project-tasks-utils';
 
 import { CONFIG } from 'src/config-global';
 
@@ -27,6 +27,7 @@ import { ConfirmDialog } from 'src/components/custom-dialog';
 import { usePopover, CustomPopover } from 'src/components/custom-popover';
 
 import { LoadingContext } from 'src/auth/context/loading-context';
+import dayjs from 'dayjs';
 
 // ----------------------------------------------------------------------
 
@@ -60,6 +61,22 @@ export function ProjectsToDoToday({
     const [currentItem, setCurrentItem] = useState(null);
 
     const [currentTasksFiltered, setCurrentTasksFiltered] = useState([]);
+
+    const todayWorkOrders = useMemo(
+        () => list?.reduce((acc, project) => {
+            const workOrders = project.workOrders || [];
+            const installationWorkOrders = workOrders.filter((wo) => wo.work_type?.name?.toLowerCase() === 'installation');
+            installationWorkOrders.forEach((wo) => {
+                const wod = dayjs(wo.start_date).format('YYYY-MM-DD');
+                if (wod === dayjs().format('YYYY-MM-DD')) {
+                    acc.push({
+                        ...wo,
+                        projectId: project.id,
+                    });
+                }
+            });
+            return acc;
+        }, []), [list]);
 
     const renderDialog = useCallback(
         ({ item, status }) => {
@@ -97,6 +114,7 @@ export function ProjectsToDoToday({
                             {list.map((item, index) => (
                                 <Item
                                     key={`${item.id}-${index}`}
+                                    workOrders={todayWorkOrders.filter(wo => wo.projectId === item.id)}
                                     item={item}
                                     sx={{ px: 2, py: 0, bgcolor: index % 2 === 0 ? 'background.default' : 'background.paper' }}
                                     router={router}
@@ -213,7 +231,7 @@ export function ProjectsToDoToday({
 
 // ----------------------------------------------------------------------
 
-const Item = ({ item, sx, router, userLogged, ...other }) =>
+const Item = ({ item, workOrders, sx, router, userLogged, ...other }) =>
     <Box sx={{ gap: 2, display: 'flex', alignItems: 'center', ...sx }} key={item.id} {...other}>
         <ListItemText
             primary={
@@ -252,11 +270,37 @@ const Item = ({ item, sx, router, userLogged, ...other }) =>
             }
             secondary={
                 <>
-                    <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', typography: 'body2', color: 'text.secondary', gap: 2 }}>
-                        <Typography component="span" variant="caption" sx={{ color: 'text.secondary' }}>
-                            Installer: {getProjectInstaller(item, CONFIG) ? getProjectInstaller(item, CONFIG).name : 'Not Installer assigned'}
-                        </Typography>
-                    </Box>
+                    {workOrders?.map((wo) => (
+                        <Box
+                            key={`${item.id}-installer-${wo.id}`}
+                            component="span"
+                            sx={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                typography: 'body2',
+                                color: 'text.secondary',
+                                gap: 2
+                            }}>
+                            <Box
+                                component="span"
+                                sx={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'flex-start',
+                                    gap: 0.5
+                                }}
+                            >
+                                <Typography component="span" variant="caption" sx={{ color: 'text.secondary' }}>
+                                    {wo.name}
+                                </Typography>
+                                <Typography component="span" variant="caption" sx={{ color: 'text.disabled' }}>
+                                    Installer(s): {getWorkOrderWorkers(wo) ?
+                                        getWorkOrderWorkers(wo)?.map(installer => installer.name).join(', ') :
+                                        'Not Installer assigned'}
+                                </Typography>
+                            </Box>
+                        </Box>
+                    ))}
                     <br />
                     {(item.projectDefaultTasks?.length > 0 && !isInstaller(userLogged?.data?.user_role?.name)) && (
                         <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', typography: 'body2', gap: 2 }}>

@@ -16,7 +16,7 @@ import { useBoolean } from 'src/hooks/use-boolean';
 
 import { fDate, getDatesBetween } from 'src/utils/format-time';
 import { getServiceInstaller } from 'src/utils/service-tasks-utils';
-import { getProjectInstaller } from 'src/utils/project-tasks-utils';
+import { getProjectInstallers } from 'src/utils/project-tasks-utils';
 
 import { CONFIG } from 'src/config-global';
 
@@ -51,7 +51,7 @@ export function ServiceEditModalDatesView({
         if (!installer) return [];
 
         const installerProjects = loadedProjects?.filter(
-            (p) => getProjectInstaller(p, CONFIG)?.id === installer.id
+            (p) => getProjectInstallers(p, CONFIG)?.id === installer.id
         ) || [];
         const installerServices = loadedServices?.filter(
             (s) => getServiceInstaller(s, CONFIG)?.id === installer.id

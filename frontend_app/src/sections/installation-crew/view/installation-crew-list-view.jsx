@@ -87,6 +87,7 @@ export function InstallationCrewListView() {
     { id: 'assistants', label: 'Assistant(s)' },
     { id: 'costByUnit', label: 'Cost by unit' },
     { id: 'typeCrew', label: 'Crew type' },
+    { id: 'typeWorking', label: 'Working type' },
     { id: 'status', label: 'Status' },
     { id: '' },
   ];
