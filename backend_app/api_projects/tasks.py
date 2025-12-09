@@ -1,6 +1,11 @@
 from celery import shared_task
 from celery import group
-from api_projects.models import Project
+from api_projects.models import (
+    Project, 
+    ProjectInstallationCrew,
+    ProjectDefaultGuideProduct,
+    ProjectDefaultMaterial,
+)
 
 from api_projects.repository import (
     project_profit_report_repository as profit_repo,
@@ -9,9 +14,14 @@ from api_projects.repository import (
     project_reminder_repository as reminder_repo,
     project_task_attachment_repository as attachment_repo,
     project_db_repository as db_repo,
+    project_work_orders_repository as work_order_repo,
+    project_installation_guide_repository as installation_guide_repo,
 )
 
+from api_projects.data_util import get_user_role_name, transform_data_to_mongo
+
 import logging
+from bson import ObjectId
 
 logger = logging.getLogger(__name__)
     
@@ -94,3 +104,382 @@ def task_manage_profit_report(force_update: bool = False):
     )
 
     return {"scheduled": total, "batches": batches, "batch_size": batch_size}
+
+
+MOCK_WORK_TYPES = [
+    { 'id': 1, 'name': 'Installation' },
+    { 'id': 2, 'name': 'Finish' },
+    { 'id': 3, 'name': 'Inspection' },
+    { 'id': 4, 'name': 'Service' },
+]
+
+MOCK_INSPECTION_TYPES = [
+    { 'id': 1, 'name': 'Book and Fasteners' },
+    { 'id': 2, 'name': 'Final' },
+]
+
+
+
+@shared_task
+def task_manage_single_project_work_orders(project_id: str, work_type: str = None, inspection_type: str = None):
+    logger.info("Starting task to manage work orders for project ID: %s", project_id)
+    try:
+        project = Project.objects(id=project_id).first()
+        if not project:
+            logger.warning("Project with ID %s not found.", project_id)
+            return None
+        start_date_fmt = ''
+        duration = 0
+        start_date = None
+        type_date = ''
+        
+        if work_type.lower() == 'installation':
+            type_date = 'installation date'
+            if project.start_date:
+                start_date_fmt = project.start_date.strftime('%Y-%m-%d')
+                start_date = project.start_date
+                duration = project.duration or 1
+        elif work_type.lower() == 'inspection' and inspection_type.lower() == 'book and fasteners':
+            type_date = 'inspection date'
+            if project.inspection_date:
+                start_date_fmt = project.inspection_date.strftime('%Y-%m-%d')
+                start_date = project.inspection_date
+                duration = project.inspection_duration or 1
+            
+        elif work_type.lower() == 'inspection' and inspection_type.lower() == 'final':
+            type_date = 'final inspection date'
+            if project.finish_permission_date:
+                start_date_fmt = project.finish_permission_date.strftime('%Y-%m-%d')
+                start_date = project.finish_permission_date
+                duration = project.finish_permission_duration or 1
+            
+            
+        if not start_date_fmt:
+            logger.warning("Project with ID %s has no %s. Skipping work order creation.", project_id, type_date)
+            return None
+        
+        user_reporter = project.user_reporter
+        title = work_type if work_type.lower() != 'inspection' else f"inspection ({inspection_type.upper() or ''})"
+        name = f"WO for {title or ''} in {project.name}, date: {start_date_fmt}"
+        
+        existing_work_order = None
+
+        if work_type and project.work_orders:
+            wt = work_type.lower()
+            it = (inspection_type or '').lower()
+            
+            if wt == 'inspection' and it in ['book and fasteners', 'final']:
+                existing_work_order = next(
+                    (
+                        wo for wo in project.work_orders
+                        if (wo.get('work_type') or {}).get('name', '').lower() == wt
+                        and (wo.get('inspection_type') or {}).get('name', '').lower() == it
+                    ),
+                    None
+                )
+            else:
+                existing_work_order = next(
+                    (
+                        wo for wo in project.work_orders
+                        if (wo.get('work_type') or {}).get('name', '').lower() == wt
+                    ),
+                    None
+                )
+        
+        if existing_work_order:
+            logger.info(
+                "Work order already exists for project ID %s with work type %s. Skipping creation.",
+                project_id,
+                work_type
+            )
+            return getattr(project, "name", None)
+        
+        description = f"Automated task to manage {work_type or ''} work orders for project."
+        
+        
+        if project.user_installer and (work_type.lower() == 'installation' or work_type.lower() == 'service'):
+            users_assignees = [project.user_installer]
+        elif project.users_assignees and (work_type.lower() == 'installation' or work_type.lower() == 'service'):
+            first_installer = next(
+                (user for user in project.users_assignees if get_user_role_name(user) == 'installer'),
+                None
+            )
+            users_assignees = [first_installer] if first_installer else [project.users_assignees[0]]
+        else:
+            users_assignees = [project.user_manager]
+            
+        items = [
+            item for item in project.sales_order.get('line_items', []) if item.get('line_item_type', '') == 'goods'
+        ] if project.sales_order and work_type.lower() == 'installation' else []
+        is_finished = False
+        
+        work_type = next(
+            (wt for wt in MOCK_WORK_TYPES if wt['name'].lower() == work_type.lower()),
+            None
+        ) if work_type else None
+        
+        inspection_type = next(
+            (it for it in MOCK_INSPECTION_TYPES if it['name'].lower() == inspection_type.lower()),
+            None
+        ) if inspection_type else None
+        
+        crews = list(ProjectInstallationCrew.objects.all())
+        installer_crews = []
+        
+        if project.user_installer and project.user_installer.get('username') == 'glauver':
+            installer_crews = [
+                transform_data_to_mongo(crew) for crew in crews 
+                if 'glauver' in [member.get('username', '').lower() for member in crew.users_installers]
+            ]
+        
+        elif project.user_installer and project.user_installer.get('username') == 'carlos.garma':
+            installer_crews = [
+                transform_data_to_mongo(crew) for crew in crews 
+                if 'carlos.garma' in [member.get('username', '').lower() for member in crew.users_installers]
+                and 'team carlos - father' in crew.name.lower()
+            ]
+        
+        proj, work_order, action = work_order_repo.manage_project_work_order_from_kwargs(
+            project_id=project_id,
+            user_reporter=user_reporter,
+            name=name,
+            description=description,
+            start_date=start_date,
+            duration=duration,
+            users_assignees=users_assignees if len(installer_crews) == 0 else [],
+            work_type=work_type,
+            inspection_type=inspection_type,
+            items=items,
+            is_finished=is_finished,
+            installer_crews=installer_crews if len(installer_crews) > 0 else [],
+        )
+        
+        logger.info(
+            "Work orders management done for project %s | id=%s",
+            proj.name,
+            getattr(proj, "id", None)
+        )
+        return getattr(proj, "name", None)
+    except Exception as e:
+        logger.error("Error managing work orders for project ID %s: %s", project_id, str(e))
+        raise
+    
+WORK_ORDER_SPECS = (
+    {"work_type": "installation"},
+    {"work_type": "inspection", "inspection_type": "book and fasteners"},
+    {"work_type": "inspection", "inspection_type": "final"},
+)
+
+TASKS_PER_PROJECT = len(WORK_ORDER_SPECS)
+
+
+@shared_task
+def task_manage_work_orders_in_batches():
+    logger.info("Starting task to manage project work orders in batches...")
+    
+    projects_qs = Project.objects.only("id")
+
+    batch_size = BATCH_SIZE  
+    current_batch = []
+    batches = 0
+    total_projects = 0
+    total_tasks = 0
+    
+    single_task_sig = task_manage_single_project_work_orders.s
+
+    for project in projects_qs:
+        total_projects += 1
+        project_id = str(project.id)
+        
+        for spec in WORK_ORDER_SPECS:
+            current_batch.append(single_task_sig(project_id, **spec))
+
+        total_tasks += TASKS_PER_PROJECT
+        
+        if len(current_batch) >= batch_size:
+            group(current_batch).apply_async(ignore_result=True)
+            batches += 1
+            current_batch = []
+    
+    if current_batch:
+        group(current_batch).apply_async(ignore_result=True)
+        batches += 1
+
+    logger.info(
+        "Dispatched work order tasks | projects=%s | tasks=%s | batches=%s | batch_size=%s",
+        total_projects,
+        total_tasks,
+        batches,
+        batch_size,
+    )
+
+    return {
+        "projects": total_projects,
+        "tasks": total_tasks,
+        "batches": batches,
+        "batch_size": batch_size,
+    }
+    
+
+##############################################
+# CREATE PROJECT INSTALLATION CREW
+##############################################
+
+@shared_task
+def task_update_installation_crews_in_projects(crew_id: str):
+    logger.info("Starting task to update installation crew ID: %s in projects...", crew_id)
+    try:
+        crew = ProjectInstallationCrew.objects(id=crew_id).first()
+        if not crew:
+            logger.warning("Installation crew with ID %s not found.", crew_id)
+            return None
+        
+        projects_qs = (
+            Project.objects(
+                __raw__={"work_orders.installer_crews.id": crew_id}
+            )
+            .only('id', 'work_orders')
+        )
+        
+        updated_projects = []
+        
+        for project in projects_qs:
+            changed = False
+
+            for work_order in project.work_orders or []:
+                installer_crews = work_order.get('installer_crews', []) or []
+                for idx, ic in enumerate(installer_crews):
+                    if str(ic.get('id')) == str(crew_id):
+                        installer_crews[idx] = transform_data_to_mongo(crew)
+                        changed = True
+                work_order['installer_crews'] = installer_crews
+
+            if changed:
+                project.save(validate=False)
+                updated_projects.append(str(project.id))
+        
+        logger.info(
+            "Updated installation crew ID %s in %s projects.",
+            crew_id,
+            len(updated_projects)
+        )
+        return updated_projects
+    except Exception as e:
+        logger.error("Error updating installation crew ID %s in projects: %s", crew_id, str(e))
+        raise
+    
+
+@shared_task
+def task_rebuild_scope_and_materials(batch_size: int = 200):
+    """
+    Recorre todos los Project en batches, recalcula productsData (scope)
+    y projectMaterials según los defaults.
+    """
+    logger.info("Starting task to rebuild scope and materials for projects...")
+
+    loaded_default_guide_products = list(
+        ProjectDefaultGuideProduct.objects.all().as_pymongo()
+    )
+    loaded_default_materials = list(
+        ProjectDefaultMaterial.objects.all().as_pymongo()
+    )
+
+    updated = 0
+    errors = []
+
+    # Query base ordenado por id (importante para que skip/limit sea estable)
+    base_qs = Project.objects.only(
+        "id",
+        "project_guide_products",
+        "project_materials",
+        "sales_order",
+    ).order_by("id")
+
+    total = base_qs.count()
+    logger.info("Total projects to rebuild: %s", total)
+
+    offset = 0
+    while offset < total:
+        logger.info("Processing batch offset %s / %s (batch_size=%s)",
+                    offset, total, batch_size)
+
+        # Batch actual
+        batch_qs = base_qs.skip(offset).limit(batch_size)
+
+        for project in batch_qs:
+            try:
+                sales_order = getattr(project, "sales_order", None) or {}
+                list_items = sales_order.get("line_items", []) or []
+
+                logger.info(
+                    "Processing project ID %s with %d line_items.",
+                    str(project.id),
+                    len(list_items),
+                )
+
+                # Solo goods
+                list_items = [
+                    item for item in list_items
+                    if ((item.get("line_item_type") or "").lower() == "goods" or 
+                       (item.get("product_type") or "").lower() == "goods")
+                ]
+
+                if not list_items:
+                    continue
+
+                # ---------- 1) productsData ----------
+                products_data = []
+                if not project.project_guide_products or len(project.project_guide_products) == 0:
+                    products_data = installation_guide_repo.compute_products_data_for_project(
+                        project=project,
+                        list_items=list_items,
+                        loaded_default_guide_products=loaded_default_guide_products,
+                    )
+
+                if (
+                    (not project.project_guide_products or len(project.project_guide_products) == 0)
+                    and len(products_data) > 0
+                ):
+                    project.project_guide_products = products_data
+                    project.save(validate=False)
+
+                # ---------- 2) materials ----------
+                materials = []
+                if not project.project_materials or len(project.project_materials) == 0:
+                    materials = installation_guide_repo.compute_materials_for_project(
+                        project=project,
+                        products_data=products_data,
+                        loaded_default_materials=loaded_default_materials,
+                    )
+
+                if (
+                    (not project.project_materials or len(project.project_materials) == 0)
+                    and len(materials) > 0
+                ):
+                    project.project_materials = materials
+                    project.save(validate=False)
+
+                updated += 1
+                logger.info(
+                    "Updated project ID %s with new scope and materials.",
+                    str(project.id),
+                )
+
+            except Exception as exc:
+                logger.error(
+                    "Error processing project ID %s: %s",
+                    str(project.id),
+                    str(exc),
+                    exc_info=True,
+                )
+                errors.append({"project_id": str(project.id), "error": str(exc)})
+
+        offset += batch_size
+        logger.info(
+            "Rebuild progress: %s projects updated, %s errors so far. offset=%s",
+            updated,
+            len(errors),
+            offset,
+        )
+
+    return {"updated": updated, "errors": errors}

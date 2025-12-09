@@ -22,11 +22,17 @@ class LoginUserType(MongoengineObjectType):
     class Meta:
         model = LoginUser
     user_role = GenericScalar()
+    installer_info = GenericScalar()
     
     def resolve_user_role(self, info):
         user_role = self.user_role or {}
         user_role = serialize_datetime(user_role)
         return dynamic_field_to_json(user_role)
+    
+    def resolve_installer_info(self, info):
+        installer_info = self.installer_info or {}
+        installer_info = serialize_datetime(installer_info)
+        return dynamic_field_to_json(installer_info)
         
 class UserRoleType(MongoengineObjectType):
     class Meta:
@@ -38,7 +44,7 @@ class Query(graphene.ObjectType):
     all_user_roles = graphene.List(UserRoleType, excluding_names=graphene.List(graphene.String))
     
     def resolve_all_login_users(self, info):
-        return list(LoginUser.objects(is_active=True).all())
+        return list(LoginUser.objects.all())
     
     def resolve_all_user_roles(self, info, excluding_names=None):
         if excluding_names:

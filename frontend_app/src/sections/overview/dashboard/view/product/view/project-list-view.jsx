@@ -184,7 +184,7 @@ export function ProjectListView({ projects, loadingProjects, ...other }) {
       .map((column) => column.field);
 
   return (
-    <Card sx={{ mt: !isMobile ? 1.5 : -7, ml: !isMobile ? -4 : 0}} {...other}>
+    <Card sx={{ mt: 1.5}} {...other}>
         <Scrollbar sx={{ maxHeight: !isMobile ? 360 : '100%', minHeight: !isMobile ? 360 : '100%'}}>
 
           <DataGrid

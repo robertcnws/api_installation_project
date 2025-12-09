@@ -58,8 +58,6 @@ export function ProjectTableRow({
   refetchProjects,
 }) {
 
-  const [rowUpdated, setRowUpdated] = useState(null);
-
   const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
 
   const today = dayjs().format('YYYY-MM-DD');
@@ -137,6 +135,35 @@ export function ProjectTableRow({
     },
   };
 
+  const workOrdersInstallations = useMemo(
+    () => row?.workOrders?.filter((workOrder) => workOrder.work_type.name.toLowerCase() === 'installation'),
+    [row]
+  );
+
+  const workOrdersInspections = useMemo(
+    () => row?.workOrders?.
+      filter(
+        (workOrder) => workOrder.work_type.name.toLowerCase() === 'inspection' &&
+          workOrder.inspection_type?.name?.toLowerCase() === 'book and fasteners'
+      ),
+    [row]
+  );
+
+  const workOrdersFinishPermissions = useMemo(
+    () => row?.workOrders?.
+      filter(
+        (workOrder) => workOrder.work_type.name.toLowerCase() === 'inspection' &&
+          workOrder.inspection_type?.name?.toLowerCase() === 'final'
+      ),
+    [row]
+  );
+
+  const hasPassedEndDate = useMemo(
+    () => workOrdersInstallations?.some(
+      (wo) => wo.end_date && fIsAfter(today, dayjs(wo.end_date).format('YYYY-MM-DD'))
+    ), [workOrdersInstallations, today]
+  );
+
   return (
     <>
       <TableRow
@@ -144,7 +171,7 @@ export function ProjectTableRow({
         sx={{
           borderRadius: 2,
           [`&.${tableRowClasses.selected}, &:hover`]: {
-            backgroundColor: row?.endDate ? ((fIsAfter(today, dayjs(row?.endDate).format('YYYY-MM-DD')) && (
+            backgroundColor: workOrdersInstallations?.length > 0 ? ((hasPassedEndDate && (
               row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
               row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
               row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
@@ -154,7 +181,7 @@ export function ProjectTableRow({
               duration: theme.transitions.duration.shortest,
             }),
             '&:hover': {
-              backgroundColor: row?.endDate ? ((fIsAfter(today, dayjs(row?.endDate).format('YYYY-MM-DD')) && (
+              backgroundColor: workOrdersInstallations?.length > 0 ? ((hasPassedEndDate && (
                 row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
                 row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
                 row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
@@ -164,7 +191,7 @@ export function ProjectTableRow({
           },
           [`& .${tableCellClasses.root}`]: { ...defaultStyles },
           ...(details.value && { [`& .${tableCellClasses.root}`]: { ...defaultStyles } }),
-          bgcolor: row?.endDate ? ((fIsAfter(today, dayjs(row?.endDate).format('YYYY-MM-DD')) && (
+          bgcolor: workOrdersInstallations?.length > 0 ? ((hasPassedEndDate && (
             row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
             row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
             row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
@@ -195,7 +222,7 @@ export function ProjectTableRow({
           sx={{
             whiteSpace: 'nowrap',
             cursor: 'pointer',
-            fontWeight: row?.endDate ? ((fIsAfter(today, dayjs(row?.endDate).format('YYYY-MM-DD')) && (
+            fontWeight: workOrdersInstallations?.length > 0 ? ((hasPassedEndDate && (
               row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
               row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
               row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
@@ -204,13 +231,36 @@ export function ProjectTableRow({
           align='center'
         >
           {/* {fDate(row?.salesOrder.date)} */}
-          {fDate(row?.startDate) ? fDate(row?.startDate) :
+          {workOrdersInstallations?.length > 0 ?
+            workOrdersInstallations.map((wo, index) => (
+              (
+                <Box
+                  key={`box-installation-date-${wo.id}`}
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '100%',
+                  }}
+                >
+                  {fDate(wo.start_date)}
+                  <Typography variant='caption' sx={{ mx: 0.5 }}>
+                    {(() => {
+                      if (wo.duration) {
+                        return wo.duration === 1 ? '(1 day)' : `(${wo.duration} days)`;
+                      }
+                      return '';
+                    })()}
+                  </Typography>
+                </Box>
+              ))) :
             <Tooltip title="No Start Date" arrow>
               <Iconify icon="ph:calendar-x-bold" sx={{ color: 'error.main' }} />
             </Tooltip>
           }
         </TableCell>
-        <TableCell
+        {/* <TableCell
           onClick={() => {
             localStorage.removeItem('projectReminderTab');
             onViewRow();
@@ -218,7 +268,7 @@ export function ProjectTableRow({
           sx={{
             whiteSpace: 'nowrap',
             cursor: 'pointer',
-            fontWeight: row?.endDate ? ((fIsAfter(today, dayjs(row?.endDate).format('YYYY-MM-DD')) && (
+            fontWeight: workOrdersInstallations?.length > 0 ? ((hasPassedEndDate && (
               row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
               row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
               row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
@@ -229,7 +279,7 @@ export function ProjectTableRow({
             <Tooltip title="No Closing Date" arrow>
               <Iconify icon="material-symbols:sms-failed-outline" sx={{ color: 'error.main' }} />
             </Tooltip>}
-        </TableCell>
+        </TableCell> */}
 
         <TableCell
           // onClick={handleClick} 
@@ -240,7 +290,7 @@ export function ProjectTableRow({
           sx={{
             whiteSpace: 'nowrap',
             cursor: 'pointer',
-            fontWeight: row?.endDate ? ((fIsAfter(today, dayjs(row?.endDate).format('YYYY-MM-DD')) && (
+            fontWeight: workOrdersInstallations?.length > 0 ? ((hasPassedEndDate && (
               row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
               row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
               row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
@@ -274,12 +324,76 @@ export function ProjectTableRow({
               sx={{ whiteSpace: 'nowrap', cursor: 'pointer', }}
               align='center'
             >
-              {row?.inspectionDate ? fDate(row?.inspectionDate) :
+              {workOrdersInspections?.length > 0 ?
+                workOrdersInspections.map((wo, index) => (
+                  (
+                    <Box
+                      key={`box-inspection-date-${wo.id}`}
+                      sx={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: '100%',
+                      }}
+                    >
+                      {fDate(wo.start_date)}
+                      <Typography variant='caption' sx={{ mx: 0.5 }}>
+                        {(() => {
+                          if (wo.duration) {
+                            return wo.duration === 1 ? '(1 day)' : `(${wo.duration} days)`;
+                          }
+                          return '';
+                        })()}
+                      </Typography>
+                    </Box>
+                  ))) :
                 row.hasPermission ?
                   <Tooltip title="No Inspection Date" arrow>
                     <Iconify icon="ph:calendar-x-bold" sx={{ color: 'error.main' }} />
                   </Tooltip> :
                   <Tooltip title="No Permission to Inspect" arrow>
+                    <Iconify icon="fluent:document-none-20-regular" sx={{ color: 'default' }} />
+                  </Tooltip>
+              }
+            </TableCell>
+            <TableCell
+              onClick={() => {
+                localStorage.removeItem('projectReminderTab');
+                onViewRow();
+              }}
+              sx={{ whiteSpace: 'nowrap', cursor: 'pointer', }}
+              align='center'
+            >
+              {workOrdersFinishPermissions?.length > 0 ?
+                workOrdersFinishPermissions.map((wo, index) => (
+                  (
+                    <Box
+                      key={`box-finish-date-${wo.id}`}
+                      sx={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: '100%',
+                      }}
+                    >
+                      {fDate(wo.start_date)}
+                      <Typography variant='caption' sx={{ mx: 0.5 }}>
+                        {(() => {
+                          if (wo.duration) {
+                            return wo.duration === 1 ? '(1 day)' : `(${wo.duration} days)`;
+                          }
+                          return '';
+                        })()}
+                      </Typography>
+                    </Box>
+                  ))) :
+                row.hasPermission ?
+                  <Tooltip title="No Finish Date" arrow>
+                    <Iconify icon="ph:calendar-x-bold" sx={{ color: 'error.main' }} />
+                  </Tooltip> :
+                  <Tooltip title="No Permission to Finish" arrow>
                     <Iconify icon="fluent:document-none-20-regular" sx={{ color: 'default' }} />
                   </Tooltip>
               }
@@ -293,7 +407,7 @@ export function ProjectTableRow({
               sx={{
                 cursor: 'pointer',
                 maxWidth: 200,
-                fontWeight: row?.endDate ? ((fIsAfter(today, dayjs(row?.endDate).format('YYYY-MM-DD')) && (
+                fontWeight: workOrdersInstallations?.length > 0 ? ((hasPassedEndDate && (
                   row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
                   row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
                   row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
@@ -411,7 +525,7 @@ export function ProjectTableRow({
               sx={{
                 whiteSpace: 'nowrap',
                 cursor: 'pointer',
-                fontWeight: row?.endDate ? ((fIsAfter(today, dayjs(row?.endDate).format('YYYY-MM-DD')) && (
+                fontWeight: workOrdersInstallations?.length > 0 ? ((hasPassedEndDate && (
                   row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
                   row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
                   row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1

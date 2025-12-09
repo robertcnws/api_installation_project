@@ -81,6 +81,7 @@ export function ProjectDetailsInstallationGuideFormView({
 
   const [productsData, setProductsData] = useState([]);
 
+
   // Cargar productos iniciales
   useEffect(() => {
     if (listItems.length > 0) {
@@ -169,6 +170,7 @@ export function ProjectDetailsInstallationGuideFormView({
   useEffect(() => {
     if (project?.projectMaterials?.length === 0) {
       const arrayMaterials = buildMaterialsReport(productsData, loadedDefaultMaterials);
+      // console.log('buildMaterialsReport - grouped:', arrayMaterials);
       setMaterials(arrayMaterials);
     }
   }, [project?.projectMaterials, loadedDefaultMaterials, productsData]);
@@ -382,6 +384,8 @@ export function ProjectDetailsInstallationGuideFormView({
       formData.append('projectGuideProducts', JSON.stringify(productsData));
       formData.append('projectMaterials', JSON.stringify(materials));
       formData.append('userReporter', JSON.stringify(userLogged?.data));
+
+      // console.log('Submitting data:', formData);
 
       const promise = axios.post(`${CONFIG.apiUrl}/projects/update/project/${project?.id}/change-installation-guide-form/`, formData, {
         headers: {

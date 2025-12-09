@@ -9,7 +9,7 @@ import Grid from '@mui/material/Unstable_Grid2';
 import Typography from '@mui/material/Typography';
 import { Box, Table, Switch, Tooltip, TableRow, TableBody, TableCell, IconButton } from '@mui/material';
 
-import { getProjectInstaller } from 'src/utils/project-tasks-utils';
+import { getProjectInstallers } from 'src/utils/project-tasks-utils';
 import { fDate, fIsAfter, fDateTime, fDuration } from 'src/utils/format-time';
 import { isInstaller, verifyPermissions, listRolesAndSubroles } from 'src/utils/check-permissions';
 
@@ -44,6 +44,7 @@ export function ProjectDetailsContent({
   listPermissions,
   openDialogs,
   setOpenDialogs,
+  tabs,
 }) {
 
   const theme = useTheme();
@@ -138,6 +139,29 @@ export function ProjectDetailsContent({
     handleChangePermission(newVal);
   }
 
+  const workOrdersInstallations = useMemo(
+    () => project?.workOrders?.filter((workOrder) => workOrder.work_type.name.toLowerCase() === 'installation'),
+    [project]
+  );
+
+  const workOrdersInspections = useMemo(
+    () => project?.workOrders?.
+      filter(
+        (workOrder) => workOrder.work_type.name.toLowerCase() === 'inspection' &&
+          workOrder.inspection_type?.name?.toLowerCase() === 'book and fasteners'
+      ),
+    [project]
+  );
+
+  const workOrdersFinishPermissions = useMemo(
+    () => project?.workOrders?.
+      filter(
+        (workOrder) => workOrder.work_type.name.toLowerCase() === 'inspection' &&
+          workOrder.inspection_type?.name?.toLowerCase() === 'final'
+      ),
+    [project]
+  );
+
   const renderMainContent = (
     <Card sx={{ p: 3, gap: 1, display: 'flex', flexDirection: 'column', width: '100%' }}>
       <Table size="small">
@@ -197,7 +221,7 @@ export function ProjectDetailsContent({
             </TableRow>
           )}
 
-          {project?.userManager?.name && (
+          {/* {project?.userManager?.name && (
 
             <TableRow>
               <TableCell>
@@ -206,20 +230,20 @@ export function ProjectDetailsContent({
               <TableCell>
                 <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, justifyContent: 'space-between' }}>
                   <Avatar
-                    alt={getProjectInstaller(project, CONFIG)?.name}
-                    src={getProjectInstaller(project, CONFIG)?.avatarUrl}
+                    alt={getProjectInstallers(project, CONFIG)?.name}
+                    src={getProjectInstallers(project, CONFIG)?.avatarUrl}
                     sx={{ width: 24, height: 24, mr: 1 }}
                   />
                   <Typography variant="body2" color="text.primary">
                     <b>
-                      {getProjectInstaller(project, CONFIG)?.name ?
-                        getProjectInstaller(project, CONFIG)?.name : ''}
+                      {getProjectInstallers(project, CONFIG)?.name ?
+                        getProjectInstallers(project, CONFIG)?.name : ''}
                     </b>
                   </Typography>
                 </Box>
               </TableCell>
               <TableCell sx={{ textAlign: 'right', maxWidth: '30px' }}>
-                {(getProjectInstaller(project, CONFIG)?.name && (verifyPermissions(
+                {(getProjectInstallers(project, CONFIG)?.name && (verifyPermissions(
                   listPermissions,
                   CONFIG.permissions.system,
                   CONFIG.permissions.moduleProjects,
@@ -233,7 +257,7 @@ export function ProjectDetailsContent({
                     </IconButton>
 
                   )}
-                {(!getProjectInstaller(project, CONFIG)?.name && (verifyPermissions(
+                {(!getProjectInstallers(project, CONFIG)?.name && (verifyPermissions(
                   listPermissions,
                   CONFIG.permissions.system,
                   CONFIG.permissions.moduleProjects,
@@ -248,60 +272,84 @@ export function ProjectDetailsContent({
               </TableCell>
             </TableRow>
 
-          )}
+          )} */}
 
-          <TableRow>
+          <TableRow
+            sx={{ cursor: 'pointer' }}
+            onClick={
+              !isInstaller(userLogged?.data?.user_role?.name) ? () => tabs.setValue('workOrders') : undefined
+            }>
             <TableCell>
-              <Typography variant="subtitle2" color="text.secondary">Estimated Install Date:</Typography>
+              <Typography variant="subtitle2" color="text.secondary">Estimated Install Date(s):</Typography>
             </TableCell>
-            <TableCell>
-              <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, justifyContent: 'space-between' }}>
-                {project?.startDate ? (
-                  <Typography
-                    variant="subtitle2"
-                    color={
-                      project?.endDate
-                        ? (
-                          (fIsAfter(dayjs(new Date()).format('YYYY-MM-DD'), dayjs(project?.endDate).format('YYYY-MM-DD')) &&
-                            (
-                              project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.preparation.toLowerCase()) ||
-                              project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.coordination.toLowerCase()) ||
-                              project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.installation.toLowerCase())
-                            )
-                          )
-                            ? 'error.main'
-                            : 'text.primary'
-                        )
-                        : 'text.primary'
-                    }
-                    sx={{
-                      fontWeight: project?.endDate ? (
-                        (fIsAfter(dayjs(new Date()).format('YYYY-MM-DD'), dayjs(project?.endDate).format('YYYY-MM-DD')) &&
-                          (
-                            project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.preparation.toLowerCase()) ||
-                            project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.coordination.toLowerCase()) ||
-                            project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.installation.toLowerCase())
-                          )
-                        )
-                          ? 'bold'
-                          : 'normal'
-                      ) : 'normal'
-                    }}
-                  >
-                    {fDate(project?.startDate)}
-                    <b> ({project?.duration ? (project?.duration === 1 ? '1 day' : `${project?.duration} days`) : fDuration(project?.startDate, project?.endDate)})</b>
-                    <br />
+            <TableCell colSpan={2} align='right'>
+              <Box sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 1,
+                alignItems: 'flex-end',
+                textAlign: 'right',
+                width: '100%'
+              }}>
+                {workOrdersInstallations?.length > 0 ?
+                  workOrdersInstallations.map((wo, index) => (
+                    (
+                      <Box
+                        key={`box-installation-date-${wo.id}`}
+                        sx={{
+                          display: 'flex',
+                          flexDirection: 'row',
+                          alignItems: 'flex-end',
+                          justifyContent: 'flex-end',
+                          width: '100%',
+                        }}
+                      >
+                        <Typography
+                          variant="subtitle2"
+                          color={
+                            wo?.end_date
+                              ? (
+                                (fIsAfter(dayjs(new Date()).format('YYYY-MM-DD'), dayjs(wo?.end_date).format('YYYY-MM-DD')) &&
+                                  (
+                                    project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.preparation.toLowerCase()) ||
+                                    project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.coordination.toLowerCase()) ||
+                                    project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.installation.toLowerCase())
+                                  )
+                                )
+                                  ? 'error.main'
+                                  : 'text.primary'
+                              )
+                              : 'text.primary'
+                          }
+                          sx={{
+                            fontWeight: wo?.end_date ? (
+                              (fIsAfter(dayjs(new Date()).format('YYYY-MM-DD'), dayjs(wo?.end_date).format('YYYY-MM-DD')) &&
+                                (
+                                  project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.preparation.toLowerCase()) ||
+                                  project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.coordination.toLowerCase()) ||
+                                  project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.installation.toLowerCase())
+                                )
+                              )
+                                ? 'bold'
+                                : 'normal'
+                            ) : 'normal'
+                          }}
+                        >
+                          {fDate(wo?.start_date)}
+                          <b> ({wo?.duration ? (wo?.duration === 1 ? '1 day' : `${wo?.duration} days`) : fDuration(wo?.start_date, wo?.end_date)})</b>
+                          {/* <br />
                     <Label variant="filled" sx={{ bgcolor: 'whitesmoke', color: 'text.primary' }}>
                       {project?.isPartDays ? 'Part Days' : 'Full Days'}
-                    </Label>
-                  </Typography>
-                ) : (
-                  <Iconify icon="fluent-mdl2:date-time" color="warning" width={20} sx={{ ml: 0.5, mt: 0.5 }} />
-                )}
+                    </Label> */}
+                        </Typography>
+                      </Box>
+                    ))) : (
+                    <Iconify icon="fluent-mdl2:date-time" color="warning" width={20} sx={{ ml: 0.5, mt: 0.5 }} />
+                  )}
 
               </Box>
             </TableCell>
-            <TableCell sx={{ textAlign: 'right', maxWidth: '30px' }}>
+            {/* <TableCell sx={{ textAlign: 'right', maxWidth: '30px' }}>
               {(project?.startDate && (verifyPermissions(
                 listPermissions,
                 CONFIG.permissions.system,
@@ -336,7 +384,7 @@ export function ProjectDetailsContent({
                     <Iconify icon="zondicons:date-add" color="warning" width={20} />
                   </IconButton>
                 )}
-            </TableCell>
+            </TableCell> */}
           </TableRow>
 
           <TableRow>
@@ -370,28 +418,82 @@ export function ProjectDetailsContent({
 
           {project?.hasPermission && (
             <>
-              <TableRow>
+              <TableRow
+                sx={{ cursor: 'pointer' }}
+                onClick={
+                  !isInstaller(userLogged?.data?.user_role?.name) ? () => tabs.setValue('workOrders') : undefined
+                }>
                 <TableCell>
-                  <Typography variant="subtitle2" color="text.secondary">Inspection Date:</Typography>
+                  <Typography variant="subtitle2" color="text.secondary">Inspection Date(s):</Typography>
                 </TableCell>
-                <TableCell>
-                  <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, justifyContent: 'space-between' }}>
-                    {project?.inspectionDate ? (
-                      <Typography variant="subtitle2" color="text.primary">
-                        {fDate(project?.inspectionDate)}
-                        <b> ({project?.inspectionDuration ? (project?.inspectionDuration === 1 ? '1 day' : `${project?.inspectionDuration} days`) : fDuration(project?.inspectionDate, project?.inspectionEndDate)})</b>
-                        <br />
-                        <Label variant="filled" sx={{ bgcolor: 'whitesmoke', color: 'text.primary' }}>
-                          {project?.inspectionIsPartDays ? 'Part Days' : 'Full Days'}
-                        </Label>
-                      </Typography>
-                    ) : (
-                      <Iconify icon="fluent-mdl2:date-time" color="warning" width={20} sx={{ ml: 0.5, mt: 0.5 }} />
-                    )}
+                <TableCell colSpan={2} align='right'>
+                  <Box sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 1,
+                    alignItems: 'flex-end',
+                    textAlign: 'right',
+                    width: '100%'
+                  }}>
+                    {workOrdersInspections?.length > 0 ?
+                      workOrdersInspections.map((wo, index) => (
+                        (
+                          <Box
+                            key={`box-inspection-date-${wo.id}`}
+                            sx={{
+                              display: 'flex',
+                              flexDirection: 'row',
+                              alignItems: 'flex-end',
+                              justifyContent: 'flex-end',
+                              width: '100%',
+                            }}
+                          >
+                            <Typography
+                              variant="subtitle2"
+                              color={
+                                wo?.end_date
+                                  ? (
+                                    (fIsAfter(dayjs(new Date()).format('YYYY-MM-DD'), dayjs(wo?.end_date).format('YYYY-MM-DD')) &&
+                                      (
+                                        project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.preparation.toLowerCase()) ||
+                                        project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.coordination.toLowerCase()) ||
+                                        project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.installation.toLowerCase())
+                                      )
+                                    )
+                                      ? 'error.main'
+                                      : 'text.primary'
+                                  )
+                                  : 'text.primary'
+                              }
+                              sx={{
+                                fontWeight: wo?.end_date ? (
+                                  (fIsAfter(dayjs(new Date()).format('YYYY-MM-DD'), dayjs(wo?.end_date).format('YYYY-MM-DD')) &&
+                                    (
+                                      project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.preparation.toLowerCase()) ||
+                                      project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.coordination.toLowerCase()) ||
+                                      project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.installation.toLowerCase())
+                                    )
+                                  )
+                                    ? 'bold'
+                                    : 'normal'
+                                ) : 'normal'
+                              }}
+                            >
+                              {fDate(wo?.start_date)}
+                              <b> ({wo?.duration ? (wo?.duration === 1 ? '1 day' : `${wo?.duration} days`) : fDuration(wo?.start_date, wo?.end_date)})</b>
+                              {/* <br />
+                    <Label variant="filled" sx={{ bgcolor: 'whitesmoke', color: 'text.primary' }}>
+                      {project?.isPartDays ? 'Part Days' : 'Full Days'}
+                    </Label> */}
+                            </Typography>
+                          </Box>
+                        ))) : (
+                        <Iconify icon="fluent-mdl2:date-time" color="warning" width={20} sx={{ ml: 0.5, mt: 0.5 }} />
+                      )}
 
                   </Box>
                 </TableCell>
-                <TableCell sx={{ textAlign: 'right', maxWidth: '30px' }}>
+                {/* <TableCell sx={{ textAlign: 'right', maxWidth: '30px' }}>
                   {(project?.inspectionDate && (verifyPermissions(
                     listPermissions,
                     CONFIG.permissions.system,
@@ -426,37 +528,84 @@ export function ProjectDetailsContent({
                         <Iconify icon="zondicons:date-add" color="warning" width={20} />
                       </IconButton>
                     )}
-                </TableCell>
+                </TableCell> */}
               </TableRow>
-              <TableRow>
+              <TableRow
+                sx={{ cursor: 'pointer' }}
+                onClick={
+                  !isInstaller(userLogged?.data?.user_role?.name) ? () => tabs.setValue('workOrders') : undefined
+                }>
                 <TableCell>
-                  <Typography variant="subtitle2" color="text.secondary">Finish Date:</Typography>
+                  <Typography variant="subtitle2" color="text.secondary">Finish Date(s):</Typography>
                 </TableCell>
-                <TableCell>
-                  <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, justifyContent: 'space-between' }}>
-                    {project?.finishPermissionDate ? (
-                      <Typography variant="subtitle2" color="text.primary">
-                        {fDate(project?.finishPermissionDate)}
-                        <b> ({project?.finishPermissionDuration ? (project?.finishPermissionDuration === 1 ? '1 day' : `${project?.finishPermissionDuration} days`) : fDuration(project?.finishPermissionDate, project?.finishPermissionEndDate)})</b>
-                        <br />
-                        <Label variant="filled" sx={{ bgcolor: 'whitesmoke', color: 'text.primary' }}>
-                          {project?.finishPermissionIsPartDays ? 'Part Days' : 'Full Days'}
-                        </Label>
-                      </Typography>
-                    ) : (
-                      <>
+                <TableCell colSpan={2} align='right'>
+                  <Box sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 1,
+                    alignItems: 'flex-end',
+                    textAlign: 'right',
+                    width: '100%'
+                  }}>
+                    {workOrdersFinishPermissions?.length > 0 ?
+                      workOrdersFinishPermissions.map((wo, index) => (
+                        (
+                          <Box
+                            key={`box-installation-date-${wo.id}`}
+                            sx={{
+                              display: 'flex',
+                              flexDirection: 'row',
+                              alignItems: 'flex-end',
+                              justifyContent: 'flex-end',
+                              width: '100%',
+                            }}
+                          >
+                            <Typography
+                              variant="subtitle2"
+                              color={
+                                wo?.end_date
+                                  ? (
+                                    (fIsAfter(dayjs(new Date()).format('YYYY-MM-DD'), dayjs(wo?.end_date).format('YYYY-MM-DD')) &&
+                                      (
+                                        project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.preparation.toLowerCase()) ||
+                                        project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.coordination.toLowerCase()) ||
+                                        project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.installation.toLowerCase())
+                                      )
+                                    )
+                                      ? 'error.main'
+                                      : 'text.primary'
+                                  )
+                                  : 'text.primary'
+                              }
+                              sx={{
+                                fontWeight: wo?.end_date ? (
+                                  (fIsAfter(dayjs(new Date()).format('YYYY-MM-DD'), dayjs(wo?.end_date).format('YYYY-MM-DD')) &&
+                                    (
+                                      project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.preparation.toLowerCase()) ||
+                                      project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.coordination.toLowerCase()) ||
+                                      project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.installation.toLowerCase())
+                                    )
+                                  )
+                                    ? 'bold'
+                                    : 'normal'
+                                ) : 'normal'
+                              }}
+                            >
+                              {fDate(wo?.start_date)}
+                              <b> ({wo?.duration ? (wo?.duration === 1 ? '1 day' : `${wo?.duration} days`) : fDuration(wo?.start_date, wo?.end_date)})</b>
+                              {/* <br />
+                    <Label variant="filled" sx={{ bgcolor: 'whitesmoke', color: 'text.primary' }}>
+                      {project?.isPartDays ? 'Part Days' : 'Full Days'}
+                    </Label> */}
+                            </Typography>
+                          </Box>
+                        ))) : (
                         <Iconify icon="fluent-mdl2:date-time" color="warning" width={20} sx={{ ml: 0.5, mt: 0.5 }} />
-                        {/* {project?.inspectionDate === null && (
-                          <Typography variant="caption" color="text.primary">
-                            [Need Inspection Date]
-                          </Typography>
-                        )} */}
-                      </>
-                    )}
+                      )}
 
                   </Box>
                 </TableCell>
-                <TableCell sx={{ textAlign: 'right', maxWidth: '30px' }}>
+                {/* <TableCell sx={{ textAlign: 'right', maxWidth: '30px' }}>
                   {(project?.finishPermissionDate &&
                     (listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator))) && (
                       <IconButton variant="text" color="primary" size="small" sx={{ ml: 0, maxWidth: 10 }}
@@ -484,7 +633,7 @@ export function ProjectDetailsContent({
                         <Iconify icon="zondicons:date-add" color="warning" width={20} />
                       </IconButton>
                     )}
-                </TableCell>
+                </TableCell> */}
               </TableRow>
             </>
           )}
@@ -711,7 +860,7 @@ export function ProjectDetailsContent({
         onClose={() => setOpenDialogs({ ...openDialogs, userManager: false })}
       />
       <ProjectEditModalInstallationTeamView
-        isEdit={getProjectInstaller(project, CONFIG)?.name}
+        isEdit={getProjectInstallers(project, CONFIG)?.name}
         project={project}
         refetchProject={refetchProject}
         open={openDialogs.installationTeam}

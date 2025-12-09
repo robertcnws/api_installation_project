@@ -16,7 +16,7 @@ import { useSetState } from 'src/hooks/use-set-state';
 
 import { isInstaller } from 'src/utils/check-permissions';
 import { fIsAfter, fIsBetween } from 'src/utils/format-time';
-import { getProjectInstaller } from 'src/utils/project-tasks-utils';
+import { getProjectInstallers } from 'src/utils/project-tasks-utils';
 
 import { CONFIG } from 'src/config-global';
 import { PROJECT_TYPE_OPTIONS } from 'src/_mock';
@@ -135,7 +135,7 @@ export function ProjectView() {
           }
           const isInstallerRole = isInstaller(userLogged?.data?.user_role?.name);
           if (isInstallerRole) {
-            const projInstaller = getProjectInstaller(message.item, CONFIG);
+            const projInstaller = getProjectInstallers(message.item, CONFIG);
             if (projInstaller && projInstaller.id && projInstaller.username && projInstaller.username !== userLogged?.data?.username) {
               return [...prevData];
             }
@@ -338,7 +338,7 @@ export function ProjectView() {
       await promise;
 
       toast.success('Trigger profits rebuilt success!');
-      
+
     }, []);
 
   const renderFilters = (
@@ -377,18 +377,15 @@ export function ProjectView() {
           <Iconify icon="ion:calendar-outline" />
         </ToggleButton> */}
 
-        {!isInstaller(userLogged?.data?.user_role?.name) && (
-          <React.Fragment key='kanban-trigger'>
-            <ToggleButton value="kanban">
-              <Iconify icon="tabler:layout-kanban" />
-            </ToggleButton>
+        {!isInstaller(userLogged?.data?.user_role?.name) && [
+          <ToggleButton key="kanban" value="kanban">
+            <Iconify icon="tabler:layout-kanban" />
+          </ToggleButton>,
 
-            <ToggleButton value="trigger" onClick={openTriggerDialog.onTrue}>
-              <Iconify icon="fluent-mdl2:trigger-auto" />
-            </ToggleButton>
-          </React.Fragment>
-
-        )}
+          <ToggleButton key="trigger" value="trigger" onClick={openTriggerDialog.onTrue}>
+            <Iconify icon="fluent-mdl2:trigger-auto" />
+          </ToggleButton>
+        ]}
 
       </ToggleButtonGroup>
 
@@ -573,7 +570,7 @@ export function ProjectView() {
                 <Button
                   variant="contained"
                   color="warning"
-                  onClick={async() => {
+                  onClick={async () => {
                     await handleTriggerAllProfits();
                     openTriggerDialog.onFalse();
                     // setView('list');
@@ -652,7 +649,7 @@ function applyFilter({ inputData, comparator, filters, dateError }) {
 
   if (installer.id) {
     inputData = inputData.filter((file) => {
-      const installerId = getProjectInstaller(file, CONFIG)?.id;
+      const installerId = getProjectInstallers(file, CONFIG)?.id;
       if (installerId) {
         return String(installerId) === String(installer.id);
       }

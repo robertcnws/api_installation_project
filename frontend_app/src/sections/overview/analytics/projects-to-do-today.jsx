@@ -15,7 +15,7 @@ import { useBoolean } from 'src/hooks/use-boolean';
 
 import { fPercent } from 'src/utils/format-number';
 import { isInstaller } from 'src/utils/check-permissions';
-import { getProjectInstaller, totalPercentageProject } from 'src/utils/project-tasks-utils';
+import { getProjectInstallers, totalPercentageProject } from 'src/utils/project-tasks-utils';
 
 import { CONFIG } from 'src/config-global';
 
@@ -254,7 +254,7 @@ const Item = ({ item, sx, router, userLogged, ...other }) =>
                 <>
                     <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', typography: 'body2', color: 'text.secondary', gap: 2 }}>
                         <Typography component="span" variant="caption" sx={{ color: 'text.secondary' }}>
-                            Installer: {getProjectInstaller(item, CONFIG) ? getProjectInstaller(item, CONFIG).name : 'Not Installer assigned'}
+                            Installer: {getProjectInstallers(item, CONFIG) ? getProjectInstallers(item, CONFIG).name : 'Not Installer assigned'}
                         </Typography>
                     </Box>
                     <br />

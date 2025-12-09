@@ -48,10 +48,6 @@ export function ProjectCalendarView({ projects, isOnlyWeek }) {
 
   const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
 
-  const {
-    listPermissions,
-  } = useDataContext();
-
   const installProjects = useMemo(() => projects?.filter((project) => project.startDate).map((p) => ({
     ...p,
     id: `${p.id}-installation`,

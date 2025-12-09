@@ -67,47 +67,34 @@ export function useGetProjectEvents(projects = [], type = 'installation') {
       }
       const color = colorMappingRef.current[project.id];
 
-      const endDate = type === 'installation' || type === 'service' || type === 'calendarNote' ?
+      const endDate = type === 'service' || type === 'calendarNote' ?
         dayjs(dayjs(project.endDate).format('YYYY-MM-DD')).add(23, 'hours').add(59, 'minutes').format('YYYY-MM-DD HH:mm:ss') :
-        type === 'workOrder' ?
+        type === 'workOrder' || type === 'installation' || type === 'inspection' || type === 'finishPermission' ?
           dayjs(dayjs(project.start_date).format('YYYY-MM-DD'))
             .add(project.duration - 1, 'days')
             .add(23, 'hours')
             .add(59, 'minutes')
             .format('YYYY-MM-DD HH:mm:ss') :
-          type === 'inspection' ?
-            dayjs(dayjs(project.inspectionEndDate).format('YYYY-MM-DD'))
+          type === 'firstCheckMeasurement' ?
+            dayjs(dayjs(project.firstDate).format('YYYY-MM-DD'))
               .add(23, 'hours')
               .add(59, 'minutes')
               .format('YYYY-MM-DD HH:mm:ss') :
-            type === 'firstCheckMeasurement' ?
-              dayjs(dayjs(project.firstDate).format('YYYY-MM-DD'))
-                .add(23, 'hours')
-                .add(59, 'minutes')
-                .format('YYYY-MM-DD HH:mm:ss') :
-              type === 'secondCheckMeasurement' ?
-                dayjs(dayjs(project.checkDate).format('YYYY-MM-DD'))
-                  .add(23, 'hours')
-                  .add(59, 'minutes')
-                  .format('YYYY-MM-DD HH:mm:ss') :
-                dayjs(dayjs(project.finishPermissionEndDate).format('YYYY-MM-DD'))
-                  .add(23, 'hours')
-                  .add(59, 'minutes')
-                  .format('YYYY-MM-DD HH:mm:ss');
+            dayjs(dayjs(project.checkDate).format('YYYY-MM-DD'))
+              .add(23, 'hours')
+              .add(59, 'minutes')
+              .format('YYYY-MM-DD HH:mm:ss');
 
       return {
         ...project,
         id: project.id,
-        title: type === 'workOrder' ? `${project.projectName} - ${project.name}` : project.name,
-        start: type === 'installation' || type === 'service' || type === 'calendarNote' ?
-          dayjs(project.startDate).format('YYYY-MM-DD') : type === 'inspection' ?
-            dayjs(project.inspectionDate).format('YYYY-MM-DD') :
-            type === 'workOrder' ?
-              project.start_date :
-              type === 'firstCheckMeasurement' ?
-                project.firstDate :
-                type === 'secondCheckMeasurement' ?
-                  project.checkDate : project.finishPermissionDate,
+        title: project.name,
+        start: type === 'service' || type === 'calendarNote' ?
+          dayjs(project.startDate).format('YYYY-MM-DD') :
+          type === 'workOrder' || type === 'installation' || type === 'inspection' || type === 'finishPermission' ?
+            project.start_date :
+            type === 'firstCheckMeasurement' ?
+              project.firstDate : project.checkDate,
         end: endDate,
         textColor: color,
         color,

@@ -251,6 +251,21 @@ def get_project_installers(project):
     return installers
 
 
+def get_user_role_name(user):
+    if not user:
+        return None
+
+    role = user.get('userRole') or user.get('user_role')
+
+    if isinstance(role, dict):
+        return role.get('name', '').lower()
+
+    if isinstance(role, str):
+        return role.lower()
+
+    return None
+
+
 class DateTimeJSONEncoder(json.JSONEncoder):
     def default(self, o):
         if isinstance(o, datetime):

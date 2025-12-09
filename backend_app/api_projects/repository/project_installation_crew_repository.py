@@ -7,6 +7,10 @@ from api_projects.data_util import (
     create_notification,
 )
 
+from api_projects.tasks import (
+    task_update_installation_crews_in_projects,
+)
+
 import json
 import logging
 
@@ -34,6 +38,7 @@ def create_project_installation_crew(request):
         cost_by_unit = data.get('costByUnit', 0.0)
         unit = data.get('unit', None)
         type_crew = data.get('typeCrew', None)
+        type_working = data.get('typeWorking', None)
         description = data.get('description', '')
         user_reporter = data.get('userReporter', None)
         is_active = data.get('isActive', True)
@@ -59,6 +64,7 @@ def create_project_installation_crew(request):
             cost_by_unit=cost_by_unit,
             unit=unit,
             type_crew=type_crew,
+            type_working=type_working,
             description=description,
             created_time=timezone.now(),
             last_modified_time=timezone.now(),
@@ -103,6 +109,7 @@ def edit_project_installation_crew(request, id):
         cost_by_unit = data.get('costByUnit', 0.0)
         unit = data.get('unit', None)
         type_crew = data.get('typeCrew', None)
+        type_working = data.get('typeWorking', None)
         description = data.get('description', '')
         user_reporter = data.get('userReporter', None)
         is_active = data.get('isActive', True)
@@ -131,11 +138,15 @@ def edit_project_installation_crew(request, id):
         crew.cost_by_unit = cost_by_unit
         crew.unit = unit
         crew.type_crew = type_crew
+        crew.type_working = type_working
         crew.description = description
         crew.last_modified_time = timezone.now()
         crew.is_active = is_active
         crew.user_reporter = user_reporter
         crew.save()
+        
+        # CREATE DELAY FUNCTION TO UPDATE PROJECTS
+        task_update_installation_crews_in_projects.delay(str(crew.id))
         
         tracking_info = transform_data_to_mongo(crew)
         tracking = ProjectTracking(

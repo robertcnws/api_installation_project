@@ -25,7 +25,7 @@ import { Box, Alert, LinearProgress } from '@mui/material';
 import FormControlLabel from '@mui/material/FormControlLabel';
 
 import { isInstaller } from 'src/utils/check-permissions';
-import { getProjectInstaller } from 'src/utils/project-tasks-utils';
+import { getProjectInstallers } from 'src/utils/project-tasks-utils';
 
 import { CONFIG } from 'src/config-global';
 import { moveColumn } from 'src/actions/kanban';
@@ -73,7 +73,7 @@ export function KanbanView({
   useEffect(() => {
     if (project) {
       setHasInstallDate(project.startDate !== null);
-      setInstaller(getProjectInstaller(project, CONFIG));
+      setInstaller(getProjectInstallers(project, CONFIG));
     }
   }, [project]);
 

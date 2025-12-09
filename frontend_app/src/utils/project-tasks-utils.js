@@ -1,3 +1,4 @@
+import dayjs from 'dayjs';
 import stringSimilarity from 'string-similarity';
 
 export const availableTasks = (project, projectTasks, CONFIG) => {
@@ -65,20 +66,106 @@ export const totalPercentageProjectStage = (project, stage, CONFIG) => {
     return percentage;
 }
 
-export const getProjectInstaller = (project, CONFIG) => {
-    const users = project?.projectDefaultTasks?.filter(
-        (task) => task.project_default_task.project_stage.name === CONFIG.stages.installation &&
-            task.project_default_task.name.toLowerCase().includes('start')
-    )[0]?.users_assignees
+export const getWorkOrders = (project, date=null, workTypeName=null) => {
+    const workOrders = project?.workOrders || [];
+    const realWorkOrders = date ?
+        workOrders.filter(
+            (wo) => dayjs(wo.start_date).format('YYYY-MM-DD').isSame(dayjs(date).format('YYYY-MM-DD'))
+        ) :
+        workOrders;
+    const filteredWorkOrders = workTypeName ?
+        realWorkOrders.filter(
+            (wo) => wo.work_type?.name.toLowerCase().includes(workTypeName.toLowerCase())
+        ) :
+        realWorkOrders;
+    return filteredWorkOrders;
+};
 
-    const installer = users?.filter(
-        (user) => {
-            const objRole = user?.userRole || user?.user_role;
-            return objRole.name.toLowerCase().includes(CONFIG.roles.installer.toLowerCase())
+export const getWorkOrderWorkers = (workOrder, roleName=null) => {
+    let users = [];
+    const installerCrews = workOrder?.installerCrews || workOrder?.installer_crews || [];
+    if (installerCrews?.length > 0) {
+        users = installerCrews.map(
+            (crew) => crew.users_installers || crew.usersInstallers || []
+        ).flat();
+    }
+    const usersAssignees = workOrder?.users_assignees || workOrder?.usersAssignees || [];
+    if (usersAssignees?.length > 0) {
+        users = [...users, ...usersAssignees];
+    }
+    const set = new Set();
+    users = users.filter((user) => {
+        const notAdded = !set.has(user.username);
+        if (notAdded) {
+            set.add(user.username);
+            return true;
         }
-    )[0] || project?.userInstaller;
+        return false;
+    });
+    if (roleName) {
+        users = users.filter(
+            (user) => {
+                const objRole = user?.userRole || user?.user_role;
+                return objRole.name.toLowerCase().includes(roleName.toLowerCase())
+            }
+        );
+    }
+    users = users.map(
+        (user) => ({
+            ...user,
+            name: `${user.first_name || user.firstName} ${user.last_name || user.lastName}`.trim(),
+        })
+    );
+    return users;
+}
 
-    return installer;
+export const getWorkOrderAssistants = (workOrder) => {
+    let assistants = [];
+    const installerCrews = workOrder?.installerCrews || workOrder?.installer_crews || [];
+    
+    if (installerCrews?.length > 0) {
+        assistants = installerCrews.map(
+            (crew) => crew.users_helpers || crew.usersHelpers || []
+        ).flat();
+        assistants = assistants.map(
+            (user) => ({
+                ...user,
+                id: dayjs().unix() + Math.random(), // to avoid duplicated keys
+            })
+        )
+    }
+    return assistants;
+};
+
+export const getProjectInstallers = (project, CONFIG, date=null) => {
+    // const users = project?.projectDefaultTasks?.filter(
+    //     (task) => task.project_default_task.project_stage.name === CONFIG.stages.installation &&
+    //         task.project_default_task.name.toLowerCase().includes('start')
+    // )[0]?.users_assignees
+
+    // const installer = users?.filter(
+    //     (user) => {
+    //         const objRole = user?.userRole || user?.user_role;
+    //         return objRole.name.toLowerCase().includes(CONFIG.roles.installer.toLowerCase())
+    //     }
+    // )[0] || project?.userInstaller;
+
+    // return installer;
+    const workOrders = getWorkOrders(project, date, CONFIG.stages.installation);
+    const installers = workOrders.map(
+        (wo) => (wo.users_assignees || wo.usersAssignees || [])
+    ).flat();
+
+    const set = new Set();
+    const uniqueInstallers = installers.filter((user) => {
+        const notAdded = !set.has(user.username);
+        if (notAdded) {
+            set.add(user.username);
+            return true;
+        }
+        return false;
+    });
+    return uniqueInstallers;
 };
 
 
@@ -200,4 +287,24 @@ export function getProjectAttachments(project, stageName = null) {
     allAttachments.tasks = tasksAttachments;
 
     return allAttachments;
+}
+
+export function getProjectCrewTypes(project) {
+    const crewTypesSet = new Set();
+    project?.workOrders?.forEach((wo) => {
+        const installerCrews = wo?.installerCrews || wo?.installer_crews || [];
+        installerCrews.forEach((crew) => {
+            if (crew?.typeCrew || crew?.type_crew) {
+                crewTypesSet.add(crew.typeCrew?.value || crew.type_crew?.value);
+            }
+        });
+        const usersAssignees = wo?.users_assignees || wo?.usersAssignees || [];
+        usersAssignees.forEach((user) => {
+            const installerInfo = user?.installerInfo || user?.installer_info;
+            if (installerInfo?.typeCrew || installerInfo?.type_crew) {
+                crewTypesSet.add(installerInfo?.typeCrew?.value || installerInfo?.type_crew?.value);
+            }
+        });
+    });
+    return Array.from(crewTypesSet);
 }

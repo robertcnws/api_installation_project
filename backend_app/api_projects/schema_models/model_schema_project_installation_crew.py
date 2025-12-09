@@ -26,6 +26,7 @@ class ProjectInstallationCrewType(MongoengineObjectType):
     user_reporter = JSONDateTime()
     unit = JSONDateTime()
     type_crew = JSONDateTime()
+    type_working = JSONDateTime()
     
     def resolve_created_time(self, info):
         dt = self.created_time
@@ -49,3 +50,6 @@ class ProjectInstallationCrewType(MongoengineObjectType):
     
     def resolve_type_crew(self, info):
         return self.type_crew or {}
+    
+    def resolve_type_working(self, info):
+        return self.type_working or {}

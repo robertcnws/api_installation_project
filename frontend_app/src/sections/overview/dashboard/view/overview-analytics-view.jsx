@@ -18,15 +18,21 @@ import { DashboardContent } from 'src/layouts/dashboard';
 import { Iconify } from 'src/components/iconify';
 
 import { ProjectCalendarView } from 'src/sections/project/calendar/view';
+import { Scrollbar } from 'src/components/scrollbar';
 
 import { useDataContext } from 'src/auth/context/data/data-context';
-
+import dayjs from 'dayjs';
+import { CalendarComponent } from 'src/sections/calendar/view/calendar-component';
 import { ProjectListView } from './product/view';
 import { AnalyticsNews } from '../analytics-news';
 import { WelcomeTypography } from '../welcome-typography';
 import { ProjectsToDoToday } from '../projects-to-do-today';
 import { ProjectsStageToday } from '../projects-stage-today';
 import { AnalyticsWidgetSummary } from '../analytics-widget-summary';
+
+
+
+
 
 
 export function OverviewAnalyticsView() {
@@ -40,7 +46,11 @@ export function OverviewAnalyticsView() {
     []
   );
 
-  const { loadedProjects, loadingProjects, loadedProjectReminders } = useDataContext();
+  const {
+    loadedProjects,
+    loadingProjects,
+    loadedProjectReminders
+  } = useDataContext();
 
   // Map + ref para WS
   const projectsRef = useRef(new Map());
@@ -153,7 +163,7 @@ export function OverviewAnalyticsView() {
     stageBuckets,
     permissionRates
   } = useMemo(() => {
-    const now = new Date();
+    const now = dayjs();
 
     // 1) Inicializo buckets a partir de CONFIG.stages
     const stageKeys = Object.keys(CONFIG.stages);
@@ -166,11 +176,21 @@ export function OverviewAnalyticsView() {
 
     // 2) Recorro proyectos solo UNA vez
     projects.forEach((proj) => {
-      const sd = new Date(proj.startDate);
-      const ed = new Date(proj.endDate);
+      // const ed = dayjs(proj.endDate).toDate();
+      const workOrders = proj.workOrders || [];
+      const installationWorkOrders = workOrders?.filter(
+        (wo) => wo.work_type?.name?.toLowerCase() === 'installation'
+      ) || [];
+
+      const someInstallationToday = installationWorkOrders.some((wo) => {
+        const wod = dayjs(wo.start_date).format('YYYY-MM-DD');
+        const woe = dayjs(wo.end_date).format('YYYY-MM-DD');
+        return fIsBetween(now, dayjs(wod).toDate(), dayjs(woe).toDate()) || wod === now.format('YYYY-MM-DD');
+      });
 
       // proyectos de hoy
-      if (fDate(sd) === fDate(now) || fIsBetween(now, sd, ed)) {
+      // if (fDate(sd) === fDate(now) || fIsBetween(now, sd, ed)) {
+      if (someInstallationToday) {
         todayProjs.push(proj);
       }
 
@@ -272,7 +292,7 @@ export function OverviewAnalyticsView() {
 
       <Grid container spacing={1}>
         <Grid xs={12} md={isInst ? 12 : 4} lg={isInst ? 12 : 4}>
-          <ProjectsToDoToday title="Installations Today" list={todayProjects} />
+          <ProjectsToDoToday title="Installation(s) Today" list={todayProjects} />
         </Grid>
 
         {!isInst && (
@@ -305,20 +325,47 @@ export function OverviewAnalyticsView() {
         )}
       </Grid>
 
-      <Grid container xs={12} spacing={1}>
-        <Grid xs={12} md={6} lg={6}>
-          <Box sx={{ mt: 0, mb: 0, width: '100%' }}>
-            <ProjectCalendarView projects={projects} isOnlyWeek={isOnlyWeek.value} />
-          </Box>
-        </Grid>
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: { xs: 'column', md: 'row' },
+          gap: 1,
+          width: '100%',
+        }}
+      >
+
+        {/* CALENDAR */}
+        <Box
+          sx={{
+            flex: 1,
+            mt: 1.5,
+            width: '100%',
+            height: 370,
+            display: 'flex',
+            justifyContent: 'flex-start',
+          }}
+        >
+          <Scrollbar sx={{ height: 370 }}>
+            <CalendarComponent height={350} isOnlyWeek />
+          </Scrollbar>
+        </Box>
+
+        {/* PROJECT LIST (solo si NO es installer) */}
         {!isInstaller(userLogged?.data?.user_role?.name) && (
-          <Grid xs={12} md={6} lg={6}>
-            <Box sx={{ mt: 0, mb: 0, width: '100%' }}>
-              <ProjectListView projects={projects} loadingProjects={loadingProjects} />
-            </Box>
-          </Grid>
+          <Box
+            sx={{
+              flex: 1,
+              width: '100%',
+              mt: { xs: 1, md: 0 },
+            }}
+          >
+            <ProjectListView projects={projects} loadingProjects={loadingProjects} />
+          </Box>
         )}
-      </Grid>
+
+      </Box>
+
     </DashboardContent>
   );
+
 }
