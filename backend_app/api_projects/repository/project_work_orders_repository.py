@@ -17,6 +17,9 @@ from api_projects.data_util import (
     transform_data_to_mongo,
     create_notification,
 )
+from api_projects.repository import (
+    project_profit_report_repository as profit_repo,
+)
 from django.http import HttpResponse
 import json
 import logging
@@ -143,6 +146,7 @@ def manage_project_work_order_core(
     # Persistir en el proyecto
     project.work_orders = existing_work_orders
     project.save()
+    profit_repo.manage_profit_report(str(project.id), force_update=True)
 
     return project, work_order, action
     
@@ -313,6 +317,7 @@ def delete_project_work_order(request, project_id, id):
     existing_work_orders = [wo for wo in existing_work_orders if str(wo.get('id')) != id]
     project.work_orders = existing_work_orders
     project.save()
+    profit_repo.manage_profit_report(str(project.id), force_update=True)
     
     include_fields = ['id', 'name', 'work_orders']
         
@@ -358,6 +363,7 @@ def finish_project_work_order(request, project_id, id):
     existing_work_orders.append(work_order)
     project.work_orders = existing_work_orders
     project.save()
+    profit_repo.manage_profit_report(str(project.id), force_update=True)
     
     include_fields = ['id', 'name', 'work_orders']
         

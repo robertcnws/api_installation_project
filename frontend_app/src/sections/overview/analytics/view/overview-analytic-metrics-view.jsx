@@ -1,4 +1,4 @@
-import React, { useRef, useMemo, useState, useEffect } from 'react';
+import React, { useRef, useMemo, useState, useEffect, useCallback } from 'react';
 
 import Grid from '@mui/material/Unstable_Grid2';
 import Typography from '@mui/material/Typography';
@@ -21,6 +21,9 @@ import { ProjectCalendarView } from 'src/sections/project/calendar/view';
 
 import { useDataContext } from 'src/auth/context/data/data-context';
 import { useSocketList } from 'src/utils/websockets';
+import axios from "axios";
+import { toast } from 'src/components/snackbar';
+import { useProjectProfitReportsQuery } from 'src/_mock/__project_profit_report';
 
 import { ProjectListView } from './product/view';
 import { AnalyticsNews } from '../analytics-news';
@@ -32,6 +35,7 @@ import { AnalyticsMetricsStageSummary } from '../analytics-metrics-stage-summary
 import { AnalyticsMetricsProjectSummary } from '../analytics-metrics-project-summary';
 import { AnalyticsMetricsServiceSummary } from '../analytics-metrics-service-summary';
 import { AnalyticsMetricsProfitSummary } from '../analytics-metrics-profit-summary';
+
 
 
 export function OverviewAnalyticMetricsView() {
@@ -177,6 +181,31 @@ export function OverviewAnalyticMetricsView() {
     [projects]
   )
 
+  const [loadingTriggerAllProfits, setLoadingTriggerAllProfits] = useState(false);
+
+  const {
+    data: allProfitReports,
+    refetch: refetchAllProfitReports,
+    loading: loadingAllProfitReports
+  } = useProjectProfitReportsQuery();
+
+  const handleTriggerAllProfits = useCallback(
+    async () => {
+
+      setLoadingTriggerAllProfits(true);
+
+      const promise = axios.post(`${CONFIG.apiUrl}/projects/update/projects/trigger-profit-rebuild/`);
+
+      await promise;
+
+      setLoadingTriggerAllProfits(false);
+
+      toast.success('Trigger profits rebuilt success!');
+
+      refetchAllProfitReports?.();
+
+    }, [refetchAllProfitReports]);
+
   if (loadingProjects || projects.length === 0 ||
     loadingServices || services.length === 0 ||
     loadingMeasurements || measurements.length === 0) {
@@ -209,7 +238,11 @@ export function OverviewAnalyticMetricsView() {
 
   return (
     <DashboardContent maxWidth="xl">
-      <WelcomeMetricsTypography userLogged={userLogged} />
+      <WelcomeMetricsTypography
+        userLogged={userLogged}
+        onRefresh={handleTriggerAllProfits}
+        loading={loadingTriggerAllProfits}
+      />
 
       {!isInst ? (
         <Box sx={{ mb: 2 }}>
@@ -289,6 +322,9 @@ export function OverviewAnalyticMetricsView() {
               <AnalyticsMetricsProfitSummary
                 sx={{ cursor: 'pointer' }}
                 finishedProjects={finishedProjects}
+                allProfitReports={allProfitReports}
+                loadingAllProfitReports={loadingAllProfitReports}
+                refetchAllProfitReports={refetchAllProfitReports}
                 title='Finished Installations (Cost & Profit Summary)'
                 icon={
                   <Iconify

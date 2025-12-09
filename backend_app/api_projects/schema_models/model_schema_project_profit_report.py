@@ -21,6 +21,8 @@ class ProjectProfitReportType(MongoengineObjectType):
     created_time = graphene.String()
     last_modified_time = graphene.String()
     project_info = JSONDateTime()
+    installation_cost = graphene.Float()
+    installation_profit = graphene.Float()
     
     
     def resolve_created_time(self, info):
@@ -33,3 +35,15 @@ class ProjectProfitReportType(MongoengineObjectType):
     
     def resolve_project_info(self, info):
         return self.project_info or {}
+    
+    def resolve_installation_cost(self, info):
+        if self.working_type == "onhouse":
+            return self.installation_cost_onhouse
+        else:
+            return self.installation_cost_subcontractor
+        
+    def resolve_installation_profit(self, info):
+        if self.working_type == "onhouse":
+            return self.installation_profit_onhouse
+        else:
+            return self.installation_profit_subcontractor

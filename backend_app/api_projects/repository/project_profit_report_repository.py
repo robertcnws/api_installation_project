@@ -14,6 +14,9 @@ from api_projects.models import Project, ProjectProfitReport
 from api_projects.repository.project_profit_report_repository import transform_data_to_mongo  # ajusta import
 
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 # ----------------------------------------------------------------------
 # Helper seguro para convertir a Decimal
@@ -34,6 +37,79 @@ def to_decimal(value, default=Decimal("0")) -> Decimal:
         return Decimal(text)
     except (InvalidOperation, TypeError, ValueError):
         return default
+    
+    
+def get_nested(obj, *keys):
+    """
+    Navega por obj usando keys, soportando:
+    - dicts con snake_case y camelCase
+    - listas (intenta cada elemento hasta encontrar un valor no None)
+    """
+
+    def _to_camel(snake: str) -> str:
+        parts = snake.split('_')
+        return parts[0].lower() + ''.join(p.title() for p in parts[1:])
+
+    def _walk(current, idx: int):
+        if current is None:
+            return None
+
+        # ya consumimos todas las keys -> devolver lo que haya
+        if idx >= len(keys):
+            return current
+
+        key = keys[idx]
+
+        # Si es lista: probamos cada elemento con la MISMA key (no se incrementa idx aquí)
+        if isinstance(current, list):
+            for elem in current:
+                val = _walk(elem, idx)
+                if val is not None:
+                    return val
+            return None
+
+        # Si es dict: probamos snake y camel, y avanzamos al siguiente índice
+        if isinstance(current, dict):
+            snake = key
+            camel = _to_camel(snake)
+
+            if snake in current:
+                return _walk(current[snake], idx + 1)
+            if camel in current:
+                return _walk(current[camel], idx + 1)
+            return None
+
+        # Cualquier otro tipo -> no se puede seguir navegando
+        return None
+
+    return _walk(obj, 0)
+
+
+
+def safe_to_decimal(value, default="0"):
+    """
+    Convierte a Decimal de forma segura.
+    Acepta int, float, str, None. Si falla, devuelve default.
+    """
+    if value is None:
+        return Decimal(default)
+    try:
+        return Decimal(str(value))
+    except (InvalidOperation, ValueError, TypeError):
+        return Decimal(default)
+
+
+def get_cost_by_unit_for_wo(wo: dict) -> Decimal:
+    """
+    Busca cost_by_unit primero en installer_crews, luego en users_assignees.installer_info.
+    Soporta snake/camel por get_nested y devuelve siempre Decimal.
+    """
+    cost_installer = get_nested(wo, "installer_crews", "cost_by_unit")
+    cost_assignee = get_nested(wo, "users_assignees", "installer_info", "cost_by_unit")
+
+    cost = cost_installer if cost_installer is not None else cost_assignee
+    return safe_to_decimal(cost, default="0")
+
 
 # ----------------------------------------------------------------------
 # Lógica principal
@@ -42,6 +118,26 @@ def manage_profit_report(project_id: str, force_update=False) -> Response:
     project = Project.objects(id=project_id).first()
     if not project:
         return Response({'error': 'Project not found'}, status=400)
+    
+    work_orders = getattr(project, "work_orders", []) or []
+    install_work_orders = [wo for wo in work_orders if wo.get("work_type", {}).get("name", "").lower() == "installation"]
+    logger.info(f"Found {len(install_work_orders)} installation work orders for project {project.name}")
+    
+    def is_on_subcontractor_crew(wo):
+        name1 = (get_nested(wo, "installer_crews", "type_crew", "value") or "").lower()
+        name2 = (get_nested(wo, "users_assignees", "installer_info", "type_crew", "value") or "").lower()
+        logger.info(f"Work order {wo.get('id', '')}: crew types '{name1}', '{name2}'")
+        return name1 == "subcontractor" or name2 == "subcontractor"
+    
+    is_on_subcontractor = any(is_on_subcontractor_crew(wo) for wo in install_work_orders)
+    
+    sum_cost_work_orders = sum(
+        safe_to_decimal(wo.get("duration", 0), default="0")
+        * get_cost_by_unit_for_wo(wo)
+        for wo in install_work_orders
+    )
+    
+     # Verificar si ya existe un reporte no editado
 
     project_profit = ProjectProfitReport.objects(project_id=str(project.id), has_been_edited=False).first()
     if project_profit and not force_update:
@@ -106,24 +202,39 @@ def manage_profit_report(project_id: str, force_update=False) -> Response:
 
     # Profit = instalación facturada - costo instalación
     total_profit = total_installation - total_installing
+    
+    total_profit_onhouse = total_installation - sum_cost_work_orders
 
     # ---- Info del proyecto ----
     project_info = transform_data_to_mongo(
         project,
-        include_fields=["id", "name", "number", "start_date", "duration"],
+        include_fields=["id", "name", "number"],
+    )
+    
+    project_info["install_work_orders"] = install_work_orders
+    project_info["duration"] = sum(
+        int(wo.get("duration", 0))
+        for wo in install_work_orders
     )
     
     project_amount_f = float(total_sales_order or 0)
     installation_amount_f = float(total_installation or 0)
     installation_cost_f = float(total_installing or 0)
     installation_profit_f = float(total_profit or 0)
+    
+    installation_cost_onhouse_f = float(sum_cost_work_orders or 0)
+    installation_profit_onhouse_f = float(total_profit_onhouse or 0)
+    
 
     if force_update and project_profit:
         project_profit.project_info = project_info
         project_profit.project_amount = project_amount_f
         project_profit.installation_amount = installation_amount_f
-        project_profit.installation_cost = installation_cost_f
-        project_profit.installation_profit = installation_profit_f
+        project_profit.installation_cost_subcontractor = installation_cost_f
+        project_profit.installation_profit_subcontractor = installation_profit_f
+        project_profit.installation_cost_onhouse = installation_cost_onhouse_f
+        project_profit.installation_profit_onhouse = installation_profit_onhouse_f
+        project_profit.working_type = "subcontractor" if is_on_subcontractor else "onhouse"
         project_profit.last_modified_time = timezone.now()
         project_profit.save()
 
@@ -139,10 +250,13 @@ def manage_profit_report(project_id: str, force_update=False) -> Response:
             project_info=project_info,
             project_amount=total_sales_order,      # monto total del proyecto
             installation_amount=total_installation,  # lo que cobras por instalar
-            installation_cost=total_installing,      # lo que te cuesta instalar
-            installation_profit=total_profit,        # utilidad
+            installation_cost_subcontractor=total_installing,      # lo que te cuesta instalar
+            installation_profit_subcontractor=total_profit,        # utilidad
+            installation_cost_onhouse=sum_cost_work_orders,
+            installation_profit_onhouse=total_profit_onhouse,
             notes="",
             has_been_edited=False,
+            working_type="subcontractor" if is_on_subcontractor else "onhouse",
             created_time=timezone.now(),
             last_modified_time=timezone.now(),
         )

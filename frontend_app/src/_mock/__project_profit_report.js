@@ -7,6 +7,10 @@ const GET_ALL_PROJECT_PROFIT_REPORTS = gql`
     allProjectProfitReports {
       id
       installationAmount
+      installationCostSubcontractor
+      installationCostOnhouse
+      installationProfitSubcontractor
+      installationProfitOnhouse
       installationCost
       installationProfit
       notes
@@ -15,6 +19,8 @@ const GET_ALL_PROJECT_PROFIT_REPORTS = gql`
       projectInfo
       createdTime
       lastModifiedTime
+      hasBeenEdited
+      workingType
     }
   }
 `;
