@@ -27,6 +27,7 @@ from api_projects.data_util import (
     to_aware,
     transform_dict_to_camelcase,
 )
+from api_projects.tasks import task_rebuild_scope_and_materials_in_project
 import json
 import logging
 
@@ -249,6 +250,10 @@ def create_project(request):
             
             project.save()
             
+            # Trigger the task to rebuild scope and materials asynchronously
+            
+            task_rebuild_scope_and_materials_in_project.delay(str(project.id))
+            
             manage_profit_report(str(project.id))
             
             tracking = ProjectTracking(
@@ -429,6 +434,8 @@ def create_projects(request):
                     duration=0,
                 )
                 project.save()
+                # Trigger the task to rebuild scope and materials asynchronously
+                task_rebuild_scope_and_materials_in_project.delay(str(project.id))
                 manage_profit_report(str(project.id))
                 tracking_info = transform_data_to_mongo(project, exclude_fields=['sales_order'])
                 list_tracking_info.append(tracking_info)
