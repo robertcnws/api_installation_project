@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import dayjs from "dayjs";
 import { Card } from "@mui/material";
+import axios from "axios";
+import { toast } from 'src/components/snackbar';
 
 import { useProjectProfitReportsQuery } from "src/_mock/__project_profit_report";
 import { CONFIG } from "src/config-global";
@@ -11,6 +13,7 @@ import { useDataContext } from "src/auth/context/data/data-context";
 import { WelcomeReportsTypography } from "../welcome-metrics-typography";
 import { ReportsSelect } from "../reports-select";
 import { ReportsTable } from "../reports-table";
+
 
 
 export function OverviewReportsView() {
@@ -45,7 +48,8 @@ export function OverviewReportsView() {
     const [title, setTitle] = useState("");
 
     const finishedProjects = useMemo(
-        () => loadedProjects?.filter((p) => p.currentStage?.name?.toLowerCase() === 'finished'),
+        // () => loadedProjects?.filter((p) => p.currentStage?.name?.toLowerCase() === 'finished'),
+        () => loadedProjects,
         [loadedProjects]
     );
 
@@ -223,6 +227,25 @@ export function OverviewReportsView() {
         (reportType?.value === 'dateRange' && selectedDateRange?.startDate && selectedDateRange?.endDate)
     ), [reportType, selectedMonth, selectedYear, selectedDateRange]);
 
+    const [loadingTriggerAllProfits, setLoadingTriggerAllProfits] = useState(false);
+
+    const handleTriggerAllProfits = useCallback(
+        async () => {
+
+            setLoadingTriggerAllProfits(true);
+
+            const promise = axios.post(`${CONFIG.apiUrl}/projects/update/projects/trigger-profit-rebuild/`);
+
+            await promise;
+
+            setLoadingTriggerAllProfits(false);
+
+            toast.success('Trigger profits rebuilt success!');
+
+            refetchAllProfitReports?.();
+
+        }, [refetchAllProfitReports]);
+
     // Actualizar título cuando cambian filtros
     useEffect(() => {
         setTitle(buildTitle());
@@ -230,7 +253,11 @@ export function OverviewReportsView() {
 
     return (
         <DashboardContent maxWidth="xl">
-            <WelcomeReportsTypography userLogged={userLogged} />
+            <WelcomeReportsTypography
+                userLogged={userLogged}
+                onRefresh={handleTriggerAllProfits}
+                loading={loadingTriggerAllProfits}
+            />
 
             <Card sx={{ p: 2, boxShadow: 3 }}>
                 <ReportsSelect

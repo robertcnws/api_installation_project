@@ -28,6 +28,9 @@ import { AnalyticsMetricsPercentChart } from './analytics-metrics-percent-chart'
 
 export function AnalyticsMetricsProfitSummary({
   finishedProjects,
+  allProfitReports,
+  loadingAllProfitReports,
+  refetchAllProfitReports,
   icon,
   title,
   color = 'primary',
@@ -38,11 +41,7 @@ export function AnalyticsMetricsProfitSummary({
   const router = useRouter();
   const { isMobile } = useContext(LoadingContext);
 
-  const {
-    data: allProfitReports,
-    refetch: refetchAllProfitReports,
-    loading: loadingAllProfitReports
-  } = useProjectProfitReportsQuery();
+  
 
   useSocketRefetch(
     `${CONFIG.wsProtocol}://${CONFIG.wsHost}/${CONFIG.wsDomain}/projects/ws/project-profit-reports/`,
@@ -172,7 +171,6 @@ export function AnalyticsMetricsProfitSummary({
       averageProjectAmount: averagePA,
     };
   }, [loadingAllProfitReports, syncedReports]);
-
 
   return (
     <Card

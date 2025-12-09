@@ -168,6 +168,7 @@ export function ReportsTable({ filteredData, title }) {
                                     <TableCell>INSTALLATION AMOUNT</TableCell>
                                     <TableCell>INSTALLATION COST</TableCell>
                                     <TableCell>INSTALLATION PROFIT</TableCell>
+                                    <TableCell>TYPE</TableCell>
                                     <TableCell>NOTES</TableCell>
                                     <TableCell />
                                 </TableRow>
@@ -227,7 +228,12 @@ export function ReportsTable({ filteredData, title }) {
                                         >
                                             {fCurrency(report.installationProfit)}
                                         </TableCell>
-                                        <TableCell>{report.notes}</TableCell>
+                                        <TableCell>
+                                            {report.workingType?.toUpperCase()}
+                                        </TableCell>
+                                        <TableCell>
+                                            {report.notes}
+                                        </TableCell>
                                         <TableCell>
                                             <Tooltip title={`Edit ${report?.projectInfo?.name} report`} arrow>
                                                 <IconButton
@@ -258,7 +264,7 @@ export function ReportsTable({ filteredData, title }) {
                                                 bgcolor: "background.neutral",
                                             }}
                                         >
-                                            <TableCell colSpan={8} />
+                                            <TableCell colSpan={9} />
                                         </TableRow>
 
                                         <TableRow>
@@ -308,7 +314,7 @@ export function ReportsTable({ filteredData, title }) {
                                             >
                                                 <b>{fCurrency(totalInstallationProfitByPage)}</b>
                                             </TableCell>
-                                            <TableCell colSpan={2} />
+                                            <TableCell colSpan={3} />
                                         </TableRow>
 
                                         <TableRow>
@@ -358,11 +364,11 @@ export function ReportsTable({ filteredData, title }) {
                                             >
                                                 <b>{fCurrency(totalInstallationProfit)}</b>
                                             </TableCell>
-                                            <TableCell colSpan={2} />
+                                            <TableCell colSpan={3} />
                                         </TableRow>
 
                                         <TableCustomPaginationZohoStyleRow
-                                            columnsLength={8}
+                                            columnsLength={9}
                                             data={filteredData}
                                             page={table.page}
                                             rowsPerPage={table.rowsPerPage}

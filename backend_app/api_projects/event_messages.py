@@ -239,11 +239,15 @@ def message_project_profit_report(msg_type, document):
                 "projectInfo": document.project_info,
                 "projectAmount": document.project_amount,
                 "installationAmount": document.installation_amount,
-                "installationCost": document.installation_cost,
-                "installationProfit": document.installation_profit,
+                "installationCostSubcontractor": document.installation_cost_subcontractor,
+                "installationCostOnhouse": document.installation_cost_onhouse,
+                "installationProfitSubcontractor": document.installation_profit_subcontractor,
+                "installationProfitOnhouse": document.installation_profit_onhouse,
                 "notes": document.notes,
                 "createdTime": document.created_time,
                 "lastModifiedTime": document.last_modified_time,
+                "hasBeenEdited": document.has_been_edited,
+                "workingType": document.working_type,
             }
 
         }

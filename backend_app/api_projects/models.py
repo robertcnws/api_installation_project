@@ -569,17 +569,20 @@ class ProjectProfitReport(Document):
     project_info = DynamicField(required=True)
     project_amount = FloatField(default=0.0)
     installation_amount = FloatField(default=0.0)
-    installation_cost = FloatField(default=0.0)
-    installation_profit = FloatField(default=0.0)
+    installation_cost_subcontractor = FloatField(default=0.0)
+    installation_cost_onhouse = FloatField(default=0.0)
+    installation_profit_subcontractor = FloatField(default=0.0)
+    installation_profit_onhouse = FloatField(default=0.0)
     notes = StringField(null=True)
     created_time = DateTimeField(default=timezone.now, null=True)
     last_modified_time = DateTimeField(default=timezone.now, null=True)
     has_been_edited = BooleanField(default=False)
+    working_type = StringField(max_length=255, null=True)
     
     meta = {
         'collection': 'project_profit_report',
         'indexes': [
-            'project_id', 'created_time', 'last_modified_time'
+            'project_id', 'created_time', 'last_modified_time', 'has_been_edited', 'working_type'
         ],
         'verbose_name': 'Project Profit Report',
         'verbose_name_plural': 'Project Profit Reports'

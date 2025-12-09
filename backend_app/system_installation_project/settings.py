@@ -314,10 +314,12 @@ CELERY_BEAT_SCHEDULE = {
     'run-task-sequence-daily': {
         'task': 'api_projects_async_task_sequence.tasks.task_sequence_daily',
         'schedule': crontab(minute=0, hour=8, day_of_week='*'),
+        # 'schedule': crontab(minute='*', hour='*', day_of_week='*'),
     },
     'run-manage-profit-report': {
         'task': 'api_projects.tasks.task_manage_profit_report',
         'schedule': crontab(minute=0, hour=7, day_of_week='*'),
+        # 'schedule': crontab(minute='*', hour='*', day_of_week='*'),
     },
     # 'run-manage-work-orders': {
     #     'task': 'api_projects.tasks.task_manage_work_orders_in_batches',

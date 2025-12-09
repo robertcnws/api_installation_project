@@ -356,6 +356,7 @@ def task_update_installation_crews_in_projects(crew_id: str):
 
             if changed:
                 project.save(validate=False)
+                task_manage_profit_single_report.delay(str(project.id), force_update=True)
                 updated_projects.append(str(project.id))
         
         logger.info(
