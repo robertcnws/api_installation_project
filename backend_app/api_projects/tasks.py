@@ -368,6 +368,83 @@ def task_update_installation_crews_in_projects(crew_id: str):
         logger.error("Error updating installation crew ID %s in projects: %s", crew_id, str(e))
         raise
     
+@shared_task
+def task_rebuild_scope_and_materials_in_project(project_id: str):
+    logger.info("Starting task to rebuild scope and materials for project ID: %s", project_id)
+    try:
+        project = Project.objects(id=project_id).first()
+        if not project:
+            logger.warning("Project with ID %s not found.", project_id)
+            return None
+
+        loaded_default_guide_products = list(
+            ProjectDefaultGuideProduct.objects.all().as_pymongo()
+        )
+        loaded_default_materials = list(
+            ProjectDefaultMaterial.objects.all().as_pymongo()
+        )
+
+        sales_order = getattr(project, "sales_order", None) or {}
+        list_items = sales_order.get("line_items", []) or []
+
+        logger.info(
+            "Processing project ID %s with %d line_items.",
+            str(project.id),
+            len(list_items),
+        )
+
+        # Solo goods
+        list_items = [
+            item for item in list_items
+            if ((item.get("line_item_type") or "").lower() == "goods" or 
+               (item.get("product_type") or "").lower() == "goods")
+        ]
+
+        if not list_items:
+            logger.info("No goods line items found for project ID %s. Skipping.", project_id)
+            return None
+
+        # ---------- 1) productsData ----------
+        products_data = []
+        if not project.project_guide_products or len(project.project_guide_products) == 0:
+            products_data = installation_guide_repo.compute_products_data_for_project(
+                project=project,
+                list_items=list_items,
+                loaded_default_guide_products=loaded_default_guide_products,
+            )
+
+        if (
+            (not project.project_guide_products or len(project.project_guide_products) == 0)
+            and len(products_data) > 0
+        ):
+            project.project_guide_products = products_data
+            project.save(validate=False)
+
+        # ---------- 2) materials ----------
+        materials = []
+        if not project.project_materials or len(project.project_materials) == 0:
+            materials = installation_guide_repo.compute_materials_for_project(
+                project=project,
+                products_data=products_data,
+                loaded_default_materials=loaded_default_materials,
+            )
+
+        if (
+            (not project.project_materials or len(project.project_materials) == 0)
+            and len(materials) > 0
+        ):
+            project.project_materials = materials
+            project.save(validate=False)
+
+        logger.info(
+            "Updated project ID %s with new scope and materials.",
+            str(project.id),
+        )
+        return str(project.id)
+    except Exception as e:
+        logger.error("Error rebuilding scope and materials for project ID %s: %s", project_id, str(e))
+        raise
+    
 
 @shared_task
 def task_rebuild_scope_and_materials(batch_size: int = 200):
