@@ -98,6 +98,14 @@ export function OverviewReportsView() {
                 return `Current Month Report (${dayjs().format("MMMM YYYY")})`;
             case "currentYear":
                 return `Current Year Report (${dayjs().format("YYYY")})`;
+            case "previousDay":
+                return `Previous Day Report (${dayjs().subtract(1, 'day').format("MMMM D, YYYY")})`;
+            case "previousWeek":
+                return `Previous Week Report (${dayjs().subtract(1, 'week').startOf("week").format("MMMM D, YYYY")} - ${dayjs().subtract(1, 'week').endOf("week").format("MMMM D, YYYY")})`;
+            case "previousMonth":
+                return `Previous Month Report (${dayjs().subtract(1, 'month').format("MMMM YYYY")})`;
+            case "previousYear":
+                return `Previous Year Report (${dayjs().subtract(1, 'year').format("YYYY")})`;
             case "customMonth":
                 if (selectedMonth && selectedYear) {
                     return `Month Report - ${selectedMonth.label} ${selectedYear.label}`;
@@ -130,12 +138,30 @@ export function OverviewReportsView() {
         const now = dayjs();
 
         const getReportDate = (report) => {
-            const s =
-                report?.projectInfo?.start_date ||
+            const workOrders = report?.projectInfo?.install_work_orders;
+
+            // 1) Si existen work orders → usar la fecha más antigua
+            if (Array.isArray(workOrders) && workOrders.length > 0) {
+                const dates = workOrders
+                    .map((wo) => wo?.start_date)
+                    .filter(Boolean)
+                    .map((d) => dayjs(d))
+                    .filter((d) => d.isValid());
+
+                if (dates.length > 0) {
+                    return dates.reduce((oldest, current) =>
+                        current.isBefore(oldest) ? current : oldest
+                    );
+                }
+            }
+
+            // 2) Si no hay work orders válidos → fallback anterior
+            const fallback =
+                report?.projectInfo?.created_time ||
                 report?.start_date ||
                 report?.createdTime?.split(" ")[0];
 
-            return dayjs(s);
+            return dayjs(fallback);
         };
 
         switch (reportType.value) {
@@ -171,6 +197,43 @@ export function OverviewReportsView() {
                 return normalizedReports.filter((r) => {
                     const d = getReportDate(r);
                     return d.isValid() && d.year() === year;
+                });
+            }
+
+            case "previousDay": {
+                const previousDay = now.subtract(1, 'day');
+                return normalizedReports.filter((r) => {
+                    const d = getReportDate(r);
+                    return d.isValid() && d.isSame(previousDay, "day");
+                });
+            }
+
+            case "previousWeek": {
+                const startPrevWeek = now.subtract(1, 'week').startOf("week");
+                const endPrevWeek = now.subtract(1, 'week').endOf("week");
+                return normalizedReports.filter((r) => {
+                    const d = getReportDate(r);
+                    if (!d.isValid()) return false;
+                    const t = d.valueOf();
+                    return t >= startPrevWeek.valueOf() && t <= endPrevWeek.valueOf();
+                });
+            }
+
+            case "previousMonth": {
+                const previousMonthDate = now.subtract(1, 'month');
+                const year = previousMonthDate.year();
+                const month = previousMonthDate.month();
+                return normalizedReports.filter((r) => {
+                    const d = getReportDate(r);
+                    return d.isValid() && d.year() === year && d.month() === month;
+                });
+            }
+
+            case "previousYear": {
+                const previousYear = now.subtract(1, 'year').year();
+                return normalizedReports.filter((r) => {
+                    const d = getReportDate(r);
+                    return d.isValid() && d.year() === previousYear;
                 });
             }
 
@@ -222,6 +285,10 @@ export function OverviewReportsView() {
         Boolean(reportType?.value === 'currentWeek') ||
         Boolean(reportType?.value === 'currentMonth') ||
         Boolean(reportType?.value === 'currentYear') ||
+        Boolean(reportType?.value === 'previousDay') ||
+        Boolean(reportType?.value === 'previousWeek') ||
+        Boolean(reportType?.value === 'previousMonth') ||
+        Boolean(reportType?.value === 'previousYear') ||
         (reportType?.value === 'customMonth' && selectedMonth && selectedYear) ||
         (reportType?.value === 'customYear' && selectedYear) ||
         (reportType?.value === 'dateRange' && selectedDateRange?.startDate && selectedDateRange?.endDate)

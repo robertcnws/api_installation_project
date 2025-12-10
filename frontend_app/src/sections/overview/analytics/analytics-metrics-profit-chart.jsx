@@ -9,7 +9,27 @@ import { Chart } from "src/components/chart";
 // - { profitReportsByDateRange: [...] }
 // - { data: { profitReportsByDateRange: [...] } }
 
-export function AnalyticsMetricsProfitChart({ syncedReports, isMobile }) {
+function getOldestStartDate(report) {
+    const workOrders = report?.projectInfo?.install_work_orders;
+    if (!Array.isArray(workOrders) || workOrders.length === 0) return null;
+
+    // Extraer fechas válidas
+    const dates = workOrders
+        .map((wo) => wo?.start_date)
+        .filter(Boolean)
+        .map((d) => dayjs(d))
+        .filter((d) => d.isValid());
+
+    if (dates.length === 0) return null;
+
+    // Retornar la más antigua
+    return dates.reduce((oldest, current) =>
+        current.isBefore(oldest) ? current : oldest
+    );
+}
+
+
+export function AnalyticsMetricsProfitChart({ monthRange, syncedReports, isMobile }) {
     const theme = useTheme();
 
     // Normalizar la data de entrada a un simple array de reports
@@ -46,18 +66,17 @@ export function AnalyticsMetricsProfitChart({ syncedReports, isMobile }) {
         return val.toFixed(0);
     };
 
-    // Construir últimos 9 meses con totales por tipo
+    // Construir últimos 12 meses con totales por tipo
     const monthlyData = useMemo(() => {
-        const monthsCount = 9;
 
-        const base = Array.from({ length: monthsCount }, (_, idx) => {
+        const base = Array.from({ length: monthRange }, (_, idx) => {
             const m = dayjs()
-                .subtract(monthsCount - 1 - idx, "month")
+                .subtract(monthRange - 1 - idx, "month")
                 .startOf("month");
 
             return {
                 key: m.format("YYYY-MM"),
-                label: m.format("MMM YYYY"), // Month Year (ej: Nov 2025)
+                label: m.format("MMM YYYY"),
                 projectAmount: 0,
                 installationAmount: 0,
                 installationCost: 0,
@@ -66,20 +85,14 @@ export function AnalyticsMetricsProfitChart({ syncedReports, isMobile }) {
         });
 
         const buckets = [...base];
-        const keyToIndex = new Map(
-            buckets.map((b, index) => [b.key, index])
-        );
+        const keyToIndex = new Map(buckets.map((b, index) => [b.key, index]));
 
         reports.forEach((r) => {
-            const startStr =
-                r?.projectInfo?.start_date ||
-                r?.start_date ||
-                r?.createdTime?.split(" ")[0];
+            const oldestStart = getOldestStartDate(r);
 
-            const start = dayjs(startStr);
-            if (!start.isValid()) return;
+            if (!oldestStart || !oldestStart.isValid()) return;
 
-            const monthKey = start.startOf("month").format("YYYY-MM");
+            const monthKey = oldestStart.startOf("month").format("YYYY-MM");
             const idx = keyToIndex.get(monthKey);
             if (idx === undefined) return;
 
@@ -92,7 +105,8 @@ export function AnalyticsMetricsProfitChart({ syncedReports, isMobile }) {
         });
 
         return buckets;
-    }, [reports]);
+    }, [reports, monthRange]);
+
 
     const chartSeries = useMemo(
         () => [

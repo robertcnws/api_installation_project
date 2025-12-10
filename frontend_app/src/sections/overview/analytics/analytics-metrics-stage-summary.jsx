@@ -57,6 +57,9 @@ export function AnalyticsMetricsStageSummary({
     [sortedTasks]
   );
 
+  console.log('stageName', value);
+  console.log('firstTask, lastTask', firstTask, lastTask);
+
   const arrayDates = useMemo(() => {
     if (!Array.isArray(allProjects) || allProjects.length === 0 || !firstTask || !lastTask) {
       return [];

@@ -155,8 +155,8 @@ export function fTypeDuration(arrayDates, typeDuration) {
 
     // === Si estamos buscando el MINIMO ===
     if (typeDuration === 'min') {
-      // ignorar valores menores a 1 hora (3600000 ms)
-      if (diff < 3600000) return;
+      // ignorar valores menores a 1 dia (86400000 ms)
+      if (diff < 86400000) return;
 
       // si aún no hay uno o este es menor, tomarlo
       if (selectedDuration === null || diff < selectedDuration) {
@@ -225,8 +225,8 @@ export function fDurationStats(arrayDates) {
       maxProjectNumber = number;
     }
 
-    // MIN solo si es < 1 hora (3600000 ms)
-    if (diff >= 3600000) {
+    // MIN solo si es < 1 dia (86400000 ms)
+    if (diff >= 86400000) {
       if (minDurationMs === null || diff < minDurationMs) {
         minDurationMs = diff;
         minProjectId = id;
