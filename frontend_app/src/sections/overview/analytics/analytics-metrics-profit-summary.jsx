@@ -172,6 +172,8 @@ export function AnalyticsMetricsProfitSummary({
     };
   }, [loadingAllProfitReports, syncedReports]);
 
+  const monthRange = 12;
+
   return (
     <Card
       sx={{
@@ -483,7 +485,7 @@ export function AnalyticsMetricsProfitSummary({
             </Box>
             <Box sx={{ minWidth: 0 }}>
               <Typography variant="subtitle2" noWrap>
-                Last 9 months
+                {`Last ${monthRange} months`}
               </Typography>
               <Typography variant="caption" color="text.secondary" noWrap>
                 Statistics chart
@@ -491,6 +493,7 @@ export function AnalyticsMetricsProfitSummary({
             </Box>
           </Stack>
           <AnalyticsMetricsProfitChart
+          monthRange={monthRange}
             syncedReports={syncedReports}
             isMobile={isMobile}
           />

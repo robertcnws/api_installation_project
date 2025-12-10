@@ -208,7 +208,7 @@ def manage_profit_report(project_id: str, force_update=False) -> Response:
     # ---- Info del proyecto ----
     project_info = transform_data_to_mongo(
         project,
-        include_fields=["id", "name", "number"],
+        include_fields=["id", "name", "number", "created_time"],
     )
     
     project_info["install_work_orders"] = install_work_orders

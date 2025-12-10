@@ -16,7 +16,7 @@ import { useSetState } from 'src/hooks/use-set-state';
 
 import { isInstaller } from 'src/utils/check-permissions';
 import { fIsAfter, fIsBetween } from 'src/utils/format-time';
-import { getProjectInstallers } from 'src/utils/project-tasks-utils';
+import { getProjectInstallers, getWorkOrderWorkers } from 'src/utils/project-tasks-utils';
 
 import { CONFIG } from 'src/config-global';
 import { PROJECT_TYPE_OPTIONS } from 'src/_mock';
@@ -649,11 +649,11 @@ function applyFilter({ inputData, comparator, filters, dateError }) {
 
   if (installer.id) {
     inputData = inputData.filter((file) => {
-      const installerId = getProjectInstallers(file, CONFIG)?.id;
-      if (installerId) {
-        return String(installerId) === String(installer.id);
-      }
-      return false;
+      const workOrders = file.workOrders || file.work_orders || [];
+      const installers = workOrders.map(
+        (wo) => getWorkOrderWorkers(wo)
+      ).flat();
+      return installers.some((i) => String(i.id) === String(installer.id));
     });
   }
 
@@ -667,7 +667,14 @@ function applyFilter({ inputData, comparator, filters, dateError }) {
 
   if (!dateError) {
     if (startDate && endDate) {
-      inputData = inputData.filter((file) => fIsBetween(file.startDate, startDate, endDate));
+      // inputData = inputData.filter((file) => fIsBetween(file.startDate, startDate, endDate));
+      inputData = inputData.filter((file) => {
+        const workOrders = file.workOrders || file.work_orders || [];
+        return workOrders.some(
+          (wo) => wo.work_type?.name?.toLowerCase() === 'installation' &&
+            fIsBetween(wo.start_date, startDate, endDate)
+        );
+      });
     }
   }
 

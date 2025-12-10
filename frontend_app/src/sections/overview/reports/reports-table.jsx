@@ -1,4 +1,5 @@
 import {
+    Autocomplete,
     Box,
     Dialog,
     DialogContent,
@@ -6,12 +7,14 @@ import {
     IconButton,
     MenuItem,
     MenuList,
+    Select,
     Table,
     TableBody,
     TableCell,
     TableContainer,
     TableHead,
     TableRow,
+    TextField,
     Tooltip,
     Typography,
 } from "@mui/material";
@@ -36,6 +39,16 @@ export function ReportsTable({ filteredData, title }) {
     const popover = usePopover();
     const openEdit = useBoolean();
     const [selectedRow, setSelectedRow] = useState(null);
+    const [selectedType, setSelectedType] = useState(null);
+
+    const finalData = useMemo(() => {
+        if (!selectedType) {
+            return filteredData;
+        }
+        return filteredData.filter(
+            (report) => report.workingType?.toLowerCase() === selectedType.value?.toLowerCase()
+        );
+    }, [filteredData, selectedType]);
 
     const {
         totalDuration,
@@ -45,7 +58,7 @@ export function ReportsTable({ filteredData, title }) {
         totalInstallationProfit,
     } = useMemo(
         () =>
-            filteredData.reduce(
+            finalData.reduce(
                 (acc, report) => {
                     acc.totalDuration += report.projectInfo?.duration || 0;
                     acc.totalProjectAmount += report.projectAmount || 0;
@@ -62,7 +75,7 @@ export function ReportsTable({ filteredData, title }) {
                     totalInstallationProfit: 0,
                 }
             ),
-        [filteredData]
+        [finalData]
     );
 
     const {
@@ -72,7 +85,7 @@ export function ReportsTable({ filteredData, title }) {
         totalInstallationCostByPage,
         totalInstallationProfitByPage,
     } = useMemo(() => {
-        const pageRows = rowInPage(filteredData, table.page, table.rowsPerPage);
+        const pageRows = rowInPage(finalData, table.page, table.rowsPerPage);
 
         return pageRows.reduce(
             (acc, report) => {
@@ -91,7 +104,7 @@ export function ReportsTable({ filteredData, title }) {
                 totalInstallationProfitByPage: 0,
             }
         );
-    }, [filteredData, table.page, table.rowsPerPage]);
+    }, [finalData, table.page, table.rowsPerPage]);
 
     const handleOpenEditRow = useCallback(
         (row) => {
@@ -101,19 +114,24 @@ export function ReportsTable({ filteredData, title }) {
         [openEdit]
     );
 
-    const exportFileName = `Reports_${title.replace(/\s+/g, "_")}`;
-    const exportRows = exportedRows(filteredData);
+    const exportFileName = selectedType ?
+        `Reports_${title.replace(/\s+/g, "_")}_${selectedType.label.replace(/\s+/g, "_")}` :
+        `Reports_${title.replace(/\s+/g, "_")}`;
+    const exportRows = exportedRows(finalData);
 
     const handleExport = useCallback((type) => {
         popover.onClose();
+        const finalTitle = selectedType ?
+            `${title} - ${selectedType.label}` :
+            title;
         if (type === "csv") {
             handleExportCSV(exportFileName, exportRows);
         } else if (type === "xlsx") {
             handleExportXLSX(exportFileName, exportRows);
         } else if (type === "pdf") {
-            handleExportPDF(title, exportFileName, exportRows);
+            handleExportPDF(finalTitle, exportFileName, exportRows);
         }
-    }, [exportFileName, exportRows, title, popover]);
+    }, [exportFileName, exportRows, title, popover, selectedType]);
 
     return (
         <>
@@ -127,34 +145,65 @@ export function ReportsTable({ filteredData, title }) {
                     }}
                 >
                     <Typography variant="h6" sx={{ mb: 2 }}>
-                        {title}
+                        {selectedType ?
+                            `${title} - ${selectedType.label}` :
+                            title
+                        }
                     </Typography>
-                    {filteredData?.length > 0 && (
-                        <React.Fragment key='download-reports'>
-                            <IconButton onClick={popover.onOpen}>
-                                <Iconify icon="mdi:download" width={24} height={24} />
-                            </IconButton>
-                            <CustomPopover
-                                open={popover.open}
-                                onClose={popover.onClose}
-                                anchorEl={popover.anchorEl}
-                            >
-                                <Box sx={{ p: 1 }}>
-                                    <MenuList>
-                                        <MenuItem key="save-csv" onClick={() => handleExport("csv")}>
-                                            <Typography>Save as CSV</Typography>
-                                        </MenuItem>
-                                        <MenuItem key="save-xls" onClick={() => handleExport("xlsx")}>
-                                            <Typography>Save as XLSX</Typography>
-                                        </MenuItem>
-                                        <MenuItem key="save-pdf" onClick={() => handleExport("pdf")}>
-                                            <Typography>Save as PDF</Typography>
-                                        </MenuItem>
-                                    </MenuList>
-                                </Box>
-                            </CustomPopover>
-                        </React.Fragment>
-                    )}
+                    <Box sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "flex-end",
+                        flexDirection: { xs: "column", sm: "row" },
+                        gap: 1,
+                    }}>
+                        <Autocomplete
+                            options={[
+                                { value: 'onhouse', label: 'On House' },
+                                { value: 'subcontractor', label: 'Subcontractor' },
+                            ]}
+                            size="small"
+                            sx={{ width: 180, mr: 1 }}
+                            getOptionLabel={(option) => option.label}
+                            isOptionEqualToValue={(option, value) => option.value === value.value}
+                            value={selectedType}
+                            onChange={(event, newValue) => setSelectedType(newValue)}
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    label="Select Crew Type"
+                                    variant="outlined"
+                                />
+                            )}
+                        />
+                        {finalData?.length > 0 && (
+                            <React.Fragment key='download-reports'>
+
+                                <IconButton onClick={popover.onOpen}>
+                                    <Iconify icon="mdi:download" width={24} height={24} />
+                                </IconButton>
+                                <CustomPopover
+                                    open={popover.open}
+                                    onClose={popover.onClose}
+                                    anchorEl={popover.anchorEl}
+                                >
+                                    <Box sx={{ p: 1 }}>
+                                        <MenuList>
+                                            <MenuItem key="save-csv" onClick={() => handleExport("csv")}>
+                                                <Typography>Save as CSV</Typography>
+                                            </MenuItem>
+                                            <MenuItem key="save-xls" onClick={() => handleExport("xlsx")}>
+                                                <Typography>Save as XLSX</Typography>
+                                            </MenuItem>
+                                            <MenuItem key="save-pdf" onClick={() => handleExport("pdf")}>
+                                                <Typography>Save as PDF</Typography>
+                                            </MenuItem>
+                                        </MenuList>
+                                    </Box>
+                                </CustomPopover>
+                            </React.Fragment>
+                        )}
+                    </Box>
                 </Box>
 
                 <Scrollbar>
@@ -175,10 +224,10 @@ export function ReportsTable({ filteredData, title }) {
                             </TableHead>
 
                             <TableBody>
-                                {filteredData?.length === 0 && (
+                                {finalData?.length === 0 && (
                                     <TableNoData notFound />
                                 )}
-                                {filteredData?.slice(
+                                {finalData?.slice(
                                     table.page * table.rowsPerPage,
                                     table.page * table.rowsPerPage + table.rowsPerPage
                                 ).map((report) => (
@@ -255,7 +304,7 @@ export function ReportsTable({ filteredData, title }) {
                                     </TableRow>
                                 ))}
 
-                                {filteredData?.length > 0 && (
+                                {finalData?.length > 0 && (
                                     <React.Fragment key='totals-reports'>
                                         <TableRow
                                             sx={{
@@ -369,7 +418,7 @@ export function ReportsTable({ filteredData, title }) {
 
                                         <TableCustomPaginationZohoStyleRow
                                             columnsLength={9}
-                                            data={filteredData}
+                                            data={finalData}
                                             page={table.page}
                                             rowsPerPage={table.rowsPerPage}
                                             handleChangePage={(event, newPage) => {

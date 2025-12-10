@@ -20,6 +20,7 @@ from api_projects.data_util import (
     get_current_stage_from_tasks,
     to_aware,
 )
+from api_projects.tasks import task_update_default_task_in_projects
 import json
 import logging
 
@@ -134,7 +135,7 @@ def create_default_task(request):
             
             for default_task in project_default_tasks:
                 new_task = ProjectDefaultTask.objects(id=default_task['project_default_task']['_id']).first()
-                default_task['project_default_task'] = transform_data_to_mongo(new_task)
+                default_task['project_default_task'] = transform_data_to_mongo(new_task, exclude_fields=['last_modified_time'])
             project_default_tasks = sorted(project_default_tasks, key=lambda x: x['project_default_task']['order'], reverse=True)
             project.project_default_tasks = project_default_tasks
                  
@@ -204,31 +205,7 @@ def edit_default_task(request, id):
         
         default_task = ProjectDefaultTask.objects(id=default_task.id).first()
         
-        projects = Project.objects.all()
-        for project in projects:
-            project_default_tasks = project.project_default_tasks if project.project_default_tasks else []
-            task = next((task for task in project_default_tasks if str(task['project_default_task']['_id']) == id), None)
-            project_default_tasks = [task for task in project_default_tasks if str(task['project_default_task']['_id']) != id]
-            project_default_tasks.append({
-                'project_default_task': transform_data_to_mongo(default_task),
-                'status': task['status'] if task else 'not started',
-                'percentage': task['percentage'] if task else 0,
-                'created_time': task['created_time'] if task else timezone.now(),
-                'last_modified_time': timezone.now(),
-                'users_assignees': task['users_assignees'] if task else [],
-                'priority': task['priority'] if task else 'medium',
-                'project_task_attachments': task['project_task_attachments'] if task else [],
-            })
-            project_default_tasks = sorted(project_default_tasks, key=lambda x: x['project_default_task']['order'], reverse=True)
-            project.project_default_tasks = project_default_tasks
-            
-            project_default_tasks = project.project_default_tasks if project.project_default_tasks else []
-            for task in project_default_tasks:
-                new_task = ProjectDefaultTask.objects(id=task['project_default_task']['_id']).first()
-                task['project_default_task'] = transform_data_to_mongo(new_task)
-            project_default_tasks = sorted(project_default_tasks, key=lambda x: x['project_default_task']['order'], reverse=True)
-            project.project_default_tasks = project_default_tasks
-            project.save()
+        task_update_default_task_in_projects.delay(str(default_task.id))
         
         tracking_info = transform_data_to_mongo(default_task)
         tracking = ProjectTracking(

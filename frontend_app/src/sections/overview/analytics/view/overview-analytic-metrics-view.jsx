@@ -155,7 +155,7 @@ export function OverviewAnalyticMetricsView() {
       value: 'finished services',
       label: 'Finished Services',
       icon: 'carbon:task-complete',
-      data: finishedServices,
+      data: [...finishedServices, ...closedServices],
     },
     {
       value: 'in progress services',
@@ -163,12 +163,12 @@ export function OverviewAnalyticMetricsView() {
       icon: 'ix:import-progress',
       data: inProgressServices,
     },
-    {
-      value: 'closed services',
-      label: 'Closed Services',
-      icon: 'material-symbols:tab-close-right-outline',
-      data: closedServices,
-    },
+    // {
+    //   value: 'closed services',
+    //   label: 'Closed Services',
+    //   icon: 'material-symbols:tab-close-right-outline',
+    //   data: closedServices,
+    // },
   ], [finishedProjects, inProgressProjects, finishedServices, inProgressServices, closedServices]);
 
   const projectStageTypes = useMemo(
@@ -248,7 +248,7 @@ export function OverviewAnalyticMetricsView() {
         <Box sx={{ mb: 2 }}>
           <Grid container spacing={1}>
             {projectTypes.map(({ value, label, icon, data }) => (
-              <Grid key={value} xs={12} sm={6} md={2.4}>
+              <Grid key={value} xs={12} sm={6} md={3}>
                 <AnalyticsMetricsWidgetSummary
                   sx={{ cursor: 'pointer' }}
                   title={label}
