@@ -229,6 +229,25 @@ export function CalendarComponent({
         [allActiveWorkOrders]
     );
 
+    const finishProjects = useMemo(
+        () => {
+            const installs = allActiveWorkOrders?.filter((workOrder) => workOrder.work_type.name.toLowerCase() === 'finish')
+
+            return installs.map((wo) => ({
+                ...wo,
+                id: `${wo.projectId}-${wo.id}-finish`,
+                name: wo.projectName,
+                originalName: `${wo.projectName} - WO Finish`,
+                userInstaller: wo.user_assignee,
+                title: `Finish ${wo.projectName}`,
+                type: 'finish',
+                namedType: 'finish',
+                icon: 'gis:flag-finish-b-o',
+            }));
+        },
+        [allActiveWorkOrders]
+    );
+
     const calendarNotesProjects = useMemo(() => calendarNotes?.filter((cn) => cn.startDate).map((p) => ({
         ...p,
         id: `${p.id}-calendarNote`,
@@ -406,6 +425,10 @@ export function CalendarComponent({
     } = useGetProjectEvents(installProjects, 'installation');
 
     const {
+        events: finishEvents, eventsLoading: finishEventsLoading
+    } = useGetProjectEvents(finishProjects, 'finish');
+
+    const {
         events: calendarNoteEvents, eventsLoading: calendarNoteEventsLoading
     } = useGetProjectEvents(calendarNotesProjects, 'calendarNote');
 
@@ -436,6 +459,7 @@ export function CalendarComponent({
     const events = useMemo(
         () => [
             ...installEvents,
+            ...finishEvents,
             ...calendarNoteEvents,
             // ...workOrderEvents,
             ...inspectionEvents,
@@ -445,6 +469,7 @@ export function CalendarComponent({
             ...secondDateMeasurementEvents
         ], [
         installEvents,
+        finishEvents,
         calendarNoteEvents,
         // workOrderEvents,
         inspectionEvents,
@@ -572,7 +597,7 @@ export function CalendarComponent({
 
         const projectInstaller = type === 'service' ?
             getServiceInstaller(info.event.extendedProps, CONFIG) :
-            type === 'installation' || type === 'inspection' || type === 'finishPermission' ?
+            type === 'installation' || type === 'inspection' || type === 'finishPermission' || type === 'finish' ?
                 info.event.extendedProps.user_assignee :
                 type === 'firstCheckMeasurement' ?
                     info.event.extendedProps.firstAssignee :

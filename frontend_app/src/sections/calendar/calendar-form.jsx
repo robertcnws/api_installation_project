@@ -220,7 +220,8 @@ export function CalendarForm({ currentEvent, colorOptions, onClose }) {
                 name="start"
                 label={
                   selectedEvent?.type === 'installation' || selectedEvent?.type === 'service' ? 'Start date' :
-                    selectedEvent?.type === 'inspection' ? 'Inspection date' : 'Finish date'
+                    selectedEvent?.type === 'inspection' ? 'Inspection date' : 
+                    selectedEvent?.type === 'finish' ? 'Finish date' : 'Finish Inspection date'
                 }
                 minDate={dayjs(selectedEvent?.salesOrder?.date)}
                 disabled
@@ -229,7 +230,8 @@ export function CalendarForm({ currentEvent, colorOptions, onClose }) {
               {(selectedEvent?.type === 'installation' ||
                 selectedEvent?.type === 'service' ||
                 selectedEvent?.type === 'finishPermission' ||
-                selectedEvent?.type === 'inspection') ? (
+                selectedEvent?.type === 'inspection' ||
+                selectedEvent?.type === 'finish') ? (
                 <>
                   <Field.MobileDateTimePicker
                     name="end"
@@ -346,7 +348,8 @@ export function CalendarForm({ currentEvent, colorOptions, onClose }) {
           {(
             selectedEvent?.type === 'installation' ||
             selectedEvent?.type === 'inspection' ||
-            selectedEvent?.type === 'finishPermission'
+            selectedEvent?.type === 'finishPermission' ||
+            selectedEvent?.type === 'finish'
           ) && (
 
               <Button
