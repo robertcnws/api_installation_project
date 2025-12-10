@@ -56,7 +56,8 @@ export function useGetProjectEvents(projects = [], type = 'installation') {
           type === 'firstCheckMeasurement' ? 10 :
             type === 'secondCheckMeasurement' ? 12 :
               type === 'calendarNote' ? 15 :
-                type === 'workOrder' ? 14 : 0;
+                type === 'workOrder' ? 19 :
+                  type === 'finish' ? 14 : 0;
     return ALL_COLORS[index];
   }, [type]);
 
@@ -69,7 +70,7 @@ export function useGetProjectEvents(projects = [], type = 'installation') {
 
       const endDate = type === 'service' || type === 'calendarNote' ?
         dayjs(dayjs(project.endDate).format('YYYY-MM-DD')).add(23, 'hours').add(59, 'minutes').format('YYYY-MM-DD HH:mm:ss') :
-        type === 'workOrder' || type === 'installation' || type === 'inspection' || type === 'finishPermission' ?
+        type === 'workOrder' || type === 'installation' || type === 'inspection' || type === 'finishPermission' || type === 'finish' ?
           dayjs(dayjs(project.start_date).format('YYYY-MM-DD'))
             .add(project.duration - 1, 'days')
             .add(23, 'hours')
@@ -91,7 +92,8 @@ export function useGetProjectEvents(projects = [], type = 'installation') {
         title: project.name,
         start: type === 'service' || type === 'calendarNote' ?
           dayjs(project.startDate).format('YYYY-MM-DD') :
-          type === 'workOrder' || type === 'installation' || type === 'inspection' || type === 'finishPermission' ?
+          type === 'workOrder' || type === 'installation' ||
+            type === 'inspection' || type === 'finishPermission' || type === 'finish' ?
             project.start_date :
             type === 'firstCheckMeasurement' ?
               project.firstDate : project.checkDate,
