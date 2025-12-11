@@ -49,7 +49,10 @@ import { ProjectDetailsWorkOrdersFormView } from './project-details-work-orders-
 
 // ----------------------------------------------------------------------
 
-export function ProjectDetailsView({ projectId }) {
+export function ProjectDetailsView({
+    projectId,
+    onCloseModal = null
+}) {
 
     const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
 
@@ -143,7 +146,7 @@ export function ProjectDetailsView({ projectId }) {
         //     { label: 'Financial', value: 'financial' },
         // ] : [],
         { label: 'Comments & History', value: 'comments' },
-        ...(associatedMeasurement || associatedServices?.length > 0) ? [
+        ...((associatedMeasurement || associatedServices?.length > 0) && !onCloseModal) ? [
             {
                 label: <>
                     <Box sx={{ display: 'flex', alignItems: 'center' }} onClick={morePopover.onOpen}>
@@ -376,11 +379,15 @@ export function ProjectDetailsView({ projectId }) {
                     },
                 });
                 toast.success('Delete success!');
-                router.push(paths.dashboard.project.list);
+                if (onCloseModal) {
+                    onCloseModal();
+                } else {
+                    router.push(paths.dashboard.project.list);
+                }
             } catch (error) {
                 console.error(error);
             }
-        }, [userLogged?.data, router]);
+        }, [userLogged?.data, router, onCloseModal]);
 
 
     const generateMeasurements = useCallback(
@@ -561,20 +568,29 @@ export function ProjectDetailsView({ projectId }) {
                             <ProjectDetailsToolbar
                                 project={itemById}
                                 tabs={tabs}
+                                // Extracted backLink logic for readability
+                                componentLink={onCloseModal ? 'modal' : 'page'}
                                 backLink={
-                                    localStorage.getItem('backFromProjectDetails') === 'analytics' ?
-                                        paths.dashboard.general.analytics :
-                                        localStorage.getItem('backFromProjectDetails') === 'calendarDashboard' ?
-                                            paths.dashboard.general.calendar :
-                                            localStorage.getItem('backFromProjectDetails') === 'measurements' ?
-                                                paths.dashboard.measurement.list :
-                                                localStorage.getItem('backFromProjectDetails') === 'measurementDetails' ?
-                                                    paths.dashboard.measurement.details(localStorage.getItem('backFromProjectDetailsMeasurementId')) :
-                                                    localStorage.getItem('backFromProjectDetails') === 'serviceDetails' ?
-                                                        paths.dashboard.service.details(localStorage.getItem('backFromProjectDetailsServiceId')) :
-                                                        localStorage.getItem('backFromProjectDetails') === 'services' ?
-                                                            paths.dashboard.service.list :
-                                                            paths.dashboard.project.list
+                                    (() => {
+                                        if (onCloseModal) return onCloseModal;
+                                        const backFrom = localStorage.getItem('backFromProjectDetails');
+                                        switch (backFrom) {
+                                            case 'analytics':
+                                                return paths.dashboard.general.analytics;
+                                            case 'calendarDashboard':
+                                                return paths.dashboard.general.calendar;
+                                            case 'measurements':
+                                                return paths.dashboard.measurement.list;
+                                            case 'measurementDetails':
+                                                return paths.dashboard.measurement.details(localStorage.getItem('backFromProjectDetailsMeasurementId'));
+                                            case 'serviceDetails':
+                                                return paths.dashboard.service.details(localStorage.getItem('backFromProjectDetailsServiceId'));
+                                            case 'services':
+                                                return paths.dashboard.service.list;
+                                            default:
+                                                return paths.dashboard.project.list;
+                                        }
+                                    })()
                                 }
                                 editLink={paths.dashboard.project.edit(`${itemById?.id}`)}
                                 openEdit={tabs.value === 'overview' ? openEdit : tabs.value === 'tasks' ? openEditTask : null}
