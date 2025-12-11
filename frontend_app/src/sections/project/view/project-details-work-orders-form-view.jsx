@@ -1,4 +1,5 @@
 import { useMemo, useState, useEffect, useContext } from 'react';
+import { lighten, useTheme } from '@mui/material/styles';
 
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
@@ -52,6 +53,8 @@ export function ProjectDetailsWorkOrdersFormView({
   openDialogs,
   setOpenDialogs,
 }) {
+
+  const theme = useTheme();
 
   useEffect(() => {
     refetchProject?.();
@@ -118,16 +121,18 @@ export function ProjectDetailsWorkOrdersFormView({
   };
 
   const handleFinishWorkOrder = async (wo) => {
+    const title = wo.is_finished ? 'Reopen' : 'Finish';
     try {
       await axios.post(`${CONFIG.apiUrl}/projects/finish/project/${project.id}/work-order/${wo.id}/`, {
         userReporter: JSON.stringify(userLogged?.data)
       });
-      toast.success(`Finish ${wo.name} successfully!`);
-      setWorkOrders((prev) => prev.filter((order) => order.id !== wo.id));
+      refetchProject?.();
+      toast.success(`${title} ${wo.name} successfully!`);
+      // setWorkOrders((prev) => prev.filter((order) => order.id !== wo.id));
     }
     catch (error) {
       console.error(error);
-      toast.error(error?.response?.data?.message || 'Finish work order failed!');
+      toast.error(error?.response?.data?.message || `${title} work order failed!`);
     }
   };
 
@@ -220,12 +225,45 @@ export function ProjectDetailsWorkOrdersFormView({
                         <TableNoData notFound />
                       )}
                       {workOrders.map((order, index) => (
-                        <TableRow key={`item-${order?.id}`}>
+                        <TableRow
+                          key={`item-${order?.id}`}
+                          sx={{ bgcolor: order?.is_finished ? lighten(theme.palette.error.lighter, 0.6) : 'inherit' }}
+                        >
                           {!isMobile ? (
                             <>
-                              <TableCell sx={{ width: 350, cursor: 'pointer' }} onClick={() => handleOpenWorkOrder(order)}>
-                                <Typography variant="body2">{order?.name || 'N/A'}</Typography>
+                              <TableCell
+                                sx={{ width: 350, cursor: 'pointer' }}
+                                onClick={() => handleOpenWorkOrder(order)}
+                              >
+                                <Typography
+                                  variant="body2"
+                                >
+                                  {order?.name || 'N/A'}
+
+                                  {order?.is_finished && (
+                                    <Label
+                                      component="span"
+                                      color="success"
+                                      size="small"
+                                      sx={{
+                                        textTransform: 'uppercase',
+                                        ml: 0.5,
+                                        px: 0.4,
+                                        py: 0,
+                                        fontSize: '0.6rem',
+                                        height: 16,
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: 0.25,
+                                      }}
+                                    >
+                                      <Iconify icon="fluent-mdl2:completed" width={13} />
+                                    </Label>
+                                  )}
+                                </Typography>
                               </TableCell>
+
+
                               <TableCell sx={{ width: 150, cursor: 'pointer' }} onClick={() => handleOpenWorkOrder(order)}>
                                 <Box sx={{ display: 'flex', gap: 1, flexDirection: 'column' }}>
                                   <Typography variant="body2">
@@ -398,18 +436,27 @@ export function ProjectDetailsWorkOrdersFormView({
                                       <Iconify icon="mdi:edit-circle-outline" sx={{ width: 27, height: 27 }} />
                                     </IconButton>
                                   </Tooltip>
-                                  <Tooltip title={`Finish Work Order ${order?.name}`} arrow>
+                                  <Tooltip
+                                    title={order?.is_finished ? `Reopen Work Order ${order?.name}` : `Finish Work Order ${order?.name}`}
+                                    arrow
+                                  >
                                     <IconButton
                                       variant="outlined"
-                                      color='success'
-                                      onClick={() => handleOpenWorkOrder(order)}
+                                      color={order?.is_finished ? 'secondary' : 'success'}
+                                      onClick={() => {
+                                        setSelectedWorkOrder(order);
+                                        confirmFinishWorkOrder.onTrue();
+                                      }}
                                       sx={{
                                         '&:hover': {
                                           boxShadow: 'none',
                                           backgroundColor: 'transparent',
                                         },
                                       }}>
-                                      <Iconify icon="fluent-mdl2:completed" sx={{ width: 22, height: 22 }} />
+                                      <Iconify
+                                        icon={order?.is_finished ? "octicon:issue-reopened-16" : "fluent-mdl2:completed"}
+                                        sx={{ width: 22, height: 22 }}
+                                      />
                                     </IconButton>
                                   </Tooltip>
                                   <Tooltip title={`Delete Work Order ${order?.name}`} arrow>
@@ -547,21 +594,21 @@ export function ProjectDetailsWorkOrdersFormView({
         onClose={() => {
           confirmFinishWorkOrder.onFalse();
         }}
-        title={`Finish Work Order ${selectedWorkOrder?.name}`}
+        title={`${selectedWorkOrder?.is_finished ? 'Reopen' : 'Finish'} Work Order ${selectedWorkOrder?.name}`}
         maxWidth="xs"
         content={
-          `Are you sure you want to finish the work order ${selectedWorkOrder?.name}?`
+          `Are you sure you want to ${selectedWorkOrder?.is_finished ? 'reopen' : 'finish'} the work order ${selectedWorkOrder?.name}?`
         }
         action={
           <Button
             variant="contained"
             color="error"
             onClick={async () => {
-              await handleDeleteWorkOrder(selectedWorkOrder);
-              confirmDeleteWorkOrder.onFalse();
+              await handleFinishWorkOrder(selectedWorkOrder);
+              confirmFinishWorkOrder.onFalse();
             }}
           >
-            Delete
+            {selectedWorkOrder?.is_finished ? 'Reopen' : 'Finish'}
           </Button>
         }
       />

@@ -359,7 +359,10 @@ def finish_project_work_order(request, project_id, id):
     
     existing_work_orders = [wo for wo in existing_work_orders if str(wo.get('id')) != id]
     work_order['is_finished'] = not work_order.get('is_finished', False)
-    work_order['end_date'] = timezone.now()
+    if work_order['is_finished']:
+        work_order['finish_date'] = timezone.now()
+    else:
+        work_order['finish_date'] = None
     existing_work_orders.append(work_order)
     project.work_orders = existing_work_orders
     project.save()
@@ -369,7 +372,7 @@ def finish_project_work_order(request, project_id, id):
         
     tracking = ProjectTracking(
         user_reporter=user_reporter,
-        action=f'set finish project work order ({project.id} - {project.name})',
+        action=f'set {"finished" if work_order["is_finished"] else "unfinished"} project work order ({project.id} - {project.name})',
         created_time=timezone.now(),
         managed_data={
             'data': transform_data_to_mongo(project, include_fields=include_fields)
@@ -379,7 +382,7 @@ def finish_project_work_order(request, project_id, id):
         
     if user_reporter:
         module='projects'
-        info=f'has finished work order {work_order.get("name", "")} from project {project.name}'
+        info=f'has {"finished" if work_order["is_finished"] else "unfinished"} work order {work_order.get("name", "")} from project {project.name}'
         info_id=project.id
         type='finish_project_work_order'
         create_notification(module, info_id, info, type, user_reporter['username'])

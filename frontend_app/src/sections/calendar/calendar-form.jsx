@@ -198,6 +198,7 @@ export function CalendarForm({ currentEvent, colorOptions, onClose }) {
     setSelectedEvent(currentEvent);
     reset(mappedDefaults); // 👈 aquí está la magia
   }, [currentEvent, reset]);
+  
 
   return (
     <>
@@ -403,6 +404,7 @@ export function CalendarForm({ currentEvent, colorOptions, onClose }) {
         workOrder={currentEvent}
         eventSingleId={selectedEvent?.woId}
         project={selectedEvent?.project}
+        onCloseCalendar={onClose}
       />
     </>
   );
