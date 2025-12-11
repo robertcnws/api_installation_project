@@ -34,6 +34,7 @@ import { CONFIG } from 'src/config-global';
 import { LoadingButton } from '@mui/lab';
 import { useBoolean } from 'src/hooks/use-boolean';
 import { InstallationCrewCreateModal } from 'src/sections/installation-crew/view/installation-crew-create-modal';
+import { ConfirmDialog } from 'src/components/custom-dialog';
 
 // Mock data
 
@@ -78,6 +79,7 @@ export function ProjectEditModalWorkOrderView({
     eventSingleId = null,
     project = null,
     refetchProject = null,
+    onCloseCalendar = null,
 }) {
     const theme = useTheme();
 
@@ -85,7 +87,11 @@ export function ProjectEditModalWorkOrderView({
 
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    const [isFinishing, setIsFinishing] = useState(false);
+
     const openModalAddCrew = useBoolean(false);
+
+    const confirmFinishWorkOrder = useBoolean(false);
 
     const {
         // loadedStages,
@@ -384,6 +390,29 @@ export function ProjectEditModalWorkOrderView({
         }
         return initialUsers;
     }, [formData.workType, loadedUsers]);
+
+    const onFinishWorkOrder = useCallback(async () => {
+        if (!workOrder) return;
+        setIsFinishing(true);
+        const title = workOrder.is_finished ? 'Reopen' : 'Finish';
+        try {
+            const workOrderId = eventSingleId || workOrder?.id || '';
+            await axios.post(`${CONFIG.apiUrl}/projects/finish/project/${project?.id}/work-order/${workOrderId}/`, {
+                userReporter: JSON.stringify(userLogged?.data)
+            });
+            toast.success(`${title} ${workOrder.name} successfully!`);
+            // setWorkOrders((prev) => prev.filter((order) => order.id !== wo.id));
+        }
+        catch (error) {
+            console.error(error);
+            toast.error(error?.response?.data?.message || `${title} work order failed!`);
+        } finally {
+            setIsFinishing(false);
+            if (onCloseCalendar) {
+                onCloseCalendar();
+            }
+        }
+    }, [workOrder, setIsFinishing, userLogged, project, eventSingleId, onCloseCalendar]);
 
     return (
         <>
@@ -1073,12 +1102,26 @@ export function ProjectEditModalWorkOrderView({
                     <LoadingButton
                         type="submit"
                         variant="contained"
-                        loading={isSubmitting}
+                        loading={isSubmitting || isFinishing}
                         onClick={handleSubmit}
-                        disabled={isSubmitting || (!isEditing && !hasChanges) || (isEditing && !hasChanges)}
+                        disabled={isSubmitting || isFinishing || (!isEditing && !hasChanges) || (isEditing && !hasChanges)}
                     >
                         {isEditing ? 'Update' : 'Create'}
                     </LoadingButton>
+                    {workOrder && (
+                        <LoadingButton
+                            type="button"
+                            variant="contained"
+                            color={workOrder?.is_finished ? 'secondary' : 'primary'}
+                            loading={isSubmitting || isFinishing}
+                            onClick={() => {
+                                confirmFinishWorkOrder.onTrue();
+                            }}
+                            disabled={isSubmitting || isFinishing}
+                        >
+                            {workOrder?.is_finished ? 'Reopen' : 'Finish'}
+                        </LoadingButton>
+                    )}
                     <Button
                         onClick={handleClose}
                         variant="outlined"
@@ -1092,6 +1135,31 @@ export function ProjectEditModalWorkOrderView({
             <InstallationCrewCreateModal
                 openModal={openModalAddCrew}
                 refetchInstallationCrews={refetchInstallationCrews}
+            />
+
+            <ConfirmDialog
+                open={confirmFinishWorkOrder.value}
+                onClose={() => {
+                    confirmFinishWorkOrder.onFalse();
+                }}
+                title={`${workOrder?.is_finished ? 'Reopen' : 'Finish'} Work Order ${workOrder?.name}`}
+                maxWidth="xs"
+                content={
+                    `Are you sure you want to ${workOrder?.is_finished ? 'reopen' : 'finish'} the work order ${workOrder?.name}?`
+                }
+                action={
+                    <Button
+                        variant="contained"
+                        color="error"
+                        onClick={async () => {
+                            await onFinishWorkOrder(workOrder);
+                            confirmFinishWorkOrder.onFalse();
+                            handleClose();
+                        }}
+                    >
+                        {workOrder?.is_finished ? 'Reopen' : 'Finish'}
+                    </Button>
+                }
             />
         </>
     );
