@@ -37,6 +37,7 @@ import { ServiceNewFormFromProject } from '../service/service-new-form-from-proj
 export function ProjectDetailsToolbar({
   project,
   tabs,
+  componentLink, // 'modal' or 'page'
   backLink,
   editLink,
   openEdit,
@@ -191,157 +192,160 @@ export function ProjectDetailsToolbar({
               </Label>
             )}
           </Box>
-          <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'left' }}>
+          {componentLink === 'page' && (
+            <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'left' }}>
 
-            <Tooltip title={
-              indexInInstallationFilteredList <= 0 ? '' :
-                `Previous installation: ${installationFilteredList?.[indexInInstallationFilteredList - 1]?.name}`
-            } arrow>
-              <span>
+              <Tooltip title={
+                indexInInstallationFilteredList <= 0 ? '' :
+                  `Previous installation: ${installationFilteredList?.[indexInInstallationFilteredList - 1]?.name}`
+              } arrow>
+                <span>
+                  <IconButton
+                    disabled={indexInInstallationFilteredList <= 0}
+                    sx={{
+                      '&:hover': {
+                        boxShadow: 'none',
+                        backgroundColor: 'transparent',
+                      },
+                      cursor: indexInInstallationFilteredList <= 0 ? 'not-allowed' : 'pointer',
+                      '&.Mui-disabled': {
+                        cursor: 'not-allowed !important',
+                        pointerEvents: 'auto',
+                      },
+                      color: indexInInstallationFilteredList <= 0 ? 'text.disabled' : 'text.primary',
+                    }}
+                    onClick={() => {
+                      const id = installationFilteredList?.[indexInInstallationFilteredList - 1]?.id;
+                      localStorage.setItem('projectId', id);
+                      localStorage.setItem('backFromProjectDetails', 'projects');
+                      // tabs?.setValue('overview');
+                      router.push(paths.dashboard.project.details(id));
+                    }} color='default'>
+                    <Iconify icon="mdi-light:skip-previous" />
+                  </IconButton>
+                </span>
+              </Tooltip>
+
+              <Tooltip title={
+                indexInInstallationFilteredList >= installationFilteredList.length - 1 ? '' :
+                  `Next installation: ${installationFilteredList?.[indexInInstallationFilteredList + 1]?.name}`
+              } arrow>
+                <span>
+                  <IconButton
+                    disabled={indexInInstallationFilteredList >= installationFilteredList.length - 1}
+                    sx={{
+                      '&:hover': {
+                        boxShadow: 'none',
+                        backgroundColor: 'transparent',
+                      },
+                      cursor: indexInInstallationFilteredList >= installationFilteredList.length - 1 ? 'not-allowed' : 'pointer',
+                      '&.Mui-disabled': {
+                        cursor: 'not-allowed !important',
+                        pointerEvents: 'auto',
+                      },
+                      color: indexInInstallationFilteredList >= installationFilteredList.length - 1 ? 'text.disabled' : 'text.primary',
+                    }}
+                    onClick={() => {
+                      const id = installationFilteredList?.[indexInInstallationFilteredList + 1]?.id;
+                      localStorage.setItem('projectId', id);
+                      localStorage.setItem('backFromProjectDetails', 'projects');
+                      // tabs?.setValue('overview');
+                      router.push(paths.dashboard.project.details(id));
+                    }} color='default'>
+                    <Iconify icon="mdi-light:skip-next" />
+                  </IconButton>
+                </span>
+              </Tooltip>
+
+              <Tooltip title='List installations' arrow>
                 <IconButton
-                  disabled={indexInInstallationFilteredList <= 0}
                   sx={{
                     '&:hover': {
                       boxShadow: 'none',
                       backgroundColor: 'transparent',
                     },
-                    cursor: indexInInstallationFilteredList <= 0 ? 'not-allowed' : 'pointer',
-                    '&.Mui-disabled': {
-                      cursor: 'not-allowed !important',
-                      pointerEvents: 'auto',
-                    },
-                    color: indexInInstallationFilteredList <= 0 ? 'text.disabled' : 'text.primary',
+                    cursor: 'pointer',
+                    color: 'text.primary',
                   }}
-                  onClick={() => {
-                    const id = installationFilteredList?.[indexInInstallationFilteredList - 1]?.id;
-                    localStorage.setItem('projectId', id);
-                    localStorage.setItem('backFromProjectDetails', 'projects');
-                    // tabs?.setValue('overview');
-                    router.push(paths.dashboard.project.details(id));
-                  }} color='default'>
-                  <Iconify icon="mdi-light:skip-previous" />
+                  onClick={popoverInstallationList.onOpen}
+                  color='default'>
+                  <Iconify icon="pepicons-pencil:next-track" />
                 </IconButton>
-              </span>
-            </Tooltip>
-
-            <Tooltip title={
-              indexInInstallationFilteredList >= installationFilteredList.length - 1 ? '' :
-              `Next installation: ${installationFilteredList?.[indexInInstallationFilteredList + 1]?.name}`
-            } arrow>
-              <span>
-                <IconButton
-                  disabled={indexInInstallationFilteredList >= installationFilteredList.length - 1}
-                  sx={{
-                    '&:hover': {
-                      boxShadow: 'none',
-                      backgroundColor: 'transparent',
-                    },
-                    cursor: indexInInstallationFilteredList >= installationFilteredList.length - 1 ? 'not-allowed' : 'pointer',
-                    '&.Mui-disabled': {
-                      cursor: 'not-allowed !important',
-                      pointerEvents: 'auto',
-                    },
-                    color: indexInInstallationFilteredList >= installationFilteredList.length - 1 ? 'text.disabled' : 'text.primary',
-                  }}
-                  onClick={() => {
-                    const id = installationFilteredList?.[indexInInstallationFilteredList + 1]?.id;
-                    localStorage.setItem('projectId', id);
-                    localStorage.setItem('backFromProjectDetails', 'projects');
-                    // tabs?.setValue('overview');
-                    router.push(paths.dashboard.project.details(id));
-                  }} color='default'>
-                  <Iconify icon="mdi-light:skip-next" />
-                </IconButton>
-              </span>
-            </Tooltip>
-
-            <Tooltip title='List installations' arrow>
-              <IconButton
-                sx={{
-                  '&:hover': {
-                    boxShadow: 'none',
-                    backgroundColor: 'transparent',
-                  },
-                  cursor: 'pointer',
-                  color: 'text.primary',
+              </Tooltip>
+              <CustomPopover
+                open={popoverInstallationList.open}
+                anchorEl={popoverInstallationList.anchorEl}
+                onClose={popoverInstallationList.onClose}
+                slotProps={{ arrow: { placement: 'left-top' } }}
+                PaperProps={{
+                  style: {
+                    maxHeight: 300,
+                  }
                 }}
-                onClick={popoverInstallationList.onOpen}
-                color='default'>
-                <Iconify icon="pepicons-pencil:next-track" />
-              </IconButton>
-            </Tooltip>
-            <CustomPopover
-              open={popoverInstallationList.open}
-              anchorEl={popoverInstallationList.anchorEl}
-              onClose={popoverInstallationList.onClose}
-              slotProps={{ arrow: { placement: 'left-top' } }}
-              PaperProps={{
-                style: {
+              >
+                <Box sx={{ p: 1 }}>
+                  <TextField
+                    value={searchText}
+                    onChange={(e) => setSearchText(e.target.value)}
+                    placeholder="Search by name or #"
+                    size="small"
+                    fullWidth
+                  />
+                </Box>
+                <MenuList sx={{
                   maxHeight: 300,
-                }
-              }}
-            >
-              <Box sx={{ p: 1 }}>
-                <TextField
-                  value={searchText}
-                  onChange={(e) => setSearchText(e.target.value)}
-                  placeholder="Search by name or #"
-                  size="small"
-                  fullWidth
-                />
-              </Box>
-              <MenuList sx={{
-                maxHeight: 300,
-                overflowY: 'auto'
-              }}>
-                {searchedInstallationFilteredList.length > 0 ? (
-                  searchedInstallationFilteredList?.map((installation) => (
-                    <MenuItem
-                      key={installation?.id}
-                      onClick={() => {
-                        popoverInstallationList.onClose();
-                        const id = installation?.id;
-                        localStorage.setItem('projectId', id);
-                        localStorage.setItem('backFromProjectDetails', 'projects');
-                        router.push(paths.dashboard.project.details(id));
-                      }}
-                    >
-                      <Tooltip
-                        title={
-                          <>
-                            <Typography variant="body2" color="background.neutral" sx={{ mb: 0 }}>
-                              Installation: {installation?.name}
-                            </Typography>
-                            <Typography variant="body2" color="background.neutral" sx={{ mb: 0 }}>
-                              Install date: {fDate(installation?.startDate) || 'N/A'}
-                            </Typography>
-                          </>
-                        }
-                        placement="right"
-                        arrow
+                  overflowY: 'auto'
+                }}>
+                  {searchedInstallationFilteredList.length > 0 ? (
+                    searchedInstallationFilteredList?.map((installation) => (
+                      <MenuItem
+                        key={installation?.id}
+                        onClick={() => {
+                          popoverInstallationList.onClose();
+                          const id = installation?.id;
+                          localStorage.setItem('projectId', id);
+                          localStorage.setItem('backFromProjectDetails', 'projects');
+                          router.push(paths.dashboard.project.details(id));
+                        }}
                       >
-                        <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'left', gap: 2 }}>
-                          <Iconify icon="grommet-icons:services" />
-                          <Typography variant="body2" sx={{ ml: 1 }}>
-                            {installation?.name}
-                          </Typography>
-                        </Box>
-                      </Tooltip>
-                    </MenuItem>
-                  ))
-                ) : (
-                  <MenuItem disabled>No matches</MenuItem>
-                )}
-              </MenuList>
-            </CustomPopover>
-          </Box>
+                        <Tooltip
+                          title={
+                            <>
+                              <Typography variant="body2" color="background.neutral" sx={{ mb: 0 }}>
+                                Installation: {installation?.name}
+                              </Typography>
+                              <Typography variant="body2" color="background.neutral" sx={{ mb: 0 }}>
+                                Install date: {fDate(installation?.startDate) || 'N/A'}
+                              </Typography>
+                            </>
+                          }
+                          placement="right"
+                          arrow
+                        >
+                          <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'left', gap: 2 }}>
+                            <Iconify icon="grommet-icons:services" />
+                            <Typography variant="body2" sx={{ ml: 1 }}>
+                              {installation?.name}
+                            </Typography>
+                          </Box>
+                        </Tooltip>
+                      </MenuItem>
+                    ))
+                  ) : (
+                    <MenuItem disabled>No matches</MenuItem>
+                  )}
+                </MenuList>
+              </CustomPopover>
+            </Box>
+          )}
         </Box>
         <Box sx={{ flexGrow: 1 }} />
 
         {(type === 'project' || type === 'tasks') && (
           <>
-            {(listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.serviceStaff) ||
-              listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.projectManager)) && (
+            {((listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.serviceStaff) ||
+              listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.projectManager)) &&
+              componentLink === 'page') && (
                 <Tooltip title='Generate Measurements' arrow>
                   <IconButton
                     sx={{
@@ -356,8 +360,9 @@ export function ProjectDetailsToolbar({
                   </IconButton>
                 </Tooltip>
               )}
-            {(listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.serviceStaff) ||
-              listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.projectManager)) && (
+            {((listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.serviceStaff) ||
+              listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.projectManager)) &&
+              componentLink === 'page') && (
                 <Tooltip title='Generate Service' arrow>
                   <IconButton
                     sx={{
@@ -451,8 +456,8 @@ export function ProjectDetailsToolbar({
         )}
         <Tooltip title='Close installation' arrow>
           <Button
-            component={RouterLink}
-            href={backLink}
+            component={componentLink === 'modal' ? 'div' : RouterLink}
+            href={`${componentLink === 'modal' ? '#' : backLink}`}
             startIcon={<Iconify icon="mingcute:close-fill" />}
             sx={{
               ml: 0,
@@ -463,7 +468,10 @@ export function ProjectDetailsToolbar({
                 backgroundColor: 'transparent',
               },
             }}
-            onClick={localStorage.getItem('projectReminderTab') ? () => localStorage.removeItem('projectReminderTab') : null}
+            onClick={
+              componentLink === 'modal' ? backLink :
+                (localStorage.getItem('projectReminderTab') ? () => localStorage.removeItem('projectReminderTab') : null)
+            }
           />
         </Tooltip>
 

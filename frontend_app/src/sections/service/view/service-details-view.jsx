@@ -46,7 +46,10 @@ import { ServiceEditModalAttachmentsView } from '../service-edit-modal-attachmen
 
 // ----------------------------------------------------------------------
 
-export function ServiceDetailsView({ serviceId }) {
+export function ServiceDetailsView({
+    serviceId,
+    onCloseModal = null
+}) {
 
     const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
 
@@ -97,7 +100,7 @@ export function ServiceDetailsView({ serviceId }) {
         { label: 'Tasks', value: 'tasks' },
         // { label: 'Attachments', value: 'attachments' },
         { label: 'Comments & History', value: 'comments' },
-        ...(associatedProject || associatedMeasurement) ? [
+        ...((associatedProject || associatedMeasurement) && !onCloseModal) ? [
             {
                 label: <>
                     <Box sx={{ display: 'flex', alignItems: 'center' }} onClick={morePopover.onOpen}>
@@ -437,11 +440,15 @@ export function ServiceDetailsView({ serviceId }) {
                     },
                 });
                 toast.success('Delete success!');
-                router.push(paths.dashboard.service.list);
+                if (onCloseModal) {
+                    onCloseModal();
+                } else {
+                    router.push(paths.dashboard.service.list);
+                }
             } catch (error) {
                 console.error(error);
             }
-        }, [userLogged?.data, router]);
+        }, [userLogged?.data, router, onCloseModal]);
 
 
     const handleUpdateService = useCallback(async () => {
@@ -596,16 +603,26 @@ export function ServiceDetailsView({ serviceId }) {
                             <ServiceDetailsToolbar
                                 service={itemById}
                                 tabs={tabs}
+                                componentLink={onCloseModal ? 'modal' : 'page'}
                                 backLink={
-                                    localStorage.getItem('backFromServiceDetails') === 'analytics' ? paths.dashboard.general.analytics :
-                                        localStorage.getItem('backFromServiceDetails') === 'calendarDashboard' ? paths.dashboard.general.calendar :
-                                            localStorage.getItem('backFromServiceDetails') === 'projectDetails' ?
-                                                paths.dashboard.project.details(localStorage.getItem('projectId')) :
-                                                localStorage.getItem('backFromServiceDetails') === 'measurements' ?
-                                                    paths.dashboard.measurement.list :
-                                                    localStorage.getItem('backFromServiceDetails') === 'measurementDetails' ?
-                                                        paths.dashboard.measurement.details(localStorage.getItem('backFromServiceDetailsMeasurementId')) :
-                                                        paths.dashboard.service.list
+                                    (() => {
+                                        if (onCloseModal) return onCloseModal;
+                                        const backFrom = localStorage.getItem('backFromServiceDetails');
+                                        switch (backFrom) {
+                                            case 'analytics':
+                                                return paths.dashboard.general.analytics;
+                                            case 'calendarDashboard':
+                                                return paths.dashboard.general.calendar;
+                                            case 'measurements':
+                                                return paths.dashboard.measurement.list;
+                                            case 'measurementDetails':
+                                                return paths.dashboard.measurement.details(localStorage.getItem('backFromServiceDetailsMeasurementId'));
+                                            case 'services':
+                                                return paths.dashboard.service.list;
+                                            default:
+                                                return paths.dashboard.project.list;
+                                        }
+                                    })()
                                 }
                                 editLink={paths.dashboard.service.edit(`${itemById?.id}`)}
                                 openEdit={tabs.value === 'overview' ? openEdit : tabs.value === 'tasks' ? openEditTask : null}
@@ -703,7 +720,7 @@ export function ServiceDetailsView({ serviceId }) {
                             }
                         />
 
-                        <Dialog open={openSalesOrderModal.value} onClose={openSalesOrderModal.onFalse} fullWidth maxWidth="lg">
+                        <Dialog open={openSalesOrderModal.value} onClose={openSalesOrderModal.onFalse} fullWidth maxWidth="xl">
                             <Scrollbar style={{ height: '70%' }}>
                                 <ServiceDetailsContentOverview
                                     salesOrder={selectedSalesOrder}

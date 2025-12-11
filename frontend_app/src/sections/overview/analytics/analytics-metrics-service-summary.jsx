@@ -1,10 +1,10 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
 import Divider from '@mui/material/Divider';
-import { Link, Typography } from '@mui/material';
+import { Dialog, DialogContent, DialogTitle, Link, Typography } from '@mui/material';
 import { useTheme, alpha } from '@mui/material/styles';
 
 import dayjs from 'dayjs';
@@ -17,6 +17,8 @@ import { Label } from 'src/components/label';
 import { useRouter } from 'src/routes/hooks';
 import { paths } from 'src/routes/paths';
 import { Chart } from 'src/components/chart'; // ajusta el path si en tu proyecto es otro
+import { useBoolean } from 'src/hooks/use-boolean';
+import { ServiceDetailsView } from 'src/sections/service/view';
 
 // ----------------------------------------------------------------------
 // Helper: construir serie mensual (últimos 6 meses)
@@ -125,8 +127,8 @@ export function AnalyticsMetricsServiceSummary({
     () =>
       Array.isArray(allServices)
         ? allServices.filter(
-            (service) => service.currentStage?.name?.toLowerCase() === 'finished'
-          )
+          (service) => service.currentStage?.name?.toLowerCase() === 'finished'
+        )
         : [],
     [allServices]
   );
@@ -224,269 +226,298 @@ export function AnalyticsMetricsServiceSummary({
   ];
 
   const chartOptions = {
-  chart: {
-    toolbar: { show: true },
-  },
+    chart: {
+      toolbar: { show: true },
+    },
 
-  plotOptions: {
-    bar: {
-      dataLabels: {
-        position: 'top',  // ← Valor encima de la barra
+    plotOptions: {
+      bar: {
+        dataLabels: {
+          position: 'top',  // ← Valor encima de la barra
+        },
       },
     },
-  },
 
-  dataLabels: {
-    enabled: true,
-    formatter: (val) => `${val}`, // ← Muestra el valor tal cual
-    style: {
-      fontSize: '11px',
-      fontWeight: '600',
-      colors: [theme.palette[color].main],
-    },
-    offsetY: -12,
-  },
-
-  xaxis: {
-    categories: monthlySeries.map((m) => m.label),
-    labels: {
+    dataLabels: {
+      enabled: true,
+      formatter: (val) => `${val}`, // ← Muestra el valor tal cual
       style: {
         fontSize: '11px',
-        fontWeight: 500,
+        fontWeight: '600',
+        colors: [theme.palette[color].main],
+      },
+      offsetY: -12,
+    },
+
+    xaxis: {
+      categories: monthlySeries.map((m) => m.label),
+      labels: {
+        style: {
+          fontSize: '11px',
+          fontWeight: 500,
+        },
       },
     },
-  },
 
-  // === Ocultar completamente eje Y ===
-  yaxis: {
-    show: false,
-  },
-
-  grid: {
-    show: false, // también quitamos las líneas
-  },
-
-  colors: [theme.palette[color].lighter],
-
-  tooltip: {
-    y: {
-      formatter: (val) => `${val} day(s)`,
+    // === Ocultar completamente eje Y ===
+    yaxis: {
+      show: false,
     },
-  },
 
-  legend: {
-    show: false,
-  },
-};
+    grid: {
+      show: false, // también quitamos las líneas
+    },
+
+    colors: [theme.palette[color].lighter],
+
+    tooltip: {
+      y: {
+        formatter: (val) => `${val} day(s)`,
+      },
+    },
+
+    legend: {
+      show: false,
+    },
+  };
+
+  const openDetailsModal = useBoolean(false);
+
+  const [selectedId, setSelectedId] = useState(null);
+
+  const handleDetails = (serviceId) => {
+    localStorage.setItem('serviceId', serviceId);
+    setSelectedId(serviceId);
+    openDetailsModal.onTrue();
+  };
 
   return (
-    <Card
-      sx={{
-        p: 2.5,
-        borderRadius: 2,
-        position: 'relative',
-        overflow: 'hidden',
-        boxShadow: theme.customShadows?.z4 ?? theme.shadows[2],
-        bgcolor: alpha(theme.palette[color].main, 0.03),
-        color: theme.palette.text.primary,
-        gap: 2,
-        ...sx,
-      }}
-      {...other}
-    >
-      {/* Header */}
-      <Stack direction="row" alignItems="center" spacing={1.5} mb={2}>
-        <Box
-          sx={{
-            width: 40,
-            height: 40,
-            borderRadius: '50%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            bgcolor: alpha(theme.palette[color].main, 0.16),
-          }}
-        >
-          {icon || (
-            <Iconify icon="solar:case-round-minimalistic-bold-duotone" width={22} height={22} />
-          )}
-        </Box>
-
-        <Box sx={{ minWidth: 0 }}>
-          <Typography variant="subtitle2" noWrap>
-            {title}
-          </Typography>
-          <Typography variant="caption" color="text.secondary" noWrap>
-            Services
-          </Typography>
-        </Box>
-
-        <Box sx={{ flexGrow: 1 }} />
-
-        <Label color={finishedCount > 0 ? 'success' : 'default'} variant="soft">
-          {finishedCount} services
-        </Label>
-      </Stack>
-
-      <Divider sx={{ mb: 2 }} />
-
-      {/* Layout: métricas + chart lado a lado */}
-      <Box
+    <>
+      <Card
         sx={{
-          display: 'flex',
-          flexDirection: { xs: 'column', md: 'row' },
+          p: 2.5,
+          borderRadius: 2,
+          position: 'relative',
+          overflow: 'hidden',
+          boxShadow: theme.customShadows?.z4 ?? theme.shadows[2],
+          bgcolor: alpha(theme.palette[color].main, 0.03),
+          color: theme.palette.text.primary,
           gap: 2,
-          alignItems: { xs: 'stretch', md: 'flex-start' },
+          ...sx,
         }}
+        {...other}
       >
-        {/* Métricas (lado izquierdo) */}
-        <Stack spacing={1.5} sx={{ flex: 1, minWidth: 0 }}>
-          {/* Avg Duration */}
+        {/* Header */}
+        <Stack direction="row" alignItems="center" spacing={1.5} mb={2}>
           <Box
             sx={{
+              width: 40,
+              height: 40,
+              borderRadius: '50%',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'space-between',
-              fontSize: 14,
+              justifyContent: 'center',
+              bgcolor: alpha(theme.palette[color].main, 0.16),
             }}
           >
-            <Typography variant="body2" color="text.secondary">
-              Avg duration
+            {icon || (
+              <Iconify icon="solar:case-round-minimalistic-bold-duotone" width={22} height={22} />
+            )}
+          </Box>
+
+          <Box sx={{ minWidth: 0 }}>
+            <Typography variant="subtitle2" noWrap>
+              {title}
             </Typography>
-            <Label variant="outlined" color="default" sx={{ px: 1.2, py: 0.3 }}>
-              <Typography variant="caption" sx={{ fontWeight: 600 }}>
-                {averageDuration || 'N/A'}
-              </Typography>
-            </Label>
+            <Typography variant="caption" color="text.secondary" noWrap>
+              Services
+            </Typography>
           </Box>
 
-          {/* Min Duration */}
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'flex-start',
-              justifyContent: 'space-between',
-              fontSize: 14,
-            }}
-          >
-            <Box sx={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-              <Typography variant="body2" color="text.secondary">
-                Min duration
-              </Typography>
+          <Box sx={{ flexGrow: 1 }} />
 
-              <Link
-                variant="caption"
-                color="inherit"
-                noWrap
-                sx={{
-                  mt: 0.25,
-                  color: 'text.primary',
-                  cursor: minServiceId ? 'pointer' : 'default',
-                  fontSize: '11px',
-                  maxWidth: 160,
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                  display: 'inline-block',
-                }}
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault();
-                  if (!minServiceId) return;
-                  localStorage.setItem('serviceId', minServiceId);
-                  router.push(paths.dashboard.service.details(minServiceId));
-                }}
-              >
-                {minServiceId ? `${minServiceName || 'Unnamed'}` : '—'}
-              </Link>
-            </Box>
-
-            <Label variant="outlined" color="default" sx={{ ml: 1 }}>
-              <Typography variant="caption" sx={{ fontWeight: 600 }}>
-                {minDuration || 'N/A'}
-              </Typography>
-            </Label>
-          </Box>
-
-          {/* Max Duration */}
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'flex-start',
-              justifyContent: 'space-between',
-              fontSize: 14,
-            }}
-          >
-            <Box sx={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-              <Typography variant="body2" color="text.secondary">
-                Max duration
-              </Typography>
-
-              <Link
-                variant="caption"
-                color="inherit"
-                noWrap
-                sx={{
-                  mt: 0.25,
-                  color: 'text.primary',
-                  cursor: maxServiceId ? 'pointer' : 'default',
-                  fontSize: '11px',
-                  maxWidth: 160,
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                  display: 'inline-block',
-                }}
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault();
-                  if (!maxServiceId) return;
-                  localStorage.setItem('serviceId', maxServiceId);
-                  router.push(paths.dashboard.service.details(maxServiceId));
-                }}
-              >
-                {maxServiceId ? `${maxServiceName || 'Unnamed'}` : '—'}
-              </Link>
-            </Box>
-
-            <Label variant="outlined" color="default" sx={{ ml: 1 }}>
-              <Typography variant="caption" sx={{ fontWeight: 600 }}>
-                {maxDuration || 'N/A'}
-              </Typography>
-            </Label>
-          </Box>
+          <Label color={finishedCount > 0 ? 'success' : 'default'} variant="soft">
+            {finishedCount} services
+          </Label>
         </Stack>
 
-        {/* Chart (lado derecho) */}
+        <Divider sx={{ mb: 2 }} />
+
+        {/* Layout: métricas + chart lado a lado */}
         <Box
           sx={{
-            flex: 1,
-            minWidth: 0,
-            minHeight: 120,
+            display: 'flex',
+            flexDirection: { xs: 'column', md: 'row' },
+            gap: 2,
+            alignItems: { xs: 'stretch', md: 'flex-start' },
           }}
         >
-          <Chart
-            type="bar"
-            series={chartSeries}
-            options={chartOptions}
-            height="100%"
-          />
-        </Box>
-      </Box>
+          {/* Métricas (lado izquierdo) */}
+          <Stack spacing={1.5} sx={{ flex: 1, minWidth: 0 }}>
+            {/* Avg Duration */}
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                fontSize: 14,
+              }}
+            >
+              <Typography variant="body2" color="text.secondary">
+                Avg duration
+              </Typography>
+              <Label variant="outlined" color="default" sx={{ px: 1.2, py: 0.3 }}>
+                <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                  {averageDuration || 'N/A'}
+                </Typography>
+              </Label>
+            </Box>
 
-      {/* Fondo decorativo */}
-      <SvgColor
-        src={`${CONFIG.assetsDir}/assets/background/shape-square.svg`}
-        sx={{
-          top: -32,
-          right: -80,
-          width: 220,
-          height: 220,
-          opacity: 0.18,
-          position: 'absolute',
-          color: theme.palette[color].lighter,
-        }}
-      />
-    </Card>
+            {/* Min Duration */}
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                justifyContent: 'space-between',
+                fontSize: 14,
+              }}
+            >
+              <Box sx={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                <Typography variant="body2" color="text.secondary">
+                  Min duration
+                </Typography>
+
+                <Link
+                  variant="caption"
+                  color="inherit"
+                  noWrap
+                  sx={{
+                    mt: 0.25,
+                    color: 'text.primary',
+                    cursor: minServiceId ? 'pointer' : 'default',
+                    fontSize: '11px',
+                    maxWidth: 160,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    display: 'inline-block',
+                  }}
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (!minServiceId) return;
+                    // localStorage.setItem('serviceId', minServiceId);
+                    // router.push(paths.dashboard.service.details(minServiceId));
+                    handleDetails(minServiceId);
+                  }}
+                >
+                  {minServiceId ? `${minServiceName || 'Unnamed'}` : '—'}
+                </Link>
+              </Box>
+
+              <Label variant="outlined" color="default" sx={{ ml: 1 }}>
+                <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                  {minDuration || 'N/A'}
+                </Typography>
+              </Label>
+            </Box>
+
+            {/* Max Duration */}
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                justifyContent: 'space-between',
+                fontSize: 14,
+              }}
+            >
+              <Box sx={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                <Typography variant="body2" color="text.secondary">
+                  Max duration
+                </Typography>
+
+                <Link
+                  variant="caption"
+                  color="inherit"
+                  noWrap
+                  sx={{
+                    mt: 0.25,
+                    color: 'text.primary',
+                    cursor: maxServiceId ? 'pointer' : 'default',
+                    fontSize: '11px',
+                    maxWidth: 160,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    display: 'inline-block',
+                  }}
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (!maxServiceId) return;
+                    // localStorage.setItem('serviceId', maxServiceId);
+                    // router.push(paths.dashboard.service.details(maxServiceId));
+                    handleDetails(maxServiceId);
+                  }}
+                >
+                  {maxServiceId ? `${maxServiceName || 'Unnamed'}` : '—'}
+                </Link>
+              </Box>
+
+              <Label variant="outlined" color="default" sx={{ ml: 1 }}>
+                <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                  {maxDuration || 'N/A'}
+                </Typography>
+              </Label>
+            </Box>
+          </Stack>
+
+          {/* Chart (lado derecho) */}
+          <Box
+            sx={{
+              flex: 1,
+              minWidth: 0,
+              minHeight: 120,
+            }}
+          >
+            <Chart
+              type="bar"
+              series={chartSeries}
+              options={chartOptions}
+              height="100%"
+            />
+          </Box>
+        </Box>
+
+        {/* Fondo decorativo */}
+        <SvgColor
+          src={`${CONFIG.assetsDir}/assets/background/shape-square.svg`}
+          sx={{
+            top: -32,
+            right: -80,
+            width: 220,
+            height: 220,
+            opacity: 0.18,
+            position: 'absolute',
+            color: theme.palette[color].lighter,
+          }}
+        />
+      </Card>
+      <Dialog
+        open={openDetailsModal.value}
+        onClose={openDetailsModal.onFalse}
+        maxWidth="xxl"
+        fullWidth
+      >
+        <DialogTitle>
+          Service Details
+        </DialogTitle>
+        <DialogContent>
+          {selectedId && (
+            <ServiceDetailsView serviceId={selectedId} onCloseModal={openDetailsModal.onFalse} />
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

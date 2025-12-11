@@ -1,10 +1,10 @@
-import { useContext, useMemo } from 'react';
+import { useContext, useMemo, useState } from 'react';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
 import Divider from '@mui/material/Divider';
-import { Link, Typography } from '@mui/material';
+import { Dialog, DialogContent, DialogTitle, Link, Typography } from '@mui/material';
 import { useTheme, alpha } from '@mui/material/styles';
 
 import dayjs from 'dayjs';
@@ -15,9 +15,11 @@ import { Iconify } from 'src/components/iconify';
 import { SvgColor } from 'src/components/svg-color';
 import { Label } from 'src/components/label';
 import { useRouter } from 'src/routes/hooks';
+import { useBoolean } from 'src/hooks/use-boolean';
 import { paths } from 'src/routes/paths';
 import { Chart } from 'src/components/chart';
 import { useProjectProfitReportsQuery } from 'src/_mock/__project_profit_report';
+import { ProjectDetailsView } from 'src/sections/project/view';
 import { fCurrency } from 'src/utils/format-number';
 import { LoadingContext } from 'src/auth/context/loading-context';
 import { useSocketRefetch } from 'src/utils/websockets';
@@ -41,7 +43,7 @@ export function AnalyticsMetricsProfitSummary({
   const router = useRouter();
   const { isMobile } = useContext(LoadingContext);
 
-  
+
 
   useSocketRefetch(
     `${CONFIG.wsProtocol}://${CONFIG.wsHost}/${CONFIG.wsDomain}/projects/ws/project-profit-reports/`,
@@ -174,381 +176,416 @@ export function AnalyticsMetricsProfitSummary({
 
   const monthRange = 12;
 
+  const openProjectDetailsModal = useBoolean(false);
+
+  const [selectedId, setSelectedId] = useState(null);
+
+  const handleProjectDetails = (projectId) => {
+    localStorage.setItem('projectId', projectId);
+    setSelectedId(projectId);
+    openProjectDetailsModal.onTrue();
+  };
+
   return (
-    <Card
-      sx={{
-        p: 2.5,
-        borderRadius: 2,
-        position: 'relative',
-        overflow: 'hidden',
-        boxShadow: theme.customShadows?.z4 ?? theme.shadows[2],
-        bgcolor: alpha(theme.palette[color].main, 0.03),
-        color: theme.palette.text.primary,
-        gap: 2,
-        ...sx,
-      }}
-      {...other}
-    >
-      {/* Header */}
-      <Stack direction="row" alignItems="center" spacing={1.5} mb={2}>
-
-        <Box
-          sx={{
-            width: 40,
-            height: 40,
-            borderRadius: '50%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            bgcolor: alpha(theme.palette[color].main, 0.16),
-          }}
-        >
-          {icon || (
-            <Iconify icon="uil:chart-line" width={22} height={22} />
-          )}
-        </Box>
-
-        <Box sx={{ minWidth: 0 }}>
-          <Typography variant="subtitle2" noWrap>
-            {title}
-          </Typography>
-          <Typography variant="caption" color="text.secondary" noWrap>
-            Average, Min & Max cost/profit metrics
-          </Typography>
-        </Box>
-
-        <Box sx={{ flexGrow: 1 }} />
-
-        <Label color={finishedCount > 0 ? 'success' : 'default'} variant="soft">
-          {finishedCount} installations
-        </Label>
-      </Stack>
-
-      <Divider sx={{ mb: 2 }} />
-
-      {/* Layout: métricas + chart lado a lado */}
-      <Box
+    <>
+      <Card
         sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          width: '100%',
+          p: 2.5,
+          borderRadius: 2,
+          position: 'relative',
+          overflow: 'hidden',
+          boxShadow: theme.customShadows?.z4 ?? theme.shadows[2],
+          bgcolor: alpha(theme.palette[color].main, 0.03),
+          color: theme.palette.text.primary,
           gap: 2,
+          ...sx,
         }}
+        {...other}
       >
-        {/* Grid de 3 columnas en desktop, 1 en mobile */}
+        {/* Header */}
+        <Stack direction="row" alignItems="center" spacing={1.5} mb={2}>
+
+          <Box
+            sx={{
+              width: 40,
+              height: 40,
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              bgcolor: alpha(theme.palette[color].main, 0.16),
+            }}
+          >
+            {icon || (
+              <Iconify icon="uil:chart-line" width={22} height={22} />
+            )}
+          </Box>
+
+          <Box sx={{ minWidth: 0 }}>
+            <Typography variant="subtitle2" noWrap>
+              {title}
+            </Typography>
+            <Typography variant="caption" color="text.secondary" noWrap>
+              Average, Min & Max cost/profit metrics
+            </Typography>
+          </Box>
+
+          <Box sx={{ flexGrow: 1 }} />
+
+          <Label color={finishedCount > 0 ? 'success' : 'default'} variant="soft">
+            {finishedCount} installations
+          </Label>
+        </Stack>
+
+        <Divider sx={{ mb: 2 }} />
+
+        {/* Layout: métricas + chart lado a lado */}
         <Box
           sx={{
-            display: 'grid',
-            gridTemplateColumns: {
-              xs: '1fr',
-              md: 'repeat(3, minmax(0, 1fr))',
-            },
-            columnGap: 2,
-            rowGap: 2,
+            display: 'flex',
+            flexDirection: 'column',
             width: '100%',
+            gap: 2,
           }}
         >
-          {/* ====== ROW 1: PROFIT ====== */}
+          {/* Grid de 3 columnas en desktop, 1 en mobile */}
           <Box
             sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              height: '100%',
+              display: 'grid',
+              gridTemplateColumns: {
+                xs: '1fr',
+                md: 'repeat(3, minmax(0, 1fr))',
+              },
+              columnGap: 2,
+              rowGap: 2,
+              width: '100%',
             }}
           >
-            <ItemProfit type="Avg profit" value={averageProfit} />
-          </Box>
-
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              height: '100%',
-            }}
-          >
-            <ItemProfitTop
-              topType="Min"
-              subTitle="profit"
-              projectId={minProjectId}
-              projectName={minProjectName}
-              profit={minProfit}
-              router={router}
-            />
-          </Box>
-
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              height: '100%',
-            }}
-          >
-            <ItemProfitTop
-              topType="Max"
-              subTitle="profit"
-              projectId={maxProjectId}
-              projectName={maxProjectName}
-              profit={maxProfit}
-              router={router}
-            />
-          </Box>
-
-          {isMobile && (
-            <Divider sx={{ gridColumn: '1 / -1', my: 1 }} />
-          )}
-
-          {/* ====== ROW 2: PROJECT AMOUNT ====== */}
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              height: '100%',
-            }}
-          >
-            <ItemProfit type="Avg project amount" value={averageProjectAmount} />
-          </Box>
-
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              height: '100%',
-            }}
-          >
-            <ItemProfitTop
-              topType="Min"
-              subTitle="project amount"
-              projectId={minProjectAmountProjectId}
-              projectName={minProjectAmountProjectName}
-              profit={minProjectAmount}
-              router={router}
-            />
-          </Box>
-
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              height: '100%',
-            }}
-          >
-            <ItemProfitTop
-              topType="Max"
-              subTitle="project amount"
-              projectId={maxProjectAmountProjectId}
-              projectName={maxProjectAmountProjectName}
-              profit={maxProjectAmount}
-              router={router}
-            />
-          </Box>
-
-          {isMobile && (
-            <Divider sx={{ gridColumn: '1 / -1', my: 1 }} />
-          )}
-
-          {/* ====== ROW 3: INSTALLATION AMOUNT ====== */}
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              height: '100%',
-            }}
-          >
-            <ItemProfit type="Avg installation amount" value={averageInstallAmount} />
-          </Box>
-
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              height: '100%',
-            }}
-          >
-            <ItemProfitTop
-              topType="Min"
-              subTitle="installation amount"
-              projectId={minInstallAmountProjectId}
-              projectName={minInstallAmountProjectName}
-              profit={minInstallAmount}
-              router={router}
-            />
-          </Box>
-
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              height: '100%',
-            }}
-          >
-            <ItemProfitTop
-              topType="Max"
-              subTitle="installation amount"
-              projectId={maxInstallAmountProjectId}
-              projectName={maxInstallAmountProjectName}
-              profit={maxInstallAmount}
-              router={router}
-            />
-          </Box>
-
-          {isMobile && (
-            <Divider sx={{ gridColumn: '1 / -1', my: 1 }} />
-          )}
-
-          {/* ====== ROW 4: INSTALLATION COST ====== */}
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              height: '100%',
-            }}
-          >
-            <ItemProfit type="Avg installation cost" value={averageInstallCost} />
-          </Box>
-
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              height: '100%',
-            }}
-          >
-            <ItemProfitTop
-              topType="Min"
-              subTitle="installation cost"
-              projectId={minInstallCostProjectId}
-              projectName={minInstallCostProjectName}
-              profit={minInstallCost}
-              router={router}
-            />
-          </Box>
-
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              height: '100%',
-            }}
-          >
-            <ItemProfitTop
-              topType="Max"
-              subTitle="installation cost"
-              projectId={maxInstallCostProjectId}
-              projectName={maxInstallCostProjectName}
-              profit={maxInstallCost}
-              router={router}
-            />
-          </Box>
-        </Box>
-      </Box>
-
-      <Box display="flex" flexDirection={isMobile ? 'column' : 'row'} sx={{ mt: 3, gap: 2, width: '100%' }}>
-
-        <Box sx={{ width: '100%' }}>
-          <Stack direction="row" alignItems="center" spacing={1.5}>
+            {/* ====== ROW 1: PROFIT ====== */}
             <Box
               sx={{
-                width: 40,
-                height: 40,
-                borderRadius: '50%',
                 display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
                 alignItems: 'center',
-                justifyContent: 'center',
-                bgcolor: alpha(theme.palette[color].main, 0.16),
+                height: '100%',
               }}
             >
-              <Iconify icon="uil:chart-line" width={22} height={22} />
+              <ItemProfit type="Avg profit" value={averageProfit} />
             </Box>
-            <Box sx={{ minWidth: 0 }}>
-              <Typography variant="subtitle2" noWrap>
-                {`Last ${monthRange} months`}
-              </Typography>
-              <Typography variant="caption" color="text.secondary" noWrap>
-                Statistics chart
-              </Typography>
-            </Box>
-          </Stack>
-          <AnalyticsMetricsProfitChart
-          monthRange={monthRange}
-            syncedReports={syncedReports}
-            isMobile={isMobile}
-          />
-        </Box>
 
-        <Box sx={{ width: '100%' }}>
-          <Stack direction="row" alignItems="center" spacing={1.5}>
             <Box
               sx={{
-                width: 40,
-                height: 40,
-                borderRadius: '50%',
                 display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
                 alignItems: 'center',
-                justifyContent: 'center',
-                bgcolor: alpha(theme.palette[color].main, 0.16),
+                height: '100%',
               }}
             >
-              <Iconify icon="mdi:chart-arc" width={22} height={22} />
+              <ItemProfitTop
+                topType="Min"
+                subTitle="profit"
+                projectId={minProjectId}
+                projectName={minProjectName}
+                profit={minProfit}
+                router={router}
+                onClick={() => handleProjectDetails(minProjectId)}
+              />
             </Box>
-            <Box sx={{ minWidth: 0 }}>
-              <Typography variant="subtitle2" noWrap>
-                Historic profit & cost
-              </Typography>
-              <Typography variant="caption" color="text.secondary" noWrap>
-                Percentage (%) charts
-              </Typography>
+
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                height: '100%',
+              }}
+            >
+              <ItemProfitTop
+                topType="Max"
+                subTitle="profit"
+                projectId={maxProjectId}
+                projectName={maxProjectName}
+                profit={maxProfit}
+                router={router}
+                onClick={() => handleProjectDetails(maxProjectId)}
+              />
             </Box>
-          </Stack>
-          <AnalyticsMetricsPercentChart
-            syncedReports={syncedReports}
-            isMobile={isMobile}
-          />
+
+            {isMobile && (
+              <Divider sx={{ gridColumn: '1 / -1', my: 1 }} />
+            )}
+
+            {/* ====== ROW 2: PROJECT AMOUNT ====== */}
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                height: '100%',
+              }}
+            >
+              <ItemProfit type="Avg project amount" value={averageProjectAmount} />
+            </Box>
+
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                height: '100%',
+              }}
+            >
+              <ItemProfitTop
+                topType="Min"
+                subTitle="project amount"
+                projectId={minProjectAmountProjectId}
+                projectName={minProjectAmountProjectName}
+                profit={minProjectAmount}
+                router={router}
+                onClick={() => handleProjectDetails(minProjectAmountProjectId)}
+              />
+            </Box>
+
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                height: '100%',
+              }}
+            >
+              <ItemProfitTop
+                topType="Max"
+                subTitle="project amount"
+                projectId={maxProjectAmountProjectId}
+                projectName={maxProjectAmountProjectName}
+                profit={maxProjectAmount}
+                router={router}
+                onClick={() => handleProjectDetails(maxProjectAmountProjectId)}
+              />
+            </Box>
+
+            {isMobile && (
+              <Divider sx={{ gridColumn: '1 / -1', my: 1 }} />
+            )}
+
+            {/* ====== ROW 3: INSTALLATION AMOUNT ====== */}
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                height: '100%',
+              }}
+            >
+              <ItemProfit type="Avg installation amount" value={averageInstallAmount} />
+            </Box>
+
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                height: '100%',
+              }}
+            >
+              <ItemProfitTop
+                topType="Min"
+                subTitle="installation amount"
+                projectId={minInstallAmountProjectId}
+                projectName={minInstallAmountProjectName}
+                profit={minInstallAmount}
+                router={router}
+                onClick={() => handleProjectDetails(minInstallAmountProjectId)}
+              />
+            </Box>
+
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                height: '100%',
+              }}
+            >
+              <ItemProfitTop
+                topType="Max"
+                subTitle="installation amount"
+                projectId={maxInstallAmountProjectId}
+                projectName={maxInstallAmountProjectName}
+                profit={maxInstallAmount}
+                router={router}
+                onClick={() => handleProjectDetails(maxInstallAmountProjectId)}
+              />
+            </Box>
+
+            {isMobile && (
+              <Divider sx={{ gridColumn: '1 / -1', my: 1 }} />
+            )}
+
+            {/* ====== ROW 4: INSTALLATION COST ====== */}
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                height: '100%',
+              }}
+            >
+              <ItemProfit type="Avg installation cost" value={averageInstallCost} />
+            </Box>
+
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                height: '100%',
+              }}
+            >
+              <ItemProfitTop
+                topType="Min"
+                subTitle="installation cost"
+                projectId={minInstallCostProjectId}
+                projectName={minInstallCostProjectName}
+                profit={minInstallCost}
+                router={router}
+                onClick={() => handleProjectDetails(minInstallCostProjectId)}
+              />
+            </Box>
+
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                height: '100%',
+              }}
+            >
+              <ItemProfitTop
+                topType="Max"
+                subTitle="installation cost"
+                projectId={maxInstallCostProjectId}
+                projectName={maxInstallCostProjectName}
+                profit={maxInstallCost}
+                router={router}
+                onClick={() => handleProjectDetails(maxInstallCostProjectId)}
+              />
+            </Box>
+          </Box>
         </Box>
 
-      </Box>
+        <Box display="flex" flexDirection={isMobile ? 'column' : 'row'} sx={{ mt: 3, gap: 2, width: '100%' }}>
 
-      {/* Fondo decorativo */}
-      <SvgColor
-        src={`${CONFIG.assetsDir}/assets/background/shape-square.svg`}
-        sx={{
-          top: -32,
-          right: -80,
-          width: 220,
-          height: 220,
-          opacity: 0.18,
-          position: 'absolute',
-          color: theme.palette[color].lighter,
-        }}
-      />
-    </Card>
+          <Box sx={{ width: '100%' }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  bgcolor: alpha(theme.palette[color].main, 0.16),
+                }}
+              >
+                <Iconify icon="uil:chart-line" width={22} height={22} />
+              </Box>
+              <Box sx={{ minWidth: 0 }}>
+                <Typography variant="subtitle2" noWrap>
+                  {`Last ${monthRange} months`}
+                </Typography>
+                <Typography variant="caption" color="text.secondary" noWrap>
+                  Statistics chart
+                </Typography>
+              </Box>
+            </Stack>
+            <AnalyticsMetricsProfitChart
+              monthRange={monthRange}
+              syncedReports={syncedReports}
+              isMobile={isMobile}
+            />
+          </Box>
+
+          <Box sx={{ width: '100%' }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  bgcolor: alpha(theme.palette[color].main, 0.16),
+                }}
+              >
+                <Iconify icon="mdi:chart-arc" width={22} height={22} />
+              </Box>
+              <Box sx={{ minWidth: 0 }}>
+                <Typography variant="subtitle2" noWrap>
+                  Historic profit & cost
+                </Typography>
+                <Typography variant="caption" color="text.secondary" noWrap>
+                  Percentage (%) charts
+                </Typography>
+              </Box>
+            </Stack>
+            <AnalyticsMetricsPercentChart
+              syncedReports={syncedReports}
+              isMobile={isMobile}
+            />
+          </Box>
+
+        </Box>
+
+        {/* Fondo decorativo */}
+        <SvgColor
+          src={`${CONFIG.assetsDir}/assets/background/shape-square.svg`}
+          sx={{
+            top: -32,
+            right: -80,
+            width: 220,
+            height: 220,
+            opacity: 0.18,
+            position: 'absolute',
+            color: theme.palette[color].lighter,
+          }}
+        />
+      </Card>
+      <Dialog
+        open={openProjectDetailsModal.value}
+        onClose={openProjectDetailsModal.onFalse}
+        maxWidth="xxl"
+        fullWidth
+      >
+        <DialogTitle>
+          Project Details
+        </DialogTitle>
+        <DialogContent>
+          {selectedId && (
+            <ProjectDetailsView projectId={selectedId} onCloseModal={openProjectDetailsModal.onFalse} />
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
-function ItemProfitTop({ topType, subTitle, projectId, projectName, profit, router }) {
+function ItemProfitTop({ topType, subTitle, projectId, projectName, profit, router, onClick }) {
   return (
     <Box
       sx={{
@@ -583,8 +620,9 @@ function ItemProfitTop({ topType, subTitle, projectId, projectName, profit, rout
           onClick={(e) => {
             e.preventDefault();
             if (!projectId) return;
-            localStorage.setItem('projectId', projectId);
-            router.push(paths.dashboard.project.details(projectId));
+            // localStorage.setItem('projectId', projectId);
+            // router.push(paths.dashboard.project.details(projectId));
+            onClick?.();
           }}
         >
           {projectId ? `${projectName || 'Unnamed'}` : '—'}

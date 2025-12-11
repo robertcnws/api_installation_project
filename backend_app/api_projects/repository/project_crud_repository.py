@@ -13,6 +13,7 @@ from api_projects.models import (
     ProjectTaskAttachment,
     ProjectTracking,
     ProjectDefaultTask,
+    ProjectProfitReport,
 )
 from api_projects.s3_utils import (
     upload_attachment_to_s3, 
@@ -27,7 +28,11 @@ from api_projects.data_util import (
     to_aware,
     transform_dict_to_camelcase,
 )
-from api_projects.tasks import task_rebuild_scope_and_materials_in_project
+from api_projects.tasks import (
+    task_rebuild_scope_and_materials_in_project, 
+    task_manage_profit_report,
+    task_manage_profit_single_report,
+)
 import json
 import logging
 
@@ -747,6 +752,11 @@ def delete_project(request, id):
         ProjectAttachment.objects(id__in=[attachment['_id'] for attachment in attachments]).delete()
         for attachment in attachments:
             delete_attachment_from_s3(attachment['file'])
+        profit_report = ProjectProfitReport.objects(
+            __raw__={'$or': [{'project_info.id': str(project.id)}, {'projectInfo.id': str(project.id)}]}
+        ).first()
+        if profit_report:
+            profit_report.delete()
         project.delete()
         tracking = ProjectTracking(
             user_reporter=user_reporter,
@@ -795,6 +805,11 @@ def delete_projects(request):
                 for attachment in attachments:
                     delete_attachment_from_s3(attachment['file'])
                 ProjectTask.objects(id__in=[task['_id'] for task in tasks]).delete()
+            profit_report = ProjectProfitReport.objects(
+                __raw__={'$or': [{'project_info.id': str(project.id)}, {'projectInfo.id': str(project.id)}]}
+            ).first()
+            if profit_report:
+                profit_report.delete()
             project.delete()
         tracking = ProjectTracking(
             user_reporter=user_reporter,

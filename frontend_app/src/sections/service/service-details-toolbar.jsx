@@ -38,6 +38,7 @@ import { useDataContext } from 'src/auth/context/data/data-context';
 export function ServiceDetailsToolbar({
   service,
   tabs,
+  componentLink,
   backLink,
   editLink,
   openEdit,
@@ -181,153 +182,155 @@ export function ServiceDetailsToolbar({
               `Created by ${service?.createdBy?.first_name || service?.createdBy?.firstName} ${service?.createdBy?.last_name || service?.createdBy?.lastName}` :
               `Created by ${service?.createdBy?.first_name || service?.userReporter?.firstName} ${service?.createdBy?.last_name || service?.userReporter?.lastName}`}
           </Typography>
-          <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'left' }}>
+          {componentLink === 'page' && (
+            <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'left' }}>
 
-            <Tooltip title={
-              indexInServiceFilteredList <= 0 ? '' :
-                `Previous service: ${serviceFilteredList?.[indexInServiceFilteredList - 1]?.name}`
-            } arrow>
-              <span>
+              <Tooltip title={
+                indexInServiceFilteredList <= 0 ? '' :
+                  `Previous service: ${serviceFilteredList?.[indexInServiceFilteredList - 1]?.name}`
+              } arrow>
+                <span>
+                  <IconButton
+                    disabled={indexInServiceFilteredList <= 0}
+                    sx={{
+                      '&:hover': {
+                        boxShadow: 'none',
+                        backgroundColor: 'transparent',
+                      },
+                      cursor: indexInServiceFilteredList <= 0 ? 'not-allowed' : 'pointer',
+                      '&.Mui-disabled': {
+                        cursor: 'not-allowed !important',
+                        pointerEvents: 'auto',
+                      },
+                      color: indexInServiceFilteredList <= 0 ? 'text.disabled' : 'text.primary',
+                    }}
+                    onClick={() => {
+                      const id = serviceFilteredList?.[indexInServiceFilteredList - 1]?.id;
+                      localStorage.setItem('serviceId', id);
+                      localStorage.setItem('backFromServiceDetails', 'services');
+                      // tabs?.setValue('overview');
+                      router.push(paths.dashboard.service.details(id));
+                    }} color='default'>
+                    <Iconify icon="mdi-light:skip-previous" />
+                  </IconButton>
+                </span>
+              </Tooltip>
+
+              <Tooltip title={
+                indexInServiceFilteredList >= serviceFilteredList.length - 1 ? '' :
+                  `Next service: ${serviceFilteredList?.[indexInServiceFilteredList + 1]?.name}`
+              } arrow>
+                <span>
+                  <IconButton
+                    disabled={indexInServiceFilteredList >= serviceFilteredList.length - 1}
+                    sx={{
+                      '&:hover': {
+                        boxShadow: 'none',
+                        backgroundColor: 'transparent',
+                      },
+                      cursor: indexInServiceFilteredList >= serviceFilteredList.length - 1 ? 'not-allowed' : 'pointer',
+                      '&.Mui-disabled': {
+                        cursor: 'not-allowed !important',
+                        pointerEvents: 'auto',
+                      },
+                      color: indexInServiceFilteredList >= serviceFilteredList.length - 1 ? 'text.disabled' : 'text.primary',
+                    }}
+                    onClick={() => {
+                      const id = serviceFilteredList?.[indexInServiceFilteredList + 1]?.id;
+                      localStorage.setItem('serviceId', id);
+                      localStorage.setItem('backFromServiceDetails', 'services');
+                      // tabs?.setValue('overview');
+                      router.push(paths.dashboard.service.details(id));
+                    }} color='default'>
+                    <Iconify icon="mdi-light:skip-next" />
+                  </IconButton>
+                </span>
+              </Tooltip>
+
+              <Tooltip title='List services' arrow>
                 <IconButton
-                  disabled={indexInServiceFilteredList <= 0}
                   sx={{
                     '&:hover': {
                       boxShadow: 'none',
                       backgroundColor: 'transparent',
                     },
-                    cursor: indexInServiceFilteredList <= 0 ? 'not-allowed' : 'pointer',
-                    '&.Mui-disabled': {
-                      cursor: 'not-allowed !important',
-                      pointerEvents: 'auto',
-                    },
-                    color: indexInServiceFilteredList <= 0 ? 'text.disabled' : 'text.primary',
+                    cursor: 'pointer',
+                    color: 'text.primary',
                   }}
-                  onClick={() => {
-                    const id = serviceFilteredList?.[indexInServiceFilteredList - 1]?.id;
-                    localStorage.setItem('serviceId', id);
-                    localStorage.setItem('backFromServiceDetails', 'services');
-                    // tabs?.setValue('overview');
-                    router.push(paths.dashboard.service.details(id));
-                  }} color='default'>
-                  <Iconify icon="mdi-light:skip-previous" />
+                  onClick={popoverServiceList.onOpen}
+                  color='default'>
+                  <Iconify icon="pepicons-pencil:next-track" />
                 </IconButton>
-              </span>
-            </Tooltip>
-
-            <Tooltip title={
-              indexInServiceFilteredList >= serviceFilteredList.length - 1 ? '' :
-                `Next service: ${serviceFilteredList?.[indexInServiceFilteredList + 1]?.name}`
-            } arrow>
-              <span>
-                <IconButton
-                  disabled={indexInServiceFilteredList >= serviceFilteredList.length - 1}
-                  sx={{
-                    '&:hover': {
-                      boxShadow: 'none',
-                      backgroundColor: 'transparent',
-                    },
-                    cursor: indexInServiceFilteredList >= serviceFilteredList.length - 1 ? 'not-allowed' : 'pointer',
-                    '&.Mui-disabled': {
-                      cursor: 'not-allowed !important',
-                      pointerEvents: 'auto',
-                    },
-                    color: indexInServiceFilteredList >= serviceFilteredList.length - 1 ? 'text.disabled' : 'text.primary',
-                  }}
-                  onClick={() => {
-                    const id = serviceFilteredList?.[indexInServiceFilteredList + 1]?.id;
-                    localStorage.setItem('serviceId', id);
-                    localStorage.setItem('backFromServiceDetails', 'services');
-                    // tabs?.setValue('overview');
-                    router.push(paths.dashboard.service.details(id));
-                  }} color='default'>
-                  <Iconify icon="mdi-light:skip-next" />
-                </IconButton>
-              </span>
-            </Tooltip>
-
-            <Tooltip title='List services' arrow>
-              <IconButton
-                sx={{
-                  '&:hover': {
-                    boxShadow: 'none',
-                    backgroundColor: 'transparent',
-                  },
-                  cursor: 'pointer',
-                  color: 'text.primary',
+              </Tooltip>
+              <CustomPopover
+                open={popoverServiceList.open}
+                anchorEl={popoverServiceList.anchorEl}
+                onClose={popoverServiceList.onClose}
+                slotProps={{ arrow: { placement: 'left-top' } }}
+                PaperProps={{
+                  style: {
+                    maxHeight: 300,
+                  }
                 }}
-                onClick={popoverServiceList.onOpen}
-                color='default'>
-                <Iconify icon="pepicons-pencil:next-track" />
-              </IconButton>
-            </Tooltip>
-            <CustomPopover
-              open={popoverServiceList.open}
-              anchorEl={popoverServiceList.anchorEl}
-              onClose={popoverServiceList.onClose}
-              slotProps={{ arrow: { placement: 'left-top' } }}
-              PaperProps={{
-                style: {
+              >
+                <Box sx={{ p: 1 }}>
+                  <TextField
+                    value={searchText}
+                    onChange={(e) => setSearchText(e.target.value)}
+                    placeholder="Search by name or #"
+                    size="small"
+                    fullWidth
+                  />
+                </Box>
+                <MenuList sx={{
                   maxHeight: 300,
-                }
-              }}
-            >
-              <Box sx={{ p: 1 }}>
-                <TextField
-                  value={searchText}
-                  onChange={(e) => setSearchText(e.target.value)}
-                  placeholder="Search by name or #"
-                  size="small"
-                  fullWidth
-                />
-              </Box>
-              <MenuList sx={{
-                maxHeight: 300,
-                overflowY: 'auto'
-              }}>
-                {searchedServiceFilteredList.length > 0 ? (
-                  searchedServiceFilteredList?.map((serv) => (
-                    <MenuItem
-                      key={serv?.id}
-                      onClick={() => {
-                        popoverServiceList.onClose();
-                        const id = serv?.id;
-                        localStorage.setItem('serviceId', id);
-                        localStorage.setItem('backFromServiceDetails', 'services');
-                        router.push(paths.dashboard.service.details(id));
-                      }}
-                    >
-                      <Tooltip
-                        title={
-                          <>
-                            <Typography variant="body2" color="background.neutral" sx={{ mb: 0 }}>
-                              Service: {serv?.name}
-                            </Typography>
-                            <Typography variant="body2" color="background.neutral" sx={{ mb: 0 }}>
-                              Start date: {fDate(serv?.startDate) || 'N/A'}
-                            </Typography>
-                            <Typography variant="body2" color="background.neutral" sx={{ mb: 0 }}>
-                              Version: {serv?.version || 'N/A'}
-                            </Typography>
-                          </>
-                        }
-                        placement="right"
-                        arrow
+                  overflowY: 'auto'
+                }}>
+                  {searchedServiceFilteredList.length > 0 ? (
+                    searchedServiceFilteredList?.map((serv) => (
+                      <MenuItem
+                        key={serv?.id}
+                        onClick={() => {
+                          popoverServiceList.onClose();
+                          const id = serv?.id;
+                          localStorage.setItem('serviceId', id);
+                          localStorage.setItem('backFromServiceDetails', 'services');
+                          router.push(paths.dashboard.service.details(id));
+                        }}
                       >
-                        <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'left', gap: 2 }}>
-                          <Iconify icon="carbon:user-service" />
-                          <Typography variant="body2" sx={{ ml: 1 }}>
-                            {serv?.name} (v{serv?.version})
-                          </Typography>
-                        </Box>
-                      </Tooltip>
-                    </MenuItem>
-                  ))
-                ) : (
-                  <MenuItem disabled>No matches</MenuItem>
-                )}
-              </MenuList>
-            </CustomPopover>
-          </Box>
+                        <Tooltip
+                          title={
+                            <>
+                              <Typography variant="body2" color="background.neutral" sx={{ mb: 0 }}>
+                                Service: {serv?.name}
+                              </Typography>
+                              <Typography variant="body2" color="background.neutral" sx={{ mb: 0 }}>
+                                Start date: {fDate(serv?.startDate) || 'N/A'}
+                              </Typography>
+                              <Typography variant="body2" color="background.neutral" sx={{ mb: 0 }}>
+                                Version: {serv?.version || 'N/A'}
+                              </Typography>
+                            </>
+                          }
+                          placement="right"
+                          arrow
+                        >
+                          <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'left', gap: 2 }}>
+                            <Iconify icon="carbon:user-service" />
+                            <Typography variant="body2" sx={{ ml: 1 }}>
+                              {serv?.name} (v{serv?.version})
+                            </Typography>
+                          </Box>
+                        </Tooltip>
+                      </MenuItem>
+                    ))
+                  ) : (
+                    <MenuItem disabled>No matches</MenuItem>
+                  )}
+                </MenuList>
+              </CustomPopover>
+            </Box>
+          )}
         </Box>
         <Box sx={{ flexGrow: 1 }} />
 
@@ -390,8 +393,8 @@ export function ServiceDetailsToolbar({
         )}
         <Tooltip title='Close service' arrow>
           <Button
-            component={RouterLink}
-            href={backLink}
+            component={componentLink === 'modal' ? 'div' : RouterLink}
+            href={componentLink === 'modal' ? undefined : backLink}
             startIcon={<Iconify icon="mingcute:close-fill" />}
             sx={{
               ml: 0,
@@ -402,6 +405,7 @@ export function ServiceDetailsToolbar({
                 backgroundColor: 'transparent',
               },
             }}
+            onClick={componentLink === 'modal' ? backLink : undefined}
           />
         </Tooltip>
 

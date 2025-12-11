@@ -28,16 +28,19 @@ import {
     rowInPage,
     TableNoData,
 } from "src/components/table";
+import { ProjectDetailsView } from "src/sections/project/view";
 import { TableCustomPaginationZohoStyleRow } from "src/components/table/table-pagination-custom-zoho-style-row";
 import { useBoolean } from "src/hooks/use-boolean";
 import { fCurrency, fNumber } from "src/utils/format-number";
 import { ReportsEditRow } from "./reports-edit-row";
 import { exportedRows, handleExportCSV, handleExportPDF, handleExportXLSX } from "./helpers-export";
 
+
 export function ReportsTable({ filteredData, title }) {
     const table = useTable({ defaultDense: true });
     const popover = usePopover();
     const openEdit = useBoolean();
+    const openProjectDetails = useBoolean();
     const [selectedRow, setSelectedRow] = useState(null);
     const [selectedType, setSelectedType] = useState(null);
 
@@ -112,6 +115,15 @@ export function ReportsTable({ filteredData, title }) {
             openEdit.onTrue();
         },
         [openEdit]
+    );
+
+    const handleOpenProjectDetailsRow = useCallback(
+        (row) => {
+            setSelectedRow(row);
+            localStorage.setItem('projectId', row.projectInfo.id);
+            openProjectDetails.onTrue();
+        },
+        [openProjectDetails]
     );
 
     const exportFileName = selectedType ?
@@ -235,15 +247,32 @@ export function ReportsTable({ filteredData, title }) {
                                         hover
                                         key={report.id}
                                         sx={{ cursor: "pointer" }}
-                                        onClick={() => handleOpenEditRow(report)}
                                     >
-                                        <TableCell>{report.projectInfo.name}</TableCell>
-                                        <TableCell>{fNumber(report.projectInfo.duration)}</TableCell>
+                                        <TableCell onClick={() => handleOpenProjectDetailsRow(report)}>
+                                            <Typography
+                                                variant="subtitle2"
+                                                noWrap
+                                                sx={{
+                                                    cursor: 'pointer',
+                                                    textDecoration: 'none',
+                                                    '&:hover': {
+                                                        textDecoration: 'underline',
+                                                    }
+                                                }}
+                                                onClick={() => handleOpenProjectDetailsRow(report)}
+                                            >
+                                                {report.projectInfo.name}
+                                            </Typography>
+                                        </TableCell>
+                                        <TableCell onClick={() => handleOpenEditRow(report)}>
+                                            {fNumber(report.projectInfo.duration)}
+                                        </TableCell>
                                         <TableCell
                                             sx={{
                                                 color:
                                                     report.projectAmount < 0 ? "warning.dark" : "inherit",
                                             }}
+                                            onClick={() => handleOpenEditRow(report)}
                                         >
                                             {fCurrency(report.projectAmount)}
                                         </TableCell>
@@ -254,6 +283,7 @@ export function ReportsTable({ filteredData, title }) {
                                                         ? "warning.dark"
                                                         : "inherit",
                                             }}
+                                            onClick={() => handleOpenEditRow(report)}
                                         >
                                             {fCurrency(report.installationAmount)}
                                         </TableCell>
@@ -264,6 +294,7 @@ export function ReportsTable({ filteredData, title }) {
                                                         ? "warning.dark"
                                                         : "inherit",
                                             }}
+                                            onClick={() => handleOpenEditRow(report)}
                                         >
                                             {fCurrency(report.installationCost)}
                                         </TableCell>
@@ -274,13 +305,14 @@ export function ReportsTable({ filteredData, title }) {
                                                         ? "warning.dark"
                                                         : "inherit",
                                             }}
+                                            onClick={() => handleOpenEditRow(report)}
                                         >
                                             {fCurrency(report.installationProfit)}
                                         </TableCell>
-                                        <TableCell>
+                                        <TableCell onClick={() => handleOpenEditRow(report)}>
                                             {report.workingType?.toUpperCase()}
                                         </TableCell>
-                                        <TableCell>
+                                        <TableCell onClick={() => handleOpenEditRow(report)}>
                                             {report.notes}
                                         </TableCell>
                                         <TableCell>
@@ -296,6 +328,7 @@ export function ReportsTable({ filteredData, title }) {
                                                             backgroundColor: 'transparent',
                                                         },
                                                     }}
+                                                    onClick={() => handleOpenEditRow(report)}
                                                 >
                                                     <Iconify icon="fluent:slide-text-edit-20-regular" color="primary" width={22} />
                                                 </IconButton>
@@ -453,6 +486,22 @@ export function ReportsTable({ filteredData, title }) {
                             row={selectedRow}
                             onCloseEdit={openEdit.onFalse}
                         />
+                    )}
+                </DialogContent>
+            </Dialog>
+
+            <Dialog
+                open={openProjectDetails.value}
+                onClose={openProjectDetails.onFalse}
+                maxWidth="xxl"
+                fullWidth
+            >
+                <DialogTitle>
+                    Project Details
+                </DialogTitle>
+                <DialogContent>
+                    {selectedRow && (
+                        <ProjectDetailsView projectId={selectedRow.projectInfo.id} onCloseModal={openProjectDetails.onFalse} />
                     )}
                 </DialogContent>
             </Dialog>
