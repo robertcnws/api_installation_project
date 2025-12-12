@@ -277,7 +277,8 @@ export function ProjectDetailsContent({
           <TableRow
             sx={{ cursor: 'pointer' }}
             onClick={
-              isAdministrator(userLogged?.data?.user_role?.name) ? () => tabs.setValue('workOrders') : undefined
+              listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator) ? 
+              () => tabs.setValue('workOrders') : undefined
             }>
             <TableCell>
               <Typography variant="subtitle2" color="text.secondary">Estimated Install Date(s):</Typography>
@@ -421,7 +422,8 @@ export function ProjectDetailsContent({
               <TableRow
                 sx={{ cursor: 'pointer' }}
                 onClick={
-                  isAdministrator(userLogged?.data?.user_role?.name) ? () => tabs.setValue('workOrders') : undefined
+                  listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator) ? 
+                  () => tabs.setValue('workOrders') : undefined
                 }>
                 <TableCell>
                   <Typography variant="subtitle2" color="text.secondary">Inspection Date(s):</Typography>
@@ -533,7 +535,8 @@ export function ProjectDetailsContent({
               <TableRow
                 sx={{ cursor: 'pointer' }}
                 onClick={
-                  isAdministrator(userLogged?.data?.user_role?.name) ? () => tabs.setValue('workOrders') : undefined
+                  listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator) ? 
+                  () => tabs.setValue('workOrders') : undefined
                 }>
                 <TableCell>
                   <Typography variant="subtitle2" color="text.secondary">Finish Date(s):</Typography>

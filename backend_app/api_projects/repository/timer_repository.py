@@ -13,7 +13,7 @@ def _get_or_create_timer(username: str, entity_type: str, entity_id: str, entity
     get_or_create versión MongoEngine.
     """
     timer = TaskTimer.objects(
-        username=username,
+        # username=username,
         entity_type=entity_type or "",
         entity_id=str(entity_id),
     ).first()
@@ -40,10 +40,10 @@ def timer_get(request, entity_type, entity_id):
     Trae el timer de esa entidad para el usuario actual.
     GET /api/timers/<entity_type>/<entity_id>/
     """
-    username = request.user.username
+    username = request.data.get("username") or request.user.username
 
     timer = TaskTimer.objects(
-        username=username,
+        # username=username,
         entity_type=entity_type or "",
         entity_id=str(entity_id),
     ).first()
@@ -112,7 +112,7 @@ def timer_pause(request):
         )
 
     timer = TaskTimer.objects(
-        username=username,
+        # username=username,
         entity_type=entity_type or "",
         entity_id=str(entity_id),
     ).first()
@@ -147,7 +147,7 @@ def timer_reset(request):
         )
 
     timer = TaskTimer.objects(
-        username=username,
+        # username=username,
         entity_type=entity_type or "",
         entity_id=str(entity_id),
     ).first()
