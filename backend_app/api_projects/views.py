@@ -20,6 +20,7 @@ from .repository import (
     project_calendar_notes_repository,
     project_profit_report_repository,
     project_installation_crew_repository,
+    timer_repository,
 )
 
 from rest_framework.response import Response
@@ -820,3 +821,30 @@ def delete_project_installation_crew(request, id):
 @permission_classes([AllowAny])
 def delete_list_of_project_installation_crews(request):
     return project_installation_crew_repository.delete_project_installation_crews(request)
+
+
+#############################################
+# TIMER ENDPOINTS
+#############################################
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def timer_get(request, entity_type, entity_id):
+    return timer_repository.timer_get(request, entity_type, entity_id)
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def timer_start(request):
+    return timer_repository.timer_start(request)
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def timer_pause(request):
+    return timer_repository.timer_pause(request)
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def timer_reset(request):
+    return timer_repository.timer_reset(request)

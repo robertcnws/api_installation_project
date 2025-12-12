@@ -14,6 +14,7 @@ from .consumers import (
     ProjectCalendarNotesConsumer,
     ProjectProfitReportConsumer,
     ProjectInstallationCrewConsumer,
+    TaskTimerConsumer
 )
 
 websocket_urlpatterns = [
@@ -30,4 +31,5 @@ websocket_urlpatterns = [
     path('api/projects/ws/project-calendar-notes/', ProjectCalendarNotesConsumer.as_asgi(), name='ws_project_calendar_notes'),
     path('api/projects/ws/project-profit-reports/', ProjectProfitReportConsumer.as_asgi(), name='ws_project_profit_reports'),
     path('api/projects/ws/project-installation-crews/', ProjectInstallationCrewConsumer.as_asgi(), name='ws_project_installation_crews'),
+    path('api/projects/ws/timers/', TaskTimerConsumer.as_asgi(), name='ws_task_timers'),
 ]

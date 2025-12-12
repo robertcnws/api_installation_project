@@ -276,3 +276,25 @@ def message_project_installation_crew(msg_type, document):
 
         }
     }
+    
+    
+def message_timer(msg_type, document):
+    return {
+        'type': 'timer_update',
+        'message': {
+            'type': msg_type,
+            "item": {
+                "id": str(document.id),
+                "username": document.username,
+                "entityType": document.entity_type,
+                "entityId": document.entity_id,
+                "entityInfo": document.entity_info,
+                "elapsedMs": document.elapsed_ms,
+                "startTime": document.start_time,
+                "isRunning": document.is_running,
+                "createdTime": document.created_time,
+                "lastModifiedTime": document.last_modified_time,
+            }
+
+        }
+    }

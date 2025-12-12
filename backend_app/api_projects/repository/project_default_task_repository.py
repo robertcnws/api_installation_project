@@ -21,6 +21,7 @@ from api_projects.data_util import (
     to_aware,
 )
 from api_projects.tasks import task_update_default_task_in_projects
+from api_projects.repository import timer_repository
 import json
 import logging
 
@@ -379,14 +380,14 @@ def change_status_project_default_task(request, projectId, id):
         
         if status == 'finished':
             next_task = get_next_task(task, sorted_tasks)
-            print('next name', next_task)
+            # print('next name', next_task)
             if next_task and next_task['status'] == 'not started':
                 less_ordered_tasks = [t for t in all_tasks if t['project_default_task']['order'] < next_task['project_default_task']['order']]
                 if not project.has_permission:
                     less_ordered_tasks = [t for t in less_ordered_tasks if t['project_default_task']['project_stage']['name'] != 'Permission']
-                print('less ordered tasks', less_ordered_tasks)
+                # print('less ordered tasks', less_ordered_tasks)
                 unfinished_tasks = [t for t in less_ordered_tasks if t['status'] != 'finished']
-                print('unfinished tasks', unfinished_tasks)
+                # print('unfinished tasks', unfinished_tasks)
                 if not unfinished_tasks:
                     next_task['status'] = 'in progress'
                     next_task['percentage'] = 50
@@ -434,6 +435,8 @@ def change_status_project_default_task(request, projectId, id):
         
         project.project_default_tasks = sorted_tasks
         project.save()
+        
+        manage_timer(project, sorted_tasks, task, status, user_reporter)
         
         tracking = ProjectTracking(
             user_reporter=user_reporter,
@@ -600,3 +603,70 @@ def upload_files_to_default_task(request, projectId, id):
         'message': 'Uploaded files to default task successfully',
         'data': json.loads(project.to_json())
     }, status=201)
+    
+
+##########
+# HELPERS
+##########
+
+def manage_timer(project, sorted_tasks, task, status, user_reporter):
+    name_start_installation = settings.TASK_START_INSTALLATION
+    name_finish_installation = settings.TASK_FINISH_INSTALLATION
+
+    def near_next_task(task, sorted_tasks):
+        return next(
+            (tt for tt in sorted_tasks if int(tt['project_default_task']['order']) == int(task['project_default_task']['order']) + 1),
+            None
+        )
+
+    next_task = near_next_task(task, sorted_tasks)
+
+    # print('name_start_installation', name_start_installation)
+    # print('name_finish_installation', name_finish_installation)
+    # print('task name', task['project_default_task']['name'])
+    # print('status', status)
+    # print('next task', next_task['project_default_task']['name'] if next_task else 'no next task')
+    # print('next task status', next_task['status'] if next_task else 'no next task')
+    
+    entity_info = {
+        'project_id': str(project.id),
+        'project_name': project.name,
+        'task_id': str(task['project_default_task']['_id']),
+        'task_name': task['project_default_task']['name'],
+        'first_name': user_reporter['first_name'] if user_reporter else 'System',
+        'last_name': user_reporter['last_name'] if user_reporter else '',
+    }
+    
+    timer = timer_repository._get_or_create_timer(
+        entity_type='task',
+        entity_id=str(project.id),
+        username=user_reporter['username'] if user_reporter else 'system',
+        entity_info=entity_info,
+    )
+
+    if name_start_installation and \
+       task['project_default_task']['name'].strip().lower() == name_start_installation.strip().lower() and \
+       status == 'in progress' and not timer.is_running:
+            timer.start()
+            timer.save()
+    if name_start_installation and \
+       next_task and \
+       next_task['project_default_task']['name'].strip().lower() == name_start_installation.strip().lower() and \
+       next_task['status'] == 'in progress' and not timer.is_running:
+            timer.start()
+            timer.save()
+    if name_start_installation and \
+       next_task['project_default_task']['name'].strip().lower() == name_start_installation.strip().lower() and \
+       status == 'in progress' and timer.is_running:
+            timer.pause()
+            timer.save()
+    if name_finish_installation and \
+       task['project_default_task']['name'].strip().lower() == name_finish_installation.strip().lower() and \
+       status == 'finished' and timer.is_running:
+            timer.pause()
+            timer.save()
+    if name_finish_installation and \
+       task['project_default_task']['name'].strip().lower() == name_finish_installation.strip().lower() and \
+       status == 'in progress' and not timer.is_running:
+            timer.start()
+            timer.save()
