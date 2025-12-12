@@ -635,6 +635,7 @@ def manage_timer(project, sorted_tasks, task, status, user_reporter):
         'task_name': task['project_default_task']['name'],
         'first_name': user_reporter['first_name'] if user_reporter else 'System',
         'last_name': user_reporter['last_name'] if user_reporter else '',
+        'work_orders': project.work_orders if project.work_orders else [],
     }
     
     timer = timer_repository._get_or_create_timer(
