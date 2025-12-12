@@ -442,7 +442,7 @@ def change_status_project_default_task(request, projectId, id):
         project.project_default_tasks = sorted_tasks
         project.save()
         
-        manage_timer(project, sorted_tasks, task, status, user_reporter)
+        manage_timer_v2(project, sorted_tasks, task, status, user_reporter)
         
         tracking = ProjectTracking(
             user_reporter=user_reporter,
@@ -626,19 +626,10 @@ def manage_timer(project, sorted_tasks, task, status, user_reporter):
         )
 
     next_task = near_next_task(task, sorted_tasks)
-
-    # print('name_start_installation', name_start_installation)
-    # print('name_finish_installation', name_finish_installation)
-    # print('task name', task['project_default_task']['name'])
-    # print('status', status)
-    # print('next task', next_task['project_default_task']['name'] if next_task else 'no next task')
-    # print('next task status', next_task['status'] if next_task else 'no next task')
     
     entity_info = {
         'project_id': str(project.id),
         'project_name': project.name,
-        'task_id': str(task['project_default_task']['_id']),
-        'task_name': task['project_default_task']['name'],
         'first_name': user_reporter['first_name'] if user_reporter else 'System',
         'last_name': user_reporter['last_name'] if user_reporter else '',
         'work_orders': project.work_orders if project.work_orders else [],
@@ -654,26 +645,126 @@ def manage_timer(project, sorted_tasks, task, status, user_reporter):
     if name_start_installation and \
        task['project_default_task']['name'].strip().lower() == name_start_installation.strip().lower() and \
        status == 'in progress' and not timer.is_running:
-            timer.start()
-            timer.save()
+           entity_info['task_id'] = str(task['project_default_task']['_id'])
+           entity_info['task_name'] = task['project_default_task']['name']
+           timer.entity_info = {**timer.entity_info, **entity_info}   
+           timer.start()
+           timer.save()
     if name_start_installation and \
        next_task and \
        next_task['project_default_task']['name'].strip().lower() == name_start_installation.strip().lower() and \
        next_task['status'] == 'in progress' and not timer.is_running:
+            entity_info['task_id'] = str(next_task['project_default_task']['_id'])
+            entity_info['task_name'] = next_task['project_default_task']['name']
+            timer.entity_info = {**timer.entity_info, **entity_info}
             timer.start()
             timer.save()
     if name_start_installation and \
        next_task['project_default_task']['name'].strip().lower() == name_start_installation.strip().lower() and \
        status == 'in progress' and timer.is_running:
+            entity_info['task_id'] = str(next_task['project_default_task']['_id'])
+            entity_info['task_name'] = next_task['project_default_task']['name']
+            timer.entity_info = {**timer.entity_info, **entity_info}
             timer.pause()
             timer.save()
     if name_finish_installation and \
        task['project_default_task']['name'].strip().lower() == name_finish_installation.strip().lower() and \
        status == 'finished' and timer.is_running:
+            entity_info['task_id'] = str(task['project_default_task']['_id'])
+            entity_info['task_name'] = task['project_default_task']['name']
+            timer.entity_info = {**timer.entity_info, **entity_info}
             timer.pause()
             timer.save()
     if name_finish_installation and \
        task['project_default_task']['name'].strip().lower() == name_finish_installation.strip().lower() and \
        status == 'in progress' and not timer.is_running:
+            entity_info['task_id'] = str(task['project_default_task']['_id'])
+            entity_info['task_name'] = task['project_default_task']['name']
+            timer.entity_info = {**timer.entity_info, **entity_info}
             timer.start()
             timer.save()
+            
+
+def manage_timer_v2(project, sorted_tasks, task, status, user_reporter):
+    start_name = (getattr(settings, "TASK_START_INSTALLATION", "") or "").strip().lower()
+    finish_name = (getattr(settings, "TASK_FINISH_INSTALLATION", "") or "").strip().lower()
+
+    def task_name_norm(t):
+        return (t.get("project_default_task", {}).get("name", "") or "").strip().lower()
+
+    def task_name_raw(t):
+        return t.get("project_default_task", {}).get("name", "") or ""
+
+    def task_id_any(t):
+        pdt = t.get("project_default_task", {}) or {}
+        # intenta varias llaves típicas
+        return pdt.get("_id") or pdt.get("id") or pdt.get("task_id") or pdt.get("pk")
+
+    def task_order(t):
+        return int((t.get("project_default_task", {}) or {}).get("order") or 0)
+
+    def near_next_task(current, tasks):
+        cur_order = task_order(current)
+        return next((tt for tt in tasks if task_order(tt) == cur_order + 1), None)
+
+    next_task = near_next_task(task, sorted_tasks)
+
+    base_entity_info = {
+        "project_id": str(project.id),
+        "project_name": project.name,
+        "first_name": (user_reporter or {}).get("first_name", "System"),
+        "last_name": (user_reporter or {}).get("last_name", ""),
+        "work_orders": project.work_orders or [],
+    }
+
+    timer = timer_repository._get_or_create_timer(
+        entity_type="task",
+        entity_id=str(project.id),
+        username=(user_reporter or {}).get("username", "system"),
+        entity_info=base_entity_info,
+    )
+
+    curr_name = task_name_norm(task)
+    next_name = task_name_norm(next_task) if next_task else ""
+
+    action = None
+    target_task = None
+
+    if start_name and curr_name == start_name and status == "in progress" and not timer.is_running:
+        action, target_task = "start", task
+
+    elif start_name and next_task and next_name == start_name and next_task.get("status") == "in progress" and not timer.is_running:
+        action, target_task = "start", next_task
+
+    elif start_name and next_task and next_name == start_name and status == "in progress" and timer.is_running:
+        action, target_task = "pause", next_task
+
+    elif finish_name and curr_name == finish_name and status == "in progress" and not timer.is_running:
+        action, target_task = "start", task
+
+    elif finish_name and curr_name == finish_name and status == "finished" and timer.is_running:
+        action, target_task = "pause", task
+
+    if not action:
+        return
+    
+    if action == "start":
+        timer.start()
+    else:
+        timer.pause()
+    
+    _id = task_id_any(target_task)
+    _name = task_name_raw(target_task)
+    
+    logger.info(
+        "manage_timer_v2 context -> project=%s action=%s task_id=%s task_name=%s",
+        str(project.id), action, str(_id), _name
+    )
+
+    merged = {**(timer.entity_info or {}), **base_entity_info}
+    merged["task_name"] = _name
+    if _id is not None:
+        merged["task_id"] = str(_id)
+
+    timer.entity_info = merged
+    timer.save()
