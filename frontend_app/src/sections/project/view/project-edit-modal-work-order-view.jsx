@@ -244,10 +244,10 @@ export function ProjectEditModalWorkOrderView({
             newErrors.name = 'Name is required';
         }
 
-        // Description
-        if (!formData.description?.trim()) {
-            newErrors.description = 'Description is required';
-        }
+        // // Description
+        // if (!formData.description?.trim()) {
+        //     newErrors.description = 'Description is required';
+        // }
 
         // Work type
         if (!formData.workType) {
@@ -562,16 +562,16 @@ export function ProjectEditModalWorkOrderView({
                                     variant="outlined"
                                     sx={{
                                         '& .MuiOutlinedInput-root': {
-                                            borderRadius: 2,
-                                            bgcolor: alpha(theme.palette.background.paper, 0.8),
-                                            '&:hover .MuiOutlinedInput-notchedOutline': {
-                                                borderColor: '#00B8D9',
-                                            },
-                                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                                borderColor: '#00B8D9',
-                                                borderWidth: 2,
-                                                boxShadow: `0 0 10px ${alpha('#00B8D9', 0.3)}`,
-                                            }
+                                            borderRadius: 1,
+                                            // bgcolor: alpha(theme.palette.background.paper, 0.8),
+                                            // '&:hover .MuiOutlinedInput-notchedOutline': {
+                                            //     borderColor: '#00B8D9',
+                                            // },
+                                            // '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                            //     borderColor: '#00B8D9',
+                                            //     borderWidth: 2,
+                                            //     boxShadow: `0 0 10px ${alpha('#00B8D9', 0.3)}`,
+                                            // }
                                         },
                                         width: { xs: '100%', md: '50%' },
                                     }}
@@ -585,16 +585,16 @@ export function ProjectEditModalWorkOrderView({
                                         width: '100%',
                                         flex: 1,
                                         '& .MuiOutlinedInput-root': {
-                                            borderRadius: 2,
-                                            bgcolor: alpha(theme.palette.background.paper, 0.8),
-                                            '&:hover .MuiOutlinedInput-notchedOutline': {
-                                                borderColor: '#00A76F',
-                                            },
-                                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                                borderColor: '#00A76F',
-                                                borderWidth: 2,
-                                                boxShadow: `0 0 10px ${alpha('#00A76F', 0.3)}`,
-                                            }
+                                            borderRadius: 1,
+                                            // bgcolor: alpha(theme.palette.background.paper, 0.8),
+                                            // '&:hover .MuiOutlinedInput-notchedOutline': {
+                                            //     borderColor: '#00A76F',
+                                            // },
+                                            // '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                            //     borderColor: '#00A76F',
+                                            //     borderWidth: 2,
+                                            //     boxShadow: `0 0 10px ${alpha('#00A76F', 0.3)}`,
+                                            // }
                                         }
                                     }}
                                 />
@@ -609,16 +609,16 @@ export function ProjectEditModalWorkOrderView({
                                         sx={{
                                             flex: 1,
                                             '& .MuiOutlinedInput-root': {
-                                                borderRadius: 2,
-                                                bgcolor: alpha(theme.palette.background.paper, 0.8),
-                                                '&:hover .MuiOutlinedInput-notchedOutline': {
-                                                    borderColor: '#FFAB00',
-                                                },
-                                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                                    borderColor: '#FFAB00',
-                                                    borderWidth: 2,
-                                                    boxShadow: `0 0 10px ${alpha('#FFAB00', 0.3)}`,
-                                                }
+                                                borderRadius: 1,
+                                                // bgcolor: alpha(theme.palette.background.paper, 0.8),
+                                                // '&:hover .MuiOutlinedInput-notchedOutline': {
+                                                //     borderColor: '#FFAB00',
+                                                // },
+                                                // '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                                //     borderColor: '#FFAB00',
+                                                //     borderWidth: 2,
+                                                //     boxShadow: `0 0 10px ${alpha('#FFAB00', 0.3)}`,
+                                                // }
                                             }
                                         }}
                                     />
@@ -668,7 +668,7 @@ export function ProjectEditModalWorkOrderView({
                             <TextField
                                 fullWidth
                                 multiline
-                                rows={5}
+                                rows={2}
                                 label="Description"
                                 value={formData.description}
                                 onChange={(e) => handleInputChange('description', e.target.value)}
@@ -677,16 +677,16 @@ export function ProjectEditModalWorkOrderView({
                                 variant="outlined"
                                 sx={{
                                     '& .MuiOutlinedInput-root': {
-                                        borderRadius: 2,
-                                        bgcolor: alpha(theme.palette.background.paper, 0.8),
-                                        '&:hover .MuiOutlinedInput-notchedOutline': {
-                                            borderColor: '#8E33FF',
-                                        },
-                                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                            borderColor: '#8E33FF',
-                                            borderWidth: 2,
-                                            boxShadow: `0 0 10px ${alpha('#8E33FF', 0.3)}`,
-                                        }
+                                        borderRadius: 1,
+                                        // bgcolor: alpha(theme.palette.background.paper, 0.8),
+                                        // '&:hover .MuiOutlinedInput-notchedOutline': {
+                                        //     borderColor: '#8E33FF',
+                                        // },
+                                        // '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                        //     borderColor: '#8E33FF',
+                                        //     borderWidth: 2,
+                                        //     boxShadow: `0 0 10px ${alpha('#8E33FF', 0.3)}`,
+                                        // }
                                     }
                                 }}
                             />
@@ -724,16 +724,16 @@ export function ProjectEditModalWorkOrderView({
                                                 helperText={errors.workType}
                                                 sx={{
                                                     '& .MuiOutlinedInput-root': {
-                                                        borderRadius: 2,
-                                                        bgcolor: alpha(theme.palette.background.paper, 0.8),
-                                                        '&:hover .MuiOutlinedInput-notchedOutline': {
-                                                            borderColor: '#8E33FF',
-                                                        },
-                                                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                                            borderColor: '#8E33FF',
-                                                            borderWidth: 2,
-                                                            boxShadow: `0 0 10px ${alpha('#8E33FF', 0.3)}`,
-                                                        }
+                                                        borderRadius: 1,
+                                                        // bgcolor: alpha(theme.palette.background.paper, 0.8),
+                                                        // '&:hover .MuiOutlinedInput-notchedOutline': {
+                                                        //     borderColor: '#8E33FF',
+                                                        // },
+                                                        // '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                                        //     borderColor: '#8E33FF',
+                                                        //     borderWidth: 2,
+                                                        //     boxShadow: `0 0 10px ${alpha('#8E33FF', 0.3)}`,
+                                                        // }
                                                     }
                                                 }}
                                             />
@@ -830,7 +830,7 @@ export function ProjectEditModalWorkOrderView({
                                                                 )}
                                                                 size="small"
                                                                 sx={{
-                                                                    background: `linear-gradient(45deg, #00B8D9, #8E33FF)`,
+                                                                    // background: `linear-gradient(45deg, #00B8D9, #8E33FF)`,
                                                                     color: 'white',
                                                                     '& .MuiChip-deleteIcon': {
                                                                         color: 'white',
@@ -851,16 +851,16 @@ export function ProjectEditModalWorkOrderView({
                                                     helperText={errors.usersAssignees}
                                                     sx={{
                                                         '& .MuiOutlinedInput-root': {
-                                                            borderRadius: 2,
-                                                            bgcolor: alpha(theme.palette.background.paper, 0.8),
-                                                            '&:hover .MuiOutlinedInput-notchedOutline': {
-                                                                borderColor: '#22C55E',
-                                                            },
-                                                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                                                borderColor: '#22C55E',
-                                                                borderWidth: 2,
-                                                                boxShadow: `0 0 10px ${alpha('#22C55E', 0.3)}`,
-                                                            }
+                                                            borderRadius: 1,
+                                                            // bgcolor: alpha(theme.palette.background.paper, 0.8),
+                                                            // '&:hover .MuiOutlinedInput-notchedOutline': {
+                                                            //     borderColor: '#22C55E',
+                                                            // },
+                                                            // '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                                            //     borderColor: '#22C55E',
+                                                            //     borderWidth: 2,
+                                                            //     boxShadow: `0 0 10px ${alpha('#22C55E', 0.3)}`,
+                                                            // }
                                                         }
                                                     }}
                                                 />
@@ -930,7 +930,7 @@ export function ProjectEditModalWorkOrderView({
                                                                 }
                                                                 size="small"
                                                                 sx={{
-                                                                    background: `linear-gradient(45deg, #00B8D9, #8E33FF)`,
+                                                                    // background: `linear-gradient(45deg, #00B8D9, #8E33FF)`,
                                                                     color: 'white',
                                                                     '& .MuiChip-deleteIcon': {
                                                                         color: 'white',
@@ -952,16 +952,16 @@ export function ProjectEditModalWorkOrderView({
                                                     fullWidth                         // 👈 asegura ancho completo dentro del flex
                                                     sx={{
                                                         '& .MuiOutlinedInput-root': {
-                                                            borderRadius: 2,
-                                                            bgcolor: alpha(theme.palette.background.paper, 0.8),
-                                                            '&:hover .MuiOutlinedInput-notchedOutline': {
-                                                                borderColor: '#22C55E',
-                                                            },
-                                                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                                                borderColor: '#22C55E',
-                                                                borderWidth: 2,
-                                                                boxShadow: `0 0 10px ${alpha('#22C55E', 0.3)}`,
-                                                            },
+                                                            borderRadius: 1,
+                                                            // bgcolor: alpha(theme.palette.background.paper, 0.8),
+                                                            // '&:hover .MuiOutlinedInput-notchedOutline': {
+                                                            //     borderColor: '#22C55E',
+                                                            // },
+                                                            // '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                                            //     borderColor: '#22C55E',
+                                                            //     borderWidth: 2,
+                                                            //     boxShadow: `0 0 10px ${alpha('#22C55E', 0.3)}`,
+                                                            // },
                                                         },
                                                     }}
                                                 />
@@ -1050,7 +1050,7 @@ export function ProjectEditModalWorkOrderView({
                                                     )}
                                                     size="small"
                                                     sx={{
-                                                        background: `linear-gradient(45deg, #00B8D9, #8E33FF)`,
+                                                        // background: `linear-gradient(45deg, #00B8D9, #8E33FF)`,
                                                         color: 'white',
                                                         '& .MuiChip-deleteIcon': {
                                                             color: 'white',
@@ -1072,16 +1072,16 @@ export function ProjectEditModalWorkOrderView({
                                         helperText={errors.products}
                                         sx={{
                                             '& .MuiOutlinedInput-root': {
-                                                borderRadius: 2,
-                                                bgcolor: alpha(theme.palette.background.paper, 0.8),
-                                                '&:hover .MuiOutlinedInput-notchedOutline': {
-                                                    borderColor: '#00A76F',
-                                                },
-                                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                                    borderColor: '#00A76F',
-                                                    borderWidth: 2,
-                                                    boxShadow: `0 0 10px ${alpha('#00A76F', 0.3)}`,
-                                                }
+                                                borderRadius: 1,
+                                                // bgcolor: alpha(theme.palette.background.paper, 0.8),
+                                                // '&:hover .MuiOutlinedInput-notchedOutline': {
+                                                //     borderColor: '#00A76F',
+                                                // },
+                                                // '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                                //     borderColor: '#00A76F',
+                                                //     borderWidth: 2,
+                                                //     boxShadow: `0 0 10px ${alpha('#00A76F', 0.3)}`,
+                                                // }
                                             }
                                         }}
                                     />

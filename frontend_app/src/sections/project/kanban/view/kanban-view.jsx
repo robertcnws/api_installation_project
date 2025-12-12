@@ -24,7 +24,7 @@ import Switch from '@mui/material/Switch';
 import { Box, Alert, LinearProgress } from '@mui/material';
 import FormControlLabel from '@mui/material/FormControlLabel';
 
-import { isInstaller } from 'src/utils/check-permissions';
+import { isInstaller, isWarehouseStaff } from 'src/utils/check-permissions';
 import { getProjectInstallers } from 'src/utils/project-tasks-utils';
 
 import { CONFIG } from 'src/config-global';
@@ -89,6 +89,11 @@ export function KanbanView({
           stage.name.toLowerCase().indexOf(CONFIG.stages.permission.toLowerCase()) !== -1);
       if (isInstaller(userLogged?.data?.user_role?.name)) {
         setStages(actionStages.filter((stage) => stage.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1));
+      } else if (isWarehouseStaff(userLogged?.data?.user_role?.name)) {
+        setStages(actionStages.filter(
+          (stage) => stage.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1 ||
+            stage.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1
+        ));
       } else if (hasPermission) {
         setStages(actionStages);
       } else {
@@ -103,7 +108,10 @@ export function KanbanView({
     '--item-gap': '10px',
     '--item-radius': '12px',
     '--column-gap': '12px',
-    '--column-width': isInstaller(userLogged?.data?.user_role?.name) ? '100%' : !isMobile ? (hasPermission ? '19.2%' : '24.3%') : '100%',
+    '--column-width': (
+      isWarehouseStaff(userLogged?.data?.user_role?.name) ? '49%' :
+        (isInstaller(userLogged?.data?.user_role?.name) ? '100%' : !isMobile ? (hasPermission ? '19.2%' : '24.3%') : '100%')
+    ),
     '--column-radius': '16px',
     '--column-padding': '10px 8px 8px 8px',
   };
@@ -134,6 +142,11 @@ export function KanbanView({
           (task) => task.users_assignees.length > 0
         );
         setDefaultTasks(withUsersTasks);
+      } else if (isWarehouseStaff(userLogged?.data?.user_role?.name)) {
+        const finalTasks = initialTasks.filter(
+          (task) => task.project_default_task.name.toLowerCase().includes('pick up')
+        );
+        setDefaultTasks(finalTasks);
       } else {
         setDefaultTasks(initialTasks);
       }
