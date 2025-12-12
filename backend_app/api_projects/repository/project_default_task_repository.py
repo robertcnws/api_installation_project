@@ -346,7 +346,7 @@ def change_status_project_default_task(request, projectId, id):
         task['percentage'] = percentage
         task['user_reporter'] = user_reporter
         task['last_modified_time'] = timezone.now()
-        if status == 'in progress' and task['start_task_time'] is None:
+        if status == 'in progress' and task.get('start_task_time', None) is None:
             task['start_task_time'] = timezone.now()
         if status == 'finished':
             task['end_task_time'] = timezone.now()
@@ -397,7 +397,7 @@ def change_status_project_default_task(request, projectId, id):
                     next_task['percentage'] = 50
                     next_task['user_reporter'] = user_reporter
                     next_task['last_modified_time'] = timezone.now()
-                    if next_task['start_task_time'] is None:
+                    if next_task.get('start_task_time', None) is None:
                         next_task['start_task_time'] = timezone.now()
                     all_tasks = [t for t in all_tasks if str(t['project_default_task']['_id']) != str(next_task['project_default_task']['_id'])]
                     all_tasks.append(next_task)
