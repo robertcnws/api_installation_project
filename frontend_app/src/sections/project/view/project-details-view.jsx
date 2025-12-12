@@ -472,7 +472,8 @@ export function ProjectDetailsView({
                             tab.value === 'comments' ||
                             tab.value === 'workOrders'
                         ) ? (
-                            !isInstaller(userLogged?.data?.user_role?.name) ? (
+                            (!isInstaller(userLogged?.data?.user_role?.name) &&
+                                !isWarehouseStaff(userLogged?.data?.user_role?.name)) ? (
                                 ((tab.value === 'tasks' && totalTasks > 0) ||
                                     (tab.value === 'attachments' && totalAttachments > 0) ||
                                     (tab.value === 'workOrders' && totalWorkOrders > 0) ||

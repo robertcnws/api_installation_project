@@ -20,7 +20,7 @@ import { useBoolean } from 'src/hooks/use-boolean';
 
 import { uuidv4 } from 'src/utils/uuidv4';
 import { fDate, fIsAfter } from 'src/utils/format-time';
-import { isInstaller } from 'src/utils/check-permissions';
+import { isAdministrator, isInstaller } from 'src/utils/check-permissions';
 import { getProjectInstallers, getWorkOrderAssistants, getWorkOrderWorkers } from 'src/utils/project-tasks-utils';
 import { getServiceInstaller } from 'src/utils/service-tasks-utils';
 
@@ -323,7 +323,7 @@ export function CalendarForm({ currentEvent, colorOptions, onClose }) {
 
         <DialogActions sx={{ flexShrink: 0 }}>
           {(!!selectedEvent?.id && selectedEvent?.type.toLowerCase().indexOf('measurement') === -1 &&
-            !isInstaller(userLogged?.data?.user_role?.name)) && (
+            isAdministrator(userLogged?.data?.user_role?.name)) && (
               <Tooltip title="Delete event">
                 <IconButton onClick={confirmDelete.onTrue} color="error">
                   <Iconify icon="solar:trash-bin-trash-bold" />
@@ -347,10 +347,11 @@ export function CalendarForm({ currentEvent, colorOptions, onClose }) {
           )} */}
 
           {(
-            selectedEvent?.type === 'installation' ||
+            (selectedEvent?.type === 'installation' ||
             selectedEvent?.type === 'inspection' ||
             selectedEvent?.type === 'finishPermission' ||
-            selectedEvent?.type === 'finish'
+            selectedEvent?.type === 'finish') &&
+            isAdministrator(userLogged?.data?.user_role?.name)
           ) && (
 
               <Button

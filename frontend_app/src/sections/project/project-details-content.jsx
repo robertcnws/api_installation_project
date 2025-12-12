@@ -11,7 +11,7 @@ import { Box, Table, Switch, Tooltip, TableRow, TableBody, TableCell, IconButton
 
 import { getProjectInstallers } from 'src/utils/project-tasks-utils';
 import { fDate, fIsAfter, fDateTime, fDuration } from 'src/utils/format-time';
-import { isInstaller, verifyPermissions, listRolesAndSubroles } from 'src/utils/check-permissions';
+import { isInstaller, verifyPermissions, listRolesAndSubroles, isAdministrator } from 'src/utils/check-permissions';
 
 import { CONFIG } from 'src/config-global';
 
@@ -277,7 +277,7 @@ export function ProjectDetailsContent({
           <TableRow
             sx={{ cursor: 'pointer' }}
             onClick={
-              !isInstaller(userLogged?.data?.user_role?.name) ? () => tabs.setValue('workOrders') : undefined
+              isAdministrator(userLogged?.data?.user_role?.name) ? () => tabs.setValue('workOrders') : undefined
             }>
             <TableCell>
               <Typography variant="subtitle2" color="text.secondary">Estimated Install Date(s):</Typography>
@@ -421,7 +421,7 @@ export function ProjectDetailsContent({
               <TableRow
                 sx={{ cursor: 'pointer' }}
                 onClick={
-                  !isInstaller(userLogged?.data?.user_role?.name) ? () => tabs.setValue('workOrders') : undefined
+                  isAdministrator(userLogged?.data?.user_role?.name) ? () => tabs.setValue('workOrders') : undefined
                 }>
                 <TableCell>
                   <Typography variant="subtitle2" color="text.secondary">Inspection Date(s):</Typography>
@@ -533,7 +533,7 @@ export function ProjectDetailsContent({
               <TableRow
                 sx={{ cursor: 'pointer' }}
                 onClick={
-                  !isInstaller(userLogged?.data?.user_role?.name) ? () => tabs.setValue('workOrders') : undefined
+                  isAdministrator(userLogged?.data?.user_role?.name) ? () => tabs.setValue('workOrders') : undefined
                 }>
                 <TableCell>
                   <Typography variant="subtitle2" color="text.secondary">Finish Date(s):</Typography>
