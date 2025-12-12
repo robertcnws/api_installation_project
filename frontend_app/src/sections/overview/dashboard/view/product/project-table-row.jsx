@@ -18,6 +18,7 @@ import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
 
 import { ProjectEditModalDatesView } from 'src/sections/project/view/project-edit-modal-dates-view';
+import { ProjectEditModalWorkOrderView } from 'src/sections/project/view/project-edit-modal-work-order-view';
 
 // ----------------------------------------------------------------------
 
@@ -68,16 +69,22 @@ export function RenderCellDate({ params }) {
           sx={{ cursor: 'pointer', px: 4 }}
           onClick={openModal.onTrue}
         >
-          Set Install date
+          Set Work Order
         </Label>
       )}
 
-      <ProjectEditModalDatesView
+      {/* <ProjectEditModalDatesView
         project={params?.row}
         open={openModal.value}
         onClose={openModal.onFalse}
         isEdit={false}
         isStartDate
+      /> */}
+
+      <ProjectEditModalWorkOrderView
+        open={openModal.value}
+        onClose={openModal.onFalse}
+        project={params?.row}
       />
     </>
   );
