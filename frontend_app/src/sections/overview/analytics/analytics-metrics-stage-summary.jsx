@@ -82,9 +82,9 @@ export function AnalyticsMetricsStageSummary({
 
         if (!startTask || !endTask) return null;
 
-        const endDate = endTask.last_modified_time;
+        const endDate = endTask.end_task_time || endTask.last_modified_time;
 
-        const lastModifiedStart = startTask.last_modified_time;
+        const lastModifiedStart = startTask.start_task_time || startTask.last_modified_time;
         const createdStart = startTask.created_time;
 
         const startDate = fIsAfter(lastModifiedStart, endDate) ? createdStart : lastModifiedStart;

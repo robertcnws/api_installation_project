@@ -595,3 +595,47 @@ def task_update_default_task_in_projects(default_task_id: str):
         project_default_tasks = sorted(project_default_tasks, key=lambda x: x['project_default_task']['order'], reverse=True)
         project.project_default_tasks = project_default_tasks
         project.save(validate=False)
+        
+
+@shared_task
+def task_update_default_tasks_in_all_projects():
+    logger.info("Starting task to update default tasks in all projects...")
+
+    projects = Project.objects.only('id', 'name', 'project_default_tasks')
+
+    processed = 0
+    for project in projects:
+        processed += 1
+
+        project_default_tasks = project.project_default_tasks or []
+        updated_tasks = []
+
+        changed_any = False
+        counter = 0
+
+        for task in project_default_tasks:
+            changed = False  
+
+            if task.get('status') == 'finished':
+                if not task.get('start_task_time'):
+                    task['start_task_time'] = task.get('last_modified_time') or task.get('created_time')
+                    changed = True
+
+                if not task.get('end_task_time'):
+                    task['end_task_time'] = task.get('last_modified_time') or task.get('created_time')
+                    changed = True
+
+            if changed:
+                changed_any = True
+                counter += 1
+
+            updated_tasks.append(task) 
+
+        if changed_any:
+            project.project_default_tasks = updated_tasks
+            project.save(validate=False)
+            logger.info("Updated %s tasks in project %s", counter, str(project.name))
+
+    return {"projects_processed": processed}
+
+        

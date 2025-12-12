@@ -329,6 +329,10 @@ CELERY_BEAT_SCHEDULE = {
     #     'task': 'api_projects.tasks.task_rebuild_scope_and_materials',
     #     'schedule': crontab(minute=0, hour='*', day_of_week='*'),
     # },
+    'run-update-default-tasks-in-all-projects' : {
+        'task': 'api_projects.tasks.task_update_default_tasks_in_all_projects',
+        'schedule': crontab(minute='*/5', hour='*', day_of_week='*'),
+    }
 }
 
 
