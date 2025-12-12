@@ -94,5 +94,10 @@ urlpatterns = [
     path('download/backup/', views.download_mongo_db, name='download_mongo_db'),
     # GET FILE URL FROM AWS S3
     path('get-file-url/', views.get_default_file_url, name='get_file_url'),
+    # TIMER ENDPOINTS
+    path('timers/<str:entity_type>/<str:entity_id>/', views.timer_get, name='timer_get'),
+    path('timers/start/', views.timer_start, name='timer_start'),
+    path('timers/pause/', views.timer_pause, name='timer_pause'),
+    path('timers/reset/', views.timer_reset, name='timer_reset'),
 
 ]

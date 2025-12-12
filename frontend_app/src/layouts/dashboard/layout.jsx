@@ -1,9 +1,10 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import Box from '@mui/material/Box';
 import Alert from '@mui/material/Alert';
 import { useTheme } from '@mui/material/styles';
 import { iconButtonClasses } from '@mui/material/IconButton';
+import { List, ListItem, MenuItem, MenuList } from '@mui/material';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
@@ -11,6 +12,9 @@ import { allLangs } from 'src/locales';
 
 import { Logo } from 'src/components/logo';
 import { useSettingsContext } from 'src/components/settings';
+import { useTaskTimersQuery } from 'src/_mock/__task_timers';
+import { CONFIG } from 'src/config-global';
+import { useSocketList, useSocketRefetch } from 'src/utils/websockets';
 
 import { Main } from './main';
 import { NavMobile } from './nav-mobile';
@@ -29,8 +33,8 @@ import { SettingsButton } from '../components/settings-button';
 import { LanguagePopover } from '../components/language-popover';
 import { navData as dashboardNavData } from '../config-nav-dashboard';
 import { NotificationsDrawer } from '../components/notifications-drawer';
-
-
+import { PersistentServerTimer } from '../components/persistent-server-timer';
+import { PersistentServerTimerList } from '../components/persistent-server-timer-list';
 
 
 
@@ -62,6 +66,33 @@ export function DashboardLayout({ sx, children, header, data }) {
   const isNavMini = settings.navLayout === 'mini';
   const isNavHorizontal = settings.navLayout === 'horizontal';
   const isNavVertical = isNavMini || settings.navLayout === 'vertical';
+
+  const [timers, setTimers] = useState([]);
+
+  const { loading: loadingTimers, data: loadedTimers } =
+    useTaskTimersQuery(null, null, null, null);
+
+  useEffect(() => {
+    if (!loadedTimers) return;
+
+    const next = Array.isArray(loadedTimers) ? loadedTimers : [loadedTimers];
+
+    setTimers(prev => {
+      if (prev.length === next.length) {
+        const same = prev.every((p, i) => p.id === next[i].id);
+        if (same) return prev;
+      }
+      return next;
+    });
+
+  }, [loadedTimers]);
+
+  useSocketList(
+    `${CONFIG.wsProtocol}://${CONFIG.wsHost}/${CONFIG.wsDomain}/projects/ws/timers/`,
+    setTimers
+  );
+
+  // console.log('Timers in DashboardLayout:', timers);
 
   return (
     <LayoutSection
@@ -158,6 +189,9 @@ export function DashboardLayout({ sx, children, header, data }) {
             rightArea: (
               <Box display="flex" alignItems="center" gap={{ xs: 0, sm: 0.75 }}>
                 {/* -- Searchbar -- */}
+                {timers?.length > 0 && (
+                  <PersistentServerTimerList timers={timers?.filter(t => t.isRunning)} />
+                )}
                 <Searchbar data={navData} />
                 {/* -- Language popover -- */}
                 {/* <LanguagePopover data={allLangs} /> */}

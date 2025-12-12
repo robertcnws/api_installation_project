@@ -15,6 +15,7 @@ from api_projects.schema_models.model_schema_project_tracking import ProjectTrac
 from api_projects.schema_models.model_schema_project_calendar_notes import ProjectCalendarNotesType
 from api_projects.schema_models.model_schema_project_profit_report import ProjectProfitReportType
 from api_projects.schema_models.model_schema_project_installation_crew import ProjectInstallationCrewType
+from api_projects.schema_models.model_schema_timer import TaskTimerType
 
 from .models import (
     ProjectInstallationCrew,
@@ -38,6 +39,9 @@ from .models import (
 )
 from .models_sync import (
     ProjectSync,
+)
+from .models_extra import (
+    TaskTimer,
 )
 from api_authorization.models import LoginUser
 from bson import ObjectId
@@ -86,6 +90,20 @@ class Query(graphene.ObjectType):
         end_date=graphene.String(required=True)
     )
     all_project_installation_crews = graphene.List(ProjectInstallationCrewType)
+    
+    all_task_timers = graphene.List(TaskTimerType)
+    
+    timer_by_id = graphene.Field(
+        TaskTimerType,
+        id=graphene.String(required=True)
+    )
+    
+    timer_get_by_username_entity = graphene.Field(
+        TaskTimerType,
+        username=graphene.String(required=False),
+        entity_type=graphene.String(required=False),
+        entity_id=graphene.String(required=False),
+    )
     
     def resolve_all_project_reminders(self, info, username=None):
         if username:
@@ -203,6 +221,28 @@ class Query(graphene.ObjectType):
     
     def resolve_all_project_installation_crews(self, info):
         return list(ProjectInstallationCrew.objects.all())
+    
+    def resolve_all_task_timers(self, info):
+        return list(TaskTimer.objects.all())
+    
+    def resolve_timer_by_id(self, info, id):
+        try:
+            return TaskTimer.objects.get(id=ObjectId(id))
+        except Exception:
+            return None
+        
+    def resolve_timer_get_by_username_entity(self, info, username=None, entity_type=None, entity_id=None):
+        try:
+            qs = TaskTimer.objects
+            if username:
+                qs = qs(username=username)
+            if entity_type:
+                qs = qs(entity_type=entity_type)
+            if entity_id:
+                qs = qs(entity_id=entity_id)
+            return qs.first()
+        except Exception:
+            return None
             
 
 schema = graphene.Schema(query=Query)

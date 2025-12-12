@@ -72,7 +72,10 @@ export function KanbanView({
 
   useEffect(() => {
     if (project) {
-      setHasInstallDate(project.startDate !== null);
+      const installWorkOrders = project?.workOrders?.filter((wo) =>
+        wo.work_type.name.toLowerCase().includes('installation')
+      );
+      setHasInstallDate(installWorkOrders.length > 0);
       setInstaller(getProjectInstallers(project, CONFIG));
     }
   }, [project]);
@@ -445,12 +448,12 @@ export function KanbanView({
                 <>
                   {!hasInstallDate && (
                     <Alert severity="error" sx={{ width: '100%', mt: 1 }}>
-                      You must define the INSTALLATION DATE of the project to see other tasks.
+                      You must define the some INSTALLATION WORK ORDER to see other tasks.
                     </Alert>
                   )}
                   {!installer && (
                     <Alert severity="error" sx={{ width: '100%', mt: 1 }}>
-                      You must assign an INSTALLER to the project to see other tasks.
+                      You must assign an INSTALLER to the some WORK ORDER to see other tasks.
                     </Alert>
                   )}
                 </>

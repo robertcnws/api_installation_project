@@ -117,6 +117,8 @@ function CombineProviders({ children }) {
   } = useProjectInstallationCrews();
 
   // console.log('loadedPermissions', loadedPermissions);
+
+  const [timerInstallation, setTimerInstallation] = React.useState(null);
   
   const value = useMemo(() => ({
     userLogged,
@@ -195,7 +197,9 @@ function CombineProviders({ children }) {
     loadedInstallationCrews,
     refetchInstallationCrews,
     loadingInstallationCrews,
-    errorInstallationCrews 
+    errorInstallationCrews,
+    timerInstallation,
+    setTimerInstallation 
   }), [
     userLogged,
     loadedUsers,
@@ -273,7 +277,9 @@ function CombineProviders({ children }) {
     loadedInstallationCrews,
     refetchInstallationCrews,
     loadingInstallationCrews,
-    errorInstallationCrews  
+    errorInstallationCrews,
+    timerInstallation,
+    setTimerInstallation 
   ]);
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>;

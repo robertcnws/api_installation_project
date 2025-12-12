@@ -15,6 +15,7 @@ from .models import (
     ProjectInstallationCrew,
 )
 from .models_sync import ProjectSync
+from .models_extra import TaskTimer
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from api_projects.event_messages import (
@@ -29,9 +30,25 @@ from api_projects.event_messages import (
     message_project_notification_user,
     message_project_calendar_notes,
     message_project_profit_report,
-    message_project_installation_crew
+    message_project_installation_crew,
+    message_timer,
 )
 import json
+
+##########################################################################
+# TaskTimer
+##########################################################################
+
+def timer_saved(sender, document, **kwargs):
+    created = kwargs.get('created', False)
+    channel_layer = get_channel_layer()
+    event = message_timer('created' if created else 'updated', document)
+    async_to_sync(channel_layer.group_send)('timer', serialize_datetime(event))
+    
+def timer_deleted(sender, document, **kwargs):
+    channel_layer = get_channel_layer()
+    event = message_timer('deleted', document)
+    async_to_sync(channel_layer.group_send)('timer', serialize_datetime(event))
 
 ##########################################################################    
 # ProjectInstallationCrew
@@ -350,3 +367,6 @@ signals.post_delete.connect(project_profit_report_deleted, sender=ProjectProfitR
 
 signals.post_save.connect(project_installation_crew_saved, sender=ProjectInstallationCrew)
 signals.post_delete.connect(project_installation_crew_deleted, sender=ProjectInstallationCrew)
+
+signals.post_save.connect(timer_saved, sender=TaskTimer)
+signals.post_delete.connect(timer_deleted, sender=TaskTimer)

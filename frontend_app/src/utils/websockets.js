@@ -59,7 +59,7 @@ export function useSocketRefetch(url, refetch) {
       const message = JSON.parse(event.data);
 
       if (message.type === 'created' || message.type === 'updated' || message.type === 'deleted') {
-        refetch();
+        refetch?.();
       }
     };
 
