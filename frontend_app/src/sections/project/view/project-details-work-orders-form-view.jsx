@@ -302,7 +302,7 @@ export function ProjectDetailsWorkOrdersFormView({
                                   )}
                                 </Box>
                               </TableCell>
-                              <TableCell sx={{ width: 50 }}>
+                              <TableCell>
                                 {order?.description ? (
                                   <Label
                                     color="warning"
@@ -315,7 +315,7 @@ export function ProjectDetailsWorkOrdersFormView({
                                       setSelectedWorkOrder(order);
                                       openNotes.onTrue();
                                     }}>
-                                    See Description
+                                    <Iconify icon="zondicons:view-show" width={26} />
                                   </Label>
                                 ) : 'N/A'}
                               </TableCell>
@@ -335,28 +335,85 @@ export function ProjectDetailsWorkOrdersFormView({
                                 </Typography>
                               </TableCell> */}
                               <TableCell sx={{ width: 200, cursor: 'pointer' }} onClick={() => handleOpenWorkOrder(order)}>
-                                <Box sx={{ display: 'flex', justifyContent: 'flex-start', flexDirection: 'column', gap: 0 }}>
-                                  <Box sx={{ display: 'flex', justifyContent: 'flex-start' }}>
-                                    <Typography variant="caption" sx={{ color: 'text.secondary', mr: 1 }}>
+                                <Box sx={{
+                                  display: 'flex',
+                                  justifyContent: 'flex-start',
+                                  flexDirection: 'column',
+                                  gap: 0,
+                                  cursor: 'pointer'
+                                }}>
+                                  <Box sx={{
+                                    display: 'flex',
+                                    justifyContent: 'flex-start',
+                                    flexDirection: 'column',
+                                    gap: 1,
+                                    cursor: 'pointer'
+                                  }}>
+                                    <Typography
+                                      variant="caption"
+                                      sx={{
+                                        color: 'text.secondary',
+                                        mr: 1,
+                                        cursor: 'pointer'
+                                      }}>
                                       Installer(s):
                                     </Typography>
-                                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                    <Box sx={{
+                                      display: 'flex',
+                                      flexDirection: 'column',
+                                      gap: 0,
+                                      mt: -1,
+                                      cursor: 'pointer'
+                                    }}>
                                       {getWorkOrderWorkers(order).map((worker) => (
-                                        <Label key={worker.id}>
+                                        <Label
+                                          key={worker.id}
+                                          sx={{
+                                            bgcolor: 'transparent',
+                                            justifyContent: 'flex-start',
+                                            cursor: 'pointer'
+                                          }}>
                                           {worker.firstName || worker.first_name} {worker.lastName || worker.last_name}
                                         </Label>
                                       ))}
                                     </Box>
                                   </Box>
                                   {getWorkOrderAssistants(order).length > 0 && (
-                                    <Box sx={{ display: 'flex', mt: 1, justifyContent: 'flex-start' }}>
-                                      <Typography variant="caption" sx={{ color: 'text.secondary', mr: 1 }}>
+                                    <Box sx={{
+                                      display: 'flex',
+                                      mt: 1,
+                                      justifyContent: 'flex-start',
+                                      flexDirection: 'column',
+                                      gap: 1,
+                                      cursor: 'pointer'
+                                    }}>
+                                      <Typography
+                                        variant="caption"
+                                        sx={{
+                                          color: 'text.secondary',
+                                          mr: 1,
+                                          cursor: 'pointer'
+                                        }}>
                                         Assistant(s):
                                       </Typography>
 
-                                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                      <Box sx={{
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: 0,
+                                        justifyContent: 'flex-start',
+                                        textAlign: 'left',
+                                        mt: -1,
+                                        cursor: 'pointer'
+                                      }}>
                                         {getWorkOrderAssistants(order).map((worker, index2) => (
-                                          <Label key={`${worker.id}-${index2}`}>
+                                          <Label
+                                            key={`${worker.id}-${index2}`}
+                                            sx={{
+                                              bgcolor: 'transparent',
+                                              justifyContent: 'flex-start',
+                                              cursor: 'pointer'
+                                            }}>
                                             {worker.name}
                                           </Label>
                                         ))}
@@ -393,11 +450,11 @@ export function ProjectDetailsWorkOrdersFormView({
                                 <br />
                                 <Typography variant="h6">Description: </Typography>
                                 {order?.description ? (
-                                  <Label color="warning" sx={{ cursor: 'pointer' }} onClick={() => {
+                                  <Label color="warning" sx={{ cursor: 'pointer', bgcolor: 'transparent', justifyContent: 'flex-start' }} onClick={() => {
                                     setSelectedWorkOrder(order);
                                     openNotes.onTrue();
                                   }}>
-                                    See Description
+                                    <Iconify icon="zondicons:view-show" width={26} />
                                   </Label>
                                 ) : 'N/A'}
                                 <br />
@@ -417,20 +474,50 @@ export function ProjectDetailsWorkOrdersFormView({
                                 </Label>
                                 <br /> */}
                                 <Typography variant="h6">Assignee(s): </Typography>
-                                {order.users_assignees?.length > 0 ? order.users_assignees.map((assignee) => (
-                                  <Label key={assignee.id} color="default" sx={{ bgcolor: 'transparent', justifyContent: 'flex-start' }}>
-                                    {`${assignee.firstName} ${assignee.lastName}`}
-                                  </Label>
-                                )) : 'N/A'}
+                                <Box sx={{ display: 'flex', justifyContent: 'flex-start', flexDirection: 'column', gap: 0 }}>
+                                  <Box sx={{ display: 'flex', justifyContent: 'flex-start', flexDirection: 'column', gap: 1 }}>
+                                    <Typography variant="caption" sx={{ color: 'text.secondary', mr: 1 }}>
+                                      Installer(s):
+                                    </Typography>
+                                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                      {getWorkOrderWorkers(order).map((worker) => (
+                                        <Typography key={worker.id} variant="body2">
+                                          {worker.firstName || worker.first_name} {worker.lastName || worker.last_name}
+                                        </Typography>
+                                      ))}
+                                    </Box>
+                                  </Box>
+                                  {getWorkOrderAssistants(order).length > 0 && (
+                                    <Box sx={{ display: 'flex', mt: 1, justifyContent: 'flex-start', flexDirection: 'column', gap: 1 }}>
+                                      <Typography variant="caption" sx={{ color: 'text.secondary', mr: 1 }}>
+                                        Assistant(s):
+                                      </Typography>
+
+                                      <Box sx={{
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: 1,
+                                        justifyContent: 'flex-start',
+                                        textAlign: 'left'
+                                      }}>
+                                        {getWorkOrderAssistants(order).map((worker, index2) => (
+                                          <Typography key={`${worker.id}-${index2}`} variant="body2">
+                                            {worker.name}
+                                          </Typography>
+                                        ))}
+                                      </Box>
+                                    </Box>
+                                  )}
+                                </Box>
                                 <br />
                                 <Typography variant="h6">Product(s): </Typography>
                                 {order?.items?.length > 0 ? (
-                                  <Label color="success" sx={{ cursor: 'pointer' }} onClick={() => {
+                                  <Typography sx={{ cursor: 'pointer', color: 'success.main' }} onClick={() => {
                                     setSelectedWorkOrder(order);
                                     openItems.onTrue();
                                   }}>
                                     {order?.items?.length > 0 ? `${order?.items?.length} Item(s)` : 'No Items'}
-                                  </Label>
+                                  </Typography>
                                 ) : 'N/A'}
                               </Box>
                             </TableCell>
