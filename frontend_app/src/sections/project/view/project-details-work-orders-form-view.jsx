@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, useContext } from 'react';
+import { useMemo, useState, useEffect, useContext, useRef } from 'react';
 import { lighten, useTheme } from '@mui/material/styles';
 
 import Card from '@mui/material/Card';
@@ -52,9 +52,27 @@ export function ProjectDetailsWorkOrdersFormView({
   listPermissions,
   openDialogs,
   setOpenDialogs,
+  isHidden,
 }) {
 
   const theme = useTheme();
+
+  const leftColRef = useRef(null);
+  const [leftColHeight, setLeftColHeight] = useState(0);
+
+  useEffect(() => {
+    const el = leftColRef.current;
+    if (!el) return undefined;
+
+    const ro = new ResizeObserver(() => {
+      setLeftColHeight(el.getBoundingClientRect().height);
+    });
+
+    ro.observe(el);
+    setLeftColHeight(el.getBoundingClientRect().height);
+
+    return () => ro.disconnect();
+  }, []);
 
   useEffect(() => {
     refetchProject?.();
@@ -519,6 +537,9 @@ export function ProjectDetailsWorkOrdersFormView({
       listPermissions={listPermissions}
       openDialogs={openDialogs}
       setOpenDialogs={setOpenDialogs}
+      isHidden={isHidden.value}
+      onToggleHidden={isHidden.onToggle}
+      maxHeight={leftColHeight}
     />
   );
 
@@ -535,11 +556,32 @@ export function ProjectDetailsWorkOrdersFormView({
   return (
     <>
       <Grid container spacing={2}>
-        <Grid xs={12} md={8}>
-          {renderContent}
+        <Grid xs={12} md={isHidden.value ? 11 : 8} sx={{ display: 'flex' }}>
+          <Box
+            ref={leftColRef}
+            sx={{
+              alignSelf: 'flex-start',
+              width: '100%',     // ✅ para que no se encoja
+              minWidth: 0,       // ✅ evita overflow raro
+            }}
+          >
+            {renderContent}
+          </Box>
         </Grid>
-        <Grid xs={12} md={4}>
-          {renderOverview}
+        <Grid xs={12} md={isHidden.value ? 1 : 4} sx={{ display: 'flex' }}>
+          <Box
+            sx={{
+              mb: 0,
+              width: '100%',
+              mt: 0,
+              ml: 0,
+              display: 'flex',
+              height: '100%',      // ✅ importante
+              minHeight: 0,        // ✅ importante para que overflow funcione
+            }}
+          >
+            {renderOverview}
+          </Box>
         </Grid>
       </Grid >
       <ProjectEditModalWorkOrderView

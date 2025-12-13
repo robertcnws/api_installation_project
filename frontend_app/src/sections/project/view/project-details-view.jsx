@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { useMemo, useState, useEffect, useCallback } from 'react';
+import { useMemo, useState, useEffect, useCallback, useRef } from 'react';
 
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
@@ -27,7 +27,7 @@ import { ConfirmDialog } from 'src/components/custom-dialog';
 import { usePopover, CustomPopover } from 'src/components/custom-popover';
 
 import { useDataContext } from 'src/auth/context/data/data-context';
-
+import { useBoolean } from 'src/hooks/use-boolean';
 import { ProjectEditModalView } from './project-edit-modal-view';
 import { ProjectDetailsToolbar } from '../project-details-toolbar';
 import { ProjectDetailsContent } from '../project-details-content';
@@ -46,7 +46,6 @@ import { ProjectDetailsInstallationGuideFormView } from './project-details-insta
 import { ProjectDetailsInstallationGuideFormInstallerView } from './project-details-installation-guide-form-installer-view';
 import { ProjectDetailsWorkOrdersFormView } from './project-details-work-orders-form-view';
 
-
 // ----------------------------------------------------------------------
 
 export function ProjectDetailsView({
@@ -59,6 +58,8 @@ export function ProjectDetailsView({
     const router = useRouter();
 
     const morePopover = usePopover();
+
+    const isHiddenOverview = useBoolean(false);
 
     const {
         loadedProjects,
@@ -613,6 +614,7 @@ export function ProjectDetailsView({
                                     openDialogs={openDialogs}
                                     setOpenDialogs={setOpenDialogs}
                                     tabs={tabs}
+                                    isHidden={isHiddenOverview}
                                 />
                             }
 
@@ -633,6 +635,7 @@ export function ProjectDetailsView({
                                     listPermissions={listPermissions}
                                     openDialogs={openDialogs}
                                     setOpenDialogs={setOpenDialogs}
+                                    isHidden={isHiddenOverview}
                                 />
                             }
 
@@ -643,6 +646,7 @@ export function ProjectDetailsView({
                                     listPermissions={listPermissions}
                                     openDialogs={openDialogs}
                                     setOpenDialogs={setOpenDialogs}
+                                    isHidden={isHiddenOverview}
                                 />
                             }
 
@@ -675,6 +679,7 @@ export function ProjectDetailsView({
                                             openDialogs={openDialogs}
                                             setOpenDialogs={setOpenDialogs}
                                             loadedDefaultGuideProducts={loadedDefaultGuideProducts}
+                                            isHidden={isHiddenOverview}
                                         />
                                     ) : (
                                         <ProjectDetailsInstallationGuideFormView
@@ -685,6 +690,7 @@ export function ProjectDetailsView({
                                             setOpenDialogs={setOpenDialogs}
                                             loadedDefaultGuideProducts={loadedDefaultGuideProducts}
                                             loadedDefaultMaterials={loadedDefaultMaterials}
+                                            isHidden={isHiddenOverview}
                                         />
                                     )))}
 

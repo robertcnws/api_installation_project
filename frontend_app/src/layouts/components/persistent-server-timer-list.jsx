@@ -66,8 +66,20 @@ export function PersistentServerTimerList({ timers = [] }) {
             onClose={() => setAnchorEl(null)}
             anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
             transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-            // ✅ opcional: mantiene montado el menú y reduce “resets”
             keepMounted
+            slotProps={{
+              paper: {
+                sx: {
+                  width: 320,           // ✅ ancho fijo del dropdown
+                  maxWidth: 320,
+                },
+              },
+            }}
+            MenuListProps={{
+              sx: {
+                p: 0,                 // opcional: quita padding extra
+              },
+            }}
           >
             {runningTimers.map((t) => {
               const k = timerKey(t);
@@ -81,17 +93,18 @@ export function PersistentServerTimerList({ timers = [] }) {
                     setSelectedKey(k);
                     setAnchorEl(null);
                   }}
+                  sx={{
+                    width: '100%',      // ✅ ocupa todo el ancho del Paper
+                    py: 1,
+                    alignItems: 'stretch',
+                  }}
                 >
-                  {/* compact para que no sea enorme en el dropdown */}
-                  <PersistentServerTimer
-                    serverTimer={t}
-                    nowMs={nowMs}
-                    compact
-                  />
+                  <PersistentServerTimer serverTimer={t} nowMs={nowMs} compact />
                 </MenuItem>
               );
             })}
           </Menu>
+
         </>
       )}
     </Box>
