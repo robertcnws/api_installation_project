@@ -1,6 +1,6 @@
 import axios from 'axios';
 import dayjs from 'dayjs';
-import { useMemo, useState, useEffect, useContext, useCallback } from 'react';
+import { useMemo, useState, useEffect, useContext, useCallback, useRef } from 'react';
 
 import Card from '@mui/material/Card';
 import Avatar from '@mui/material/Avatar';
@@ -12,6 +12,7 @@ import { Box, Table, Switch, Tooltip, TableRow, TableBody, TableCell, IconButton
 import { getProjectInstallers } from 'src/utils/project-tasks-utils';
 import { fDate, fIsAfter, fDateTime, fDuration } from 'src/utils/format-time';
 import { isInstaller, verifyPermissions, listRolesAndSubroles, isAdministrator } from 'src/utils/check-permissions';
+import { useBoolean } from 'src/hooks/use-boolean';
 
 import { CONFIG } from 'src/config-global';
 
@@ -35,6 +36,7 @@ import { ProjectEditModalInstallationTeamView } from './view/project-edit-modal-
 
 
 
+
 // ----------------------------------------------------------------------
 
 export function ProjectDetailsContent({
@@ -45,6 +47,7 @@ export function ProjectDetailsContent({
   openDialogs,
   setOpenDialogs,
   tabs,
+  isHidden,
 }) {
 
   const theme = useTheme();
@@ -52,6 +55,23 @@ export function ProjectDetailsContent({
   const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
 
   const { isMobile } = useContext(LoadingContext);
+
+  const leftColRef = useRef(null);
+  const [leftColHeight, setLeftColHeight] = useState(0);
+
+  useEffect(() => {
+    const el = leftColRef.current;
+    if (!el) return undefined;
+
+    const ro = new ResizeObserver(() => {
+      setLeftColHeight(el.getBoundingClientRect().height);
+    });
+
+    ro.observe(el);
+    setLeftColHeight(el.getBoundingClientRect().height);
+
+    return () => ro.disconnect();
+  }, []);
 
   const {
     loadedStages,
@@ -163,7 +183,8 @@ export function ProjectDetailsContent({
   );
 
   const renderMainContent = (
-    <Card sx={{ p: 3, gap: 1, display: 'flex', flexDirection: 'column', width: '100%' }}>
+    <Card sx={{ p: 3, gap: 1, display: 'flex', flexDirection: 'column', width: '100%', height: '100%' }}>
+
       <Table size="small">
         <TableBody>
           <TableRow>
@@ -277,8 +298,8 @@ export function ProjectDetailsContent({
           <TableRow
             sx={{ cursor: 'pointer' }}
             onClick={
-              listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator) ? 
-              () => tabs.setValue('workOrders') : undefined
+              listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator) ?
+                () => tabs.setValue('workOrders') : undefined
             }>
             <TableCell>
               <Typography variant="subtitle2" color="text.secondary">Estimated Install Date(s):</Typography>
@@ -422,8 +443,8 @@ export function ProjectDetailsContent({
               <TableRow
                 sx={{ cursor: 'pointer' }}
                 onClick={
-                  listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator) ? 
-                  () => tabs.setValue('workOrders') : undefined
+                  listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator) ?
+                    () => tabs.setValue('workOrders') : undefined
                 }>
                 <TableCell>
                   <Typography variant="subtitle2" color="text.secondary">Inspection Date(s):</Typography>
@@ -535,8 +556,8 @@ export function ProjectDetailsContent({
               <TableRow
                 sx={{ cursor: 'pointer' }}
                 onClick={
-                  listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator) ? 
-                  () => tabs.setValue('workOrders') : undefined
+                  listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator) ?
+                    () => tabs.setValue('workOrders') : undefined
                 }>
                 <TableCell>
                   <Typography variant="subtitle2" color="text.secondary">Finish Date(s):</Typography>
@@ -648,7 +669,8 @@ export function ProjectDetailsContent({
   );
 
   const renderDescription = (
-    <Card sx={{ p: 3, gap: 1.5, display: 'flex', flexDirection: 'column', width: '100%' }}>
+    <Card sx={{ p: 3, gap: 1.5, display: 'flex', flexDirection: 'column', width: '100%', height: '100%' }}>
+
       {project?.description?.split('&').map((line, index) => (
         <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, mt: 0, mb: 0 }} key={`box-${index}`}>
           <Typography key={index} variant="caption" color="text.primary" sx={{ mb: 0.5, textAlign: 'justify', fontWeight: index === 0 ? 'bold' : 'normal' }}>
@@ -778,6 +800,8 @@ export function ProjectDetailsContent({
     />
   );
 
+
+
   const renderOverview = (
     <ProjectDetailsContentOverview
       project={project}
@@ -785,6 +809,9 @@ export function ProjectDetailsContent({
       openDialogs={openDialogs}
       setOpenDialogs={setOpenDialogs}
       isOverview={!!project}
+      isHidden={isHidden.value}
+      onToggleHidden={isHidden.onToggle}
+      maxHeight={leftColHeight}
     />
   );
 
@@ -814,33 +841,75 @@ export function ProjectDetailsContent({
       <Grid container spacing={3}>
         {!isInstaller(userLogged?.data?.user_role?.name) && (
           <>
-            <Grid xs={12} md={8}>
-              <Grid xs={12} md={12}>
-                <Box sx={{ mb: 1, width: '100%', mt: -4 }}>
-                  {renderStages}
-                </Box>
-              </Grid>
-              <Grid xs={12} md={12}>
-                <Box sx={{ display: 'flex', flexDirection: !isMobile ? 'row' : 'column', gap: 1, mb: 1, mt: -3 }}>
-                  {renderMainContent}
-                  {renderDescription}
-                </Box>
-              </Grid>
-              <Grid xs={12} md={12}>
-                <Box sx={{ display: 'flex', flexDirection: !isMobile ? 'row' : 'column', gap: 1, mb: 1, mt: -3, width: '100%' }}>
-                  {renderTaskChart}
-                  {renderProjectSemicircleChart}
-                </Box>
-              </Grid>
+            {/* ✅ Columna izquierda */}
+            <Grid xs={12} md={isHidden.value ? 11 : 8} sx={{ display: 'flex' }}>
+              <Box
+                ref={leftColRef}
+                sx={{
+                  alignSelf: 'flex-start',
+                  width: '100%',     // ✅ para que no se encoja
+                  minWidth: 0,       // ✅ evita overflow raro
+                }}
+              >
+                <Grid container spacing={3}>
+                  <Grid xs={12}>
+                    <Box sx={{ mb: 1, width: '100%', mt: -4 }}>
+                      {renderStages}
+                    </Box>
+                  </Grid>
 
+                  <Grid xs={12}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        flexDirection: !isMobile ? 'row' : 'column',
+                        gap: 1,
+                        mb: 1,
+                        mt: -3,
+                        width: '100%',
+                        alignItems: 'stretch',
+                      }}
+                    >
+                      <Box sx={{ flex: 1, minWidth: 0, display: 'flex' }}>
+                        <Box sx={{ width: '100%' }}>{renderMainContent}</Box>
+                      </Box>
+
+                      <Box sx={{ flex: 1, minWidth: 0, display: 'flex' }}>
+                        <Box sx={{ width: '100%' }}>{renderDescription}</Box>
+                      </Box>
+                    </Box>
+                  </Grid>
+
+                  <Grid xs={12}>
+                    <Box sx={{ display: 'flex', flexDirection: !isMobile ? 'row' : 'column', gap: 1, mb: 1, mt: -3, width: '100%' }}>
+                      {renderTaskChart}
+                      {renderProjectSemicircleChart}
+                    </Box>
+                  </Grid>
+                </Grid>
+              </Box>
             </Grid>
-            <Grid xs={12} md={4}>
-              <Box sx={{ mb: 1, width: '100%', mt: -2.5, ml: -3 }}>
+
+            {/* ✅ Columna derecha (siempre existe para poder reabrir) */}
+            <Grid xs={12} md={isHidden.value ? 1 : 4} sx={{ display: 'flex' }}>
+              <Box
+                sx={{
+                  mb: 0,
+                  width: '100%',
+                  mt: { sm: -4, xs: -1.5 },
+                  ml: { sm: -1.5, xs: -0.5 },
+                  display: 'flex',
+                  height: '100%',      // ✅ importante
+                  minHeight: 0,        // ✅ importante para que overflow funcione
+                }}
+              >
                 {renderOverview}
               </Box>
             </Grid>
           </>
         )}
+
+
         {isInstaller(userLogged?.data?.user_role?.name) && (
           <>
             <Grid xs={12} md={12}>

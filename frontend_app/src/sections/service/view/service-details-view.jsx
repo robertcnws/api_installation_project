@@ -57,6 +57,8 @@ export function ServiceDetailsView({
 
     const morePopover = usePopover();
 
+    const insHiddenOverview = useBoolean(false);
+
     const {
         loadedServices,
         loadedTracks,
@@ -642,6 +644,7 @@ export function ServiceDetailsView({
                                     setOpenDialogs={setOpenDialogs}
                                     openSalesOrderModal={openSalesOrderModal}
                                     handleChangeProperties={handleChangeProperties}
+                                    isHidden={insHiddenOverview}
                                 />
                             }
 

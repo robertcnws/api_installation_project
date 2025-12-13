@@ -1,6 +1,6 @@
 import axios from 'axios';
 import dayjs from 'dayjs';
-import React, { useMemo, useState, useEffect, useContext, useCallback } from 'react';
+import React, { useMemo, useState, useEffect, useContext, useCallback, useRef } from 'react';
 
 import Card from '@mui/material/Card';
 import Avatar from '@mui/material/Avatar';
@@ -54,6 +54,7 @@ export function ServiceDetailsContent({
   setOpenDialogs,
   openSalesOrderModal,
   handleChangeProperties,
+  isHidden,
 }) {
 
   const theme = useTheme();
@@ -61,6 +62,23 @@ export function ServiceDetailsContent({
   const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
 
   const { isMobile } = useContext(LoadingContext);
+
+  const leftColRef = useRef(null);
+  const [leftColHeight, setLeftColHeight] = useState(0);
+
+  useEffect(() => {
+    const el = leftColRef.current;
+    if (!el) return undefined;
+
+    const ro = new ResizeObserver(() => {
+      setLeftColHeight(el.getBoundingClientRect().height);
+    });
+
+    ro.observe(el);
+    setLeftColHeight(el.getBoundingClientRect().height);
+
+    return () => ro.disconnect();
+  }, []);
 
   const table = useTable({ defaultDense: true });
 
@@ -1326,6 +1344,9 @@ export function ServiceDetailsContent({
       openDialogs={openDialogs}
       setOpenDialogs={setOpenDialogs}
       isOverview={!!service}
+      isHidden={isHidden.value}
+      onToggleHidden={isHidden.onToggle}
+      maxHeight={leftColHeight}
     />
   );
 
@@ -1354,29 +1375,47 @@ export function ServiceDetailsContent({
       <Grid container spacing={3}>
         {/* {!isInstaller(userLogged?.data?.user_role?.name) && ( */}
         <>
-          <Grid xs={12} md={8}>
-            {!isInstaller(userLogged?.data?.user_role?.name) && (
+          <Grid xs={12} md={isHidden.value ? 11 : 8} sx={{ display: 'flex' }}>
+            <Box
+              ref={leftColRef}
+              sx={{
+                alignSelf: 'flex-start',
+                width: '100%',     // ✅ para que no se encoja
+                minWidth: 0,       // ✅ evita overflow raro
+              }}
+            >
+              {!isInstaller(userLogged?.data?.user_role?.name) && (
+                <Grid xs={12} md={12}>
+                  <Box sx={{ mb: 1, width: '100%', mt: -4 }}>
+                    {renderStages}
+                  </Box>
+                </Grid>
+              )}
               <Grid xs={12} md={12}>
-                <Box sx={{ mb: 1, width: '100%', mt: -4 }}>
-                  {renderStages}
+                <Box sx={{ display: 'flex', flexDirection: !isMobile ? 'row' : 'column', gap: 1, mb: 1, mt: -3 }}>
+                  {renderMainContent}
+                  {renderDescription}
                 </Box>
               </Grid>
-            )}
-            <Grid xs={12} md={12}>
-              <Box sx={{ display: 'flex', flexDirection: !isMobile ? 'row' : 'column', gap: 1, mb: 1, mt: -3 }}>
-                {renderMainContent}
-                {renderDescription}
-              </Box>
-            </Grid>
-            <Grid xs={12} md={12}>
-              <Box sx={{ display: 'flex', flexDirection: !isMobile ? 'row' : 'column', gap: 1, mb: 1, mt: -3, width: '100%' }}>
-                {renderIssuedProducts}
-              </Box>
-            </Grid>
-
+              <Grid xs={12} md={12}>
+                <Box sx={{ display: 'flex', flexDirection: !isMobile ? 'row' : 'column', gap: 1, mb: 1, mt: -3, width: '100%' }}>
+                  {renderIssuedProducts}
+                </Box>
+              </Grid>
+            </Box>
           </Grid>
-          <Grid xs={12} md={4}>
-            <Box sx={{ mb: 1, width: '100%', mt: -2.5, ml: -3 }}>
+          <Grid xs={12} md={isHidden.value ? 1 : 4} sx={{ display: 'flex' }}>
+            <Box
+              sx={{
+                mb: 0,
+                width: '100%',
+                mt: { sm: -2.5, xs: -1.5 },
+                ml: { sm: -3, xs: -0.5 },
+                display: 'flex',
+                height: '100%',      // ✅ importante
+                minHeight: 0,        // ✅ importante para que overflow funcione
+              }}
+            >
               {renderOverview}
             </Box>
           </Grid>
