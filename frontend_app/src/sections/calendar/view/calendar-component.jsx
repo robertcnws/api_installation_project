@@ -283,7 +283,7 @@ export function CalendarComponent({
                 name: wo.projectName,
                 originalName: `${wo.projectName} - WO Inspection`,
                 userInstaller: wo.user_assignee,
-                title: `Inspection ${wo.projectName}`,
+                title: `Book & Fasteners ${wo.projectName}`,
                 type: 'inspection',
                 namedType: 'inspection',
                 icon: 'icon-park-outline:inspection',
@@ -317,7 +317,7 @@ export function CalendarComponent({
                 name: wo.projectName,
                 originalName: `${wo.projectName} - WO Final Inspection`,
                 userInstaller: wo.user_assignee,
-                title: `Finish Permission ${wo.projectName}`,
+                title: `Final Inspection ${wo.projectName}`,
                 type: 'finishPermission',
                 namedType: 'finish permission',
                 icon: 'ep:finished',
@@ -632,6 +632,42 @@ export function CalendarComponent({
     const openTooltip = Boolean(tooltipAnchor);
     const id = openTooltip ? 'calendar-event-tooltip' : undefined;
 
+    const getCustomPrefix = (info) => {
+        const { namedType } = info;
+        let prefix = '';
+
+        switch (namedType) {
+            case 'installation':
+                prefix = 'Installation';
+                break;
+            case 'finish':
+                prefix = 'Finish';
+                break;
+            case 'inspection':
+                prefix = 'book & fasteners';
+                break;
+            case 'finish permission':
+                prefix = 'Final Inspection';
+                break;
+            case 'service':
+                prefix = 'Service';
+                break;
+            case 'first check measurement':
+                prefix = 'First Check Measurement';
+                break;
+            case 'second check measurement':
+                prefix = 'Second Check Measurement';
+                break;
+            case 'calendar note':
+                prefix = 'Note';
+                break;
+            default:
+                prefix = '';
+        }
+
+        return prefix.toUpperCase();
+    }
+
     return (
         <>
             {
@@ -748,7 +784,7 @@ export function CalendarComponent({
                                     <Paper elevation={1} sx={{ p: 1, bgcolor: 'black', color: 'white', }}>
                                         <Box sx={{ display: 'flex', alignItems: 'center', flexDirection: 'column' }}>
                                             <Typography variant="caption">
-                                                {tooltipInfo.namedType?.toUpperCase()}: {tooltipInfo.title}
+                                                {getCustomPrefix(tooltipInfo)}: {tooltipInfo.title}
                                             </Typography>
                                             {tooltipInfo.installer?.name && (
                                                 <Typography variant="caption">
