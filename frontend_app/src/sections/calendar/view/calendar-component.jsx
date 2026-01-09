@@ -659,7 +659,7 @@ export function CalendarComponent({
                 prefix = 'Second Check Measurement';
                 break;
             case 'calendar note':
-                prefix = 'Note';
+                prefix = 'Calendar Note';
                 break;
             default:
                 prefix = '';
@@ -831,7 +831,7 @@ export function CalendarComponent({
                                             <Iconify icon="mdi:calendar" />
                                         </Box>
                                         <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                                            Manage {currentEvent?.namedType} event
+                                            Manage {getCustomPrefix(currentEvent)} event
                                         </Typography>
                                     </Box>
                                 )}
