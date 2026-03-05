@@ -75,7 +75,7 @@ export function KanbanView({
       const installWorkOrders = project?.workOrders?.filter((wo) =>
         wo.work_type.name.toLowerCase().includes('installation')
       );
-      setHasInstallDate(installWorkOrders.length > 0);
+      setHasInstallDate(installWorkOrders?.length > 0);
       setInstaller(getProjectInstallers(project, CONFIG));
     }
   }, [project]);
@@ -83,21 +83,21 @@ export function KanbanView({
   useEffect(() => {
     if (loadedStages) {
       const actionStages = hasInstallDate && installer ?
-        loadedStages.filter((stage) => stage.name.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) === -1) :
-        loadedStages.filter((stage) => stage.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
-          stage.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
-          stage.name.toLowerCase().indexOf(CONFIG.stages.permission.toLowerCase()) !== -1);
+        loadedStages.filter((stage) => stage?.name?.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) === -1) :
+        loadedStages.filter((stage) => stage?.name?.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
+          stage?.name?.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
+          stage?.name?.toLowerCase().indexOf(CONFIG.stages.permission.toLowerCase()) !== -1);
       if (isInstaller(userLogged?.data?.user_role?.name)) {
-        setStages(actionStages.filter((stage) => stage.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1));
+        setStages(actionStages.filter((stage) => stage?.name?.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1));
       } else if (isWarehouseStaff(userLogged?.data?.user_role?.name)) {
         setStages(actionStages.filter(
-          (stage) => stage.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1 ||
-            stage.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1
+          (stage) => stage?.name?.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1 ||
+            stage?.name?.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1
         ));
       } else if (hasPermission) {
         setStages(actionStages);
       } else {
-        setStages(actionStages.filter((stage) => stage.name !== CONFIG.stages.permission));
+        setStages(actionStages.filter((stage) => stage?.name !== CONFIG.stages.permission));
       }
     }
   }, [loadedStages, hasPermission, userLogged, hasInstallDate, installer]);
@@ -128,23 +128,23 @@ export function KanbanView({
     if (tasks) {
       const initialTasks = tasks.map((task) => ({
         ...task,
-        beforeNoMatter: tasksBeforeNoMatter.includes(task.project_default_task.name.toLowerCase()),
+        beforeNoMatter: tasksBeforeNoMatter.includes(task?.project_default_task?.name?.toLowerCase()),
       }));
       if (isInstaller(userLogged?.data?.user_role?.name)) {
         const selectedTasks = initialTasks.filter(
-          (task) => task.project_default_task.project_stage.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
+          (task) => task?.project_default_task?.project_stage?.name?.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
         );
         const finalTasks = selectedTasks.filter(
-          (task) => task.project_default_task.name.toLowerCase().includes('start') ||
-            task.project_default_task.name.toLowerCase().includes('finish')
+          (task) => task?.project_default_task?.name?.toLowerCase().includes('start') ||
+            task?.project_default_task?.name?.toLowerCase().includes('finish')
         );
         const withUsersTasks = finalTasks.filter(
-          (task) => task.users_assignees.length > 0
+          (task) => task?.users_assignees?.length > 0
         );
         setDefaultTasks(withUsersTasks);
       } else if (isWarehouseStaff(userLogged?.data?.user_role?.name)) {
         const finalTasks = initialTasks.filter(
-          (task) => task.project_default_task.name.toLowerCase().includes('pick up')
+          (task) => task?.project_default_task?.name?.toLowerCase().includes('pick up')
         );
         setDefaultTasks(finalTasks);
       } else {
@@ -161,7 +161,7 @@ export function KanbanView({
   const percentage = useMemo(() => {
     if (newBoard) {
       const totalTasks = Object.values(newBoard.tasks).flat().length;
-      const sumPercentage = Object.values(newBoard.tasks).flat().reduce((acc, task) => acc + task.percentage, 0);
+      const sumPercentage = Object.values(newBoard.tasks).flat().reduce((acc, task) => acc + (task?.percentage || 0), 0);
       return totalTasks > 0 ? sumPercentage / totalTasks : 0;
     }
     return 0;
