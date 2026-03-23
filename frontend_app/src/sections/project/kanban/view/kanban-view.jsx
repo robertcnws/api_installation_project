@@ -329,7 +329,6 @@ export function KanbanView({
           ...board.tasks[overColumn].slice(newIndex, board.tasks[overColumn].length),
         ],
       };
-
       // moveTask(updateTasks);
     }
   };

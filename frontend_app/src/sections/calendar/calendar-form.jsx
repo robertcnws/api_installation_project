@@ -322,14 +322,14 @@ export function CalendarForm({ currentEvent, colorOptions, onClose }) {
         )}
 
         <DialogActions sx={{ flexShrink: 0 }}>
-          {(!!selectedEvent?.id && selectedEvent?.type.toLowerCase().indexOf('measurement') === -1 &&
+          {/* {(!!selectedEvent?.id && selectedEvent?.type.toLowerCase().indexOf('measurement') === -1 &&
             listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) && (
               <Tooltip title="Delete event">
                 <IconButton onClick={confirmDelete.onTrue} color="error">
                   <Iconify icon="solar:trash-bin-trash-bold" />
                 </IconButton>
               </Tooltip>
-            )}
+            )} */}
 
           <Box sx={{ flexGrow: 1 }} />
 
