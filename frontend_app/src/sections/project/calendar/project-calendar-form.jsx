@@ -216,13 +216,13 @@ export function ProjectCalendarForm({ currentEvent, colorOptions, onClose }) {
         </Scrollbar>
 
         <DialogActions sx={{ flexShrink: 0 }}>
-          {(!!currentEvent?.id && !isInstaller(userLogged?.data?.user_role?.name)) && (
+          {/* {(!!currentEvent?.id && !isInstaller(userLogged?.data?.user_role?.name)) && (
             <Tooltip title="Delete event">
               <IconButton onClick={confirmDelete.onTrue} color="error">
                 <Iconify icon="solar:trash-bin-trash-bold" />
               </IconButton>
             </Tooltip>
-          )}
+          )} */}
 
           <Box sx={{ flexGrow: 1 }} />
 
