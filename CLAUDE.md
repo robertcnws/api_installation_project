@@ -2,108 +2,149 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Common Development Commands
+## Project Overview
 
-### Frontend (React/Vite)
-- **Development**: `cd frontend_app && yarn dev` (runs on localhost:3030)
-- **Build**: `cd frontend_app && yarn build`
-- **Lint**: `cd frontend_app && yarn lint`
-- **Lint Fix**: `cd frontend_app && yarn lint:fix`
-- **Format Check**: `cd frontend_app && yarn fm:check`
-- **Format Fix**: `cd frontend_app && yarn fm:fix`
-- **Clean Restart**: `cd frontend_app && yarn re:start`
+This is an **Installation Project Management System** consisting of three applications:
 
-### Backend (Django)
-- **Development**: `cd backend_app && python manage.py runserver`
-- **Database Migrations**: `cd backend_app && python manage.py makemigrations && python manage.py migrate`
-- **Collect Static**: `cd backend_app && python manage.py collectstatic`
-- **Create Superuser**: `cd backend_app && python manage.py createsuperuser`
-- **Run Celery Worker**: `cd backend_app && celery -A system_installation_project worker --loglevel=info`
-- **Run Celery Beat**: `cd backend_app && celery -A system_installation_project beat --loglevel=info`
+1. **`backend_app/`** — Django 5.1 REST API + GraphQL backend (Python)
+2. **`frontend_app/`** — React/Vite SPA frontend (JavaScript, MUI)
+3. **`nextjs_app/`** — Next.js 15 frontend (TypeScript, Tailwind, Supabase)
 
-### Docker Services
-- **Start All Services**: `docker-compose up -d`
-- **Stop All Services**: `docker-compose down`
-- **Rebuild Services**: `docker-compose up --build -d`
-- **View Logs**: `docker-compose logs -f [service_name]`
+The system also includes MongoDB, Redis, Nginx, and optional Supabase infrastructure, all orchestrated via Docker Compose.
 
-### Database Access
-- **MongoDB**: Access via MongoDB Compass on `mongodb://localhost:27037` or AdminMongo on `http://localhost:8082`
-- **MongoExpress**: `http://localhost:8085`
+---
 
-## Architecture Overview
+## Commands
 
-### Project Structure
-This is a **full-stack installation project management system** with the following architecture:
+### Backend (`backend_app/`)
 
-#### Backend (Django + MongoDB)
-- **Framework**: Django 5.1.4 with MongoEngine ODM
-- **Database**: MongoDB with custom authentication backend
-- **API**: GraphQL (Graphene-Django) and REST Framework
-- **Authentication**: Custom JWT with MongoDB backend
-- **Task Queue**: Celery with Redis broker
-- **Real-time**: Django Channels with Redis
+```bash
+# Local development (from backend_app/)
+python manage.py runserver 8001
 
-#### Frontend (React + Vite)
-- **Framework**: React 18.3.1 with Vite build tool
-- **UI Library**: Material-UI (MUI) 5.16.7
-- **State Management**: Apollo Client for GraphQL, Tanstack Query
-- **Authentication**: Auth0 integration
-- **Rich Text**: TipTap editor
-- **Charts**: ApexCharts, React-ApexCharts
+# Migrations
+python manage.py makemigrations
+python manage.py migrate
 
-### Core Application Modules
+# Run a specific test
+python manage.py test api_projects.tests
 
-#### Backend Apps
-1. **api_authorization**: Custom MongoDB authentication system
-2. **api_projects**: Project management core (stages, tasks, work orders)
-3. **api_services**: Service management and repair workflows
-4. **api_measurements**: Measurement data handling
-5. **api_integration**: External integrations (Zoho, AWS S3)
-6. **api_projects_async_task_sequence**: Celery task automation
-7. **api_users**: User management with role-based permissions
+# Celery worker (requires Redis)
+celery -A system_installation_project worker --loglevel=info -E
 
-#### Frontend Sections
-- **auth**: Authentication views (sign-in/up, password reset)
-- **project**: Project management interfaces
-- **calendar**: Scheduling and calendar views
-- **file-manager**: Document and file management
-- **dashboard**: Main analytics and overview
+# Celery beat scheduler
+celery -A system_installation_project beat --loglevel=info
 
-### Database Design
-- **MongoDB Collections**: Uses MongoEngine Document models
-- **Key Models**: ProjectStage, ProjectTaskStage, Project workflows
-- **Authentication**: Custom user model with MongoDB backend
-- **Indexing**: Performance indexes on frequently queried fields
+# Collect static files
+python manage.py collectstatic --no-input
+```
 
-### Environment Configuration
-- **Backend**: Uses django-environ for environment variables
-- **Docker**: Multi-service setup with MongoDB, Redis, Nginx
-- **Networking**: Shared bridge network for service communication
-- **Ports**: Frontend (3030), Backend (8001), MongoDB (27037), Redis (6399)
+### Frontend (`frontend_app/`) — Vite/React, uses Yarn
 
-### Permission System
-The application uses role-based access control with these roles:
-- Superadmin, Administrator, Project Manager
-- Installer, Service Staff, Warehouse Staff
-- Permission checks via utility functions in `src/utils/check-permissions`
+```bash
+yarn dev           # Start dev server
+yarn build         # Production build
+yarn lint          # ESLint
+yarn lint:fix      # ESLint with auto-fix
+yarn fm:check      # Prettier check
+yarn fm:fix        # Prettier fix
+```
 
-### Development Workflow
-1. Backend changes require Django migrations if models are modified
-2. Frontend uses Vite HMR for fast development
-3. GraphQL schema changes need backend restart
-4. Celery tasks for automated workflows run on schedule
-5. Docker services can be developed independently
+### Next.js App (`nextjs_app/`) — uses npm/pnpm
 
-### Integration Points
-- **AWS S3**: File storage for projects, tasks, services, comments, backups
-- **Zoho**: CRM integration for sales orders
-- **Auth0**: External authentication provider
-- **Firebase**: Additional services integration
+```bash
+npm run dev        # Start dev server (port 3000)
+npm run build      # Production build
+npm run lint       # ESLint via next lint
+npm run type-check # TypeScript check without emitting
+```
 
-When working on this codebase:
-- Always check user permissions before modifying access controls
-- Follow the existing MongoDB document structure patterns
-- Use the established GraphQL/REST API patterns
-- Maintain the Docker service networking setup
-- Test both authenticated and unauthenticated user flows
+### Docker (full stack)
+
+```bash
+# Start all services locally
+docker-compose up --build
+
+# Services exposed:
+# Backend API:    http://localhost:8001
+# Nginx:          http://localhost:85
+# MongoDB:        localhost:27037
+# MongoExpress:   http://localhost:8085
+# AdminMongo:     http://localhost:8082
+# Redis:          localhost:6399
+```
+
+### Supabase (local)
+
+```bash
+supabase start     # Starts local Supabase (API: 54321, DB: 54322, Studio: 54323)
+supabase stop
+supabase db reset  # Reapply migrations + seed
+```
+
+---
+
+## Architecture
+
+### Backend (`backend_app/`)
+
+Django project at `system_installation_project/` with these apps:
+
+| App | Responsibility |
+|-----|---------------|
+| `api_authorization` | Custom MongoDB-backed auth (session-based, JWT revocation), `MongoAuthMiddleware`, `MongoConnectionMiddleware` |
+| `api_projects` | Core domain — projects, tasks, stages, crews, work orders, timers, calendar notes, profit reports |
+| `api_services` | Services management |
+| `api_measurements` | Measurements tracking |
+| `api_users` | User management |
+| `api_integration` | External integrations |
+| `api_projects_async_task_sequence` | Celery async task orchestration for project workflows |
+
+**Database pattern:** SQLite is the Django ORM default DB (sessions/admin), but **primary data is stored in MongoDB via MongoEngine**. Authentication uses a custom `MongoDBBackend` with `LoginUser` as the user model.
+
+**API pattern:** Each app exposes both REST endpoints (DRF) and GraphQL (graphene-django/graphene-mongo). GraphQL schemas live in `schema.py` and `schema_models/` within each app. REST views in `views.py`, URL routing in `urls.py`.
+
+**Repository pattern:** `api_projects/repository/` contains one file per domain entity (e.g., `project_crud_repository.py`, `project_work_orders_repository.py`). Views delegate to these repositories.
+
+**WebSockets:** Django Channels with Redis channel layers. Each app with real-time features has `consumers.py` and `ws_urls.py`.
+
+**Async tasks:** Celery + Redis. `api_projects/tasks.py` and `api_projects_async_task_sequence/tasks.py`.
+
+**Startup sequence (Docker):** makemigrations → migrate → collectstatic → `init_scripts.py` → `sync_scripts` management command → Celery worker + beat → Gunicorn (uvicorn workers) on port 8001.
+
+### Frontend — React/Vite (`frontend_app/`)
+
+Standard Minimal Kit v6 (Vite + JS) structure:
+- `src/sections/` — feature-level page components (projects, calendar, kanban, etc.)
+- `src/pages/` — route-level page wrappers
+- `src/components/` — shared UI components
+- `src/hooks/` — custom React hooks
+- `src/auth/` — Auth0 + AWS Amplify + Firebase auth integrations
+- API calls use Axios; GraphQL via Apollo Client; data fetching with TanStack Query + SWR
+
+### Frontend — Next.js (`nextjs_app/`)
+
+App Router structure:
+- `app/(auth)/` — login, register pages
+- `app/(dashboard)/` — authenticated routes: projects, services, measurements, calendar, stages, users, reports, installation-crews
+- `app/api/` — Next.js API routes
+- `components/` — organized into `ui/`, `shared/`, `projects/`, `services/`, `measurements/`, `auth/`, `layout/`
+- `actions/` — Next.js Server Actions
+- `hooks/` — client-side hooks
+- `lib/` — utilities, Supabase client setup
+
+**Auth:** Supabase Auth via `@supabase/ssr`. Middleware at `middleware.ts` protects all routes except `/login`, `/register`, `/api/auth`. Unauthenticated users redirect to `/login`; authenticated users redirect away from auth pages to `/dashboard`.
+
+### Supabase (`supabase/`)
+
+- Schema split across `part1_schema.sql`, `part2_schema.sql`, `part3_schema.sql` (combined in `full_schema.sql`)
+- Migrations in `migrations/`, seed data in `seed/`
+- Storage buckets: `project-attachments`, `service-attachments`, `measurement-attachments`, `avatars`
+- Realtime enabled for: projects, services, measurements, project_notifications
+
+### Infrastructure
+
+- **Nginx** proxies frontend → backend; config in `nginx/nginx.conf`
+- **Production Docker Compose** files are separate per service tier: `docker-compose.aws.backend.prod.yml`, `docker-compose.aws.frontend.prod.yml`, `docker-compose.aws.jenkins.prod.yml`
+- **CI/CD:** Jenkins (`Jenkinsfile`, `jenkins/`)
+- `shared-network` Docker bridge network must exist externally before running compose: `docker network create shared-network`

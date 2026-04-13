@@ -1,0 +1,5 @@
+pymongo>=4.10.1
+supabase>=2.9.0
+python-dotenv>=1.0.0
+psycopg2-binary>=2.9.9
+tqdm>=4.66.0
