@@ -128,7 +128,7 @@ export function ProjectDetailsToolbar({
   const searchedInstallationFilteredList = useMemo(() => {
     const lower = searchText.toLowerCase();
     return installationFilteredList.filter(inst =>
-      inst.name.toLowerCase().includes(lower) ||
+      inst.name?.toLowerCase().includes(lower) ||
       String(inst.number).toLowerCase().includes(lower)
     );
   }, [installationFilteredList, searchText]);

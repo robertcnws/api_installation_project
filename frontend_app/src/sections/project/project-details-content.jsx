@@ -101,19 +101,19 @@ export function ProjectDetailsContent({
     if (project) {
       setTotalTasks(
         project?.hasPermission ? project?.projectDefaultTasks?.length :
-          project?.projectDefaultTasks?.filter((task) => task.project_default_task.project_stage.name !== CONFIG.stages.permission).length
+          project?.projectDefaultTasks?.filter((task) => task.project_default_task?.project_stage?.name !== CONFIG.stages.permission).length
       );
       setTotalInProgressTasks(
         project?.hasPermission ? project?.projectDefaultTasks?.filter((task) => task.status === 'in progress').length :
-          project?.projectDefaultTasks?.filter((task) => task.status === 'in progress' && task.project_default_task.project_stage.name !== CONFIG.stages.permission).length
+          project?.projectDefaultTasks?.filter((task) => task.status === 'in progress' && task.project_default_task?.project_stage?.name !== CONFIG.stages.permission).length
       );
       setTotalCompletedTasks(
         project?.hasPermission ? project?.projectDefaultTasks?.filter((task) => task.status === 'finished').length :
-          project?.projectDefaultTasks?.filter((task) => task.status === 'finished' && task.project_default_task.project_stage.name !== CONFIG.stages.permission).length
+          project?.projectDefaultTasks?.filter((task) => task.status === 'finished' && task.project_default_task?.project_stage?.name !== CONFIG.stages.permission).length
       );
       setTotalNotStartedTasks(
         project?.hasPermission ? project?.projectDefaultTasks?.filter((task) => task.status === CONFIG.taskStatus.notStarted).length :
-          project?.projectDefaultTasks?.filter((task) => task.status === CONFIG.taskStatus.notStarted && task.project_default_task.project_stage.name !== CONFIG.stages.permission).length
+          project?.projectDefaultTasks?.filter((task) => task.status === CONFIG.taskStatus.notStarted && task.project_default_task?.project_stage?.name !== CONFIG.stages.permission).length
       );
     }
   }, [project]);
@@ -160,14 +160,14 @@ export function ProjectDetailsContent({
   }
 
   const workOrdersInstallations = useMemo(
-    () => project?.workOrders?.filter((workOrder) => workOrder.work_type.name.toLowerCase() === 'installation'),
+    () => project?.workOrders?.filter((workOrder) => workOrder.work_type?.name?.toLowerCase() === 'installation'),
     [project]
   );
 
   const workOrdersInspections = useMemo(
     () => project?.workOrders?.
       filter(
-        (workOrder) => workOrder.work_type.name.toLowerCase() === 'inspection' &&
+        (workOrder) => workOrder.work_type?.name?.toLowerCase() === 'inspection' &&
           workOrder.inspection_type?.name?.toLowerCase() === 'book and fasteners'
       ),
     [project]
@@ -176,7 +176,7 @@ export function ProjectDetailsContent({
   const workOrdersFinishPermissions = useMemo(
     () => project?.workOrders?.
       filter(
-        (workOrder) => workOrder.work_type.name.toLowerCase() === 'inspection' &&
+        (workOrder) => workOrder.work_type?.name?.toLowerCase() === 'inspection' &&
           workOrder.inspection_type?.name?.toLowerCase() === 'final'
       ),
     [project]

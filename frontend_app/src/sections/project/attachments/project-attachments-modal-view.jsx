@@ -77,7 +77,7 @@ export function ProjectAttachmentsModalView({
             return {
                 attachmentType: type,
                 files: filesForStage,
-                attachmentOtherName: loadedStages.find((s) => s.name.toLowerCase() === type.toLowerCase())?.otherName
+                attachmentOtherName: loadedStages.find((s) => s.name?.toLowerCase() === type.toLowerCase())?.otherName
             };
         }).filter((mappedFile) => mappedFile?.files?.length > 0);
     }, [displayFiles, displayProject, attachmentTypes, loadedStages]);

@@ -92,7 +92,7 @@ export function ProjectDetailsView({
 
     const taskFinishInstallation = useMemo(() =>
         itemById?.projectDefaultTasks?.find(
-            (t) => t.project_default_task?.name.trim().toLowerCase().includes(CONFIG.tasks.finishInstallation.trim().toLowerCase())
+            (t) => t.project_default_task?.name?.trim()?.toLowerCase()?.includes(CONFIG.tasks.finishInstallation.trim().toLowerCase())
         ),
         [itemById]
     );
@@ -348,14 +348,14 @@ export function ProjectDetailsView({
     const totalTasks = useMemo(() => (
         itemById?.hasPermission ?
             itemById?.projectDefaultTasks?.length :
-            itemById?.projectDefaultTasks?.filter((task) => task.project_default_task.project_stage.name !== CONFIG.stages.permission)?.length
+            itemById?.projectDefaultTasks?.filter((task) => task.project_default_task?.project_stage?.name !== CONFIG.stages.permission)?.length
             || 0), [itemById]
     );
 
 
     const tasks = useMemo(() =>
         itemById?.hasPermission ? itemById?.projectDefaultTasks :
-            itemById?.projectDefaultTasks?.filter((task) => task.project_default_task.project_stage.name !== CONFIG.stages.permission) || [], [itemById]
+            itemById?.projectDefaultTasks?.filter((task) => task.project_default_task?.project_stage?.name !== CONFIG.stages.permission) || [], [itemById]
     );
 
     const [openEdit, setOpenEdit] = useState(false);

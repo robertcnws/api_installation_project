@@ -89,7 +89,7 @@ const ItemBase = forwardRef(({
   const initialTasks = useMemo(() => availableTasks(project, project?.projectDefaultTasks, CONFIG), [project]);
 
   const extraTasks = useMemo(() => project?.projectDefaultTasks?.filter(
-    t => tasksBeforeNoMatter.some(item => item.toLowerCase().includes(t.project_default_task.name.toLowerCase()))
+    t => tasksBeforeNoMatter.some(item => item.toLowerCase().includes(t.project_default_task?.name?.toLowerCase()))
   ), [project, tasksBeforeNoMatter]);
 
   const possibleTasks = useMemo(() => initialTasks.concat(extraTasks), [initialTasks, extraTasks]);
@@ -157,7 +157,7 @@ const ItemBase = forwardRef(({
                   task?.project_default_task?.order === 1 ||
                   (
                     project?.hasPermission &&
-                    task?.project_default_task?.project_stage.name.toLowerCase() === CONFIG.stages.permission.toLowerCase() &&
+                    task?.project_default_task?.project_stage?.name?.toLowerCase() === CONFIG.stages.permission.toLowerCase() &&
                     !isWarehouseStaff(userLogged?.data?.user_role?.name)
                   ))) ||
                   (task.beforeNoMatter && task.status === CONFIG.taskStatus.notStarted)) && (

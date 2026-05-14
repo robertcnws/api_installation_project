@@ -310,7 +310,7 @@ export function KanbanDetails({
                   ) && (
                       <>
                         {((task && task.status === CONFIG.taskStatus.notStarted && (task?.project_default_task?.order === 1 ||
-                          (project?.hasPermission && task?.project_default_task?.project_stage.name.toLowerCase() === CONFIG.stages.permission.toLowerCase()))) ||
+                          (project?.hasPermission && task?.project_default_task?.project_stage?.name?.toLowerCase() === CONFIG.stages.permission.toLowerCase()))) ||
                           (task.beforeNoMatter && task.status === CONFIG.taskStatus.notStarted)) && (
                             <Button
                               variant="soft"

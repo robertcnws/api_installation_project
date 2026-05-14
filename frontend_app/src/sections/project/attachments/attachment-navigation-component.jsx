@@ -31,7 +31,7 @@ export function AttachmentNavigationComponent({
     const searchedFilteredList = useMemo(() => {
         const lower = searchText.toLowerCase();
         return dataFiltered.filter(inst =>
-            inst.name.toLowerCase().includes(lower) ||
+            inst.name?.toLowerCase().includes(lower) ||
             String(inst.number).toLowerCase().includes(lower)
         );
     }, [dataFiltered, searchText]);

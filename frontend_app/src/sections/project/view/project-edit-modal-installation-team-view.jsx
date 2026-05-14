@@ -121,7 +121,7 @@ export function ProjectEditModalInstallationTeamView({
         if (project && project?.userManager?.id && cleanLoadedUsers?.length > 0) {
             setFilteredUsers(cleanLoadedUsers.filter(
                 user => user.id !== project?.userManager?.id &&
-                    user.userRole.name.toLowerCase().indexOf(CONFIG.roles.installer.toLowerCase()) !== -1
+                    user.userRole?.name?.toLowerCase().indexOf(CONFIG.roles.installer.toLowerCase()) !== -1
             ));
         }
     }, [cleanLoadedUsers, project]);
@@ -133,7 +133,7 @@ export function ProjectEditModalInstallationTeamView({
         const projectPermissions = [];
 
         const permission = loadedProjectPermissions?.find(
-            (perm) => perm.name.toLowerCase().indexOf(CONFIG.projectPermissions.fullAccess.toLowerCase()) !== -1
+            (perm) => perm.name?.toLowerCase().indexOf(CONFIG.projectPermissions.fullAccess.toLowerCase()) !== -1
         );
 
         if (permission) {

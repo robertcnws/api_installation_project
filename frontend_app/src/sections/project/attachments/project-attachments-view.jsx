@@ -78,8 +78,8 @@ export function ProjectAttachmentsView() {
   const finalStages = useMemo(() => {
     if (loadedStages) {
       return loadedStages.filter(
-        (stage) => 
-          stage.name.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) === -1 &&
+        (stage) =>
+          stage.name?.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) === -1 &&
           stage.otherName !== null &&
           stage.otherName !== ''
       );
@@ -472,13 +472,13 @@ function applyFilter({ inputData, comparator, filters, dateError }) {
 
   if (name) {
     inputData = inputData.filter(
-      (file) => file.name.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
-        file.number.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
-        file.salesOrder.salesorder_id.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
-        file.salesOrder.salesorder_number.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
-        file.salesOrder.customer_id.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
-        file.salesOrder.customer_name.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
-        file.address.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
+      (file) => file.name?.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
+        file.number?.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
+        file.salesOrder?.salesorder_id?.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
+        file.salesOrder?.salesorder_number?.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
+        file.salesOrder?.customer_id?.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
+        file.salesOrder?.customer_name?.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
+        file.address?.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
         JSON.stringify(file.userManager).toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
         JSON.stringify(file.usersAssignees).toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
         JSON.stringify(file.currentStage).toLowerCase().indexOf(name.toLowerCase()) !== -1

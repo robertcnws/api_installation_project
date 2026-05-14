@@ -69,13 +69,13 @@ export function ProjectDetailsAttachmentView({
         if (loadedStages) {
             const filteredStages = loadedStages.filter(
                 (stage) =>
-                    stage.name.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) === -1 &&
+                    stage.name?.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) === -1 &&
                     stage.otherName !== null &&
                     stage.otherName !== ''
 
             );
             if (!project?.hasPermission) {
-                return filteredStages.filter((stage) => stage.name.toLowerCase().indexOf(CONFIG.stages.permission.toLowerCase()) === -1);
+                return filteredStages.filter((stage) => stage.name?.toLowerCase().indexOf(CONFIG.stages.permission.toLowerCase()) === -1);
             }
             return filteredStages;
         }

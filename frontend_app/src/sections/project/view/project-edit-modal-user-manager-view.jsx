@@ -191,7 +191,7 @@ export function ProjectEditModalUserManagerView({
         const projectPermissions = [];
 
         const permission = loadedProjectPermissions?.find(
-            (perm) => perm.name.toLowerCase().indexOf(CONFIG.projectPermissions.fullAccess.toLowerCase()) !== -1
+            (perm) => perm.name?.toLowerCase().indexOf(CONFIG.projectPermissions.fullAccess.toLowerCase()) !== -1
         );
 
         if (permission) {
