@@ -73,7 +73,7 @@ export function KanbanView({
   useEffect(() => {
     if (project) {
       const installWorkOrders = project?.workOrders?.filter((wo) =>
-        wo.work_type.name.toLowerCase().includes('installation')
+        wo.work_type?.name?.toLowerCase().includes('installation')
       );
       setHasInstallDate(installWorkOrders?.length > 0);
       setInstaller(getProjectInstallers(project, CONFIG));

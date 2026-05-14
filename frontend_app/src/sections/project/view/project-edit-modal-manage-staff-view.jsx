@@ -34,8 +34,8 @@ export function ProjectEditModalManageStaffView({
   const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
 
   const filteredUsers = useMemo(() =>
-    isWarehouseStaff ? loadedUsers.filter((user) => user.userRole.name.toLowerCase() === CONFIG.roles.warehouseStaff.toLowerCase()) :
-      loadedUsers.filter((user) => user.userRole.name.toLowerCase() === CONFIG.roles.installer.toLowerCase()),
+    isWarehouseStaff ? loadedUsers.filter((user) => user.userRole?.name?.toLowerCase() === CONFIG.roles.warehouseStaff.toLowerCase()) :
+      loadedUsers.filter((user) => user.userRole?.name?.toLowerCase() === CONFIG.roles.installer.toLowerCase()),
     [loadedUsers, isWarehouseStaff]);
 
   const ProjectDialogSchema = zod.object({

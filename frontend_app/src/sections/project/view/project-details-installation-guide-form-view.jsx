@@ -97,7 +97,7 @@ export function ProjectDetailsInstallationGuideFormView({
         const finalItem = {
           ...item,
           name: product?.name || item.name,
-          price: product?.price || (item.name.toLowerCase().includes('mullion') ? 0 : item.price),
+          price: product?.price || (item.name?.toLowerCase().includes('mullion') ? 0 : item.price),
           quantity: product?.quantity || item.quantity,
           notes: product?.notes || '',
           checked: product?.checked || false,
@@ -596,7 +596,7 @@ export function ProjectDetailsInstallationGuideFormView({
                                     listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) ? (
                                     <TextField
                                       type="number"
-                                      min={product.name.toLowerCase().includes('mullion') ? 0 : 1}
+                                      min={product.name?.toLowerCase().includes('mullion') ? 0 : 1}
                                       value={product.price}
                                       placeholder="Price..."
                                       sx={{ width: 70 }}
@@ -679,7 +679,7 @@ export function ProjectDetailsInstallationGuideFormView({
                                     listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) ? (
                                     <TextField
                                       type="number"
-                                      min={product.name.toLowerCase().includes('mullion') ? 0 : 1}
+                                      min={product.name?.toLowerCase().includes('mullion') ? 0 : 1}
                                       value={product.price}
                                       placeholder="Enter price"
                                       sx={{ width: 200 }}

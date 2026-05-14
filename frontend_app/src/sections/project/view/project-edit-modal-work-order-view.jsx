@@ -59,7 +59,7 @@ const buildWorkOrderName = (project, workType, inspectionType) => {
 
     if (workType?.name?.toLowerCase() === 'inspection') {
         if (inspectionType) {
-            return `WO for Inspection (${inspectionType.name.toUpperCase()}) in ${project.name}, date: ${baseDate}`;
+            return `WO for Inspection (${inspectionType.name?.toUpperCase()}) in ${project.name}, date: ${baseDate}`;
         }
         return `WO for Inspection in ${project.name}, date: ${baseDate}`;
     }
