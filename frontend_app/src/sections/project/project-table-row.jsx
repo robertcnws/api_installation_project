@@ -136,14 +136,14 @@ export function ProjectTableRow({
   };
 
   const workOrdersInstallations = useMemo(
-    () => row?.workOrders?.filter((workOrder) => workOrder.work_type.name.toLowerCase() === 'installation'),
+    () => row?.workOrders?.filter((workOrder) => workOrder.work_type?.name?.toLowerCase() === 'installation'),
     [row]
   );
 
   const workOrdersInspections = useMemo(
     () => row?.workOrders?.
       filter(
-        (workOrder) => workOrder.work_type.name.toLowerCase() === 'inspection' &&
+        (workOrder) => workOrder.work_type?.name?.toLowerCase() === 'inspection' &&
           workOrder.inspection_type?.name?.toLowerCase() === 'book and fasteners'
       ),
     [row]
@@ -152,7 +152,7 @@ export function ProjectTableRow({
   const workOrdersFinishPermissions = useMemo(
     () => row?.workOrders?.
       filter(
-        (workOrder) => workOrder.work_type.name.toLowerCase() === 'inspection' &&
+        (workOrder) => workOrder.work_type?.name?.toLowerCase() === 'inspection' &&
           workOrder.inspection_type?.name?.toLowerCase() === 'final'
       ),
     [row]
@@ -172,9 +172,9 @@ export function ProjectTableRow({
           borderRadius: 2,
           [`&.${tableRowClasses.selected}, &:hover`]: {
             backgroundColor: workOrdersInstallations?.length > 0 ? ((hasPassedEndDate && (
-              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
-              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
-              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
+              row?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
+              row?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
+              row?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
             )) ? lighten(theme.palette.error.lighter, 0.6) : 'background.paper') : 'background.paper',
             boxShadow: theme.customShadows.z20,
             transition: theme.transitions.create(['background-color', 'box-shadow'], {
@@ -182,9 +182,9 @@ export function ProjectTableRow({
             }),
             '&:hover': {
               backgroundColor: workOrdersInstallations?.length > 0 ? ((hasPassedEndDate && (
-                row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
-                row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
-                row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
+                row?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
+                row?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
+                row?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
               )) ? lighten(theme.palette.error.lighter, 0.6) : 'background.paper') : 'background.paper'
               , boxShadow: theme.customShadows.z20
             },
@@ -192,9 +192,9 @@ export function ProjectTableRow({
           [`& .${tableCellClasses.root}`]: { ...defaultStyles },
           ...(details.value && { [`& .${tableCellClasses.root}`]: { ...defaultStyles } }),
           bgcolor: workOrdersInstallations?.length > 0 ? ((hasPassedEndDate && (
-            row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
-            row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
-            row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
+            row?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
+            row?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
+            row?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
           )) ? lighten(theme.palette.error.lighter, 0.7) : 'inherit') : 'inherit',
         }}
       >
@@ -223,9 +223,9 @@ export function ProjectTableRow({
             whiteSpace: 'nowrap',
             cursor: 'pointer',
             fontWeight: workOrdersInstallations?.length > 0 ? ((hasPassedEndDate && (
-              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
-              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
-              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
+              row?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
+              row?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
+              row?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
             )) ? 'fontWeightBold' : 'inherit') : 'inherit',
           }}
           align='center'
@@ -269,9 +269,9 @@ export function ProjectTableRow({
             whiteSpace: 'nowrap',
             cursor: 'pointer',
             fontWeight: workOrdersInstallations?.length > 0 ? ((hasPassedEndDate && (
-              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
-              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
-              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
+              row?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
+              row?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
+              row?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
             )) ? 'fontWeightBold' : 'inherit') : 'inherit',
           }}
         >
@@ -291,9 +291,9 @@ export function ProjectTableRow({
             whiteSpace: 'nowrap',
             cursor: 'pointer',
             fontWeight: workOrdersInstallations?.length > 0 ? ((hasPassedEndDate && (
-              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
-              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
-              row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
+              row?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
+              row?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
+              row?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
             )) ? 'fontWeightBold' : 'inherit') : 'inherit',
           }}
         >
@@ -408,9 +408,9 @@ export function ProjectTableRow({
                 cursor: 'pointer',
                 maxWidth: 200,
                 fontWeight: workOrdersInstallations?.length > 0 ? ((hasPassedEndDate && (
-                  row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
-                  row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
-                  row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
+                  row?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
+                  row?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
+                  row?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
                 )) ? 'fontWeightBold' : 'inherit') : 'inherit',
               }}
             >
@@ -425,11 +425,11 @@ export function ProjectTableRow({
               sx={{ whiteSpace: 'nowrap', cursor: 'pointer', }}
             >
               <Label color={
-                row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ? 'default' :
-                  row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ? 'secondary' :
-                    row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1 ? 'info' :
-                      row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.permission.toLowerCase()) !== -1 ? 'warning' :
-                        row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.closing.toLowerCase()) !== -1 ? 'success' : 'error'
+                row?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ? 'default' :
+                  row?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ? 'secondary' :
+                    row?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1 ? 'info' :
+                      row?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.permission.toLowerCase()) !== -1 ? 'warning' :
+                        row?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.closing.toLowerCase()) !== -1 ? 'success' : 'error'
               }>{row?.currentStage?.name}</Label>
             </TableCell>
 
@@ -526,9 +526,9 @@ export function ProjectTableRow({
                 whiteSpace: 'nowrap',
                 cursor: 'pointer',
                 fontWeight: workOrdersInstallations?.length > 0 ? ((hasPassedEndDate && (
-                  row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
-                  row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
-                  row?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
+                  row?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
+                  row?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
+                  row?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
                 )) ? 'fontWeightBold' : 'inherit') : 'inherit',
                 fontSize: '0.75rem',
               }}
