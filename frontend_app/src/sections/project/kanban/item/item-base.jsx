@@ -150,7 +150,7 @@ const ItemBase = forwardRef(({
             listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator) ||
             task?.users_assignees?.some((u) => u.id === userLogged?.data?.id) ||
             project?.userManager?.id === userLogged?.data?.id ||
-            (isWarehouseStaff(userLogged?.data?.user_role?.name) && task?.project_default_task?.project_stage?.name.toLowerCase() === CONFIG.stages.installation.toLowerCase())
+            (isWarehouseStaff(userLogged?.data?.user_role?.name) && task?.project_default_task?.project_stage?.name?.toLowerCase() === CONFIG.stages.installation.toLowerCase())
           ) && (
               <>
                 {((task && task.status === CONFIG.taskStatus.notStarted && (
@@ -188,7 +188,7 @@ const ItemBase = forwardRef(({
                       task,
                       project?.projectDefaultTasks,
                       CONFIG.taskStatus.inProgress,
-                      task?.project_default_task?.project_stage?.name.toLowerCase().indexOf(CONFIG.stages.permission.toLowerCase()) !== -1,
+                      task?.project_default_task?.project_stage?.name?.toLowerCase().indexOf(CONFIG.stages.permission.toLowerCase()) !== -1,
                       CONFIG
                     ).length === 0) ||
                     (task.beforeNoMatter && task.status === CONFIG.taskStatus.inProgress)

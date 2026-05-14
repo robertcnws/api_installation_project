@@ -213,9 +213,9 @@ const ItemBase = forwardRef(({ task, stateProps, sx, ...other }, ref) => {
             py: 2.5,
             position: 'relative',
             bgcolor: task?.endDate ? ((fIsAfter(today, dayjs(task?.endDate).format('YYYY-MM-DD')) && (
-              task?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
-              task?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
-              task?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
+              task?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
+              task?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
+              task?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
             )) ? lighten(th.palette.error.lighter, 0.6) : 'inherit') : 'inherit',
           }}
         >

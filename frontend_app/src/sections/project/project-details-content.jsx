@@ -333,9 +333,9 @@ export function ProjectDetailsContent({
                               ? (
                                 (fIsAfter(dayjs(new Date()).format('YYYY-MM-DD'), dayjs(wo?.end_date).format('YYYY-MM-DD')) &&
                                   (
-                                    project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.preparation.toLowerCase()) ||
-                                    project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.coordination.toLowerCase()) ||
-                                    project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.installation.toLowerCase())
+                                    project?.currentStage?.name?.toLowerCase().includes(CONFIG.stages.preparation.toLowerCase()) ||
+                                    project?.currentStage?.name?.toLowerCase().includes(CONFIG.stages.coordination.toLowerCase()) ||
+                                    project?.currentStage?.name?.toLowerCase().includes(CONFIG.stages.installation.toLowerCase())
                                   )
                                 )
                                   ? 'error.main'
@@ -347,9 +347,9 @@ export function ProjectDetailsContent({
                             fontWeight: wo?.end_date ? (
                               (fIsAfter(dayjs(new Date()).format('YYYY-MM-DD'), dayjs(wo?.end_date).format('YYYY-MM-DD')) &&
                                 (
-                                  project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.preparation.toLowerCase()) ||
-                                  project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.coordination.toLowerCase()) ||
-                                  project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.installation.toLowerCase())
+                                  project?.currentStage?.name?.toLowerCase().includes(CONFIG.stages.preparation.toLowerCase()) ||
+                                  project?.currentStage?.name?.toLowerCase().includes(CONFIG.stages.coordination.toLowerCase()) ||
+                                  project?.currentStage?.name?.toLowerCase().includes(CONFIG.stages.installation.toLowerCase())
                                 )
                               )
                                 ? 'bold'
@@ -478,9 +478,9 @@ export function ProjectDetailsContent({
                                   ? (
                                     (fIsAfter(dayjs(new Date()).format('YYYY-MM-DD'), dayjs(wo?.end_date).format('YYYY-MM-DD')) &&
                                       (
-                                        project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.preparation.toLowerCase()) ||
-                                        project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.coordination.toLowerCase()) ||
-                                        project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.installation.toLowerCase())
+                                        project?.currentStage?.name?.toLowerCase().includes(CONFIG.stages.preparation.toLowerCase()) ||
+                                        project?.currentStage?.name?.toLowerCase().includes(CONFIG.stages.coordination.toLowerCase()) ||
+                                        project?.currentStage?.name?.toLowerCase().includes(CONFIG.stages.installation.toLowerCase())
                                       )
                                     )
                                       ? 'error.main'
@@ -492,9 +492,9 @@ export function ProjectDetailsContent({
                                 fontWeight: wo?.end_date ? (
                                   (fIsAfter(dayjs(new Date()).format('YYYY-MM-DD'), dayjs(wo?.end_date).format('YYYY-MM-DD')) &&
                                     (
-                                      project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.preparation.toLowerCase()) ||
-                                      project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.coordination.toLowerCase()) ||
-                                      project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.installation.toLowerCase())
+                                      project?.currentStage?.name?.toLowerCase().includes(CONFIG.stages.preparation.toLowerCase()) ||
+                                      project?.currentStage?.name?.toLowerCase().includes(CONFIG.stages.coordination.toLowerCase()) ||
+                                      project?.currentStage?.name?.toLowerCase().includes(CONFIG.stages.installation.toLowerCase())
                                     )
                                   )
                                     ? 'bold'
@@ -591,9 +591,9 @@ export function ProjectDetailsContent({
                                   ? (
                                     (fIsAfter(dayjs(new Date()).format('YYYY-MM-DD'), dayjs(wo?.end_date).format('YYYY-MM-DD')) &&
                                       (
-                                        project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.preparation.toLowerCase()) ||
-                                        project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.coordination.toLowerCase()) ||
-                                        project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.installation.toLowerCase())
+                                        project?.currentStage?.name?.toLowerCase().includes(CONFIG.stages.preparation.toLowerCase()) ||
+                                        project?.currentStage?.name?.toLowerCase().includes(CONFIG.stages.coordination.toLowerCase()) ||
+                                        project?.currentStage?.name?.toLowerCase().includes(CONFIG.stages.installation.toLowerCase())
                                       )
                                     )
                                       ? 'error.main'
@@ -605,9 +605,9 @@ export function ProjectDetailsContent({
                                 fontWeight: wo?.end_date ? (
                                   (fIsAfter(dayjs(new Date()).format('YYYY-MM-DD'), dayjs(wo?.end_date).format('YYYY-MM-DD')) &&
                                     (
-                                      project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.preparation.toLowerCase()) ||
-                                      project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.coordination.toLowerCase()) ||
-                                      project?.currentStage?.name.toLowerCase().includes(CONFIG.stages.installation.toLowerCase())
+                                      project?.currentStage?.name?.toLowerCase().includes(CONFIG.stages.preparation.toLowerCase()) ||
+                                      project?.currentStage?.name?.toLowerCase().includes(CONFIG.stages.coordination.toLowerCase()) ||
+                                      project?.currentStage?.name?.toLowerCase().includes(CONFIG.stages.installation.toLowerCase())
                                     )
                                   )
                                     ? 'bold'
@@ -705,10 +705,10 @@ export function ProjectDetailsContent({
           <Label
             variant="filled"
             sx={{
-              bgcolor: field.value.toLowerCase() === 'custom' ? 'whitesmoke' :
-                field.value.toLowerCase() === 'mixed' ? 'warning.lighter' : 'success.lighter',
-              color: field.value.toLowerCase() === 'custom' ? 'text.primary' :
-                field.value.toLowerCase() === 'mixed' ? 'warning.main' : 'success.main'
+              bgcolor: String(field.value).toLowerCase() === 'custom' ? 'whitesmoke' :
+                String(field.value).toLowerCase() === 'mixed' ? 'warning.lighter' : 'success.lighter',
+              color: String(field.value).toLowerCase() === 'custom' ? 'text.primary' :
+                String(field.value).toLowerCase() === 'mixed' ? 'warning.main' : 'success.main'
             }}
             key={`label-${index}`}
           >
