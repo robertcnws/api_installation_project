@@ -217,9 +217,9 @@ export function ProjectFolderItem({
           cursor: 'pointer',
           position: 'relative',
           bgcolor: folder?.endDate ? ((fIsAfter(today, dayjs(folder?.endDate).format('YYYY-MM-DD')) && (
-            folder?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
-            folder?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
-            folder?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
+            folder?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
+            folder?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
+            folder?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
           )) ? lighten(th.palette.error.lighter, 0.7) : 'transparent') : 'transparent',
           flexDirection: 'column',
           alignItems: 'flex-start',

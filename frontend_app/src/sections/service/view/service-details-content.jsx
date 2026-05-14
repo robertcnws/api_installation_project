@@ -686,10 +686,10 @@ export function ServiceDetailsContent({
             <Label
               variant="filled"
               sx={{
-                bgcolor: field.value.toLowerCase() === 'stock' ? 'success.lighter' :
-                  field.value.toLowerCase() === 'mixed' ? 'warning.lighter' : 'whitesmoke',
-                color: field.value.toLowerCase() === 'stock' ? 'success.main' :
-                  field.value.toLowerCase() === 'mixed' ? 'warning.main' : 'text.primary',
+                bgcolor: String(field.value).toLowerCase() === 'stock' ? 'success.lighter' :
+                  String(field.value).toLowerCase() === 'mixed' ? 'warning.lighter' : 'whitesmoke',
+                color: String(field.value).toLowerCase() === 'stock' ? 'success.main' :
+                  String(field.value).toLowerCase() === 'mixed' ? 'warning.main' : 'text.primary',
 
               }}
               key={`label-${index}`}

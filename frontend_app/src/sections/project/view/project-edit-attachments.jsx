@@ -253,7 +253,7 @@ export function ProjectEditAttachments({
     <>
       <Box sx={{ maxHeight: 600, minHeight: !isMobile ? 600 : 0, overflow: 'auto' }}>
         {(project?.currentStage &&
-          project?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) === -1) && (
+          project?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) === -1) && (
             <>
               <Box
                 key={project?.currentStage?.id}

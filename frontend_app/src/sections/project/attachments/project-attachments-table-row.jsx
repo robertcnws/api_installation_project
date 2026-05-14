@@ -104,9 +104,9 @@ export function ProjectAttachmentsTableRow({
           borderRadius: 2,
           [`&.${tableRowClasses.selected}, &:hover`]: {
             backgroundColor: rowUpdated?.endDate ? ((fIsAfter(today, dayjs(rowUpdated?.endDate).format('YYYY-MM-DD')) && (
-              rowUpdated?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
-              rowUpdated?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
-              rowUpdated?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
+              rowUpdated?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
+              rowUpdated?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
+              rowUpdated?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
             )) ? lighten(theme.palette.error.lighter, 0.6) : 'background.paper') : 'background.paper',
             boxShadow: theme.customShadows.z20,
             transition: theme.transitions.create(['background-color', 'box-shadow'], {
@@ -114,9 +114,9 @@ export function ProjectAttachmentsTableRow({
             }),
             '&:hover': {
               backgroundColor: rowUpdated?.endDate ? ((fIsAfter(today, dayjs(rowUpdated?.endDate).format('YYYY-MM-DD')) && (
-                rowUpdated?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
-                rowUpdated?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
-                rowUpdated?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
+                rowUpdated?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
+                rowUpdated?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
+                rowUpdated?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
               )) ? lighten(theme.palette.error.lighter, 0.6) : 'background.paper') : 'background.paper'
               , boxShadow: theme.customShadows.z20
             },
@@ -124,9 +124,9 @@ export function ProjectAttachmentsTableRow({
           [`& .${tableCellClasses.root}`]: { ...defaultStyles },
           ...(details.value && { [`& .${tableCellClasses.root}`]: { ...defaultStyles } }),
           bgcolor: rowUpdated?.endDate ? ((fIsAfter(today, dayjs(rowUpdated?.endDate).format('YYYY-MM-DD')) && (
-            rowUpdated?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
-            rowUpdated?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
-            rowUpdated?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
+            rowUpdated?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
+            rowUpdated?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
+            rowUpdated?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
           )) ? lighten(theme.palette.error.lighter, 0.7) : 'inherit') : 'inherit',
         }}
       >
@@ -156,9 +156,9 @@ export function ProjectAttachmentsTableRow({
             whiteSpace: 'nowrap',
             cursor: 'pointer',
             fontWeight: rowUpdated?.endDate ? ((fIsAfter(today, dayjs(rowUpdated?.endDate).format('YYYY-MM-DD')) && (
-              rowUpdated?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
-              rowUpdated?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
-              rowUpdated?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
+              rowUpdated?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
+              rowUpdated?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
+              rowUpdated?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
             )) ? 'fontWeightBold' : 'inherit') : 'inherit',
           }}
           align='center'
@@ -181,9 +181,9 @@ export function ProjectAttachmentsTableRow({
             cursor: 'pointer',
             maxWidth: 200,
             fontWeight: rowUpdated?.endDate ? ((fIsAfter(today, dayjs(rowUpdated?.endDate).format('YYYY-MM-DD')) && (
-              rowUpdated?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
-              rowUpdated?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
-              rowUpdated?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
+              rowUpdated?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
+              rowUpdated?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
+              rowUpdated?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
             )) ? 'fontWeightBold' : 'inherit') : 'inherit',
           }}
         >
@@ -282,9 +282,9 @@ export function ProjectAttachmentsTableRow({
             whiteSpace: 'nowrap',
             cursor: 'pointer',
             fontWeight: rowUpdated?.endDate ? ((fIsAfter(today, dayjs(rowUpdated?.endDate).format('YYYY-MM-DD')) && (
-              rowUpdated?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
-              rowUpdated?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
-              rowUpdated?.currentStage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
+              rowUpdated?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.preparation.toLowerCase()) !== -1 ||
+              rowUpdated?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.coordination.toLowerCase()) !== -1 ||
+              rowUpdated?.currentStage?.name?.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
             )) ? 'fontWeightBold' : 'inherit') : 'inherit',
             fontSize: '0.75rem',
           }}

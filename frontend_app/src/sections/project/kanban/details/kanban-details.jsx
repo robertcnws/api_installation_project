@@ -334,7 +334,7 @@ export function KanbanDetails({
                             task,
                             project?.projectDefaultTasks,
                             CONFIG.taskStatus.inProgress,
-                            task?.project_default_task?.project_stage?.name.toLowerCase().indexOf(CONFIG.stages.permission.toLowerCase()) !== -1,
+                            task?.project_default_task?.project_stage?.name?.toLowerCase().indexOf(CONFIG.stages.permission.toLowerCase()) !== -1,
                             CONFIG
                           ).length === 0 && (
                             <Button

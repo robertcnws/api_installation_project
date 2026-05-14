@@ -739,7 +739,7 @@ export function ProjectEditModalWorkOrderView({
                                             />
                                         )}
                                     />
-                                    {formData?.workType && formData?.workType?.name.toLowerCase() === 'inspection' && (
+                                    {formData?.workType && formData?.workType?.name?.toLowerCase() === 'inspection' && (
                                         <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
                                             <RadioGroup
                                                 row
