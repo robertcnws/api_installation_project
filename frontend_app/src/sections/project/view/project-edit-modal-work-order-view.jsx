@@ -783,7 +783,7 @@ export function ProjectEditModalWorkOrderView({
                             </Stack>
                         </m.div>
 
-                        {/* User Assignee */}
+                        {/* Installation Crew & Assignees */}
                         {formData.workType && (
                             <m.div
                                 initial={{ opacity: 0, x: -20 }}
@@ -792,81 +792,6 @@ export function ProjectEditModalWorkOrderView({
                             >
                                 <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ width: '100%', minWidth: 0 }}>
 
-                                    <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', width: '100%' }}>
-                                        <Autocomplete
-                                            multiple
-                                            options={filteredUsers || []}
-                                            getOptionLabel={(option) => `${option.firstName} ${option.lastName}`}
-                                            value={formData.usersAssignees}
-                                            onChange={(event, newValue) => handleInputChange('usersAssignees', newValue)}
-                                            renderOption={(props, option) => {
-                                                const { key, ...liProps } = props;
-                                                return (
-                                                    <Box component="li" key={option.id} {...liProps}>
-                                                        <Stack spacing={0.5}>
-                                                            <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                                                                {option.name || `${option.firstName} ${option.lastName}`}
-                                                            </Typography>
-                                                        </Stack>
-                                                    </Box>
-                                                );
-                                            }}
-                                            renderTags={(value, getTagProps) =>
-                                                value.map((option, index) => {
-                                                    const tagProps = getTagProps({ index });
-                                                    const { key, ...restTagProps } = tagProps;
-
-                                                    return (
-                                                        <Tooltip key={option.id} title={option.name || `${option.firstName} ${option.lastName}`} arrow>
-                                                            <Chip
-                                                                key={option.id}
-                                                                {...restTagProps}
-                                                                label={(
-                                                                    <Stack spacing={0.5}>
-                                                                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                                                                            {option.name || `${option.firstName} ${option.lastName}`}
-                                                                        </Typography>
-                                                                    </Stack>
-                                                                )}
-                                                                size="small"
-                                                                sx={{
-                                                                    // background: `linear-gradient(45deg, #00B8D9, #8E33FF)`,
-                                                                    color: 'white',
-                                                                    '& .MuiChip-deleteIcon': {
-                                                                        color: 'white',
-                                                                        '&:hover': { color: '#FF5630' },
-                                                                    },
-                                                                    height: 50,
-                                                                }}
-                                                            />
-                                                        </Tooltip>
-                                                    );
-                                                })
-                                            }
-                                            renderInput={(params) => (
-                                                <TextField
-                                                    {...params}
-                                                    label="Users Assignees"
-                                                    error={!!errors.usersAssignees}
-                                                    helperText={errors.usersAssignees}
-                                                    sx={{
-                                                        '& .MuiOutlinedInput-root': {
-                                                            borderRadius: 1,
-                                                            // bgcolor: alpha(theme.palette.background.paper, 0.8),
-                                                            // '&:hover .MuiOutlinedInput-notchedOutline': {
-                                                            //     borderColor: '#22C55E',
-                                                            // },
-                                                            // '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                                            //     borderColor: '#22C55E',
-                                                            //     borderWidth: 2,
-                                                            //     boxShadow: `0 0 10px ${alpha('#22C55E', 0.3)}`,
-                                                            // }
-                                                        }
-                                                    }}
-                                                />
-                                            )}
-                                        />
-                                    </Box>
                                     <Box
                                         sx={{
                                             display: 'flex',
@@ -878,27 +803,71 @@ export function ProjectEditModalWorkOrderView({
                                     >
                                         <Autocomplete
                                             multiple
-                                            options={loadedInstallationCrews || []}
-                                            getOptionLabel={(option) => option.name}
-                                            value={formData.installerCrews}
-                                            onChange={(event, newValue) => handleInputChange('installerCrews', newValue)}
-                                            sx={{ flex: 1, minWidth: 0 }}          // 👈 CLAVE: que el Autocomplete crezca
+                                            options={[
+                                                ...(loadedInstallationCrews || []),
+                                                ...(filteredUsers || []),
+                                            ]}
+                                            getOptionLabel={(option) =>
+                                                option?.firstName !== undefined
+                                                    ? `${option.firstName} ${option.lastName}`
+                                                    : option?.name || ''
+                                            }
+                                            isOptionEqualToValue={(option, value) =>
+                                                option?.id === value?.id &&
+                                                (option?.firstName !== undefined) === (value?.firstName !== undefined)
+                                            }
+                                            value={[
+                                                ...(formData.installerCrews || []),
+                                                ...(formData.usersAssignees || []),
+                                            ]}
+                                            onChange={(event, newValue) => {
+                                                const crews = newValue.filter(
+                                                    (item) => item && item.firstName === undefined
+                                                );
+                                                const users = newValue.filter(
+                                                    (item) => item && item.firstName !== undefined
+                                                );
+                                                setFormData((prev) => ({
+                                                    ...prev,
+                                                    installerCrews: crews,
+                                                    usersAssignees: users,
+                                                }));
+                                                const hasAny = crews.length > 0 || users.length > 0;
+                                                if (hasAny && (errors.usersAssignees || errors.installerCrews)) {
+                                                    setErrors((prev) => ({
+                                                        ...prev,
+                                                        usersAssignees: null,
+                                                        installerCrews: null,
+                                                    }));
+                                                } else if (!hasAny) {
+                                                    const msg = 'Installation Crew or Assignees are required';
+                                                    setErrors((prev) => ({
+                                                        ...prev,
+                                                        usersAssignees: msg,
+                                                        installerCrews: msg,
+                                                    }));
+                                                }
+                                            }}
+                                            sx={{ flex: 1, minWidth: 0 }}
                                             renderOption={(props, option) => {
                                                 const { key, ...liProps } = props;
+                                                const isUser = option?.firstName !== undefined;
                                                 return (
-                                                    <Box component="li" key={option.id} {...liProps}>
+                                                    <Box component="li" key={`${isUser ? 'user' : 'crew'}-${option.id}`} {...liProps}>
                                                         <Stack spacing={0.5}>
                                                             <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                                                                {option.name}
+                                                                {isUser ? `${option.firstName} ${option.lastName}` : option.name}
                                                             </Typography>
-                                                            <Typography
-                                                                variant="caption"
-                                                                sx={{ color: 'text.disabled', fontStyle: 'italic' }}
-                                                            >
-                                                                {option.usersInstallers
-                                                                    ?.map((u) => `${u.firstName} ${u.lastName}`)
-                                                                    .join(', ')}
-                                                            </Typography>
+                                                            {!isUser && (
+                                                                <Typography
+                                                                    variant="caption"
+                                                                    sx={{ color: 'text.disabled', fontStyle: 'italic' }}
+                                                                >
+                                                                    {option.usersInstallers
+                                                                        ?.map((u) => `${u.firstName} ${u.lastName}`)
+                                                                        .join(', ')}
+                                                                </Typography>
+                                                            )}
                                                         </Stack>
                                                     </Box>
                                                 );
@@ -907,30 +876,36 @@ export function ProjectEditModalWorkOrderView({
                                                 value.map((option, index) => {
                                                     const tagProps = getTagProps({ index });
                                                     const { key, ...restTagProps } = tagProps;
+                                                    const isUser = option?.firstName !== undefined;
+                                                    const tagKey = `${isUser ? 'user' : 'crew'}-${option.id}`;
+                                                    const labelText = isUser
+                                                        ? `${option.firstName} ${option.lastName}`
+                                                        : option.name;
 
                                                     return (
-                                                        <Tooltip key={option.id} title={option.name} arrow>
+                                                        <Tooltip key={tagKey} title={labelText} arrow>
                                                             <Chip
-                                                                key={option.id}
+                                                                key={tagKey}
                                                                 {...restTagProps}
                                                                 label={
                                                                     <Stack spacing={0.5}>
                                                                         <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                                                                            {option.name}
+                                                                            {labelText}
                                                                         </Typography>
-                                                                        <Typography
-                                                                            variant="caption"
-                                                                            sx={{ color: 'whitesmoke', fontStyle: 'italic' }}
-                                                                        >
-                                                                            {option.usersInstallers
-                                                                                ?.map((u) => `${u.firstName} ${u.lastName}`)
-                                                                                .join(', ')}
-                                                                        </Typography>
+                                                                        {!isUser && (
+                                                                            <Typography
+                                                                                variant="caption"
+                                                                                sx={{ color: 'whitesmoke', fontStyle: 'italic' }}
+                                                                            >
+                                                                                {option.usersInstallers
+                                                                                    ?.map((u) => `${u.firstName} ${u.lastName}`)
+                                                                                    .join(', ')}
+                                                                            </Typography>
+                                                                        )}
                                                                     </Stack>
                                                                 }
                                                                 size="small"
                                                                 sx={{
-                                                                    // background: `linear-gradient(45deg, #00B8D9, #8E33FF)`,
                                                                     color: 'white',
                                                                     '& .MuiChip-deleteIcon': {
                                                                         color: 'white',
@@ -946,22 +921,13 @@ export function ProjectEditModalWorkOrderView({
                                             renderInput={(params) => (
                                                 <TextField
                                                     {...params}
-                                                    label={`${formData?.workType?.name?.toUpperCase()} Crew`}
-                                                    error={!!errors.installerCrews}
-                                                    helperText={errors.installerCrews}
-                                                    fullWidth                         // 👈 asegura ancho completo dentro del flex
+                                                    label="Installation Crew & Assignees"
+                                                    error={!!errors.installerCrews || !!errors.usersAssignees}
+                                                    helperText={errors.installerCrews || errors.usersAssignees}
+                                                    fullWidth
                                                     sx={{
                                                         '& .MuiOutlinedInput-root': {
                                                             borderRadius: 1,
-                                                            // bgcolor: alpha(theme.palette.background.paper, 0.8),
-                                                            // '&:hover .MuiOutlinedInput-notchedOutline': {
-                                                            //     borderColor: '#22C55E',
-                                                            // },
-                                                            // '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                                            //     borderColor: '#22C55E',
-                                                            //     borderWidth: 2,
-                                                            //     boxShadow: `0 0 10px ${alpha('#22C55E', 0.3)}`,
-                                                            // },
                                                         },
                                                     }}
                                                 />
