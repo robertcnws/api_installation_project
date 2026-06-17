@@ -166,7 +166,7 @@ export function ProjectDetailsReleaseFormView({
         >
           Save
         </LoadingButton>
-        {!isInstaller(userLogged?.data?.user_role.name) ? (
+        {!isInstaller(userLogged?.data?.user_role?.name) ? (
           <Button
             variant="outlined"
             onClick={() => generateReleaseFormReport({ project })}
@@ -206,12 +206,12 @@ export function ProjectDetailsReleaseFormView({
 
   return (
     <Grid container spacing={2}>
-      <Grid xs={12} md={!isInstaller(userLogged?.data?.user_role.name) ? 8 : 12}>
+      <Grid xs={12} md={!isInstaller(userLogged?.data?.user_role?.name) ? 8 : 12}>
         <Form methods={methods} onSubmit={onSubmit}>
           {renderContent}
         </Form>
       </Grid>
-      {!isInstaller(userLogged?.data?.user_role.name) && (
+      {!isInstaller(userLogged?.data?.user_role?.name) && (
         <Grid xs={12} md={4}>
           {renderOverview}
         </Grid>

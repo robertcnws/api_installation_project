@@ -21,7 +21,7 @@ import { useBoolean } from 'src/hooks/use-boolean';
 import { uuidv4 } from 'src/utils/uuidv4';
 import { fDate, fIsAfter } from 'src/utils/format-time';
 import { isInstaller } from 'src/utils/check-permissions';
-import { getProjectInstaller } from 'src/utils/project-tasks-utils';
+import { getProjectInstallers } from 'src/utils/project-tasks-utils';
 
 import { CONFIG } from 'src/config-global';
 import { createEvent } from 'src/actions/calendar';
@@ -176,16 +176,16 @@ export function ProjectCalendarForm({ currentEvent, colorOptions, onClose }) {
                   }}
                   disabled
                 />
-                {getProjectInstaller(currentEvent, CONFIG)?.name && (
+                {getProjectInstallers(currentEvent, CONFIG)?.name && (
                   <Box sx={{ display: 'flex', mb: 1, p: 1, justifyContent: 'flex-start' }}>
                     <Typography variant="caption" sx={{ color: 'text.secondary', mr: 1, mt: 1.5 }}>
                       Installer:
                     </Typography>
                     <Label sx={{ display: 'flex', minHeight: 40 }}>
                       <Avatar
-                        src={getProjectInstaller(currentEvent, CONFIG).avatarUrl || getProjectInstaller(currentEvent, CONFIG).avatar_url}
+                        src={getProjectInstallers(currentEvent, CONFIG).avatarUrl || getProjectInstallers(currentEvent, CONFIG).avatar_url}
                         sx={{ width: 24, height: 24, mr: 1 }} />
-                      {getProjectInstaller(currentEvent, CONFIG).name}
+                      {getProjectInstallers(currentEvent, CONFIG).name}
                     </Label>
                   </Box>
                 )}
@@ -216,13 +216,13 @@ export function ProjectCalendarForm({ currentEvent, colorOptions, onClose }) {
         </Scrollbar>
 
         <DialogActions sx={{ flexShrink: 0 }}>
-          {(!!currentEvent?.id && !isInstaller(userLogged?.data?.user_role?.name)) && (
+          {/* {(!!currentEvent?.id && !isInstaller(userLogged?.data?.user_role?.name)) && (
             <Tooltip title="Delete event">
               <IconButton onClick={confirmDelete.onTrue} color="error">
                 <Iconify icon="solar:trash-bin-trash-bold" />
               </IconButton>
             </Tooltip>
-          )}
+          )} */}
 
           <Box sx={{ flexGrow: 1 }} />
 

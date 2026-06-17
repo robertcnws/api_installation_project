@@ -535,3 +535,85 @@ class ProjectDefaultMaterial(Document):
 
     def __str__(self):
         return self.name
+    
+class ProjectCalendarNotes(Document):
+    name = StringField(max_length=255, required=True)
+    description = StringField(null=True)
+    start_date = DateTimeField(null=True)
+    end_date = DateTimeField(null=True)
+    duration = IntField(default=0, null=True)
+    user_manager = DynamicField(null=True)
+    user_installer = DynamicField(null=True)
+    user_assignees = ListField(DynamicField(), default=list, null=True)
+    user_reporter = DynamicField(null=True)
+    associated_events = ListField(DynamicField(), default=list, null=True)
+    is_active = BooleanField(default=True)
+    created_time = DateTimeField(default=timezone.now, null=True)
+    last_modified_time = DateTimeField(default=timezone.now, null=True)
+    
+    meta = {
+        'collection': 'project_calendar_notes',
+        'indexes': [
+            'name', 'created_time', 'last_modified_time', 'is_active'
+        ],
+        'verbose_name': 'Project Calendar Note',
+        'verbose_name_plural': 'Project Calendar Notes'
+    }
+
+    def __str__(self):
+        return self.name
+    
+    
+class ProjectProfitReport(Document):
+    project_id = StringField(required=True)
+    project_info = DynamicField(required=True)
+    project_amount = FloatField(default=0.0)
+    installation_amount = FloatField(default=0.0)
+    installation_cost_subcontractor = FloatField(default=0.0)
+    installation_cost_onhouse = FloatField(default=0.0)
+    installation_profit_subcontractor = FloatField(default=0.0)
+    installation_profit_onhouse = FloatField(default=0.0)
+    notes = StringField(null=True)
+    created_time = DateTimeField(default=timezone.now, null=True)
+    last_modified_time = DateTimeField(default=timezone.now, null=True)
+    has_been_edited = BooleanField(default=False)
+    working_type = StringField(max_length=255, null=True)
+    
+    meta = {
+        'collection': 'project_profit_report',
+        'indexes': [
+            'project_id', 'created_time', 'last_modified_time', 'has_been_edited', 'working_type'
+        ],
+        'verbose_name': 'Project Profit Report',
+        'verbose_name_plural': 'Project Profit Reports'
+    }
+
+    def __str__(self):
+        return f'Profit Report for {self.project.name}'
+    
+    
+class ProjectInstallationCrew(Document):
+    name = StringField(max_length=255, required=True)
+    users_installers = ListField(DynamicField(), default=list, null=True)
+    users_helpers = ListField(DynamicField(), default=list, null=True)
+    cost_by_unit = FloatField(default=0.0)
+    unit = DynamicField(null=True)
+    type_crew = DynamicField(null=True)
+    type_working = DynamicField(null=True)
+    description = StringField(null=True)
+    created_time = DateTimeField(default=timezone.now, null=True)
+    last_modified_time = DateTimeField(default=timezone.now, null=True)
+    is_active = BooleanField(default=True)
+    user_reporter = DynamicField(null=True)
+    
+    meta = {
+        'collection': 'project_installation_crew',
+        'indexes': [
+            'created_time', 'last_modified_time', 'is_active', 'name', 'type_crew', 'type_working'
+        ],
+        'verbose_name': 'Project Installation Crew',
+        'verbose_name_plural': 'Project Installation Crews'
+    }
+
+    def __str__(self):
+        return f'Installation Crew - {self.name}'    

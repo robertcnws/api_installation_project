@@ -96,7 +96,7 @@ export function ServiceView() {
 
   const allCreatorsUsers = useMemo(() => [
     ...loadedUsers.filter(
-      user => isServiceStaff(user.userRole.name) || isAdministrator(user.userRole.name)
+      user => isServiceStaff(user.userRole.name) || listRolesAndSubroles(user.userRole.name).includes(CONFIG.roles.administrator)
     ),
     ...loadedSuperadminUsers,
   ], [loadedUsers, loadedSuperadminUsers]);

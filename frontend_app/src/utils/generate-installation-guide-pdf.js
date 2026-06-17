@@ -363,7 +363,7 @@ export const createScopeArray = ({ listItems, loadedDefaultGuideProducts }) => {
 
     listItems?.forEach((item) => {
         // const dimensions = extractDimensions(item.description);
-        const propertiesJson = filteredDescriptionJson(item.description);
+        const propertiesJson = filteredDescriptionJson(item.description);   
         const dimensions = propertiesJson?.Size ? extractDimensions(item.description) : item.description ? extractDimensions(item.description) : null;
         const config = propertiesJson?.Config || propertiesJson?.config || propertiesJson?.Size || propertiesJson?.size;
         if (config?.length > 0) {

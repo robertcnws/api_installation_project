@@ -10,7 +10,7 @@ import InputAdornment from '@mui/material/InputAdornment';
 import { Divider, Tooltip, MenuItem, MenuList, IconButton, Typography, ListItemIcon, ListItemText } from '@mui/material';
 
 import { fDateRangeShortLabel } from 'src/utils/format-time';
-import { isInstaller, isAdministrator } from 'src/utils/check-permissions';
+import { isInstaller, isAdministrator, listRolesAndSubroles } from 'src/utils/check-permissions';
 
 import { varAlpha } from 'src/theme/styles';
 
@@ -21,6 +21,7 @@ import { usePopover, CustomPopover } from 'src/components/custom-popover';
 import { CustomDateRangePicker } from 'src/components/custom-date-range-picker';
 
 import { LoadingContext } from 'src/auth/context/loading-context';
+import { CONFIG } from 'src/config-global';
 
 // ----------------------------------------------------------------------
 
@@ -351,7 +352,9 @@ export function ServiceFilters({
             }}
             sx={{ width: '100%' }}
           >
-            {loadedUsers.filter((user) => isAdministrator(user.userRole.name)).map((user) => (
+            {loadedUsers.filter(
+              (user) => listRolesAndSubroles(user.userRole.name).includes(CONFIG.roles.administrator)
+            ).map((user) => (
               <MenuItem key={user.id} value={user.id}>
                 {user.name}
               </MenuItem>

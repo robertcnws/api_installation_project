@@ -9,6 +9,7 @@ from api_projects.data_util import (
 from .models import UserRole
 from api_authorization.models import LoginUser
 from api_projects.models import ProjectTracking, Project
+from api_users.tasks import sync_project_update_info as sync_task
 import logging
 
 logging.basicConfig(level=logging.WARNING)
@@ -248,6 +249,7 @@ def create_user(request):
     password = data.get('password')
     user_reporter = data.get('userReporter')
     avatar_url = data.get('avatarUrl')
+    installer_info = data.get('installerInfo')
     
     try:
         user = LoginUser.objects.filter(username=username).first()
@@ -271,6 +273,7 @@ def create_user(request):
             avatar_url=avatar_url,
             created_time=timezone.now(),
             last_modified_time=timezone.now(),
+            installer_info=installer_info if installer_info else {},
         )
         
         user.set_password(password)
@@ -325,6 +328,7 @@ def edit_user(request, id):
         password = data.get('password')
         user_reporter = data.get('userReporter')
         status = data.get('status')
+        installer_info = data.get('installerInfo')
     
         check_user = LoginUser.objects.filter(username=username).first()
         if check_user and check_user.id != user.id:
@@ -343,6 +347,7 @@ def edit_user(request, id):
         user.phone_number = phone_number if phone_number else user.phone_number
         user.user_role = role if role else user.user_role
         user.is_active = True if status == 'active' else False if status == 'inactive' else user.is_active
+        user.installer_info = installer_info
         user.last_modified_time = timezone.now()
         if password:
             user.set_password(password)
@@ -350,67 +355,7 @@ def edit_user(request, id):
         
         tracking_info = transform_data_to_mongo(user, exclude_fields=['password'])
         
-        projects = Project.objects.all()
-        for project in projects:
-            has_change = False
-            if project.user_reporter and str(project.user_reporter.get('id', '')) == id:
-                tracking_info['avatar_url'] = project.user_reporter['avatarUrl'] if project.user_reporter.get('avatarUrl') else \
-                                              project.user_reporter['avatar_url'] if project.user_reporter.get('avatar_url') else None  
-                project.user_reporter = tracking_info
-                has_change = True
-            if project.user_manager is not None:
-                if str(project.user_manager.get('id', '')) == id:
-                    tracking_info['avatar_url'] = project.user_manager['avatarUrl'] if project.user_manager.get('avatarUrl') else \
-                                                project.user_manager['avatar_url'] if project.user_manager.get('avatar_url') else None
-                    new_info = {
-                        **project.user_manager, 
-                        'firstName': tracking_info['first_name'],
-                        'lastName': tracking_info['last_name'],
-                        'avatarUrl': tracking_info['avatar_url'],
-                        'email': tracking_info['email'],
-                        'phoneNumber': tracking_info['phone_number'],
-                        'name': f"{tracking_info['first_name']} {tracking_info['last_name']}",
-                    }                              
-                    project.user_manager = new_info
-                    has_change = True
-            current_assignee = next((assignee for assignee in (project.users_assignees or []) if str(assignee['id']) == id), None)
-            if current_assignee:
-                user_assignees = [assignee for assignee in (project.users_assignees or []) if str(assignee['id']) != id]
-                user_assignees.append({
-                        **current_assignee,
-                        'id': tracking_info['id'],
-                        'username': tracking_info['username'],
-                        'firstName': tracking_info['first_name'],
-                        'lastName': tracking_info['last_name'],
-                        'avatarUrl': tracking_info['avatar_url'],
-                        'email': tracking_info['email'],
-                        'phoneNumber': tracking_info['phone_number'],
-                        'name': f"{tracking_info['first_name']} {tracking_info['last_name']}",
-                })
-                user_assignees = sorted(user_assignees, key=lambda x: x['username'], reverse=True)
-                project.users_assignees = user_assignees
-                has_change = True
-            default_tasks = project.project_default_tasks or []
-            for default_task in default_tasks:
-                current_user_assignees = next((assignee for assignee in (default_task['users_assignees'] or []) if str(assignee['id']) == id), None)
-                if current_user_assignees:
-                    task_user_assignees = [assignee for assignee in (default_task['users_assignees'] or []) if str(assignee['id']) != id]
-                    task_user_assignees.append({
-                        **current_user_assignees,
-                        'id': tracking_info['id'],
-                        'username': tracking_info['username'],
-                        'firstName': tracking_info['first_name'],
-                        'lastName': tracking_info['last_name'],
-                        'avatarUrl': tracking_info['avatar_url'],
-                        'email': tracking_info['email'],
-                        'phoneNumber': tracking_info['phone_number'],
-                        'name': f"{tracking_info['first_name']} {tracking_info['last_name']}",
-                    })
-                    task_user_assignees = sorted(task_user_assignees, key=lambda x: x['username'], reverse=True)
-                    default_task['users_assignees'] = task_user_assignees
-                    has_change = True
-            if has_change:
-                project.save()
+        sync_task.delay(tracking_info, str(user.id))
                 
         project_tracking = ProjectTracking(
             user_reporter=user_reporter,

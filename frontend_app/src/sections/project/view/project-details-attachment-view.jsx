@@ -1,7 +1,8 @@
-import { useMemo, useState, useEffect, useContext, useCallback } from 'react';
+import { useMemo, useState, useEffect, useContext, useCallback, useRef } from 'react';
 
 import Card from '@mui/material/Card';
 import Grid from '@mui/material/Unstable_Grid2';
+import { Box } from '@mui/material';
 
 import { availableTasks } from 'src/utils/project-tasks-utils';
 
@@ -14,6 +15,7 @@ import { ProjectEditAttachments } from './project-edit-attachments';
 import { ProjectDetailsContentOverview } from '../project-details-content-overview';
 
 
+
 // ----------------------------------------------------------------------
 
 export function ProjectDetailsAttachmentView({
@@ -22,7 +24,25 @@ export function ProjectDetailsAttachmentView({
     listPermissions,
     openDialogs,
     setOpenDialogs,
+    isHidden,
 }) {
+
+    const leftColRef = useRef(null);
+    const [leftColHeight, setLeftColHeight] = useState(0);
+
+    useEffect(() => {
+        const el = leftColRef.current;
+        if (!el) return undefined;
+
+        const ro = new ResizeObserver(() => {
+            setLeftColHeight(el.getBoundingClientRect().height);
+        });
+
+        ro.observe(el);
+        setLeftColHeight(el.getBoundingClientRect().height);
+
+        return () => ro.disconnect();
+    }, []);
 
     const TASK_STATUS_OPTIONS = [
         { value: 'not started', label: 'Not Started Tasks' },
@@ -49,13 +69,13 @@ export function ProjectDetailsAttachmentView({
         if (loadedStages) {
             const filteredStages = loadedStages.filter(
                 (stage) =>
-                    stage.name.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) === -1 &&
+                    stage.name?.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) === -1 &&
                     stage.otherName !== null &&
                     stage.otherName !== ''
 
             );
             if (!project?.hasPermission) {
-                return filteredStages.filter((stage) => stage.name.toLowerCase().indexOf(CONFIG.stages.permission.toLowerCase()) === -1);
+                return filteredStages.filter((stage) => stage.name?.toLowerCase().indexOf(CONFIG.stages.permission.toLowerCase()) === -1);
             }
             return filteredStages;
         }
@@ -212,18 +232,41 @@ export function ProjectDetailsAttachmentView({
             listPermissions={listPermissions}
             openDialogs={openDialogs}
             setOpenDialogs={setOpenDialogs}
+            isHidden={isHidden.value}
+            onToggleHidden={isHidden.onToggle}
+            maxHeight={leftColHeight}
         />
     );
 
     return (
         <Grid container spacing={2}>
-            <Grid xs={12} md={8}>
-                {renderContent}
+            <Grid xs={12} md={isHidden.value ? 11 : 8} sx={{ display: 'flex' }}>
+                <Box
+                    ref={leftColRef}
+                    sx={{
+                        alignSelf: 'flex-start',
+                        width: '100%',     // ✅ para que no se encoja
+                        minWidth: 0,       // ✅ evita overflow raro
+                    }}
+                >
+                    {renderContent}
+                </Box>
             </Grid>
 
-            <Grid xs={12} md={4}>
-                {renderOverview}
-
+            <Grid xs={12} md={isHidden.value ? 1 : 4} sx={{ display: 'flex' }}>
+                <Box
+                    sx={{
+                        mb: 0,
+                        width: '100%',
+                        mt: 0,
+                        ml: 0,
+                        display: 'flex',
+                        height: '100%',      // ✅ importante
+                        minHeight: 0,        // ✅ importante para que overflow funcione
+                    }}
+                >
+                    {renderOverview}
+                </Box>
                 {/* {renderCompany} */}
             </Grid>
         </Grid>

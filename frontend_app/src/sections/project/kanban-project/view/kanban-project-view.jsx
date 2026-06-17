@@ -494,7 +494,7 @@ function adaptToKanbanData(projects, stages) {
     if (colId && tasks[colId]) {
       const projectTasks = project.hasPermission ? project.projectDefaultTasks :
         project.projectDefaultTasks?.filter(
-          (task) => task.project_default_task.project_stage.name.toLowerCase().indexOf(CONFIG.stages.permission.toLowerCase()) === -1
+          (task) => task.project_default_task?.project_stage?.name?.toLowerCase().indexOf(CONFIG.stages.permission.toLowerCase()) === -1
         );
       const totalPercent = projectTasks.reduce((acc, task) => acc + task.percentage, 0);
       const percentage = totalPercent / projectTasks.length || 0;
@@ -507,7 +507,7 @@ function adaptToKanbanData(projects, stages) {
         percentage: percentage || 0,
       });
       if (project.hasPermission) {
-        const permission = stages.find((stage) => stage.name.toLowerCase().indexOf(CONFIG.stages.permission.toLowerCase()) !== -1);
+        const permission = stages.find((stage) => stage.name?.toLowerCase().indexOf(CONFIG.stages.permission.toLowerCase()) !== -1);
         if (permission && tasks[permission.id]) {
           if (project.currentStage.order < permission.order) {
             tasks[permission.id].push({

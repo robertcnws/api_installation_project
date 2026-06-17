@@ -59,6 +59,8 @@ const ICONS = {
   measurement: icon('ic-measurements'),
   defaultMaterial: icon('ic-material'),
   statistics: icon('ic-statistics'),
+  report: icon('ic-report'),
+  crew: icon('ic-crew'),
 };
 
 const userLogged = JSON.parse(sessionStorage.getItem('userLogged'));
@@ -76,8 +78,11 @@ export const navData = () => [
     subheader: 'Overview',
     items: [
       { title: 'Dashboard', path: paths.dashboard.general.analytics, icon: ICONS.dashboard },
-      { title: 'Analytics', path: paths.dashboard.general.analytics, icon: ICONS.statistics },
       { title: 'Calendar', path: paths.dashboard.general.calendar, icon: ICONS.calendarOverview },
+      ...(userLogged && listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.projectManager) ? [
+        { title: 'Metrics', path: paths.dashboard.general.metrics, icon: ICONS.statistics },
+        { title: 'Reports', path: paths.dashboard.general.reports, icon: ICONS.report },
+      ] : []),
     ],
   },
   /**
@@ -168,6 +173,17 @@ export const navData = () => [
           children: [
             { title: 'List', path: paths.dashboard.user.list },
             { title: 'Create', path: paths.dashboard.user.new },
+          ],
+        },
+      ] : []),
+      ...(userLogged && listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.projectManager) ? [
+        {
+          title: 'Installation Crews',
+          path: paths.dashboard.installationCrew.root,
+          icon: ICONS.crew,
+          children: [
+            { title: 'List', path: paths.dashboard.installationCrew.list },
+            { title: 'Create', path: paths.dashboard.installationCrew.new },
           ],
         },
       ] : []),

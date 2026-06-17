@@ -1,5 +1,6 @@
 services:
   aws_frontend_app:
+    platform: linux/amd64
     build:
       context: ./frontend_app
       dockerfile: Dockerfile.aws.frontend.prod

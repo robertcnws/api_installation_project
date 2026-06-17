@@ -16,7 +16,7 @@ import { useRouter } from 'src/routes/hooks';
 
 import { useTabs } from 'src/hooks/use-tabs';
 
-import { isAdministrator, isProjectManager } from 'src/utils/check-permissions';
+import { isAdministrator, isProjectManager, listRolesAndSubroles } from 'src/utils/check-permissions';
 
 import { CONFIG } from 'src/config-global';
 import { useServiceByIdQuery } from 'src/_mock/__services';
@@ -46,7 +46,9 @@ export function ServiceEditModalUserManagerView({
 
     const item = useMemo(() => loadedServices?.find((service) => service.id === serviceId), [loadedServices, serviceId]);
 
-    const managerUsers = useMemo(() => loadedUsers.filter((user) => isProjectManager(user.userRole.name) || isAdministrator(user.userRole.name)), [loadedUsers]);
+    const managerUsers = useMemo(() => loadedUsers.filter(
+        (user) => isProjectManager(user.userRole.name) || listRolesAndSubroles(user.userRole.name).includes(CONFIG.roles.administrator)
+    ), [loadedUsers]);
 
     const cleanLoadedUsers = useMemo(() => managerUsers.map(({ __typename, ...rest }) => rest), [managerUsers]);
 

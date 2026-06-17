@@ -81,6 +81,7 @@ export function ProjectDetailsInstallationGuideFormView({
 
   const [productsData, setProductsData] = useState([]);
 
+
   // Cargar productos iniciales
   useEffect(() => {
     if (listItems.length > 0) {
@@ -96,7 +97,7 @@ export function ProjectDetailsInstallationGuideFormView({
         const finalItem = {
           ...item,
           name: product?.name || item.name,
-          price: product?.price || (item.name.toLowerCase().includes('mullion') ? 0 : item.price),
+          price: product?.price || (item.name?.toLowerCase().includes('mullion') ? 0 : item.price),
           quantity: product?.quantity || item.quantity,
           notes: product?.notes || '',
           checked: product?.checked || false,
@@ -169,6 +170,7 @@ export function ProjectDetailsInstallationGuideFormView({
   useEffect(() => {
     if (project?.projectMaterials?.length === 0) {
       const arrayMaterials = buildMaterialsReport(productsData, loadedDefaultMaterials);
+      // console.log('buildMaterialsReport - grouped:', arrayMaterials);
       setMaterials(arrayMaterials);
     }
   }, [project?.projectMaterials, loadedDefaultMaterials, productsData]);
@@ -383,6 +385,8 @@ export function ProjectDetailsInstallationGuideFormView({
       formData.append('projectMaterials', JSON.stringify(materials));
       formData.append('userReporter', JSON.stringify(userLogged?.data));
 
+      // console.log('Submitting data:', formData);
+
       const promise = axios.post(`${CONFIG.apiUrl}/projects/update/project/${project?.id}/change-installation-guide-form/`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
@@ -592,7 +596,7 @@ export function ProjectDetailsInstallationGuideFormView({
                                     listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) ? (
                                     <TextField
                                       type="number"
-                                      min={product.name.toLowerCase().includes('mullion') ? 0 : 1}
+                                      min={product.name?.toLowerCase().includes('mullion') ? 0 : 1}
                                       value={product.price}
                                       placeholder="Price..."
                                       sx={{ width: 70 }}
@@ -675,7 +679,7 @@ export function ProjectDetailsInstallationGuideFormView({
                                     listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator)) ? (
                                     <TextField
                                       type="number"
-                                      min={product.name.toLowerCase().includes('mullion') ? 0 : 1}
+                                      min={product.name?.toLowerCase().includes('mullion') ? 0 : 1}
                                       value={product.price}
                                       placeholder="Enter price"
                                       sx={{ width: 200 }}

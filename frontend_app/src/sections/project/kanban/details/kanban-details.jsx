@@ -310,7 +310,7 @@ export function KanbanDetails({
                   ) && (
                       <>
                         {((task && task.status === CONFIG.taskStatus.notStarted && (task?.project_default_task?.order === 1 ||
-                          (project?.hasPermission && task?.project_default_task?.project_stage.name.toLowerCase() === CONFIG.stages.permission.toLowerCase()))) ||
+                          (project?.hasPermission && task?.project_default_task?.project_stage?.name?.toLowerCase() === CONFIG.stages.permission.toLowerCase()))) ||
                           (task.beforeNoMatter && task.status === CONFIG.taskStatus.notStarted)) && (
                             <Button
                               variant="soft"
@@ -334,7 +334,7 @@ export function KanbanDetails({
                             task,
                             project?.projectDefaultTasks,
                             CONFIG.taskStatus.inProgress,
-                            task?.project_default_task?.project_stage?.name.toLowerCase().indexOf(CONFIG.stages.permission.toLowerCase()) !== -1,
+                            task?.project_default_task?.project_stage?.name?.toLowerCase().indexOf(CONFIG.stages.permission.toLowerCase()) !== -1,
                             CONFIG
                           ).length === 0 && (
                             <Button

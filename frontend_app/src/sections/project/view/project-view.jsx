@@ -1,6 +1,6 @@
 import axios from 'axios';
 import dayjs from 'dayjs';
-import { useMemo, useState, useEffect, useContext, useCallback } from 'react';
+import React, { useMemo, useState, useEffect, useContext, useCallback } from 'react';
 
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
@@ -16,7 +16,7 @@ import { useSetState } from 'src/hooks/use-set-state';
 
 import { isInstaller } from 'src/utils/check-permissions';
 import { fIsAfter, fIsBetween } from 'src/utils/format-time';
-import { getProjectInstaller } from 'src/utils/project-tasks-utils';
+import { getProjectInstallers, getWorkOrderWorkers } from 'src/utils/project-tasks-utils';
 
 import { CONFIG } from 'src/config-global';
 import { PROJECT_TYPE_OPTIONS } from 'src/_mock';
@@ -73,7 +73,7 @@ export function ProjectView() {
 
   const finalStages = useMemo(() => {
     if (loadedStages) {
-      return loadedStages.filter((stage) => stage.name.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) === -1);
+      return loadedStages.filter((stage) => stage.name?.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) === -1);
     }
     return [];
   }, [loadedStages]);
@@ -93,6 +93,8 @@ export function ProjectView() {
   const [isWarehouseStaff, setIsWarehouseStaff] = useState(false);
 
   const upload = useBoolean();
+
+  const openTriggerDialog = useBoolean();
 
   // const [view, setView] = useState(
   //   isInstaller(userLogged?.data?.user_role?.name) ? 'grid' : localStorage.getItem('projectView') || 'list'
@@ -133,7 +135,7 @@ export function ProjectView() {
           }
           const isInstallerRole = isInstaller(userLogged?.data?.user_role?.name);
           if (isInstallerRole) {
-            const projInstaller = getProjectInstaller(message.item, CONFIG);
+            const projInstaller = getProjectInstallers(message.item, CONFIG);
             if (projInstaller && projInstaller.id && projInstaller.username && projInstaller.username !== userLogged?.data?.username) {
               return [...prevData];
             }
@@ -215,7 +217,7 @@ export function ProjectView() {
   const notFound = (!dataFiltered.length && canReset) || !dataFiltered.length;
 
   const handleChangeView = useCallback((event, newView) => {
-    if (newView !== null) {
+    if (newView !== null && newView !== 'trigger') {
       localStorage.setItem('projectView', newView);
       localStorage.removeItem('projectReminderTab');
       setView(newView);
@@ -328,6 +330,17 @@ export function ProjectView() {
     [router, dataFiltered]
   );
 
+  const handleTriggerAllProfits = useCallback(
+    async () => {
+
+      const promise = axios.post(`${CONFIG.apiUrl}/projects/update/projects/trigger-profit-rebuild/`);
+
+      await promise;
+
+      toast.success('Trigger profits rebuilt success!');
+
+    }, []);
+
   const renderFilters = (
     <Stack
       spacing={2}
@@ -364,11 +377,15 @@ export function ProjectView() {
           <Iconify icon="ion:calendar-outline" />
         </ToggleButton> */}
 
-        {!isInstaller(userLogged?.data?.user_role?.name) && (
-          <ToggleButton value="kanban">
+        {!isInstaller(userLogged?.data?.user_role?.name) && [
+          <ToggleButton key="kanban" value="kanban">
             <Iconify icon="tabler:layout-kanban" />
+          </ToggleButton>,
+
+          <ToggleButton key="trigger" value="trigger" onClick={openTriggerDialog.onTrue}>
+            <Iconify icon="fluent-mdl2:trigger-auto" />
           </ToggleButton>
-        )}
+        ]}
 
       </ToggleButtonGroup>
 
@@ -474,7 +491,7 @@ export function ProjectView() {
                     />
                   ) : view === 'calendar' ? (
                     <ProjectCalendarView projects={dataFiltered} isOnlyWeek={false} />
-                  ) : (
+                  ) : view === 'kanban' && (
                     <KanbanProjectView projects={dataFiltered} refetchProjects={refetchProjects} />
                   )}
                 </>
@@ -539,6 +556,31 @@ export function ProjectView() {
                 </Button>
               }
             />
+
+            <ConfirmDialog
+              open={openTriggerDialog.value}
+              onClose={openTriggerDialog.onFalse}
+              title="Update Cost & Profit Data"
+              content={
+                <>
+                  Are you sure want to update all installation project(s) with costs and profits?
+                </>
+              }
+              action={
+                <Button
+                  variant="contained"
+                  color="warning"
+                  onClick={async () => {
+                    await handleTriggerAllProfits();
+                    openTriggerDialog.onFalse();
+                    // setView('list');
+                  }}
+                >
+                  Update
+                </Button>
+              }
+            />
+
           </>
         )}
     </>
@@ -607,11 +649,11 @@ function applyFilter({ inputData, comparator, filters, dateError }) {
 
   if (installer.id) {
     inputData = inputData.filter((file) => {
-      const installerId = getProjectInstaller(file, CONFIG)?.id;
-      if (installerId) {
-        return String(installerId) === String(installer.id);
-      }
-      return false;
+      const workOrders = file.workOrders || file.work_orders || [];
+      const installers = workOrders.map(
+        (wo) => getWorkOrderWorkers(wo)
+      ).flat();
+      return installers.some((i) => String(i.id) === String(installer.id));
     });
   }
 
@@ -625,7 +667,14 @@ function applyFilter({ inputData, comparator, filters, dateError }) {
 
   if (!dateError) {
     if (startDate && endDate) {
-      inputData = inputData.filter((file) => fIsBetween(file.startDate, startDate, endDate));
+      // inputData = inputData.filter((file) => fIsBetween(file.startDate, startDate, endDate));
+      inputData = inputData.filter((file) => {
+        const workOrders = file.workOrders || file.work_orders || [];
+        return workOrders.some(
+          (wo) => wo.work_type?.name?.toLowerCase() === 'installation' &&
+            fIsBetween(wo.start_date, startDate, endDate)
+        );
+      });
     }
   }
 

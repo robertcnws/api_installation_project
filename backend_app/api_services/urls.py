@@ -55,4 +55,4 @@ urlpatterns = [
     # GET FILE URL FROM AWS S3
     path('get-file-url/', views.get_default_file_url, name='get_file_url'),
     
-] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+]

@@ -60,10 +60,10 @@ export function ProjectDetailsCommentInput({ project, refetchProject, commentDat
 
       if (isInstaller(userLogged?.data?.user_role?.name)) {
         const selectedTasks = filtered?.filter(
-          (task) => task.project_default_task?.project_stage?.name.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
+          (task) => task.project_default_task?.project_stage?.name?.toLowerCase().indexOf(CONFIG.stages.installation.toLowerCase()) !== -1
         );
         const finalTasks = selectedTasks.filter(
-          (task) => task.project_default_task.name.toLowerCase().includes(CONFIG.permissions.operationUploadFile.toLowerCase())
+          (task) => task.project_default_task?.name?.toLowerCase().includes(CONFIG.permissions.operationUploadFile.toLowerCase())
         );
         const withUsersTasks = finalTasks.filter(
           (task) => task.users_assignees.length > 0

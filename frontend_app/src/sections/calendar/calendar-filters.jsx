@@ -122,7 +122,7 @@ export function CalendarFilters({
       </Typography>
 
       <Box component="ul">
-        {orderBy(events, ['end'], ['desc']).map((event) => (
+        {orderBy(events, ['end', 'endDate'], ['desc']).map((event) => (
           <Box component="li" key={event.id}>
             <ListItemButton
               onClick={() => onClickEvent(`${event.id}`)}
@@ -176,7 +176,7 @@ export function CalendarFilters({
       open={open}
       onClose={onClose}
       slotProps={{ backdrop: { invisible: true } }}
-      PaperProps={{ sx: { width: 320 } }}
+      PaperProps={{ sx: { width: { xs: 320, sm: 360 } } }}
     >
       {renderHead}
 

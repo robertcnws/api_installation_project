@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { z as zod } from 'zod';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { isValidPhoneNumber } from 'react-phone-number-input/input';
@@ -18,7 +18,7 @@ import DialogContent from '@mui/material/DialogContent';
 
 import { Iconify } from 'src/components/iconify';
 
-import { createDefaultPermissions } from 'src/utils/check-permissions';
+import { createDefaultPermissions, isInstaller } from 'src/utils/check-permissions';
 
 import { CONFIG } from 'src/config-global';
 import { USER_STATUS_OPTIONS } from 'src/_mock';
@@ -28,29 +28,19 @@ import { toast } from 'src/components/snackbar';
 import { Form, Field, schemaHelper } from 'src/components/hook-form';
 
 import { useDataContext } from 'src/auth/context/data/data-context';
+import { Grid } from '@mui/material';
 
 // ----------------------------------------------------------------------
 
-export const UserQuickEditSchema = zod.object({
-  firstName: zod.string().min(1, { message: 'First name is required!' }),
-  lastName: zod.string().min(1, { message: 'Last name is required!' }),
-  email: zod
-    .string()
-    .min(1, { message: 'Email is required!' })
-    .email({ message: 'Email must be a valid email address!' }),
-  phoneNumber: schemaHelper.phoneNumber({ isValidPhoneNumber }),
-  // country: schemaHelper.objectOrNull({
-  //   message: { required_error: 'Country is required!' },
-  // }),
-  // state: zod.string().min(1, { message: 'State is required!' }),
-  // city: zod.string().min(1, { message: 'City is required!' }),
-  // address: zod.string().min(1, { message: 'Address is required!' }),
-  // zipCode: zod.string().min(1, { message: 'Zip code is required!' }),
-  // company: zod.string().min(1, { message: 'Company is required!' }),
-  role: zod.string().min(1, { message: 'Role is required!' }),
-  // Not required
-  status: zod.string(),
-});
+const units = [
+  { label: 'Daily', value: 'daily' },
+  { label: 'Hourly', value: 'hourly' },
+];
+
+const typeCrews = [
+  { label: 'On House', value: 'onHouse' },
+  { label: 'Subcontractor', value: 'subcontractor' },
+];
 
 // ----------------------------------------------------------------------
 
@@ -69,8 +59,91 @@ export function UserQuickEditForm({ currentUser, open, onClose }) {
       phoneNumber: currentUser?.phoneNumber || '',
       status: currentUser?.isActive ? 'active' : 'inactive',
       role: currentUser?.userRole.id || '',
+      costByUnit: currentUser?.installerInfo?.costByUnit || 1,
+      unit: currentUser?.installerInfo?.unit || null,
+      typeCrew: currentUser?.installerInfo?.typeCrew || null,
     }),
     [currentUser]
+  );
+
+  const baseSchema = zod.object({
+    firstName: zod.string().min(1, { message: 'First name is required!' }),
+    lastName: zod.string().min(1, { message: 'Last name is required!' }),
+    email: zod
+      .string()
+      .min(1, { message: 'Email is required!' })
+      .email({ message: 'Email must be a valid email address!' }),
+    phoneNumber: schemaHelper.phoneNumber({ isValidPhoneNumber }),
+    role: zod.string().min(1, { message: 'Role is required!' }),
+    status: zod.string(),
+    costByUnit: zod
+      .coerce
+      .number()
+      .optional(),
+
+    unit: zod
+      .object({
+        value: zod.string(),
+        label: zod.string(),
+      })
+      .nullable()
+      .optional(),
+
+    typeCrew: zod
+      .object({
+        value: zod.string(),
+        label: zod.string(),
+      })
+      .nullable()
+      .optional(),
+  });
+
+  const UserQuickEditSchema = useMemo(
+    () =>
+      baseSchema.superRefine((data, ctx) => {
+        const selectedRole = loadedUserRoles?.find(
+          (role) => role.id === data.role
+        );
+        const isInstallerSelected =
+          selectedRole && isInstaller(selectedRole.name);
+
+        if (isInstallerSelected) {
+          if (
+            Number.isNaN(data.costByUnit)
+          ) {
+            ctx.addIssue({
+              code: zod.ZodIssueCode.custom,
+              message: 'Cost by unit is required',
+              path: ['costByUnit'],
+            });
+          } else if (data.costByUnit < 0) {
+            ctx.addIssue({
+              code: zod.ZodIssueCode.custom,
+              message: 'Cost by unit must be at least 0',
+              path: ['costByUnit'],
+            });
+          }
+
+          // unit requerido
+          if (!data.unit) {
+            ctx.addIssue({
+              code: zod.ZodIssueCode.custom,
+              message: 'Unit is required!',
+              path: ['unit'],
+            });
+          }
+
+          // typeCrew requerido
+          if (!data.typeCrew) {
+            ctx.addIssue({
+              code: zod.ZodIssueCode.custom,
+              message: 'Type crew is required!',
+              path: ['typeCrew'],
+            });
+          }
+        }
+      }),
+    [baseSchema, loadedUserRoles]
   );
 
   const methods = useForm({
@@ -83,17 +156,49 @@ export function UserQuickEditForm({ currentUser, open, onClose }) {
     reset,
     handleSubmit,
     formState: { isSubmitting },
+    watch,
   } = methods;
 
+  const roleValue = watch('role');
+
+  const isInstallerRole = useMemo(() => {
+    if (!loadedUserRoles || loadedUserRoles.length === 0) return false;
+    const selectedRole = loadedUserRoles.find((role) => role.id === roleValue);
+    return !!(selectedRole && isInstaller(selectedRole.name));
+  }, [roleValue, loadedUserRoles]);
+
+  useEffect(() => {
+    if (!open) {
+      reset(defaultValues);
+    }
+  }, [open, reset, defaultValues]);
+
   const onSubmit = handleSubmit(async (data) => {
-    const {id} = currentUser;
-    data = { 
-      ...data, 
-      username: currentUser.username, 
+    const { id } = currentUser;
+    let payload = {
+      ...data,
+      username: currentUser.username,
       userReporter: userLogged?.data
     };
 
-    const promise = axios.post(`${CONFIG.apiUrl}/users/edit/user/${id}/`, data);
+    const selectedRole = loadedUserRoles?.find((role) => role.id === data.role);
+    const isInstallerSelected = selectedRole && isInstaller(selectedRole.name);
+
+    if (isInstallerSelected) {
+      payload = {
+        ...payload,
+        installerInfo: {
+          costByUnit:
+            typeof data.costByUnit === 'number'
+              ? data.costByUnit
+              : Number(data.costByUnit),
+          unit: data.unit,
+          typeCrew: data.typeCrew,
+        },
+      };
+    }
+
+    const promise = axios.post(`${CONFIG.apiUrl}/users/edit/user/${id}/`, payload);
 
     try {
       reset();
@@ -110,7 +215,7 @@ export function UserQuickEditForm({ currentUser, open, onClose }) {
       // console.info('DATA', data);
 
       if (data.username === userLogged?.data.username) {
-        localStorage.removeItem('userLogged');  
+        localStorage.removeItem('userLogged');
         sessionStorage.removeItem('userLogged');
         /* eslint-disable object-shorthand */
         localStorage.setItem('userLogged', JSON.stringify({ data: data }));
@@ -120,18 +225,18 @@ export function UserQuickEditForm({ currentUser, open, onClose }) {
 
       refetchUsers?.();
 
-      const roleName = loadedUserRoles?.find((role) => role.id === data.role)?.name;
-      const {username} = data;
+      // const roleName = loadedUserRoles?.find((role) => role.id === data.role)?.name;
+      // const { username } = data;
 
-      const dataAWS = createDefaultPermissions(roleName);
-      await axios.post(`${CONFIG.apiUrl}/integration/manage_user_permissions/`, {
-        username,
-        data: dataAWS,
-      }, {
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      }).then((res) => res.data)
+      // const dataAWS = createDefaultPermissions(roleName);
+      // await axios.post(`${CONFIG.apiUrl}/integration/manage_user_permissions/`, {
+      //   username,
+      //   data: dataAWS,
+      // }, {
+      //   headers: {
+      //     'Content-Type': 'application/json'
+      //   }
+      // }).then((res) => res.data)
 
     } catch (error) {
       console.error(error);
@@ -194,28 +299,8 @@ export function UserQuickEditForm({ currentUser, open, onClose }) {
 
             <Field.Text name="firstName" label="First name" />
             <Field.Text name="lastName" label="Last name" />
-            
+
             <Field.Phone name="phoneNumber" label="Phone number" />
-
-            {/* <Field.CountrySelect
-              fullWidth
-              name="country"
-              label="Country"
-              placeholder="Choose a country"
-            />
-
-            <Field.Text name="state" label="State/region" />
-            <Field.Text name="city" label="City" />
-            <Field.Text name="address" label="Address" />
-            <Field.Text name="zipCode" label="Zip/code" />
-            <Field.Select name="gender" label="Gender">
-                <MenuItem key="M" value="M">
-                  Male
-                </MenuItem>
-                <MenuItem key="F" value="F">
-                  Female
-                </MenuItem>
-            </Field.Select> */}
             <Field.Select name="role" label="Role">
               {loadedUserRoles.map((role) => (
                 <MenuItem key={role.id} value={role.id}>
@@ -224,6 +309,52 @@ export function UserQuickEditForm({ currentUser, open, onClose }) {
               ))}
             </Field.Select>
           </Box>
+          {isInstallerRole && (
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={12}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: { xs: 'column', md: 'row' },
+                    width: '100%',
+                    gap: 2,
+                    mt: 3,
+                    mb: 2,
+                  }}
+                >
+                  <Field.Autocomplete
+                    name="unit"
+                    label="Unit"
+                    options={units}
+                    getOptionLabel={(option) => option.label}
+                    isOptionEqualToValue={(option, value) =>
+                      !!value && option.value === value.value
+                    }
+                    sx={{ flex: 1 }}
+                  />
+
+                  <Field.Text
+                    name="costByUnit"
+                    label="Cost by unit"
+                    type="number"
+                    sx={{ flex: 1 }}
+                    inputProps={{ min: 1 }}
+                  />
+
+                  <Field.Autocomplete
+                    name="typeCrew"
+                    label="Crew type"
+                    options={typeCrews}
+                    getOptionLabel={(option) => option.label}
+                    isOptionEqualToValue={(option, value) =>
+                      !!value && option.value === value.value
+                    }
+                    sx={{ flex: 1 }}
+                  />
+                </Box>
+              </Grid>
+            </Grid>
+          )}
         </DialogContent>
 
         <DialogActions>

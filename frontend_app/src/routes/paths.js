@@ -66,6 +66,8 @@ export const paths = {
       app: `${ROOTS.DASHBOARD}/app`,
       analytics: `${ROOTS.DASHBOARD}/analytics`,
       calendar: `${ROOTS.DASHBOARD}/calendar`,
+      metrics: `${ROOTS.DASHBOARD}/metrics`,
+      reports: `${ROOTS.DASHBOARD}/reports`,
     },
     user: {
       root: `${ROOTS.DASHBOARD}/user`,
@@ -77,6 +79,13 @@ export const paths = {
       demo: {
         edit: `${ROOTS.DASHBOARD}/user/${MOCK_ID}/edit`,
       },
+    },
+    installationCrew: {
+      root: `${ROOTS.DASHBOARD}/install-crew`,
+      new: `${ROOTS.DASHBOARD}/install-crew/new`,
+      list: `${ROOTS.DASHBOARD}/install-crew/list`,
+      edit: (id) => `${ROOTS.DASHBOARD}/install-crew/${id}/edit`,
+      details: (id) => `${ROOTS.DASHBOARD}/install-crew/${id}`,
     },
     salesOrder: {
       root: `${ROOTS.DASHBOARD}/sales-order`,

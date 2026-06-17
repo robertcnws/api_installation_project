@@ -26,6 +26,7 @@ const GET_ALL_USERS = gql`
       username
       zipCode
       password
+      installerInfo
     }
   }
 `;

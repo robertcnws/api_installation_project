@@ -12,8 +12,13 @@ from api_projects.schema_models.model_schema_project_default_guide_product impor
 from api_projects.schema_models.model_schema_project_default_material import ProjectDefaultMaterialType
 from api_projects.schema_models.model_schema_project_reminder import ProjectRemainder
 from api_projects.schema_models.model_schema_project_tracking import ProjectTrackingType, ProjectTrackingViewType
+from api_projects.schema_models.model_schema_project_calendar_notes import ProjectCalendarNotesType
+from api_projects.schema_models.model_schema_project_profit_report import ProjectProfitReportType
+from api_projects.schema_models.model_schema_project_installation_crew import ProjectInstallationCrewType
+from api_projects.schema_models.model_schema_timer import TaskTimerType
 
 from .models import (
+    ProjectInstallationCrew,
     ProjectStage, 
     ProjectRole, 
     Project, 
@@ -29,12 +34,19 @@ from .models import (
     ProjectReminder,
     ProjectDefaultMaterial,
     ProjectView,
+    ProjectCalendarNotes,
+    ProjectProfitReport,
 )
 from .models_sync import (
     ProjectSync,
 )
+from .models_extra import (
+    TaskTimer,
+)
 from api_authorization.models import LoginUser
 from bson import ObjectId
+from datetime import datetime, time
+from django.utils import timezone
 
 class Query(graphene.ObjectType):
     all_project_permissions = graphene.List(ProjectPermissionsType)
@@ -70,6 +82,28 @@ class Query(graphene.ObjectType):
     )
     
     all_project_default_materials = graphene.List(ProjectDefaultMaterialType)
+    all_project_calendar_notes = graphene.List(ProjectCalendarNotesType)
+    all_project_profit_reports = graphene.List(ProjectProfitReportType)
+    profit_reports_by_date_range = graphene.List(
+        ProjectProfitReportType,
+        start_date=graphene.String(required=True),
+        end_date=graphene.String(required=True)
+    )
+    all_project_installation_crews = graphene.List(ProjectInstallationCrewType)
+    
+    all_task_timers = graphene.List(TaskTimerType)
+    
+    timer_by_id = graphene.Field(
+        TaskTimerType,
+        id=graphene.String(required=True)
+    )
+    
+    timer_get_by_username_entity = graphene.Field(
+        TaskTimerType,
+        username=graphene.String(required=False),
+        entity_type=graphene.String(required=False),
+        entity_id=graphene.String(required=False),
+    )
     
     def resolve_all_project_reminders(self, info, username=None):
         if username:
@@ -157,5 +191,58 @@ class Query(graphene.ObjectType):
         
     def resolve_all_project_default_materials(self, info):
         return list(ProjectDefaultMaterial.objects(is_active=True))
+    
+    def resolve_all_project_calendar_notes(self, info):
+        return list(ProjectCalendarNotes.objects(is_active=True))
+    
+    def resolve_all_project_profit_reports(self, info):
+        return list(ProjectProfitReport.objects().order_by('-created_time'))
+    
+    def resolve_profit_reports_by_date_range(self, info, start_date, end_date):
+        try:
+            date_from = datetime.strptime(start_date, "%Y-%m-%d").date()
+            date_to = datetime.strptime(end_date, "%Y-%m-%d").date()
+        except ValueError:
+            return ProjectProfitReport.objects.none()
+        
+        start_dt = datetime.combine(date_from, time.min)  # 00:00:00
+        end_dt = datetime.combine(date_to, time.max)      # 23:59:59.999999
+        
+        qs = ProjectProfitReport.objects(
+            __raw__={
+                "project_info.start_date": {
+                    "$gte": start_dt,
+                    "$lte": end_dt,
+                }
+            }
+        )
+
+        return qs.order_by('-created_time')
+    
+    def resolve_all_project_installation_crews(self, info):
+        return list(ProjectInstallationCrew.objects.all())
+    
+    def resolve_all_task_timers(self, info):
+        return list(TaskTimer.objects.all())
+    
+    def resolve_timer_by_id(self, info, id):
+        try:
+            return TaskTimer.objects.get(id=ObjectId(id))
+        except Exception:
+            return None
+        
+    def resolve_timer_get_by_username_entity(self, info, username=None, entity_type=None, entity_id=None):
+        try:
+            qs = TaskTimer.objects
+            if username:
+                qs = qs(username=username)
+            if entity_type:
+                qs = qs(entity_type=entity_type)
+            if entity_id:
+                qs = qs(entity_id=entity_id)
+            return qs.first()
+        except Exception:
+            return None
+            
 
 schema = graphene.Schema(query=Query)

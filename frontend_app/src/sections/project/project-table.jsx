@@ -24,13 +24,6 @@ import { LoadingContext } from 'src/auth/context/loading-context';
 
 import { ProjectTableRow } from './project-table-row';
 
-
-
-
-// ----------------------------------------------------------------------
-
-
-
 // ----------------------------------------------------------------------
 
 export function ProjectTable({
@@ -77,10 +70,11 @@ export function ProjectTable({
   const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
 
   const TABLE_HEAD = [
-    { id: 'startDate', label: 'Installation Date' },
-    { id: 'duration', label: 'Duration' },
+    { id: 'startDate', label: 'Installation Date(s)' },
+    // { id: 'duration', label: 'Duration' },
     { id: 'number', label: 'Number' },
-    { id: 'inspectionDate', label: 'Inspection Date' },
+    { id: 'inspectionDate', label: 'Inspection Date(s)' },
+    { id: 'finishInspectionDate', label: 'Finish Date(s)' },
     { id: 'name', label: 'Name' },
     { id: 'currentStage', label: 'Stage' },
     ...((loadedStages || []).map((stage) => ({
@@ -94,8 +88,7 @@ export function ProjectTable({
   ];
 
   const TABLE_HEAD_MOBILE = [
-    { id: 'startDate', label: 'Installation Date' },
-    { id: 'duration', label: 'Duration' },
+    { id: 'startDate', label: 'Installation Date(s)' },
     { id: 'number', label: 'Number' },
     { id: 'hasPermission', label: 'Permission' },
     { id: '' },

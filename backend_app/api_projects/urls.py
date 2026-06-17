@@ -15,7 +15,9 @@ urlpatterns = [
     path('create/projects/', views.create_projects, name='create_projects'),
     path('update/projects/change-staff-all-projects/', views.change_staff_all_projects, name='change_staff_all_projects'),
     path('update/projects/change-description-all-projects/', views.change_description_all_projects, name='change_description_all_projects'),
+    path('update/projects/trigger-profit-rebuild/', views.trigger_profit_rebuild, name='trigger_profit_rebuild'),
     path('update/project/<str:id>/', views.update_project, name='update_project'),
+    path('update/project/<str:id>/manage-profit-report/', views.manage_profit_report, name='manage_profit_report'),
     path('update/project/<str:id>/change-permission/', views.change_project_permission, name='change_project_permission'),
     path('update/project/<str:id>/change-address/', views.change_project_address, name='change_project_address'),
     path('update/project/<str:id>/change-phone-number/', views.change_project_phone_number, name='change_project_phone_number'),
@@ -42,6 +44,10 @@ urlpatterns = [
     path('mark-read/notifications/', views.mark_as_read_notifications, name='mark_as_read_notifications'),
     path('delete/notifications/', views.delete_notifications, name='delete_notifications'),
     path('download/files/', views.download_s3_archive, name='download_s3_archive'),
+    # PROJECT CALENDAR NOTES
+    path('create/project/calendar-note/', views.create_project_calendar_note, name='create_project_calendar_note'),
+    path('update/project/calendar-note/<str:id>/', views.update_project_calendar_note, name='update_project_calendar_note'),
+    path('delete/project/calendar-note/<str:id>/', views.delete_project_calendar_note, name='delete_project_calendar_note'),
     # PROJECT TASKS
     path('create/project/task/', views.create_project_task, name='create_project_task'),
     path('update/project/task/<str:id>/', views.update_project_task, name='update_project_task'),
@@ -57,6 +63,11 @@ urlpatterns = [
     path('edit/default-task/<str:id>/', views.edit_default_task, name='edit_default_task'),
     path('delete/default-task/<str:id>/', views.delete_default_task, name='delete_default_task'),
     path('delete/default-tasks/', views.delete_default_tasks, name='delete_default_tasks'),
+    # PROJECT INSTALLATION CREWS
+    path('create/installation-crew/', views.create_project_installation_crew, name='create_project_installation_crew'),
+    path('edit/installation-crew/<str:id>/', views.edit_project_installation_crew, name='edit_project_installation_crew'),
+    path('delete/installation-crew/<str:id>/', views.delete_project_installation_crew, name='delete_project_installation_crew'),
+    path('delete/installation-crews/', views.delete_list_of_project_installation_crews, name='delete_list_of_project_installation_crews'),
     # PROJECT STAGES
     path('create/stage/', views.create_stage, name='create_stage'),
     path('edit/stage/<str:id>/', views.edit_stage, name='edit_stage'),
@@ -83,5 +94,10 @@ urlpatterns = [
     path('download/backup/', views.download_mongo_db, name='download_mongo_db'),
     # GET FILE URL FROM AWS S3
     path('get-file-url/', views.get_default_file_url, name='get_file_url'),
+    # TIMER ENDPOINTS
+    path('timers/<str:entity_type>/<str:entity_id>/', views.timer_get, name='timer_get'),
+    path('timers/start/', views.timer_start, name='timer_start'),
+    path('timers/pause/', views.timer_pause, name='timer_pause'),
+    path('timers/reset/', views.timer_reset, name='timer_reset'),
 
-] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+]

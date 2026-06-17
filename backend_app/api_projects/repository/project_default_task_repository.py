@@ -20,6 +20,8 @@ from api_projects.data_util import (
     get_current_stage_from_tasks,
     to_aware,
 )
+from api_projects.tasks import task_update_default_task_in_projects
+from api_projects.repository import timer_repository
 import json
 import logging
 
@@ -134,7 +136,7 @@ def create_default_task(request):
             
             for default_task in project_default_tasks:
                 new_task = ProjectDefaultTask.objects(id=default_task['project_default_task']['_id']).first()
-                default_task['project_default_task'] = transform_data_to_mongo(new_task)
+                default_task['project_default_task'] = transform_data_to_mongo(new_task, exclude_fields=['last_modified_time'])
             project_default_tasks = sorted(project_default_tasks, key=lambda x: x['project_default_task']['order'], reverse=True)
             project.project_default_tasks = project_default_tasks
                  
@@ -204,31 +206,7 @@ def edit_default_task(request, id):
         
         default_task = ProjectDefaultTask.objects(id=default_task.id).first()
         
-        projects = Project.objects.all()
-        for project in projects:
-            project_default_tasks = project.project_default_tasks if project.project_default_tasks else []
-            task = next((task for task in project_default_tasks if str(task['project_default_task']['_id']) == id), None)
-            project_default_tasks = [task for task in project_default_tasks if str(task['project_default_task']['_id']) != id]
-            project_default_tasks.append({
-                'project_default_task': transform_data_to_mongo(default_task),
-                'status': task['status'] if task else 'not started',
-                'percentage': task['percentage'] if task else 0,
-                'created_time': task['created_time'] if task else timezone.now(),
-                'last_modified_time': timezone.now(),
-                'users_assignees': task['users_assignees'] if task else [],
-                'priority': task['priority'] if task else 'medium',
-                'project_task_attachments': task['project_task_attachments'] if task else [],
-            })
-            project_default_tasks = sorted(project_default_tasks, key=lambda x: x['project_default_task']['order'], reverse=True)
-            project.project_default_tasks = project_default_tasks
-            
-            project_default_tasks = project.project_default_tasks if project.project_default_tasks else []
-            for task in project_default_tasks:
-                new_task = ProjectDefaultTask.objects(id=task['project_default_task']['_id']).first()
-                task['project_default_task'] = transform_data_to_mongo(new_task)
-            project_default_tasks = sorted(project_default_tasks, key=lambda x: x['project_default_task']['order'], reverse=True)
-            project.project_default_tasks = project_default_tasks
-            project.save()
+        task_update_default_task_in_projects.delay(str(default_task.id))
         
         tracking_info = transform_data_to_mongo(default_task)
         tracking = ProjectTracking(
@@ -368,6 +346,10 @@ def change_status_project_default_task(request, projectId, id):
         task['percentage'] = percentage
         task['user_reporter'] = user_reporter
         task['last_modified_time'] = timezone.now()
+        if status == 'in progress' and task.get('start_task_time', None) is None:
+            task['start_task_time'] = timezone.now()
+        if status == 'finished':
+            task['end_task_time'] = timezone.now()
         
         tracking_task = task
         
@@ -402,19 +384,21 @@ def change_status_project_default_task(request, projectId, id):
         
         if status == 'finished':
             next_task = get_next_task(task, sorted_tasks)
-            print('next name', next_task)
+            # print('next name', next_task)
             if next_task and next_task['status'] == 'not started':
                 less_ordered_tasks = [t for t in all_tasks if t['project_default_task']['order'] < next_task['project_default_task']['order']]
                 if not project.has_permission:
                     less_ordered_tasks = [t for t in less_ordered_tasks if t['project_default_task']['project_stage']['name'] != 'Permission']
-                print('less ordered tasks', less_ordered_tasks)
+                # print('less ordered tasks', less_ordered_tasks)
                 unfinished_tasks = [t for t in less_ordered_tasks if t['status'] != 'finished']
-                print('unfinished tasks', unfinished_tasks)
+                # print('unfinished tasks', unfinished_tasks)
                 if not unfinished_tasks:
                     next_task['status'] = 'in progress'
                     next_task['percentage'] = 50
                     next_task['user_reporter'] = user_reporter
                     next_task['last_modified_time'] = timezone.now()
+                    if next_task.get('start_task_time', None) is None:
+                        next_task['start_task_time'] = timezone.now()
                     all_tasks = [t for t in all_tasks if str(t['project_default_task']['_id']) != str(next_task['project_default_task']['_id'])]
                     all_tasks.append(next_task)
         
@@ -457,6 +441,8 @@ def change_status_project_default_task(request, projectId, id):
         
         project.project_default_tasks = sorted_tasks
         project.save()
+        
+        manage_timer_v2(project, sorted_tasks, task, status, user_reporter)
         
         tracking = ProjectTracking(
             user_reporter=user_reporter,
@@ -623,3 +609,162 @@ def upload_files_to_default_task(request, projectId, id):
         'message': 'Uploaded files to default task successfully',
         'data': json.loads(project.to_json())
     }, status=201)
+    
+
+##########
+# HELPERS
+##########
+
+def manage_timer(project, sorted_tasks, task, status, user_reporter):
+    name_start_installation = settings.TASK_START_INSTALLATION
+    name_finish_installation = settings.TASK_FINISH_INSTALLATION
+
+    def near_next_task(task, sorted_tasks):
+        return next(
+            (tt for tt in sorted_tasks if int(tt['project_default_task']['order']) == int(task['project_default_task']['order']) + 1),
+            None
+        )
+
+    next_task = near_next_task(task, sorted_tasks)
+    
+    entity_info = {
+        'project_id': str(project.id),
+        'project_name': project.name,
+        'first_name': user_reporter['first_name'] if user_reporter else 'System',
+        'last_name': user_reporter['last_name'] if user_reporter else '',
+        'work_orders': project.work_orders if project.work_orders else [],
+    }
+    
+    timer = timer_repository._get_or_create_timer(
+        entity_type='task',
+        entity_id=str(project.id),
+        username=user_reporter['username'] if user_reporter else 'system',
+        entity_info=entity_info,
+    )
+
+    if name_start_installation and \
+       task['project_default_task']['name'].strip().lower() == name_start_installation.strip().lower() and \
+       status == 'in progress' and not timer.is_running:
+           entity_info['task_id'] = str(task['project_default_task']['_id'])
+           entity_info['task_name'] = task['project_default_task']['name']
+           timer.entity_info = {**timer.entity_info, **entity_info}   
+           timer.start()
+           timer.save()
+    if name_start_installation and \
+       next_task and \
+       next_task['project_default_task']['name'].strip().lower() == name_start_installation.strip().lower() and \
+       next_task['status'] == 'in progress' and not timer.is_running:
+            entity_info['task_id'] = str(next_task['project_default_task']['_id'])
+            entity_info['task_name'] = next_task['project_default_task']['name']
+            timer.entity_info = {**timer.entity_info, **entity_info}
+            timer.start()
+            timer.save()
+    if name_start_installation and \
+       next_task['project_default_task']['name'].strip().lower() == name_start_installation.strip().lower() and \
+       status == 'in progress' and timer.is_running:
+            entity_info['task_id'] = str(next_task['project_default_task']['_id'])
+            entity_info['task_name'] = next_task['project_default_task']['name']
+            timer.entity_info = {**timer.entity_info, **entity_info}
+            timer.pause()
+            timer.save()
+    if name_finish_installation and \
+       task['project_default_task']['name'].strip().lower() == name_finish_installation.strip().lower() and \
+       status == 'finished' and timer.is_running:
+            entity_info['task_id'] = str(task['project_default_task']['_id'])
+            entity_info['task_name'] = task['project_default_task']['name']
+            timer.entity_info = {**timer.entity_info, **entity_info}
+            timer.pause()
+            timer.save()
+    if name_finish_installation and \
+       task['project_default_task']['name'].strip().lower() == name_finish_installation.strip().lower() and \
+       status == 'in progress' and not timer.is_running:
+            entity_info['task_id'] = str(task['project_default_task']['_id'])
+            entity_info['task_name'] = task['project_default_task']['name']
+            timer.entity_info = {**timer.entity_info, **entity_info}
+            timer.start()
+            timer.save()
+            
+
+def manage_timer_v2(project, sorted_tasks, task, status, user_reporter):
+    start_name = (getattr(settings, "TASK_START_INSTALLATION", "") or "").strip().lower()
+    finish_name = (getattr(settings, "TASK_FINISH_INSTALLATION", "") or "").strip().lower()
+
+    def task_name_norm(t):
+        return (t.get("project_default_task", {}).get("name", "") or "").strip().lower()
+
+    def task_name_raw(t):
+        return t.get("project_default_task", {}).get("name", "") or ""
+
+    def task_id_any(t):
+        pdt = t.get("project_default_task", {}) or {}
+        # intenta varias llaves típicas
+        return pdt.get("_id") or pdt.get("id") or pdt.get("task_id") or pdt.get("pk")
+
+    def task_order(t):
+        return int((t.get("project_default_task", {}) or {}).get("order") or 0)
+
+    def near_next_task(current, tasks):
+        cur_order = task_order(current)
+        return next((tt for tt in tasks if task_order(tt) == cur_order + 1), None)
+
+    next_task = near_next_task(task, sorted_tasks)
+
+    base_entity_info = {
+        "project_id": str(project.id),
+        "project_name": project.name,
+        "first_name": (user_reporter or {}).get("first_name", "System"),
+        "last_name": (user_reporter or {}).get("last_name", ""),
+        "work_orders": project.work_orders or [],
+    }
+
+    timer = timer_repository._get_or_create_timer(
+        entity_type="task",
+        entity_id=str(project.id),
+        username=(user_reporter or {}).get("username", "system"),
+        entity_info=base_entity_info,
+    )
+
+    curr_name = task_name_norm(task)
+    next_name = task_name_norm(next_task) if next_task else ""
+
+    action = None
+    target_task = None
+
+    if start_name and curr_name == start_name and status == "in progress" and not timer.is_running:
+        action, target_task = "start", task
+
+    elif start_name and next_task and next_name == start_name and next_task.get("status") == "in progress" and not timer.is_running:
+        action, target_task = "start", next_task
+
+    elif start_name and next_task and next_name == start_name and status == "in progress" and timer.is_running:
+        action, target_task = "pause", next_task
+
+    elif finish_name and curr_name == finish_name and status == "in progress" and not timer.is_running:
+        action, target_task = "start", task
+
+    elif finish_name and curr_name == finish_name and status == "finished" and timer.is_running:
+        action, target_task = "pause", task
+
+    if not action:
+        return
+    
+    if action == "start":
+        timer.start()
+    else:
+        timer.pause()
+    
+    _id = task_id_any(target_task)
+    _name = task_name_raw(target_task)
+    
+    logger.info(
+        "manage_timer_v2 context -> project=%s action=%s task_id=%s task_name=%s",
+        str(project.id), action, str(_id), _name
+    )
+
+    merged = {**(timer.entity_info or {}), **base_entity_info}
+    merged["task_name"] = _name
+    if _id is not None:
+        merged["task_id"] = str(_id)
+
+    timer.entity_info = merged
+    timer.save()

@@ -37,7 +37,7 @@ RUN set -eux; pip install --upgrade pip && pip install --no-cache-dir gunicorn u
 COPY . /app/
 RUN mkdir -p /tmp/mongo_backup
 
-EXPOSE 8000
+EXPOSE 8001
 
 CMD ["sh", "-c", "python manage.py makemigrations --no-input && \
                   python manage.py migrate --no-input && \
@@ -46,4 +46,4 @@ CMD ["sh", "-c", "python manage.py makemigrations --no-input && \
                   python manage.py sync_scripts && \
                   celery -A system_installation_project worker --loglevel=info -E & \
                   celery -A system_installation_project beat --loglevel=info & \
-                  gunicorn system_installation_project.asgi:application -w 3 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000"]
+                  gunicorn system_installation_project.asgi:application -w 3 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8001"]

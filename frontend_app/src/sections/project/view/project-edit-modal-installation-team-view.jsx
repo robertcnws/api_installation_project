@@ -14,7 +14,7 @@ import { Avatar, Dialog, DialogTitle, DialogActions, Typography } from '@mui/mat
 import { Iconify } from 'src/components/iconify';
 
 import { isInstaller } from 'src/utils/check-permissions';
-import { getProjectInstaller } from 'src/utils/project-tasks-utils';
+import { getProjectInstallers } from 'src/utils/project-tasks-utils';
 
 import { CONFIG } from 'src/config-global';
 
@@ -83,7 +83,7 @@ export function ProjectEditModalInstallationTeamView({
             id: project?.id || '',
             name: project?.name || '',
             number: project?.number || '',
-            installer: getProjectInstaller(project, CONFIG) || null,
+            installer: getProjectInstallers(project, CONFIG) || null,
         }),
         [project]
     );
@@ -110,7 +110,7 @@ export function ProjectEditModalInstallationTeamView({
                 id: project?.id || '',
                 name: project?.name || '',
                 number: project?.number || '',
-                installer: getProjectInstaller(project, CONFIG) || null,
+                installer: getProjectInstallers(project, CONFIG) || null,
             });
         }
     }, [project, userLogged?.data, reset]);
@@ -121,7 +121,7 @@ export function ProjectEditModalInstallationTeamView({
         if (project && project?.userManager?.id && cleanLoadedUsers?.length > 0) {
             setFilteredUsers(cleanLoadedUsers.filter(
                 user => user.id !== project?.userManager?.id &&
-                    user.userRole.name.toLowerCase().indexOf(CONFIG.roles.installer.toLowerCase()) !== -1
+                    user.userRole?.name?.toLowerCase().indexOf(CONFIG.roles.installer.toLowerCase()) !== -1
             ));
         }
     }, [cleanLoadedUsers, project]);
@@ -133,7 +133,7 @@ export function ProjectEditModalInstallationTeamView({
         const projectPermissions = [];
 
         const permission = loadedProjectPermissions?.find(
-            (perm) => perm.name.toLowerCase().indexOf(CONFIG.projectPermissions.fullAccess.toLowerCase()) !== -1
+            (perm) => perm.name?.toLowerCase().indexOf(CONFIG.projectPermissions.fullAccess.toLowerCase()) !== -1
         );
 
         if (permission) {

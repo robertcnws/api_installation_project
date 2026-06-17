@@ -1,4 +1,5 @@
-import { useMemo, useState, useEffect, useContext } from 'react';
+import { useMemo, useState, useEffect, useContext, useRef } from 'react';
+import { lighten, useTheme } from '@mui/material/styles';
 
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
@@ -7,7 +8,7 @@ import Grid from '@mui/material/Unstable_Grid2';
 import Typography from '@mui/material/Typography';
 import ListItemText from '@mui/material/ListItemText';
 import { toast } from 'src/components/snackbar';
-import { Box, Table, Button, TableRow, TableBody, TableCell, TableHead, TextField, IconButton, TableFooter, TableContainer, Tooltip } from '@mui/material';
+import { Box, Table, Button, TableRow, TableBody, TableCell, TableHead, TextField, IconButton, TableFooter, TableContainer, Tooltip, Autocomplete, Avatar } from '@mui/material';
 
 import { fCurrency } from 'src/utils/format-number';
 import { fDate, fIsAfter } from 'src/utils/format-time';
@@ -26,11 +27,22 @@ import { Form, Field } from 'src/components/hook-form';
 import { LoadingContext } from 'src/auth/context/loading-context';
 
 import { ConfirmDialog } from 'src/components/custom-dialog';
+import { TableNoData } from 'src/components/table';
+import { getWorkOrderAssistants, getWorkOrderWorkers } from 'src/utils/project-tasks-utils';
 
 import { ProjectEditModalNotesView } from './project-edit-modal-notes-view';
 import { ProjectDetailsContentOverview } from '../project-details-content-overview';
 import { ProjectEditModalWorkOrderView } from './project-edit-modal-work-order-view';
 import { ProjectDetailsContentOverviewModalService } from '../project-details-content-overview-modal-service';
+
+
+const MOCK_WORK_TYPES = [
+  { id: 1, name: 'Installation' },
+  { id: 2, name: 'Finish' },
+  { id: 3, name: 'Inspection' },
+  { id: 4, name: 'Service' },
+  { id: 5, name: 'All' }
+];
 
 // ----------------------------------------------------------------------
 
@@ -40,7 +52,27 @@ export function ProjectDetailsWorkOrdersFormView({
   listPermissions,
   openDialogs,
   setOpenDialogs,
+  isHidden,
 }) {
+
+  const theme = useTheme();
+
+  const leftColRef = useRef(null);
+  const [leftColHeight, setLeftColHeight] = useState(0);
+
+  useEffect(() => {
+    const el = leftColRef.current;
+    if (!el) return undefined;
+
+    const ro = new ResizeObserver(() => {
+      setLeftColHeight(el.getBoundingClientRect().height);
+    });
+
+    ro.observe(el);
+    setLeftColHeight(el.getBoundingClientRect().height);
+
+    return () => ro.disconnect();
+  }, []);
 
   useEffect(() => {
     refetchProject?.();
@@ -65,13 +97,25 @@ export function ProjectDetailsWorkOrdersFormView({
 
   const openItems = useBoolean(false);
 
+  const openNotes = useBoolean(false);
+
   const confirmDeleteWorkOrder = useBoolean(false);
 
   const confirmFinishWorkOrder = useBoolean(false);
 
+  const [selectedWOType, setSelectedWOType] = useState({ id: 5, name: 'All' });
+
   const [selectedWorkOrder, setSelectedWorkOrder] = useState(null);
 
-  const handleOpenNotes = () => { };
+  const handleChangeWOType = (event, newValue) => {
+    const woType = newValue || { id: 5, name: 'All' };
+    setSelectedWOType(woType);
+    if (woType.name === 'All') {
+      setWorkOrders(toSortedWorkOrders(project?.workOrders));
+    } else {
+      setWorkOrders(toSortedWorkOrders(filterWorkOrdersByType(woType.name, project?.workOrders)));
+    }
+  }
 
   const handleOpenWorkOrder = (wo) => {
     setSelectedWorkOrder(wo);
@@ -95,16 +139,33 @@ export function ProjectDetailsWorkOrdersFormView({
   };
 
   const handleFinishWorkOrder = async (wo) => {
+    const title = wo.is_finished ? 'Reopen' : 'Finish';
     try {
       await axios.post(`${CONFIG.apiUrl}/projects/finish/project/${project.id}/work-order/${wo.id}/`, {
-          userReporter: JSON.stringify(userLogged?.data)
+        userReporter: JSON.stringify(userLogged?.data)
       });
-      toast.success(`Finish ${wo.name} successfully!`);
-      setWorkOrders((prev) => prev.filter((order) => order.id !== wo.id));
+      refetchProject?.();
+      toast.success(`${title} ${wo.name} successfully!`);
+      // setWorkOrders((prev) => prev.filter((order) => order.id !== wo.id));
     }
     catch (error) {
       console.error(error);
-      toast.error(error?.response?.data?.message || 'Finish work order failed!');
+      toast.error(error?.response?.data?.message || `${title} work order failed!`);
+    }
+  };
+
+  const colorToWOType = (woTypeName) => {
+    switch (woTypeName?.toLowerCase()) {
+      case 'installation':
+        return 'info';
+      case 'finish':
+        return 'success';
+      case 'inspection':
+        return 'warning';
+      case 'service':
+        return 'secondary';
+      default:
+        return 'default';
     }
   };
 
@@ -115,22 +176,38 @@ export function ProjectDetailsWorkOrdersFormView({
         {
           label: (
             <Stack spacing={1} direction="row">
-              <Typography variant='subtitle2'>Work Orders</Typography>
-              <Tooltip title="Add Work Order" arrow>
-                <IconButton variant="text" color="primary" size="small" sx={{
-                  // ml: -15, 
-                  minWidth: 15,
-                  mt: -1,
-                  '&:hover': {
-                    boxShadow: 'none',
-                    backgroundColor: 'transparent',
-                  },
-                }}
-                  onClick={() => setOpenDialogs({ ...openDialogs, workOrder: true })}
-                >
-                  <Iconify icon="icons8:plus" color="primary" width={25} />
-                </IconButton>
-              </Tooltip>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', flexDirection: 'row', width: '100%' }}>
+                <Box sx={{ display: 'flex', justifyContent: 'flex-start', flexDirection: 'row', width: '100%' }}>
+                  <Typography variant='subtitle2'>Work Orders</Typography>
+                  <Tooltip title="Add Work Order" arrow>
+                    <IconButton variant="text" color="primary" size="small" sx={{
+                      // ml: -15, 
+                      minWidth: 15,
+                      mt: -1,
+                      '&:hover': {
+                        boxShadow: 'none',
+                        backgroundColor: 'transparent',
+                      },
+                    }}
+                      onClick={() => setOpenDialogs({ ...openDialogs, workOrder: true })}
+                    >
+                      <Iconify icon="icons8:plus" color="primary" width={25} />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', flexDirection: 'row', width: '100%', gap: 2 }}>
+                  <Autocomplete
+                    size="small"
+                    options={MOCK_WORK_TYPES}
+                    getOptionLabel={(option) => option.name}
+                    isOptionEqualToValue={(option, value) => option.id === value.id}
+                    defaultValue={MOCK_WORK_TYPES[4]}
+                    sx={{ width: '100%', mt: -1 }}
+                    onChange={handleChangeWOType}
+                    renderInput={(params) => <TextField {...params} label="Filter WO Type" />}
+                  />
+                </Box>
+              </Box>
             </Stack>
           ),
           value: (
@@ -143,10 +220,11 @@ export function ProjectDetailsWorkOrdersFormView({
                         {!isMobile ? (
                           <>
                             <TableCell>Info</TableCell>
+                            <TableCell>WO Type</TableCell>
                             <TableCell>Description</TableCell>
                             <TableCell>Date & Duration</TableCell>
-                            <TableCell>Stage</TableCell>
-                            <TableCell>Assignee</TableCell>
+                            {/* <TableCell>Stage</TableCell> */}
+                            <TableCell>Assignee(s)</TableCell>
                             <TableCell>Product(s)</TableCell>
                             <TableCell />
                           </>
@@ -161,23 +239,87 @@ export function ProjectDetailsWorkOrdersFormView({
                       </TableRow>
                     </TableHead>
                     <TableBody>
+                      {workOrders.length === 0 && (
+                        <TableNoData notFound />
+                      )}
                       {workOrders.map((order, index) => (
-                        <TableRow key={`item-${order?.id}`}>
+                        <TableRow
+                          key={`item-${order?.id}`}
+                          sx={{ bgcolor: order?.is_finished ? lighten(theme.palette.error.lighter, 0.6) : 'inherit' }}
+                        >
                           {!isMobile ? (
                             <>
-                              <TableCell sx={{ width: 150 }}>
-                                <Typography variant="body2">{order?.name || 'N/A'}</Typography>
+                              <TableCell
+                                sx={{ width: 350, cursor: 'pointer' }}
+                                onClick={() => handleOpenWorkOrder(order)}
+                              >
+                                <Typography
+                                  variant="body2"
+                                >
+                                  {order?.name || 'N/A'}
+
+                                  {order?.is_finished && (
+                                    <Label
+                                      component="span"
+                                      color="success"
+                                      size="small"
+                                      sx={{
+                                        textTransform: 'uppercase',
+                                        ml: 0.5,
+                                        px: 0.4,
+                                        py: 0,
+                                        fontSize: '0.6rem',
+                                        height: 16,
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: 0.25,
+                                      }}
+                                    >
+                                      <Iconify icon="fluent-mdl2:completed" width={13} />
+                                    </Label>
+                                  )}
+                                </Typography>
                               </TableCell>
-                              <TableCell sx={{ width: 50 }}>
+
+
+                              <TableCell sx={{ width: 150, cursor: 'pointer' }} onClick={() => handleOpenWorkOrder(order)}>
+                                <Box sx={{ display: 'flex', gap: 1, flexDirection: 'column' }}>
+                                  <Typography variant="body2">
+                                    <Label
+                                      color={colorToWOType(order?.work_type?.name)}
+                                      sx={{
+                                        bgcolor: `${colorToWOType(order?.work_type?.name)}.lighter`,
+                                        textTransform: 'capitalize'
+                                      }}
+                                    >
+                                      {order?.work_type?.name || 'N/A'}
+                                    </Label>
+                                  </Typography>
+                                  {order?.work_type?.name?.toLowerCase() === 'inspection' && (
+                                    <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                                      {order?.inspection_type?.name || 'N/A'}
+                                    </Typography>
+                                  )}
+                                </Box>
+                              </TableCell>
+                              <TableCell>
                                 {order?.description ? (
-                                  <Label color="warning" sx={{ cursor: 'pointer' }} onClick={() => {
-                                    handleOpenNotes(order)
-                                  }}>
-                                    See Description
+                                  <Label
+                                    color="warning"
+                                    sx={{
+                                      cursor: 'pointer',
+                                      bgcolor: 'transparent',
+                                      fontSize: 14
+                                    }}
+                                    onClick={() => {
+                                      setSelectedWorkOrder(order);
+                                      openNotes.onTrue();
+                                    }}>
+                                    <Iconify icon="zondicons:view-show" width={26} />
                                   </Label>
                                 ) : 'N/A'}
                               </TableCell>
-                              <TableCell sx={{ width: 200 }}>
+                              <TableCell sx={{ width: 200, cursor: 'pointer' }} onClick={() => handleOpenWorkOrder(order)}>
                                 <Box display="flex" flexDirection="column">
                                   <Typography variant="body2">
                                     {fDate(order?.start_date) || 'N/A'}
@@ -187,23 +329,113 @@ export function ProjectDetailsWorkOrdersFormView({
                                   </Typography>
                                 </Box>
                               </TableCell>
-                              <TableCell sx={{ width: 100 }}>
+                              {/* <TableCell sx={{ width: 100 }}>
                                 <Typography variant="body2">
                                   {order?.project_stage?.name || 'N/A'}
                                 </Typography>
-                              </TableCell>
-                              <TableCell sx={{ width: 200 }}>
-                                <Typography variant="body2">
-                                  {`${order?.user_assignee?.firstName} ${order?.user_assignee?.lastName}` || 'N/A'}
-                                </Typography>
+                              </TableCell> */}
+                              <TableCell sx={{ width: 200, cursor: 'pointer' }} onClick={() => handleOpenWorkOrder(order)}>
+                                <Box sx={{
+                                  display: 'flex',
+                                  justifyContent: 'flex-start',
+                                  flexDirection: 'column',
+                                  gap: 0,
+                                  cursor: 'pointer'
+                                }}>
+                                  <Box sx={{
+                                    display: 'flex',
+                                    justifyContent: 'flex-start',
+                                    flexDirection: 'column',
+                                    gap: 1,
+                                    cursor: 'pointer'
+                                  }}>
+                                    <Typography
+                                      variant="caption"
+                                      sx={{
+                                        color: 'text.secondary',
+                                        mr: 1,
+                                        cursor: 'pointer'
+                                      }}>
+                                      Installer(s):
+                                    </Typography>
+                                    <Box sx={{
+                                      display: 'flex',
+                                      flexDirection: 'column',
+                                      gap: 0,
+                                      mt: -1,
+                                      cursor: 'pointer'
+                                    }}>
+                                      {getWorkOrderWorkers(order).map((worker) => (
+                                        <Label
+                                          key={worker.id}
+                                          sx={{
+                                            bgcolor: 'transparent',
+                                            justifyContent: 'flex-start',
+                                            cursor: 'pointer'
+                                          }}>
+                                          {worker.firstName || worker.first_name} {worker.lastName || worker.last_name}
+                                        </Label>
+                                      ))}
+                                    </Box>
+                                  </Box>
+                                  {getWorkOrderAssistants(order).length > 0 && (
+                                    <Box sx={{
+                                      display: 'flex',
+                                      mt: 1,
+                                      justifyContent: 'flex-start',
+                                      flexDirection: 'column',
+                                      gap: 1,
+                                      cursor: 'pointer'
+                                    }}>
+                                      <Typography
+                                        variant="caption"
+                                        sx={{
+                                          color: 'text.secondary',
+                                          mr: 1,
+                                          cursor: 'pointer'
+                                        }}>
+                                        Assistant(s):
+                                      </Typography>
+
+                                      <Box sx={{
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: 0,
+                                        justifyContent: 'flex-start',
+                                        textAlign: 'left',
+                                        mt: -1,
+                                        cursor: 'pointer'
+                                      }}>
+                                        {getWorkOrderAssistants(order).map((worker, index2) => (
+                                          <Label
+                                            key={`${worker.id}-${index2}`}
+                                            sx={{
+                                              bgcolor: 'transparent',
+                                              justifyContent: 'flex-start',
+                                              cursor: 'pointer'
+                                            }}>
+                                            {worker.name}
+                                          </Label>
+                                        ))}
+                                      </Box>
+                                    </Box>
+                                  )}
+                                </Box>
                               </TableCell>
                               <TableCell sx={{ width: 100 }}>
-                                <Label color={order?.items?.length > 0 ? 'success' : 'default'} sx={{ cursor: order?.items?.length > 0 ? 'pointer' : 'default' }} onClick={() => {
-                                  if (order?.items?.length > 0) {
-                                    setSelectedWorkOrder(order);
-                                    openItems.onTrue();
-                                  }
-                                }}>
+                                <Label
+                                  color={order?.items?.length > 0 ? 'success' : 'default'}
+                                  sx={{
+                                    cursor: order?.items?.length > 0 ? 'pointer' : 'default',
+                                    bgcolor: 'transparent',
+                                    fontSize: 14
+                                  }}
+                                  onClick={() => {
+                                    if (order?.items?.length > 0) {
+                                      setSelectedWorkOrder(order);
+                                      openItems.onTrue();
+                                    }
+                                  }}>
                                   {order?.items?.length > 0 ? `${order?.items?.length} Item(s)` : 'No Items'}
                                 </Label>
                               </TableCell>
@@ -218,10 +450,11 @@ export function ProjectDetailsWorkOrdersFormView({
                                 <br />
                                 <Typography variant="h6">Description: </Typography>
                                 {order?.description ? (
-                                  <Label color="warning" sx={{ cursor: 'pointer' }} onClick={() => {
-                                    handleOpenNotes(order)
+                                  <Label color="warning" sx={{ cursor: 'pointer', bgcolor: 'transparent', justifyContent: 'flex-start' }} onClick={() => {
+                                    setSelectedWorkOrder(order);
+                                    openNotes.onTrue();
                                   }}>
-                                    See Description
+                                    <Iconify icon="zondicons:view-show" width={26} />
                                   </Label>
                                 ) : 'N/A'}
                                 <br />
@@ -235,24 +468,56 @@ export function ProjectDetailsWorkOrdersFormView({
                                   {order.duration || 'N/A'}
                                 </Label>
                                 <br />
-                                <Typography variant="h6">Stage: </Typography>
+                                {/* <Typography variant="h6">Stage: </Typography>
                                 <Label color="success" sx={{ bgcolor: 'transparent', justifyContent: 'flex-start' }}>
                                   {order.project_stage?.name || 'N/A'}
                                 </Label>
-                                <br />
-                                <Typography variant="h6">Assignee: </Typography>
-                                <Label color="success" sx={{ bgcolor: 'transparent', justifyContent: 'flex-start' }}>
-                                  {order.user_assignee?.firstName || 'N/A'}
-                                </Label>
+                                <br /> */}
+                                <Typography variant="h6">Assignee(s): </Typography>
+                                <Box sx={{ display: 'flex', justifyContent: 'flex-start', flexDirection: 'column', gap: 0 }}>
+                                  <Box sx={{ display: 'flex', justifyContent: 'flex-start', flexDirection: 'column', gap: 1 }}>
+                                    <Typography variant="caption" sx={{ color: 'text.secondary', mr: 1 }}>
+                                      Installer(s):
+                                    </Typography>
+                                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                      {getWorkOrderWorkers(order).map((worker) => (
+                                        <Typography key={worker.id} variant="body2">
+                                          {worker.firstName || worker.first_name} {worker.lastName || worker.last_name}
+                                        </Typography>
+                                      ))}
+                                    </Box>
+                                  </Box>
+                                  {getWorkOrderAssistants(order).length > 0 && (
+                                    <Box sx={{ display: 'flex', mt: 1, justifyContent: 'flex-start', flexDirection: 'column', gap: 1 }}>
+                                      <Typography variant="caption" sx={{ color: 'text.secondary', mr: 1 }}>
+                                        Assistant(s):
+                                      </Typography>
+
+                                      <Box sx={{
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: 1,
+                                        justifyContent: 'flex-start',
+                                        textAlign: 'left'
+                                      }}>
+                                        {getWorkOrderAssistants(order).map((worker, index2) => (
+                                          <Typography key={`${worker.id}-${index2}`} variant="body2">
+                                            {worker.name}
+                                          </Typography>
+                                        ))}
+                                      </Box>
+                                    </Box>
+                                  )}
+                                </Box>
                                 <br />
                                 <Typography variant="h6">Product(s): </Typography>
                                 {order?.items?.length > 0 ? (
-                                  <Label color="success" sx={{ cursor: 'pointer' }} onClick={() => {
+                                  <Typography sx={{ cursor: 'pointer', color: 'success.main' }} onClick={() => {
                                     setSelectedWorkOrder(order);
                                     openItems.onTrue();
                                   }}>
                                     {order?.items?.length > 0 ? `${order?.items?.length} Item(s)` : 'No Items'}
-                                  </Label>
+                                  </Typography>
                                 ) : 'N/A'}
                               </Box>
                             </TableCell>
@@ -276,18 +541,27 @@ export function ProjectDetailsWorkOrdersFormView({
                                       <Iconify icon="mdi:edit-circle-outline" sx={{ width: 27, height: 27 }} />
                                     </IconButton>
                                   </Tooltip>
-                                  <Tooltip title={`Finish Work Order ${order?.name}`} arrow>
+                                  <Tooltip
+                                    title={order?.is_finished ? `Reopen Work Order ${order?.name}` : `Finish Work Order ${order?.name}`}
+                                    arrow
+                                  >
                                     <IconButton
                                       variant="outlined"
-                                      color='success'
-                                      onClick={() => handleOpenWorkOrder(order)}
+                                      color={order?.is_finished ? 'secondary' : 'success'}
+                                      onClick={() => {
+                                        setSelectedWorkOrder(order);
+                                        confirmFinishWorkOrder.onTrue();
+                                      }}
                                       sx={{
                                         '&:hover': {
                                           boxShadow: 'none',
                                           backgroundColor: 'transparent',
                                         },
                                       }}>
-                                      <Iconify icon="fluent-mdl2:completed" sx={{ width: 22, height: 22 }} />
+                                      <Iconify
+                                        icon={order?.is_finished ? "octicon:issue-reopened-16" : "fluent-mdl2:completed"}
+                                        sx={{ width: 22, height: 22 }}
+                                      />
                                     </IconButton>
                                   </Tooltip>
                                   <Tooltip title={`Delete Work Order ${order?.name}`} arrow>
@@ -350,6 +624,9 @@ export function ProjectDetailsWorkOrdersFormView({
       listPermissions={listPermissions}
       openDialogs={openDialogs}
       setOpenDialogs={setOpenDialogs}
+      isHidden={isHidden.value}
+      onToggleHidden={isHidden.onToggle}
+      maxHeight={leftColHeight}
     />
   );
 
@@ -366,11 +643,32 @@ export function ProjectDetailsWorkOrdersFormView({
   return (
     <>
       <Grid container spacing={2}>
-        <Grid xs={12} md={8}>
-          {renderContent}
+        <Grid xs={12} md={isHidden.value ? 11 : 8} sx={{ display: 'flex' }}>
+          <Box
+            ref={leftColRef}
+            sx={{
+              alignSelf: 'flex-start',
+              width: '100%',     // ✅ para que no se encoja
+              minWidth: 0,       // ✅ evita overflow raro
+            }}
+          >
+            {renderContent}
+          </Box>
         </Grid>
-        <Grid xs={12} md={4}>
-          {renderOverview}
+        <Grid xs={12} md={isHidden.value ? 1 : 4} sx={{ display: 'flex' }}>
+          <Box
+            sx={{
+              mb: 0,
+              width: '100%',
+              mt: 0,
+              ml: 0,
+              display: 'flex',
+              height: '100%',      // ✅ importante
+              minHeight: 0,        // ✅ importante para que overflow funcione
+            }}
+          >
+            {renderOverview}
+          </Box>
         </Grid>
       </Grid >
       <ProjectEditModalWorkOrderView
@@ -389,6 +687,13 @@ export function ProjectDetailsWorkOrdersFormView({
         title="Work Order Products"
         subtitle={`List of products associated with this work order ${selectedWorkOrder?.name} for sales order ${project?.name}`}
         iconTitle="mdi:package-variant-closed"
+        isLong
+      />
+      <ProjectEditModalNotesView
+        open={openNotes.value}
+        onClose={openNotes.onFalse}
+        item={selectedWorkOrder}
+        type="Work Order"
       />
       <ConfirmDialog
         open={confirmDeleteWorkOrder.value}
@@ -418,24 +723,30 @@ export function ProjectDetailsWorkOrdersFormView({
         onClose={() => {
           confirmFinishWorkOrder.onFalse();
         }}
-        title={`Finish Work Order ${selectedWorkOrder?.name}`}
+        title={`${selectedWorkOrder?.is_finished ? 'Reopen' : 'Finish'} Work Order ${selectedWorkOrder?.name}`}
         maxWidth="xs"
         content={
-          `Are you sure you want to finish the work order ${selectedWorkOrder?.name}?`
+          `Are you sure you want to ${selectedWorkOrder?.is_finished ? 'reopen' : 'finish'} the work order ${selectedWorkOrder?.name}?`
         }
         action={
           <Button
             variant="contained"
             color="error"
             onClick={async () => {
-              await handleDeleteWorkOrder(selectedWorkOrder);
-              confirmDeleteWorkOrder.onFalse();
+              await handleFinishWorkOrder(selectedWorkOrder);
+              confirmFinishWorkOrder.onFalse();
             }}
           >
-            Delete
+            {selectedWorkOrder?.is_finished ? 'Reopen' : 'Finish'}
           </Button>
         }
       />
     </>
   );
+}
+
+function filterWorkOrdersByType(type, workOrders = []) {
+  if (!type) return workOrders;
+  if (type.toLowerCase() === 'all') return workOrders;
+  return workOrders.filter((wo) => wo.work_type?.name?.toLowerCase() === type?.toLowerCase());
 }

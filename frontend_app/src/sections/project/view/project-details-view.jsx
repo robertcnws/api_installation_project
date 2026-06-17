@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { useMemo, useState, useEffect, useCallback } from 'react';
+import { useMemo, useState, useEffect, useCallback, useRef } from 'react';
 
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
@@ -13,7 +13,7 @@ import { useTabs } from 'src/hooks/use-tabs';
 import { fDate } from 'src/utils/format-time';
 import { extractDimensions } from 'src/utils/generate-installation-guide-pdf';
 import { generateMeasurementProperties } from 'src/utils/measurement-tasks-utils';
-import { getProjectInstaller, filteredDescriptionJson } from 'src/utils/project-tasks-utils';
+import { getProjectInstallers, filteredDescriptionJson, getProjectCrewTypes } from 'src/utils/project-tasks-utils';
 import { isInstaller, isFinancialStaff, isWarehouseStaff, listRolesAndSubroles } from 'src/utils/check-permissions';
 
 import { CONFIG } from 'src/config-global';
@@ -27,7 +27,7 @@ import { ConfirmDialog } from 'src/components/custom-dialog';
 import { usePopover, CustomPopover } from 'src/components/custom-popover';
 
 import { useDataContext } from 'src/auth/context/data/data-context';
-
+import { useBoolean } from 'src/hooks/use-boolean';
 import { ProjectEditModalView } from './project-edit-modal-view';
 import { ProjectDetailsToolbar } from '../project-details-toolbar';
 import { ProjectDetailsContent } from '../project-details-content';
@@ -46,16 +46,20 @@ import { ProjectDetailsInstallationGuideFormView } from './project-details-insta
 import { ProjectDetailsInstallationGuideFormInstallerView } from './project-details-installation-guide-form-installer-view';
 import { ProjectDetailsWorkOrdersFormView } from './project-details-work-orders-form-view';
 
-
 // ----------------------------------------------------------------------
 
-export function ProjectDetailsView({ projectId }) {
+export function ProjectDetailsView({
+    projectId,
+    onCloseModal = null
+}) {
 
     const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
 
     const router = useRouter();
 
     const morePopover = usePopover();
+
+    const isHiddenOverview = useBoolean(false);
 
     const {
         loadedProjects,
@@ -88,7 +92,7 @@ export function ProjectDetailsView({ projectId }) {
 
     const taskFinishInstallation = useMemo(() =>
         itemById?.projectDefaultTasks?.find(
-            (t) => t.project_default_task?.name.trim().toLowerCase().includes(CONFIG.tasks.finishInstallation.trim().toLowerCase())
+            (t) => t.project_default_task?.name?.trim()?.toLowerCase()?.includes(CONFIG.tasks.finishInstallation.trim().toLowerCase())
         ),
         [itemById]
     );
@@ -111,6 +115,8 @@ export function ProjectDetailsView({ projectId }) {
         [loadedServices, itemById]
     );
 
+    const itemTypeCrews = useMemo(() => getProjectCrewTypes(itemById) || [], [itemById]);
+
 
     const DETAILS_TABS = [
         { label: 'Overview', value: 'overview' },
@@ -132,15 +138,16 @@ export function ProjectDetailsView({ projectId }) {
         //     taskFinishInstallation?.status.toLowerCase().indexOf(CONFIG.taskStatus.finished.toLowerCase()) !== -1) ? [
         //     { label: 'Release Form', value: 'releaseForm' },
         // ] : [],
-        ...listRolesAndSubroles(userLogged?.data?.user_role?.name)
-            .some(elem => [CONFIG.roles.installer, CONFIG.roles.warehouseStaff]) ? [
-            { label: 'Installation Guide', value: 'installationGuide' },
-        ] : [],
-        ...listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.financialStaff) ? [
-            { label: 'Financial', value: 'financial' },
-        ] : [],
+        ...(listRolesAndSubroles(userLogged?.data?.user_role?.name)
+            .some(
+                elem => [CONFIG.roles.installer, CONFIG.roles.warehouseStaff]
+            ) && itemTypeCrews?.includes('subcontractor')) ?
+            [{ label: 'Installation Guide', value: 'installationGuide' },] : [],
+        // ...listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.financialStaff) ? [
+        //     { label: 'Financial', value: 'financial' },
+        // ] : [],
         { label: 'Comments & History', value: 'comments' },
-        ...(associatedMeasurement || associatedServices?.length > 0) ? [
+        ...((associatedMeasurement || associatedServices?.length > 0) && !onCloseModal) ? [
             {
                 label: <>
                     <Box sx={{ display: 'flex', alignItems: 'center' }} onClick={morePopover.onOpen}>
@@ -341,14 +348,14 @@ export function ProjectDetailsView({ projectId }) {
     const totalTasks = useMemo(() => (
         itemById?.hasPermission ?
             itemById?.projectDefaultTasks?.length :
-            itemById?.projectDefaultTasks?.filter((task) => task.project_default_task.project_stage.name !== CONFIG.stages.permission)?.length
+            itemById?.projectDefaultTasks?.filter((task) => task.project_default_task?.project_stage?.name !== CONFIG.stages.permission)?.length
             || 0), [itemById]
     );
 
 
     const tasks = useMemo(() =>
         itemById?.hasPermission ? itemById?.projectDefaultTasks :
-            itemById?.projectDefaultTasks?.filter((task) => task.project_default_task.project_stage.name !== CONFIG.stages.permission) || [], [itemById]
+            itemById?.projectDefaultTasks?.filter((task) => task.project_default_task?.project_stage?.name !== CONFIG.stages.permission) || [], [itemById]
     );
 
     const [openEdit, setOpenEdit] = useState(false);
@@ -373,11 +380,15 @@ export function ProjectDetailsView({ projectId }) {
                     },
                 });
                 toast.success('Delete success!');
-                router.push(paths.dashboard.project.list);
+                if (onCloseModal) {
+                    onCloseModal();
+                } else {
+                    router.push(paths.dashboard.project.list);
+                }
             } catch (error) {
                 console.error(error);
             }
-        }, [userLogged?.data, router]);
+        }, [userLogged?.data, router, onCloseModal]);
 
 
     const generateMeasurements = useCallback(
@@ -421,7 +432,7 @@ export function ProjectDetailsView({ projectId }) {
             try {
                 const promise = axios.post(`${CONFIG.apiUrl}/measurements/create/measurement/`, {
                     project: JSON.stringify(project),
-                    installer: JSON.stringify(getProjectInstaller(itemById, CONFIG)),
+                    installer: JSON.stringify(getProjectInstallers(itemById, CONFIG)),
                     items: JSON.stringify(arrayDimensions),
                     userReporter: JSON.stringify(userLogged?.data),
                     salesOrder: JSON.stringify(itemById?.salesOrder),
@@ -458,11 +469,12 @@ export function ProjectDetailsView({ projectId }) {
                     label={tab.label}
                     icon={
                         (tab.value === 'tasks' ||
-                         tab.value === 'attachments' ||
-                         tab.value === 'comments' ||
-                         tab.value === 'workOrders'
+                            tab.value === 'attachments' ||
+                            tab.value === 'comments' ||
+                            tab.value === 'workOrders'
                         ) ? (
-                            !isInstaller(userLogged?.data?.user_role?.name) ? (
+                            (!isInstaller(userLogged?.data?.user_role?.name) &&
+                                !isWarehouseStaff(userLogged?.data?.user_role?.name)) ? (
                                 ((tab.value === 'tasks' && totalTasks > 0) ||
                                     (tab.value === 'attachments' && totalAttachments > 0) ||
                                     (tab.value === 'workOrders' && totalWorkOrders > 0) ||
@@ -517,6 +529,11 @@ export function ProjectDetailsView({ projectId }) {
 
     const [titleLinearProgress, setTitleLinearProgress] = useState(`Loading data from installation ${item?.name ? item?.name : ''}...`);
 
+
+
+
+    // console.log('itemTypeCrews', itemTypeCrews);
+
     return (
         <>
             {
@@ -553,20 +570,29 @@ export function ProjectDetailsView({ projectId }) {
                             <ProjectDetailsToolbar
                                 project={itemById}
                                 tabs={tabs}
+                                // Extracted backLink logic for readability
+                                componentLink={onCloseModal ? 'modal' : 'page'}
                                 backLink={
-                                    localStorage.getItem('backFromProjectDetails') === 'analytics' ?
-                                        paths.dashboard.general.analytics :
-                                        localStorage.getItem('backFromProjectDetails') === 'calendarDashboard' ?
-                                            paths.dashboard.general.calendar :
-                                            localStorage.getItem('backFromProjectDetails') === 'measurements' ?
-                                                paths.dashboard.measurement.list :
-                                                localStorage.getItem('backFromProjectDetails') === 'measurementDetails' ?
-                                                    paths.dashboard.measurement.details(localStorage.getItem('backFromProjectDetailsMeasurementId')) :
-                                                    localStorage.getItem('backFromProjectDetails') === 'serviceDetails' ?
-                                                        paths.dashboard.service.details(localStorage.getItem('backFromProjectDetailsServiceId')) :
-                                                        localStorage.getItem('backFromProjectDetails') === 'services' ?
-                                                            paths.dashboard.service.list :
-                                                            paths.dashboard.project.list
+                                    (() => {
+                                        if (onCloseModal) return onCloseModal;
+                                        const backFrom = localStorage.getItem('backFromProjectDetails');
+                                        switch (backFrom) {
+                                            case 'analytics':
+                                                return paths.dashboard.general.analytics;
+                                            case 'calendarDashboard':
+                                                return paths.dashboard.general.calendar;
+                                            case 'measurements':
+                                                return paths.dashboard.measurement.list;
+                                            case 'measurementDetails':
+                                                return paths.dashboard.measurement.details(localStorage.getItem('backFromProjectDetailsMeasurementId'));
+                                            case 'serviceDetails':
+                                                return paths.dashboard.service.details(localStorage.getItem('backFromProjectDetailsServiceId'));
+                                            case 'services':
+                                                return paths.dashboard.service.list;
+                                            default:
+                                                return paths.dashboard.project.list;
+                                        }
+                                    })()
                                 }
                                 editLink={paths.dashboard.project.edit(`${itemById?.id}`)}
                                 openEdit={tabs.value === 'overview' ? openEdit : tabs.value === 'tasks' ? openEditTask : null}
@@ -587,6 +613,8 @@ export function ProjectDetailsView({ projectId }) {
                                     listPermissions={listPermissions}
                                     openDialogs={openDialogs}
                                     setOpenDialogs={setOpenDialogs}
+                                    tabs={tabs}
+                                    isHidden={isHiddenOverview}
                                 />
                             }
 
@@ -607,6 +635,7 @@ export function ProjectDetailsView({ projectId }) {
                                     listPermissions={listPermissions}
                                     openDialogs={openDialogs}
                                     setOpenDialogs={setOpenDialogs}
+                                    isHidden={isHiddenOverview}
                                 />
                             }
 
@@ -617,6 +646,7 @@ export function ProjectDetailsView({ projectId }) {
                                     listPermissions={listPermissions}
                                     openDialogs={openDialogs}
                                     setOpenDialogs={setOpenDialogs}
+                                    isHidden={isHiddenOverview}
                                 />
                             }
 
@@ -640,26 +670,29 @@ export function ProjectDetailsView({ projectId }) {
                                 ))}
 
                             {(tabs.value === 'installationGuide' && itemById?.userManager?.username) && (
-                                !isInstaller(userLogged?.data?.user_role?.name) ? (
-                                    <ProjectDetailsInstallationGuideFormView
-                                        project={itemById}
-                                        refetchProject={refetchProject}
-                                        listPermissions={listPermissions}
-                                        openDialogs={openDialogs}
-                                        setOpenDialogs={setOpenDialogs}
-                                        loadedDefaultGuideProducts={loadedDefaultGuideProducts}
-                                        loadedDefaultMaterials={loadedDefaultMaterials}
-                                    />
-                                ) : (
-                                    <ProjectDetailsInstallationGuideFormInstallerView
-                                        project={itemById}
-                                        refetchProject={refetchProject}
-                                        listPermissions={listPermissions}
-                                        openDialogs={openDialogs}
-                                        setOpenDialogs={setOpenDialogs}
-                                        loadedDefaultGuideProducts={loadedDefaultGuideProducts}
-                                    />
-                                ))}
+                                itemTypeCrews?.includes('subcontractor') && (
+                                    isInstaller(userLogged?.data?.user_role?.name) ? (
+                                        <ProjectDetailsInstallationGuideFormInstallerView
+                                            project={itemById}
+                                            refetchProject={refetchProject}
+                                            listPermissions={listPermissions}
+                                            openDialogs={openDialogs}
+                                            setOpenDialogs={setOpenDialogs}
+                                            loadedDefaultGuideProducts={loadedDefaultGuideProducts}
+                                            isHidden={isHiddenOverview}
+                                        />
+                                    ) : (
+                                        <ProjectDetailsInstallationGuideFormView
+                                            project={itemById}
+                                            refetchProject={refetchProject}
+                                            listPermissions={listPermissions}
+                                            openDialogs={openDialogs}
+                                            setOpenDialogs={setOpenDialogs}
+                                            loadedDefaultGuideProducts={loadedDefaultGuideProducts}
+                                            loadedDefaultMaterials={loadedDefaultMaterials}
+                                            isHidden={isHiddenOverview}
+                                        />
+                                    )))}
 
                             {(tabs.value === 'financial' &&
                                 itemById?.userManager?.username &&

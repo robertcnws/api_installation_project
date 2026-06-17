@@ -15,7 +15,7 @@ import { useBoolean } from 'src/hooks/use-boolean';
 import { useSetState } from 'src/hooks/use-set-state';
 
 import { fIsAfter, fIsBetween } from 'src/utils/format-time';
-import { getProjectInstaller, getProjectAttachments } from 'src/utils/project-tasks-utils';
+import { getProjectInstallers, getProjectAttachments } from 'src/utils/project-tasks-utils';
 
 import { CONFIG } from 'src/config-global';
 import { PROJECT_TYPE_OPTIONS } from 'src/_mock';
@@ -78,8 +78,8 @@ export function ProjectAttachmentsView() {
   const finalStages = useMemo(() => {
     if (loadedStages) {
       return loadedStages.filter(
-        (stage) => 
-          stage.name.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) === -1 &&
+        (stage) =>
+          stage.name?.toLowerCase().indexOf(CONFIG.stages.finished.toLowerCase()) === -1 &&
           stage.otherName !== null &&
           stage.otherName !== ''
       );
@@ -472,13 +472,13 @@ function applyFilter({ inputData, comparator, filters, dateError }) {
 
   if (name) {
     inputData = inputData.filter(
-      (file) => file.name.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
-        file.number.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
-        file.salesOrder.salesorder_id.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
-        file.salesOrder.salesorder_number.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
-        file.salesOrder.customer_id.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
-        file.salesOrder.customer_name.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
-        file.address.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
+      (file) => file.name?.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
+        file.number?.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
+        file.salesOrder?.salesorder_id?.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
+        file.salesOrder?.salesorder_number?.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
+        file.salesOrder?.customer_id?.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
+        file.salesOrder?.customer_name?.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
+        file.address?.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
         JSON.stringify(file.userManager).toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
         JSON.stringify(file.usersAssignees).toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
         JSON.stringify(file.currentStage).toLowerCase().indexOf(name.toLowerCase()) !== -1
@@ -510,7 +510,7 @@ function applyFilter({ inputData, comparator, filters, dateError }) {
 
   if (installer.id) {
     inputData = inputData.filter((file) => {
-      const installerId = getProjectInstaller(file, CONFIG)?.id;
+      const installerId = getProjectInstallers(file, CONFIG)?.id;
       if (installerId) {
         return String(installerId) === String(installer.id);
       }

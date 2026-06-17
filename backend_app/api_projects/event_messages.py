@@ -201,3 +201,100 @@ def message_project_notification_user(msg_type, document):
 
         }
     }
+
+def message_project_calendar_notes(msg_type, document):
+    return {
+        'type': 'project_calendar_notes_update',
+        'message': {
+            'type': msg_type,
+            "item": {
+                "id": str(document.id),
+                "name": document.name,
+                "description": document.description,
+                "startDate": document.start_date,
+                "endDate": document.end_date,
+                "duration": document.duration,
+                "userManager": document.user_manager,
+                "userInstaller": document.user_installer,
+                "userAssignees": document.user_assignees,
+                "userReporter": document.user_reporter,
+                "associatedEvents": document.associated_events,
+                "isActive": document.is_active,
+                "createdTime": document.created_time,
+                "lastModifiedTime": document.last_modified_time,
+            }
+
+        }
+    }
+    
+
+def message_project_profit_report(msg_type, document):
+    return {
+        'type': 'project_profit_report_update',
+        'message': {
+            'type': msg_type,
+            "item": {
+                "id": str(document.id),
+                "projectId": document.project_id,
+                "projectInfo": document.project_info,
+                "projectAmount": document.project_amount,
+                "installationAmount": document.installation_amount,
+                "installationCostSubcontractor": document.installation_cost_subcontractor,
+                "installationCostOnhouse": document.installation_cost_onhouse,
+                "installationProfitSubcontractor": document.installation_profit_subcontractor,
+                "installationProfitOnhouse": document.installation_profit_onhouse,
+                "notes": document.notes,
+                "createdTime": document.created_time,
+                "lastModifiedTime": document.last_modified_time,
+                "hasBeenEdited": document.has_been_edited,
+                "workingType": document.working_type,
+            }
+
+        }
+    }
+    
+def message_project_installation_crew(msg_type, document):
+    return {
+        'type': 'project_installation_crew_update',
+        'message': {
+            'type': msg_type,
+            "item": {
+                "id": str(document.id),
+                "name": document.name,
+                "description": document.description,
+                "usersInstallers": document.users_installers,
+                "usersHelpers": document.users_helpers,
+                "userReporter": document.user_reporter,
+                "isActive": document.is_active,
+                "createdTime": document.created_time,
+                "lastModifiedTime": document.last_modified_time,
+                "costByUnit": document.cost_by_unit,
+                "unit": document.unit,
+                "typeCrew": document.type_crew,
+                "typeWorking": document.type_working,
+            }
+
+        }
+    }
+    
+    
+def message_timer(msg_type, document):
+    return {
+        'type': 'timer_update',
+        'message': {
+            'type': msg_type,
+            "item": {
+                "id": str(document.id),
+                "username": document.username,
+                "entityType": document.entity_type,
+                "entityId": document.entity_id,
+                "entityInfo": document.entity_info,
+                "elapsedMs": document.elapsed_ms,
+                "startTime": document.start_time,
+                "isRunning": document.is_running,
+                "createdTime": document.created_time,
+                "lastModifiedTime": document.last_modified_time,
+            }
+
+        }
+    }

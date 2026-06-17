@@ -89,7 +89,7 @@ const ItemBase = forwardRef(({
   const initialTasks = useMemo(() => availableTasks(project, project?.projectDefaultTasks, CONFIG), [project]);
 
   const extraTasks = useMemo(() => project?.projectDefaultTasks?.filter(
-    t => tasksBeforeNoMatter.some(item => item.toLowerCase().includes(t.project_default_task.name.toLowerCase()))
+    t => tasksBeforeNoMatter.some(item => item.toLowerCase().includes(t.project_default_task?.name?.toLowerCase()))
   ), [project, tasksBeforeNoMatter]);
 
   const possibleTasks = useMemo(() => initialTasks.concat(extraTasks), [initialTasks, extraTasks]);
@@ -150,14 +150,14 @@ const ItemBase = forwardRef(({
             listRolesAndSubroles(userLogged?.data?.user_role?.name).includes(CONFIG.roles.administrator) ||
             task?.users_assignees?.some((u) => u.id === userLogged?.data?.id) ||
             project?.userManager?.id === userLogged?.data?.id ||
-            (isWarehouseStaff(userLogged?.data?.user_role?.name) && task?.project_default_task?.project_stage?.name.toLowerCase() === CONFIG.stages.installation.toLowerCase())
+            (isWarehouseStaff(userLogged?.data?.user_role?.name) && task?.project_default_task?.project_stage?.name?.toLowerCase() === CONFIG.stages.installation.toLowerCase())
           ) && (
               <>
                 {((task && task.status === CONFIG.taskStatus.notStarted && (
                   task?.project_default_task?.order === 1 ||
                   (
                     project?.hasPermission &&
-                    task?.project_default_task?.project_stage.name.toLowerCase() === CONFIG.stages.permission.toLowerCase() &&
+                    task?.project_default_task?.project_stage?.name?.toLowerCase() === CONFIG.stages.permission.toLowerCase() &&
                     !isWarehouseStaff(userLogged?.data?.user_role?.name)
                   ))) ||
                   (task.beforeNoMatter && task.status === CONFIG.taskStatus.notStarted)) && (
@@ -188,7 +188,7 @@ const ItemBase = forwardRef(({
                       task,
                       project?.projectDefaultTasks,
                       CONFIG.taskStatus.inProgress,
-                      task?.project_default_task?.project_stage?.name.toLowerCase().indexOf(CONFIG.stages.permission.toLowerCase()) !== -1,
+                      task?.project_default_task?.project_stage?.name?.toLowerCase().indexOf(CONFIG.stages.permission.toLowerCase()) !== -1,
                       CONFIG
                     ).length === 0) ||
                     (task.beforeNoMatter && task.status === CONFIG.taskStatus.inProgress)

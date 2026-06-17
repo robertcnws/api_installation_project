@@ -46,16 +46,17 @@ export function ProjectDetailsFinancialView({
     }, [refetchProject]);
 
     //  Sales Order
+    
     const totalItems = useMemo(() => project?.salesOrder?.line_items?.filter(
-        (item) => item.line_item_type.toLowerCase().includes('good')
+        (item) => item.line_item_type?.toLowerCase().includes('good')
     ).reduce((total, item) => total + Number(item.item_total), 0), [project]);
 
     const totalInstallation = useMemo(() => project?.salesOrder?.line_items?.filter(
-        (item) => item.name.toLowerCase().includes('install') || item.name.toLowerCase().includes('struct')
+        (item) => item.name?.toLowerCase().includes('install') || item.name?.toLowerCase().includes('struct')
     ).reduce((total, item) => total + item.item_total, 0), [project]);
 
     const totalOthers = useMemo(() => project?.salesOrder?.line_items?.filter(
-        (item) => !item.line_item_type.toLowerCase().includes('good') && !item.name.toLowerCase().includes('install') && !item.name.toLowerCase().includes('struct')
+        (item) => !item.line_item_type?.toLowerCase().includes('good') && !item.name?.toLowerCase().includes('install') && !item.name?.toLowerCase().includes('struct')
     ).reduce((total, item) => total + item.item_total, 0), [project]);
 
     const totalSalesOrder = useMemo(() => project?.salesOrder?.total, [project]);

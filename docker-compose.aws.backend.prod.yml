@@ -1,5 +1,6 @@
 services:
   aws_backend_app:
+    platform: linux/amd64
     build:
       context: ./backend_app
       dockerfile: Dockerfile.aws.backend.prod

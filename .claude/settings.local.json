@@ -1,7 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(git check-ignore *)",
+      "Bash(echo \"exit=$?\")",
+      "Bash(grep -rnE '\\(href=|src=\\).*\\\\$\\\\{|\\(href|src\\)=\\\\{[^}]*\\\\b\\(props|data|user|item\\)\\\\b' /Users/marketingdept1/Projects/api_installation_project/frontend_app/src --include='*.jsx' --include='*.js')",
+      "Bash(xargs ls -la)"
     ],
     "deny": [],
     "ask": []

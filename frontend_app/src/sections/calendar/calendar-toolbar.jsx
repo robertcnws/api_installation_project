@@ -1,4 +1,4 @@
-
+import { useMemo } from 'react';
 import Stack from '@mui/material/Stack';
 import Badge from '@mui/material/Badge';
 import Button from '@mui/material/Button';
@@ -7,9 +7,16 @@ import MenuItem from '@mui/material/MenuItem';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import LinearProgress from '@mui/material/LinearProgress';
+import { Box } from '@mui/system';
+import { Dialog, DialogTitle } from '@mui/material';
+import { useBoolean } from 'src/hooks/use-boolean';
+import { useTheme } from '@mui/material/styles';
+import { isInstaller } from 'src/utils/check-permissions';
+
 
 import { Iconify } from 'src/components/iconify';
 import { usePopover, CustomPopover } from 'src/components/custom-popover';
+import { CalendarNoteForm } from './calendar-note-form';
 
 // ----------------------------------------------------------------------
 
@@ -35,7 +42,13 @@ export function CalendarToolbar({
 }) {
   const popover = usePopover();
 
+  const theme = useTheme();
+
+  const openNewCalendarNote = useBoolean();
+
   const selectedItem = VIEW_OPTIONS.filter((item) => item.value === view)[0];
+
+  const userLogged = useMemo(() => JSON.parse(sessionStorage.getItem('userLogged')), []);
 
   return (
     <>
@@ -76,7 +89,13 @@ export function CalendarToolbar({
         </Stack>
 
         <Stack direction="row" alignItems="center" spacing={1}>
-          <Button size="small" color="error" variant="contained" onClick={onToday}>
+          {(!isInstaller(userLogged?.data?.user_role?.name)) && (
+            <Button size="small" color="primary" variant="contained" onClick={openNewCalendarNote.onTrue}>
+              Add Note
+            </Button>
+          )}
+
+          <Button size="small" color="warning" variant="contained" onClick={onToday}>
             Today
           </Button>
 
@@ -124,6 +143,39 @@ export function CalendarToolbar({
           ))}
         </MenuList>
       </CustomPopover>
+
+      <Dialog
+        fullWidth
+        maxWidth='md'
+        open={openNewCalendarNote.value}
+        onClose={openNewCalendarNote.onFalse}
+        transitionDuration={{
+          enter: theme.transitions.duration.shortest,
+          exit: theme.transitions.duration.shortest - 80,
+        }}
+        PaperProps={{
+          sx: {
+            display: 'flex',
+            overflow: 'hidden',
+            flexDirection: 'column',
+            '& form': { minHeight: 0, display: 'flex', flex: '1 1 auto', flexDirection: 'column' },
+          },
+        }}
+      >
+        <DialogTitle sx={{ minHeight: 76 }}>
+          {openNewCalendarNote.value && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Box className="dialog-title-icon">
+                <Iconify icon="mdi:calendar" />
+              </Box>
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                Add new calendar note event
+              </Typography>
+            </Box>
+          )}
+        </DialogTitle>
+        <CalendarNoteForm currentEvent={null} onClose={openNewCalendarNote.onFalse} />
+      </Dialog>
     </>
   );
 }

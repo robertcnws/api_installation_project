@@ -243,7 +243,23 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = '/static/'
+
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),
+]
+
+STATICFILES_FINDERS = [
+    'django.contrib.staticfiles.finders.FileSystemFinder',
+    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+]
+
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
 BASE_DIR_STATIC = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
 BACKUP_DIR = os.path.join(BASE_DIR, 'backup')
 
 MEDIA_URL = '/backup/'
@@ -298,12 +314,25 @@ CELERY_BEAT_SCHEDULE = {
     'run-task-sequence-daily': {
         'task': 'api_projects_async_task_sequence.tasks.task_sequence_daily',
         'schedule': crontab(minute=0, hour=8, day_of_week='*'),
-        # 'schedule': crontab(minute='*/2', hour='7-17', day_of_week='*'),
+        # 'schedule': crontab(minute='*', hour='*', day_of_week='*'),
     },
-    # 'run-task-sequence-5min': {
-    #     'task': 'api_projects_async_task_sequence.tasks.task_sequence_5min',
-    #     'schedule': crontab(minute='*/5', hour='7-17', day_of_week='*'),
+    'run-manage-profit-report': {
+        'task': 'api_projects.tasks.task_manage_profit_report',
+        'schedule': crontab(minute=0, hour=7, day_of_week='*'),
+        # 'schedule': crontab(minute='*', hour='*', day_of_week='*'),
+    },
+    # 'run-manage-work-orders': {
+    #     'task': 'api_projects.tasks.task_manage_work_orders_in_batches',
+    #     'schedule': crontab(minute=5, hour='*', day_of_week='*'),
     # },
+    # 'run-generate-installation-guides': {
+    #     'task': 'api_projects.tasks.task_rebuild_scope_and_materials',
+    #     'schedule': crontab(minute=0, hour='*', day_of_week='*'),
+    # },
+    # 'run-update-default-tasks-in-all-projects' : {
+    #     'task': 'api_projects.tasks.task_update_default_tasks_in_all_projects',
+    #     'schedule': crontab(minute='*/5', hour='*', day_of_week='*'),
+    # }
 }
 
 

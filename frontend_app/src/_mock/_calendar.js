@@ -10,5 +10,5 @@ export const CALENDAR_COLOR_OPTIONS = [
   // warning.main,
   // error.main,
   // error.darker,
-  '#FFA500', '#e6194b', '#008080', '#9c27b0', '#0082c8', '#aa6e28',
+  '#FFA500', '#e6194b', '#008080', '#9c27b0', '#0082c8', '#aa6e28', '#0000FF', '#000000',
 ];

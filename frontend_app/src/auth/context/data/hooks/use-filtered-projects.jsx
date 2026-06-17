@@ -2,7 +2,7 @@ import dayjs from 'dayjs';
 import { useMemo } from 'react';
 
 import { listRolesAndSubroles } from 'src/utils/check-permissions';
-import { getProjectInstaller, totalPercentageProjectStage } from 'src/utils/project-tasks-utils';
+import { getWorkOrderWorkers, totalPercentageProjectStage } from 'src/utils/project-tasks-utils';
 
 import { CONFIG } from 'src/config-global';
 
@@ -38,8 +38,14 @@ export function useFilteredProjects(projects, loadedUsers, userLogged) {
         (p.currentStage?.name?.toLowerCase().includes(CONFIG.stages.installation.toLowerCase())) ||
         (p.currentStage?.name?.toLowerCase().includes(CONFIG.stages.coordination.toLowerCase()) &&
           totalPercentageProjectStage(p, CONFIG.stages.coordination, CONFIG) >= 50)
-      ) && getProjectInstaller(p, CONFIG)?.username === userLogged?.data?.username
+      ) 
+      // && getProjectInstallers(p, CONFIG)?.username === userLogged?.data?.username
     ));
+    finalProjects = finalProjects?.filter(p =>
+      p.workOrders?.some(wo =>
+        getWorkOrderWorkers(wo)?.some(w => w.username === userLogged?.data?.username)
+      )
+    );
   }
   return finalProjects;
 }

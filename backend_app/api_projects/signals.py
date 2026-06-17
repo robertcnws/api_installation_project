@@ -10,8 +10,12 @@ from .models import (
     ProjectDefaultGuideProduct,
     ProjectReminder,
     ProjectDefaultMaterial,
+    ProjectCalendarNotes,
+    ProjectProfitReport,
+    ProjectInstallationCrew,
 )
 from .models_sync import ProjectSync
+from .models_extra import TaskTimer
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from api_projects.event_messages import (
@@ -24,8 +28,73 @@ from api_projects.event_messages import (
     message_project_default_task,
     message_project_tracking,
     message_project_notification_user,
+    message_project_calendar_notes,
+    message_project_profit_report,
+    message_project_installation_crew,
+    message_timer,
 )
 import json
+
+##########################################################################
+# TaskTimer
+##########################################################################
+
+def timer_saved(sender, document, **kwargs):
+    created = kwargs.get('created', False)
+    channel_layer = get_channel_layer()
+    event = message_timer('created' if created else 'updated', document)
+    async_to_sync(channel_layer.group_send)('timer', serialize_datetime(event))
+    
+def timer_deleted(sender, document, **kwargs):
+    channel_layer = get_channel_layer()
+    event = message_timer('deleted', document)
+    async_to_sync(channel_layer.group_send)('timer', serialize_datetime(event))
+
+##########################################################################    
+# ProjectInstallationCrew
+##########################################################################
+
+def project_installation_crew_saved(sender, document, **kwargs):
+    created = kwargs.get('created', False)
+    channel_layer = get_channel_layer()
+    event = message_project_installation_crew('created' if created else 'updated', document)
+    async_to_sync(channel_layer.group_send)('project_installation_crew', serialize_datetime(event))
+    
+def project_installation_crew_deleted(sender, document, **kwargs):
+    channel_layer = get_channel_layer()
+    event = message_project_installation_crew('deleted', document)
+    async_to_sync(channel_layer.group_send)('project_installation_crew', serialize_datetime(event))
+
+##########################################################################    
+# ProjectProfitReport
+##########################################################################
+
+def project_profit_report_saved(sender, document, **kwargs):
+    created = kwargs.get('created', False)
+    channel_layer = get_channel_layer()
+    event = message_project_profit_report('created' if created else 'updated', document)
+    async_to_sync(channel_layer.group_send)('project_profit_report', serialize_datetime(event))
+    
+def project_profit_report_deleted(sender, document, **kwargs):
+    channel_layer = get_channel_layer()
+    event = message_project_profit_report('deleted', document)
+    async_to_sync(channel_layer.group_send)('project_profit_report', serialize_datetime(event))
+
+##########################################################################
+# ProjectCalendarNotes
+##########################################################################
+
+def project_calendar_notes_saved(sender, document, **kwargs):
+    created = kwargs.get('created', False)
+    channel_layer = get_channel_layer()
+    event = message_project_calendar_notes('created' if created else 'updated', document)
+    async_to_sync(channel_layer.group_send)('project_calendar_notes', serialize_datetime(event))
+    
+    
+def project_calendar_notes_deleted(sender, document, **kwargs):
+    channel_layer = get_channel_layer()
+    event = message_project_calendar_notes('deleted', document)
+    async_to_sync(channel_layer.group_send)('project_calendar_notes', serialize_datetime(event))
 
 
 ##########################################################################
@@ -289,3 +358,15 @@ signals.post_delete.connect(project_default_material_deleted, sender=ProjectDefa
 
 signals.post_save.connect(sync_project, sender=Project)
 signals.post_delete.connect(delete_from_sync, sender=Project)
+
+signals.post_save.connect(project_calendar_notes_saved, sender=ProjectCalendarNotes)
+signals.post_delete.connect(project_calendar_notes_deleted, sender=ProjectCalendarNotes)
+
+signals.post_save.connect(project_profit_report_saved, sender=ProjectProfitReport)
+signals.post_delete.connect(project_profit_report_deleted, sender=ProjectProfitReport)
+
+signals.post_save.connect(project_installation_crew_saved, sender=ProjectInstallationCrew)
+signals.post_delete.connect(project_installation_crew_deleted, sender=ProjectInstallationCrew)
+
+signals.post_save.connect(timer_saved, sender=TaskTimer)
+signals.post_delete.connect(timer_deleted, sender=TaskTimer)

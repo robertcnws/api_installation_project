@@ -17,8 +17,16 @@ from .repository import (
     project_task_stage_repository,
     project_tracking_repository,
     project_work_orders_repository,
-    
+    project_calendar_notes_repository,
+    project_profit_report_repository,
+    project_installation_crew_repository,
+    timer_repository,
 )
+
+from rest_framework.response import Response
+from rest_framework import status
+
+from api_projects.tasks import task_manage_profit_report
     
     
 #############################################
@@ -711,3 +719,132 @@ def delete_work_order(request, project_id, id):
 @permission_classes([AllowAny])
 def finish_work_order(request, project_id, id):
     return project_work_orders_repository.finish_project_work_order(request, project_id, id)
+
+
+##############################################
+# CREATE PROJECT CALENDAR NOTE
+##############################################
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def create_project_calendar_note(request):
+    return project_calendar_notes_repository.create_project_calendar_note(request)
+
+
+##############################################
+# UPDATE PROJECT CALENDAR NOTE
+##############################################
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def update_project_calendar_note(request, id):
+    return project_calendar_notes_repository.update_project_calendar_note(request, id)
+
+
+##############################################
+# DELETE PROJECT CALENDAR NOTE
+##############################################
+
+@api_view(['DELETE'])
+@permission_classes([AllowAny])
+def delete_project_calendar_note(request, id):
+    return project_calendar_notes_repository.delete_project_calendar_note(request, id)
+
+
+##############################################
+# TRIGGER PROFIT REBUILD
+##############################################
+
+@api_view(['POST'])
+@permission_classes([AllowAny])  # o la que uses
+def trigger_profit_rebuild(request):
+    """
+    Dispara el recálculo de profit de TODOS los proyectos en background.
+    """
+    async_result = task_manage_profit_report.delay(force_update=True)
+
+    return Response(
+        {
+            "message": "Profit report recalculation scheduled.",
+            "task_id": async_result.id,
+            "status": "scheduled",
+        },
+        status=status.HTTP_202_ACCEPTED,
+    )
+    
+    
+##############################################
+# MANAGE PROFIT REPORT
+##############################################
+
+@api_view(['POST'])
+@permission_classes([AllowAny])  # o la que uses
+def manage_profit_report(request, id):
+    return project_profit_report_repository.update_profit_report(id, request)
+
+
+##############################################
+# CREATE PROJECT INSTALLATION CREW
+##############################################
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def create_project_installation_crew(request):
+    return project_installation_crew_repository.create_project_installation_crew(request)
+
+
+#############################################
+# EDIT PROJECT INSTALLATION CREW
+#############################################
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def edit_project_installation_crew(request, id):
+    return project_installation_crew_repository.edit_project_installation_crew(request, id)
+
+
+#############################################
+# DELETE PROJECT INSTALLATION CREW
+#############################################
+
+@api_view(['DELETE'])
+@permission_classes([AllowAny])
+def delete_project_installation_crew(request, id):
+    return project_installation_crew_repository.delete_project_installation_crew(request, id)
+
+
+#############################################
+# DELETE LIST OF PROJECT INSTALLATION CREWS
+#############################################
+
+@api_view(['DELETE'])
+@permission_classes([AllowAny])
+def delete_list_of_project_installation_crews(request):
+    return project_installation_crew_repository.delete_project_installation_crews(request)
+
+
+#############################################
+# TIMER ENDPOINTS
+#############################################
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def timer_get(request, entity_type, entity_id):
+    return timer_repository.timer_get(request, entity_type, entity_id)
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def timer_start(request):
+    return timer_repository.timer_start(request)
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def timer_pause(request):
+    return timer_repository.timer_pause(request)
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def timer_reset(request):
+    return timer_repository.timer_reset(request)
